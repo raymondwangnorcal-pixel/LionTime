@@ -463,38 +463,7 @@ const FALLBACK_LIBRARIES = [
     ]
   },
   {
-    id: "avery", name: "Avery Architectural & Fine Arts Library",
-    url: "https://hours.library.columbia.edu/locations/avery", note: "Service desk closes 15 min before the library",
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-14", end: "2026-09-05",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"09:00",close:"19:00"}, "2": {open:"09:00",close:"19:00"}, "3": {open:"09:00",close:"19:00"}, "4": {open:"09:00",close:"19:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "business", name: "Business & Economics Library",
-    url: "https://hours.library.columbia.edu/locations/business", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-17", end: "2026-09-04",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": {open:"10:00",close:"18:00"}, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "business_manhattanville", name: "S. Steven Pan '88 Business Library",
-    url: "https://hours.library.columbia.edu/locations/business-manhattanville", note: "May close 1–2 PM for staff lunch. Geffen Hall access required.",
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Regular", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"10:00",close:"14:00"}, "2": {open:"10:00",close:"14:00"}, "3": {open:"10:00",close:"14:00"}, "4": {open:"10:00",close:"14:00"}, "5": {open:"10:00",close:"14:00"}, "6": null } }
-    ]
-  },
-  {
-    id: "science_engineering", name: "Science & Engineering Library",
+    id: "science_engineering", name: "NoCo Library",
     url: "https://hours.library.columbia.edu/locations/science-engineering", note: null,
     temporarilyClosed: false,
     schedules: [
@@ -513,6 +482,28 @@ const FALLBACK_LIBRARIES = [
         hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
       { label: "Summer", start: "2026-01-01", end: "2026-12-31",
         hours: { "0": null, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
+    ]
+  },
+  {
+    id: "business", name: "Uris Library",
+    url: "https://hours.library.columbia.edu/locations/business", note: null,
+    temporarilyClosed: false,
+    schedules: [
+      { label: "Intersession", start: "2026-08-17", end: "2026-09-04",
+        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
+      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
+        hours: { "0": {open:"10:00",close:"18:00"}, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
+    ]
+  },
+  {
+    id: "avery", name: "Avery Library",
+    url: "https://hours.library.columbia.edu/locations/avery", note: "Service desk closes 15 min before the library",
+    temporarilyClosed: false,
+    schedules: [
+      { label: "Intersession", start: "2026-08-14", end: "2026-09-05",
+        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
+      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
+        hours: { "0": null, "1": {open:"09:00",close:"19:00"}, "2": {open:"09:00",close:"19:00"}, "3": {open:"09:00",close:"19:00"}, "4": {open:"09:00",close:"19:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
     ]
   },
   {
@@ -555,6 +546,15 @@ const FALLBACK_LIBRARIES = [
         hours: { "0": null, "1": {open:"10:00",close:"18:00"}, "2": {open:"10:00",close:"18:00"}, "3": {open:"10:00",close:"18:00"}, "4": {open:"10:00",close:"18:00"}, "5": {open:"10:00",close:"18:00"}, "6": null } },
       { label: "Summer", start: "2026-01-01", end: "2026-12-31",
         hours: { "0": null, "1": {open:"10:00",close:"20:00"}, "2": {open:"10:00",close:"20:00"}, "3": {open:"10:00",close:"20:00"}, "4": {open:"10:00",close:"20:00"}, "5": {open:"10:00",close:"18:00"}, "6": null } }
+    ]
+  },
+  {
+    id: "business_manhattanville", name: "S. Steven Pan '88 Business Library",
+    url: "https://hours.library.columbia.edu/locations/business-manhattanville", note: "May close 1–2 PM for staff lunch. Geffen Hall access required.",
+    temporarilyClosed: false,
+    schedules: [
+      { label: "Regular", start: "2026-01-01", end: "2026-12-31",
+        hours: { "0": null, "1": {open:"10:00",close:"14:00"}, "2": {open:"10:00",close:"14:00"}, "3": {open:"10:00",close:"14:00"}, "4": {open:"10:00",close:"14:00"}, "5": {open:"10:00",close:"14:00"}, "6": null } }
     ]
   },
   {
@@ -628,14 +628,6 @@ function timeToMinutes(timeStr) {
   return h * 60 + m;
 }
 
-function minutesToDisplay(totalMin) {
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
-}
-
 function formatTime12(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
   const ampm = h >= 12 ? 'PM' : 'AM';
@@ -670,15 +662,13 @@ function getLibraryStatus(library) {
   const closeMin = timeToMinutes(todayHours.close);
 
   if (nowMin < openMin) {
-    const diff = openMin - nowMin;
-    return { status: 'closed', label: 'Closed', countdown: `Opens in ${minutesToDisplay(diff)}`, todayHours };
+    return { status: 'closed', label: 'Closed', countdown: `Opens at ${formatTime12(todayHours.open)}`, todayHours };
   } else if (nowMin < closeMin) {
-    const diff = closeMin - nowMin;
-    const closingSoon = diff <= 60;
+    const closingSoon = (closeMin - nowMin) <= 60;
     return {
       status: closingSoon ? 'closing-soon' : 'open',
       label: closingSoon ? 'Closing Soon' : 'Open',
-      countdown: `Closes in ${minutesToDisplay(diff)}`,
+      countdown: `Closes at ${formatTime12(todayHours.close)}`,
       todayHours
     };
   } else {
@@ -779,7 +769,9 @@ function renderAll() {
   const sorted = [...libraries].sort((a, b) => {
     const sa = getLibraryStatus(a);
     const sb = getLibraryStatus(b);
-    return (order[sa.status] ?? 9) - (order[sb.status] ?? 9);
+    const statusDiff = (order[sa.status] ?? 9) - (order[sb.status] ?? 9);
+    if (statusDiff !== 0) return statusDiff;
+    return libraries.indexOf(a) - libraries.indexOf(b);
   });
 
   const filtered = sorted.filter(lib => {

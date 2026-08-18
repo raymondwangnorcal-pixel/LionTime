@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LionHour — Utility Split View</title>
+<style>
+  :root {
+    --side-bg: #0B1121;
+    --main-bg: #F8FAFC;
+    --border: #CBD5E1;
+    --border-strong: #94A3B8;
+    --txt-core: #0F172A;
+    --txt-sec: #475569;
+    --txt-muted: #94A3B8;
+    --accent: #2563EB;
+    --open: #059669; --soon: #D97706; --closed: #DC2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif; background: var(--main-bg); color: var(--txt-core); font-size: 13px; display: flex; -webkit-font-smoothing: antialiased; }
+
+  .side-panel { width: 260px; background: var(--side-bg); color: #FFF; padding: 1.5rem; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; border-right: 1px solid #1E293B; z-index: 100; }
+  .side-logo { font-size: 1.25rem; font-weight: 800; color: #FFF; letter-spacing: -0.01em; margin-bottom: 2rem; font-family: -apple-system, sans-serif; }
+  
+  .s-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; margin-bottom: 0.75rem; font-weight: 700; color: #94A3B8; }
+  .s-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 4px; font-weight: 600; color: rgba(255,255,255,0.7); text-decoration: none; margin-bottom: 0.25rem; transition: background 0.1s; }
+  .s-item:hover, .s-item.active { background: rgba(255,255,255,0.1); color: #FFF; }
+  .s-counter { font-size: 0.7rem; font-weight: 700; background: rgba(0,0,0,0.3); padding: 0.1rem 0.4rem; border-radius: 8px; }
+
+  .main-flex { margin-left: 260px; flex: 1; display: grid; grid-template-columns: 1fr 360px; min-height: 100vh; max-width: calc(100vw - 260px); }
+  
+  .stream-pane { padding: 1.5rem; border-right: 1px solid var(--border); }
+  .top-row-util { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+  .clock-util { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--txt-core); font-size: 0.85rem; }
+
+  .super-list { background: #FFF; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+  .util-header { display: grid; grid-template-columns: 10px 2fr 1fr 100px; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--txt-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; background: #FAFAFA; }
+  .util-row { display: grid; grid-template-columns: 10px 2fr 1fr 100px; align-items: center; padding: 0.5rem 1rem; border-bottom: 1px solid #EDF2F7; cursor: pointer; transition: background 0.1s; }
+  .util-row:hover, .util-row.active { background: #EDF2F7; }
+  .util-row.active { border-left: 3px solid var(--accent); padding-left:calc(1rem - 3px); }
+
+  .dot-util { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-util.open { background: var(--open); }
+  .dot-util.soon { background: var(--soon); }
+  .dot-util.closed { background: var(--closed); }
+
+  .title-util { font-weight: 700; color: var(--txt-core); }
+  .loc-util { color: var(--txt-muted); font-size: 0.75rem; margin-top: 0.1rem; }
+
+  .inspector-pane { padding: 1.5rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; background: #FFF; }
+  .inspect-header { border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; margin-bottom: 1.5rem; }
+  .inspect-tag { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-block; }
+  .inspect-tag.open { background: #DCFCE7; color: #166534; }
+
+  .hour-timeline { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+  .time-row { border-bottom: 1px solid #EDF2F7; }
+  .time-row.today { font-weight: 700; color: var(--accent); background: #EFF6FF; }
+  .time-row td { padding: 0.5rem 0.3rem; }
+  .time-row td:last-child { text-align: right; }
+</style>
+</head>
+<body>
+
+<aside class="side-panel">
+  <div class="side-logo">🦁 LIONHOUR TACTICAL</div>
+  
+  <div class="s-section">STATUS</div>
+  <a href="#" class="s-item active"><span>● ALL VIEWS</span><span class="s-counter">32</span></a>
+  <a href="#" class="s-item"><span>● OPEN NOW</span><span class="s-counter">18</span></a>
+  <a href="#" class="s-item"><span>● CLOSING SOON</span><span class="s-counter">3</span></a>
+  
+  <div class="s-section" style="margin-top: 1.5rem;">CATEGORIES</div>
+  <a href="#" class="s-item"><span>📚 LIBRARIES</span><span class="s-counter">6</span></a>
+  <a href="#" class="s-item"><span>🍜 DINING</span><span class="s-counter">9</span></a>
+</aside>
+
+<main class="main-flex">
+  <div class="stream-pane">
+    <div class="top-row-util">
+      <div>
+        <div class="clock-util">● 10:33 PM ET · Aug 17</div>
+        <div style="font-size:0.75rem; color:var(--txt-sec); margin-top:0.2rem;">Currently showing real-time status.</div>
+      </div>
+      <input type="text" placeholder="Filter..." style="padding:0.4rem 0.7rem; border:1px solid var(--border); border-radius:4px; font-size:0.75rem; font-family:inherit;">
+    </div>
+
+    <div class="super-list">
+      <div class="util-header">
+        <span></span><span>VENUE</span><span>TODAY</span><span>STATUS</span>
+      </div>
+      <div class="util-row active">
+        <span class="dot-util open"></span>
+        <div><div class="title-util">Butler Library</div><div class="loc-util">535 W 114th St · Main</div></div>
+        <div class="loc-util">Open 24 Hours</div>
+        <div><span class="inspect-tag open">OPEN</span></div>
+      </div>
+      <div class="util-row">
+        <span class="dot-util open"></span>
+        <div><div class="title-util">JJ's Place</div><div class="loc-util">John Jay Hall · Main</div></div>
+        <div class="loc-util">Noon – 10:00 AM</div>
+        <div><span class="inspect-tag open">OPEN</span></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="inspector-pane">
+    <div class="inspect-header">
+      <span class="inspect-tag open">OPEN NOW</span>
+      <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--txt-core); margin-top: 0.6rem;">Butler Library</h2>
+      <p style="color: var(--txt-muted); font-size: 0.75rem; margin-top:0.15rem;">535 W 114th St · Main Campus Library</p>
+    </div>
+
+    <div style="font-weight:700; text-transform:uppercase; font-size:0.7rem; color:var(--txt-muted); margin-bottom:0.75rem;">WEEKLY HOURS</div>
+    <table class="hour-timeline">
+      <tr class="time-row today"><td>Monday (Today)</td><td>Open 24 Hours</td></tr>
+      <tr class="time-row"><td>Tuesday</td><td>Open 24 Hours</td></tr>
+      <tr class="time-row"><td>Wednesday</td><td>Open 24 Hours</td></tr>
+    </table>
+  </aside>
+</main>
+
+</body>
+</html>

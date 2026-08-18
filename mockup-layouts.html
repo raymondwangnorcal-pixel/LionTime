@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LionHour — Layout Options</title>
+<style>
+  :root {
+    --columbia-blue: #1D4F91;
+    --columbia-light: #75AADB;
+    --columbia-pale: #B9D9EB;
+    --bg: #F0F4F8;
+    --surface: #FFFFFF;
+    --text: #1a1a2e;
+    --text-secondary: #5a6278;
+    --muted: #898781;
+    --hairline: #e4e9ef;
+
+    /* Status palette — reserved, never reused for category identity.
+       Always paired with a text label so color never carries meaning alone. */
+    --open: #0ca30c;
+    --open-bg: #dcfce7;
+    --soon: #b45309;
+    --soon-bg: #fef3c7;
+    --closed: #d03b3b;
+    --closed-bg: #fee2e2;
+
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-lg: 0 4px 14px rgba(0,0,0,0.09), 0 2px 4px rgba(0,0,0,0.05);
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+
+  /* ── Variant switcher ──────────────────────────── */
+  .switcher {
+    position: sticky; top: 0; z-index: 50;
+    background: #fff; border-bottom: 1px solid var(--hairline);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .switcher-inner {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0.7rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  .switcher-label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .variant-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .variant-btn {
+    padding: 0.4rem 0.9rem; border-radius: 8px;
+    border: 1.5px solid var(--hairline); background: #fff;
+    color: var(--text-secondary); font-size: 0.84rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .variant-btn:hover { border-color: var(--columbia-light); color: var(--columbia-blue); }
+  .variant-btn.active {
+    background: var(--columbia-blue); color: #fff; border-color: var(--columbia-blue);
+  }
+  .variant-note {
+    font-size: 0.78rem; color: var(--text-secondary);
+    flex: 1; min-width: 220px; text-align: right;
+  }
+
+  /* ── Header ────────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
+    color: white; padding: 1.6rem 1.5rem 1.3rem;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .header::before {
+    content: ''; position: absolute; top: -50%; right: -20%;
+    width: 400px; height: 400px; background: rgba(255,255,255,0.04); border-radius: 50%;
+  }
+  .header-content { position: relative; z-index: 1; }
+  .logo { display: flex; align-items: center; justify-content: center; gap: 0.55rem; margin-bottom: 0.3rem; }
+  .lion-icon { font-size: 1.7rem; line-height: 1; }
+  .site-title { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.5px; }
+  .site-title span { color: var(--columbia-pale); font-weight: 400; }
+  .clock {
+    font-size: 0.92rem; font-weight: 500; margin-top: 0.55rem;
+    background: rgba(255,255,255,0.13); display: inline-block;
+    padding: 0.32rem 0.9rem; border-radius: 20px;
+  }
+
+  /* ── Shared controls ───────────────────────────── */
+  .controls { max-width: 1400px; margin: 0 auto; padding: 1rem 1.5rem 0.2rem; }
+  .search-wrap { display: flex; justify-content: center; margin-bottom: 0.8rem; }
+  .search-input {
+    width: 100%; max-width: 400px; padding: 0.55rem 1rem; font-size: 0.88rem;
+    border: 1.5px solid #d5dbe3; border-radius: 22px; background: #fff;
+    color: var(--text); outline: none; font-family: inherit; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--columbia-blue); }
+  .chip-row { display: flex; justify-content: center; gap: 0.4rem; flex-wrap: wrap; }
+  .chip {
+    padding: 0.28rem 0.75rem; border-radius: 16px;
+    border: 1px solid var(--hairline); background: #fbfcfd;
+    color: var(--text-secondary); font-size: 0.77rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .chip:hover { border-color: var(--columbia-light); }
+  .chip.active { background: var(--columbia-pale); color: #14406f; border-color: var(--columbia-light); }
+
+  .stage { max-width: 1400px; margin: 0 auto; padding: 0.9rem 1.5rem 3rem; }
+
+  .sec-head {
+    display: flex; align-items: baseline; gap: 0.6rem; padding: 1.3rem 0 0.2rem;
+  }
+  .sec-title {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--columbia-blue);
+  }
+  .sec-rule { flex: 1; height: 1px; background: var(--hairline); }
+  .sec-meta { font-size: 0.74rem; color: var(--text-secondary); }
+
+  /* Status badge — shared across variants (label + color, never color alone) */
+  .badge {
+    font-size: 0.63rem; font-weight: 700; padding: 0.24rem 0.5rem;
+    border-radius: 20px; white-space: nowrap; text-transform: uppercase;
+    letter-spacing: 0.4px; flex-shrink: 0;
+  }
+  .badge.open { background: var(--open-bg); color: #15803d; }
+  .badge.closing-soon { background: var(--soon-bg); color: var(--soon); }
+  .badge.closed { background: var(--closed-bg); color: #b91c1c; }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.open { background: var(--open); }
+  .dot.closing-soon { background: var(--soon); }
+  .dot.closed { background: var(--closed); }
+
+  /* ════════ VARIANT A — Cards ════════ */
+  .v-cards .grid {
+    display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 0.9rem; padding: 0.8rem 0 0.4rem;
+  }
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+    display: flex; flex-direction: column;
+    border-left: 3px solid transparent;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .card.open { border-left-color: var(--open); }
+  .card.closing-soon { border-left-color: var(--soon); }
+  .card.closed { border-left-color: #e5e7eb; }
+  .card.closed .card-name { color: var(--text-secondary); }
+  .card-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 0.9rem 1rem 0.5rem; gap: 0.6rem;
+  }
+  .card-name { font-size: 0.92rem; font-weight: 600; line-height: 1.3; flex: 1; }
+  .card-body { padding: 0 1rem 0.9rem; flex: 1; }
+  .card-line { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; }
+  .card-line b { color: var(--text); font-weight: 600; }
+  .card-note { font-size: 0.72rem; color: var(--muted); font-style: italic; margin-top: 0.4rem; line-height: 1.4; }
+  .card-toggle {
+    display: block; width: 100%; padding: 0.5rem 1rem; background: #f8fafc;
+    border: none; border-top: 1px solid #f1f4f7; color: var(--columbia-blue);
+    font-size: 0.74rem; font-weight: 500; cursor: pointer; font-family: inherit;
+  }
+  .card-toggle:hover { background: #eef3f9; }
+  .drawer { max-height: 0; overflow: hidden; transition: max-height .3s ease; background: #f8fafc; }
+  .drawer.open { max-height: 400px; }
+  .drawer-inner { padding: 0.4rem 1rem 0.8rem; font-size: 0.75rem; }
+
+  /* ════════ VARIANT B — Dense list ════════ */
+  .v-list .list {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; margin-top: 0.6rem;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 14px minmax(0,2.1fr) minmax(0,1.9fr) 82px;
+    align-items: center; gap: 0.9rem;
+    padding: 0.62rem 1.1rem; border-bottom: 1px solid #f1f4f7;
+    transition: background .12s;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: #f8fafc; }
+  .row-name { font-size: 0.87rem; font-weight: 600; }
+  .row.is-closed .row-name { color: var(--text-secondary); font-weight: 500; }
+  /* tabular figures so the time columns align down the page */
+  .row-hours {
+    font-size: 0.81rem; color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .row-badge { justify-self: end; }
+  .list-head {
+    display: grid;
+    grid-template-columns: 14px minmax(0,2.1fr) minmax(0,1.9fr) 82px;
+    gap: 0.9rem; padding: 0.5rem 1.1rem;
+    background: #f8fafc; border-bottom: 1px solid var(--hairline);
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ════════ VARIANT C — Timeline ════════ */
+  .v-timeline .tl-wrap {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 0.5rem 1.1rem 0.9rem; margin-top: 0.6rem;
+  }
+  .tl-row {
+    display: grid; grid-template-columns: minmax(0,1.5fr) 1fr 78px;
+    align-items: center; gap: 1rem;
+    padding: 0.45rem 0; border-bottom: 1px solid #f4f6f9;
+  }
+  .tl-sub {
+    font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .tl-badge { justify-self: end; }
+  .tl-row:last-child { border-bottom: none; }
+  .tl-name { font-size: 0.85rem; font-weight: 600; }
+  .tl-row.is-closed .tl-name { color: var(--text-secondary); font-weight: 500; }
+  .tl-track {
+    position: relative; height: 22px; border-radius: 4px;
+    background: #f2f5f8; overflow: hidden;
+  }
+  /* hairline solid gridlines at 06/12/18 — recessive, never dashed */
+  .tl-grid { position: absolute; inset: 0; pointer-events: none; }
+  .tl-grid i { position: absolute; top: 0; bottom: 0; width: 1px; background: #e4e9ef; }
+  .tl-seg {
+    position: absolute; top: 4px; height: 14px;   /* ≤24px thick, air above/below */
+    border-radius: 4px;                            /* 4px rounded data-ends */
+    background: var(--open);
+  }
+  .tl-seg.is-soon { background: var(--soon); }
+  .tl-seg.past { background: #cbd5e1; }
+  /* 2px surface gap so touching segments read as separate without a border */
+  .tl-seg + .tl-seg { box-shadow: -2px 0 0 var(--surface); }
+  .tl-now {
+    position: absolute; top: -1px; bottom: -1px; width: 2px;
+    background: var(--columbia-blue); z-index: 3;
+  }
+  .tl-now::after {
+    content: ''; position: absolute; top: -3px; left: -3px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--columbia-blue); box-shadow: 0 0 0 2px var(--surface);
+  }
+  .tl-axis {
+    display: grid; grid-template-columns: minmax(0,1.5fr) 1fr 78px;
+    gap: 1rem; padding-top: 0.3rem;
+  }
+  .tl-axis-inner { position: relative; height: 14px; }
+  .tl-axis-inner span {
+    position: absolute; top: 0; font-size: 0.63rem; color: var(--muted);
+    transform: translateX(-50%); white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .tl-legend {
+    display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+    padding: 0.5rem 0 0.2rem; font-size: 0.72rem; color: var(--text-secondary);
+  }
+  .tl-key { display: flex; align-items: center; gap: 0.35rem; }
+  .tl-key i { width: 14px; height: 8px; border-radius: 3px; display: inline-block; }
+  .tl-time { font-size: 0.78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; justify-self: end; }
+
+  /* ════════ VARIANT D — Status board ════════ */
+  .v-board .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; margin-top: 0.8rem; }
+  .col { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .col-head {
+    padding: 0.7rem 1rem; border-bottom: 1px solid var(--hairline);
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .col-head .count {
+    margin-left: auto; font-size: 0.72rem; color: var(--text-secondary);
+    font-weight: 600; letter-spacing: 0;
+  }
+  .col.open .col-head { color: #15803d; background: #f4fdf6; }
+  .col.closing-soon .col-head { color: var(--soon); background: #fffbeb; }
+  .col.closed .col-head { color: #b91c1c; background: #fef6f6; }
+  .item { padding: 0.55rem 1rem; border-bottom: 1px solid #f4f6f9; }
+  .item:last-child { border-bottom: none; }
+  .item-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+  .item-name { font-size: 0.85rem; font-weight: 600; }
+  .item-time { font-size: 0.78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .item-cat {
+    font-size: 0.66rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.6px; margin-top: 0.12rem;
+  }
+  .col-empty { padding: 1.4rem 1rem; text-align: center; color: var(--muted); font-size: 0.8rem; }
+
+  .empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); font-size: 0.9rem; }
+
+  .footer {
+    text-align: center; padding: 1.4rem; color: var(--text-secondary);
+    font-size: 0.76rem; border-top: 1px solid var(--hairline); background: #fff;
+  }
+
+  /* ════════ VARIANT E — Rich cards (mini timeline instead of dead space) ════════ */
+  .v-rich .grid {
+    display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 0.9rem; padding: 0.8rem 0 0.4rem;
+  }
+  .rcard {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 0.9rem 1rem 0.85rem;
+    border-left: 3px solid transparent; transition: box-shadow .2s, transform .2s;
+  }
+  .rcard:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .rcard.open { border-left-color: var(--open); }
+  .rcard.closing-soon { border-left-color: var(--soon); }
+  .rcard.closed { border-left-color: #e5e7eb; }
+  .rcard.closed .rcard-name { color: var(--text-secondary); }
+  .rcard-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 0.6rem; margin-bottom: 0.55rem;
+  }
+  .rcard-name { font-size: 0.9rem; font-weight: 600; line-height: 1.3; flex: 1; }
+  .rcard .tl-track { height: 18px; }
+  .rcard .tl-seg { top: 3px; height: 12px; }
+  .rcard-scale {
+    position: relative; height: 12px; margin-top: 0.18rem;
+  }
+  .rcard-scale span {
+    position: absolute; top: 0; font-size: 0.6rem; color: var(--muted);
+    transform: translateX(-50%); font-variant-numeric: tabular-nums;
+  }
+  .rcard-hours {
+    font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.45rem;
+    font-variant-numeric: tabular-nums; line-height: 1.4;
+  }
+  .rcard-hours b { color: var(--text); font-weight: 600; }
+  .rcard-note { font-size: 0.71rem; color: var(--muted); font-style: italic; margin-top: 0.3rem; line-height: 1.35; }
+
+  @media (max-width: 1180px) {
+    .v-cards .grid, .v-rich .grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .v-board .board { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .v-cards .grid, .v-rich .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .row, .list-head { grid-template-columns: 14px minmax(0,1.6fr) minmax(0,1.3fr) 74px; }
+    .tl-row, .tl-axis { grid-template-columns: minmax(0,1.2fr) 1fr; }
+    .tl-badge { display: none; }
+  }
+  @media (max-width: 620px) {
+    .v-cards .grid, .v-rich .grid { grid-template-columns: minmax(0,1fr); }
+    .variant-note { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <div class="switcher-inner">
+    <span class="switcher-label">Layout</span>
+    <div class="variant-tabs" id="variant-tabs"></div>
+    <span class="variant-note" id="variant-note"></span>
+  </div>
+</div>
+
+<header class="header">
+  <div class="header-content">
+    <div class="logo"><span class="lion-icon">🦁</span><h1 class="site-title">Lion<span>Hour</span></h1></div>
+    <div class="clock" id="clock">—</div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <input type="text" class="search-input" id="search" placeholder="Search…" autocomplete="off">
+  </div>
+  <div class="chip-row" id="cat-chips"></div>
+</div>
+
+<main class="stage" id="stage"></main>
+
+<footer class="footer">Four structural options over the same live data · times in Eastern Time</footer>
+
+<script>
+/* ══════════════════════════════════════════════════
+   CATEGORIES
+   ══════════════════════════════════════════════════ */
+const CATEGORIES = [
+  { id: 'all',      label: 'All',            icon: '' },
+  { id: 'library',  label: 'Libraries',      icon: '📚' },
+  { id: 'dining',   label: 'Dining',         icon: '🍜' },
+  { id: 'cafe',     label: 'Cafes',          icon: '☕' },
+  { id: 'fitness',  label: 'Fitness',        icon: '💪' },
+  { id: 'student',  label: 'Student Life & Services', icon: '🎓' },
+];
+
+const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+
+/* ══════════════════════════════════════════════════
+   VENUE DATA
+   hours: { dayOfWeek 0=Sun … 6=Sat : [[open, close], …] }
+   null / omitted = closed that day.
+   close <= open  → spans past midnight (e.g. ["12:00","10:00"])
+   ══════════════════════════════════════════════════ */
+const D = (mon, tue, wed, thu, fri, sat, sun) => ({0:sun,1:mon,2:tue,3:wed,4:thu,5:fri,6:sat});
+const ALL = h => D(h,h,h,h,h,h,h);
+const WEEKDAYS = (wd, sat=null, sun=null) => D(wd,wd,wd,wd,wd,sat,sun);
+
+const VENUES = [
+  /* ── LIBRARIES (top 6 by traffic) ───────────────── */
+  { id:'butler', name:'Butler Library', cat:'library', loc:'535 W 114th St',
+    hours: D([['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],
+             [['00:00','23:00']],[['09:00','23:00']],[['09:00','24:00']]),
+    note:'Open 24 hours Sun 9 AM through Fri 11 PM during the semester.' },
+
+  { id:'noco', name:'NoCo Library', cat:'library', loc:'Northwest Corner Building, 4th fl',
+    hours: WEEKDAYS([['09:00','23:00']], [['11:00','20:00']], [['11:00','23:00']]) },
+
+  { id:'lehman', name:'Lehman Social Sciences Library', cat:'library', loc:'International Affairs Building, 3rd fl',
+    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+
+  { id:'uris', name:'Uris Library', cat:'library', loc:'Uris Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+
+  { id:'avery', name:'Avery Library', cat:'library', loc:'Avery Hall, 2nd fl',
+    hours: WEEKDAYS([['09:00','21:00']], [['11:00','18:00']], [['12:00','21:00']]),
+    note:'Service desk closes 15 minutes before the library.' },
+
+  { id:'math', name:'Mathematics Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','20:00']], null, [['13:00','20:00']]) },
+
+  /* ── DINING ─────────────────────────────────────── */
+  { id:'johnjay', name:'John Jay Dining', cat:'dining', loc:'John Jay Hall, 1st fl',
+    hours: D([['09:30','21:00']],[['09:30','21:00']],[['09:30','21:00']],[['09:30','21:00']],
+             null,null,[['09:30','21:00']]),
+    note:'Closed Friday and Saturday for Fall 2026.' },
+
+  { id:'ferris', name:'Ferris Dining Hall', cat:'dining', loc:'Lerner Hall, 3rd fl',
+    hours: D([['07:30','20:00']],[['07:30','20:00']],[['07:30','20:00']],[['07:30','20:00']],
+             [['07:30','20:00']],[['09:00','20:00']],[['10:00','14:00'],['16:00','20:00']]) },
+
+  { id:'jjs', name:"JJ's Place", cat:'dining', loc:'John Jay Hall, lower level',
+    hours: ALL([['12:00','10:00']]),
+    note:'Runs overnight — opens noon, closes 10 AM the next morning.' },
+
+  { id:'chefmikes', name:"Chef Mike's Subs", cat:'dining', loc:'Hartley Hall, lower level',
+    hours: ALL([['11:00','02:00']]) },
+
+  { id:'chefdons', name:"Chef Don's Pizza", cat:'dining', loc:'Wien Hall, lower level',
+    hours: WEEKDAYS([['08:00','19:00']]) },
+
+  { id:'gracedodge', name:'Grace Dodge Dining Hall', cat:'dining', loc:'Grace Dodge Hall, Teachers College',
+    hours: D([['11:00','19:30']],[['11:00','19:30']],[['11:00','19:30']],[['11:00','19:30']],null,null,null) },
+
+  { id:'facultyhouse', name:'Faculty House — 2nd Floor', cat:'dining', loc:'64 Morningside Dr',
+    hours: D([['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],
+             [['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],null,null,null) },
+
+  { id:'facshack', name:'Fac Shack', cat:'dining', loc:'Faculty House patio',
+    hours: D([['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],
+             null,null,[['15:00','20:00']]) },
+
+  { id:'johnnys', name:"Johnny's Food Truck", cat:'dining', loc:'Broadway at 115th St',
+    hours: D([['11:00','15:00']],[['11:00','15:00']],[['11:00','15:00']],
+             [['11:00','15:00'],['19:00','23:00']],[['11:00','15:00'],['19:00','23:00']],
+             [['19:00','23:00']],[['18:00','22:00']]) },
+
+  /* ── CAFES ──────────────────────────────────────── */
+  { id:'bj-butler', name:'Butler Cafe', cat:'cafe', loc:'Butler Library, 1st fl',
+    hours: D([['08:00','24:00']],[['08:00','24:00']],[['08:00','24:00']],[['08:00','24:00']],
+             [['09:00','21:00']],[['09:00','21:00']],[['09:00','21:00']]) },
+
+  { id:'joe-noco', name:"Joe's Coffee (NoCo)", cat:'cafe', loc:'Northwest Corner Building, 550 W 120th St',
+    hours: WEEKDAYS([['07:00','19:00']], [['09:00','17:00']], [['09:00','17:00']]),
+    note:'Columbia ID required for entry.' },
+
+  { id:'cafe-east', name:'Cafe East', cat:'cafe', loc:'Lerner Hall, Room 2E',
+    hours: WEEKDAYS([['10:30','19:30']], [['11:00','19:30']], [['11:00','19:30']]) },
+
+  { id:'bj-uris', name:'Uris Cafe', cat:'cafe', loc:'Uris Hall, lower level',
+    hours: WEEKDAYS([['08:00','21:00']], [['08:00','18:00']]) },
+
+  { id:'bj-mudd', name:'Mudd Cafe', cat:'cafe', loc:'Mudd Building, 1st fl',
+    hours: WEEKDAYS([['08:00','18:00']]) },
+
+  { id:'joe-journalism', name:"Joe's Coffee (Journalism)", cat:'cafe', loc:'Pulitzer Hall, 2950 Broadway',
+    hours: WEEKDAYS([['07:00','19:00']], [['09:00','16:00']], [['09:00','16:00']]),
+    note:'Columbia ID required for entry.' },
+
+  { id:'joe-dodge', name:"Joe's Coffee (Dodge)", cat:'cafe', loc:'Dodge Hall, 2960 Broadway',
+    hours: WEEKDAYS([['08:00','18:00']]),
+    note:'Columbia ID required for entry.' },
+
+  { id:'bj-everett', name:'Everett Cafe', cat:'cafe', loc:'Lenfest Hall, Law School',
+    hours: D([['08:30','19:30']],[['08:30','19:30']],[['08:30','19:30']],[['08:30','19:30']],
+             [['08:30','14:00']],null,null) },
+
+  { id:'lenfest-cafe', name:'Lenfest Cafe', cat:'cafe', loc:'Lenfest Hall',
+    hours: D([['08:00','18:30']],[['08:00','18:30']],[['08:00','18:30']],[['08:00','18:30']],
+             [['08:00','15:00']],null,null) },
+
+  /* ── FITNESS ────────────────────────────────────── */
+  { id:'dodge', name:'Dodge Fitness Center', cat:'fitness', loc:'3030 Broadway',
+    hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]),
+    note:'All members must be out of the building at the posted closing time.' },
+
+  { id:'uris-pool', name:'Uris Pool', cat:'fitness', loc:'Dodge Fitness Center, lower level',
+    hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
+                    [['13:00','17:00']], [['13:00','17:00']]),
+    note:'Pool areas must be vacated at posted closing times.' },
+
+  { id:'dodge-membership', name:'Dodge Membership Office', cat:'fitness', loc:'Dodge Fitness Center, main level',
+    hours: WEEKDAYS([['09:30','16:30']]) },
+
+  /* ── STUDENT LIFE & SERVICES ────────────────────── */
+  { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
+    hours: WEEKDAYS([['07:30','00:30']], [['08:30','00:30']], [['08:30','00:30']]),
+    note:'Times are subject to change throughout the academic year.' },
+
+  { id:'bookstore', name:'Columbia University Bookstore', cat:'student', loc:'Lerner Hall, lower level',
+    hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
+    estimated: true },
+
+  { id:'package', name:'Lerner Package Center', cat:'student', loc:'Lerner Hall, lower level',
+    hours: WEEKDAYS([['09:00','20:00']], [['10:00','17:00']], null),
+    estimated: true },
+
+  { id:'medical', name:'Medical Services', cat:'student', loc:'John Jay Hall, 4th fl',
+    hours: D([['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],
+             [['08:00','16:00']],null,null),
+    note:'Check-in closes 30 minutes before closing. After-hours nurse line available 24/7.' },
+
+  { id:'caps', name:'Counseling & Psychological Services', cat:'student', loc:'Lerner Hall, 8th fl',
+    hours: D([['08:00','19:00']],[['08:00','19:00']],[['08:00','19:00']],[['08:00','19:00']],
+             [['08:00','17:00']],null,null),
+    note:'24/7 phone support available outside office hours.' },
+
+  { id:'disability', name:'Disability Services', cat:'student', loc:'Wien Hall, Suite 108A',
+    hours: WEEKDAYS([['09:00','17:00']]),
+    note:'By appointment; virtual drop-in hours select days.' },
+
+  { id:'svr', name:'Sexual Violence Response', cat:'student', loc:'Lerner Hall, Suite 700',
+    hours: WEEKDAYS([['09:00','17:00']]),
+    note:'24/7 helpline available outside office hours.' },
+
+  { id:'immunization', name:'Immunization Compliance Office', cat:'student', loc:'John Jay Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','17:00']]),
+    note:'Virtual appointments only.' },
+];
+
+/* ══════════════════════════════════════════════════
+   TIME HELPERS (Eastern Time)
+   ══════════════════════════════════════════════════ */
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function nowET() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short', hour: '2-digit', minute: '2-digit',
+    second: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t).value;
+  const dow = DAY_SHORT.indexOf(get('weekday'));
+  let hour = parseInt(get('hour'), 10);
+  if (hour === 24) hour = 0;
+  return {
+    dow,
+    mins: hour * 60 + parseInt(get('minute'), 10),
+    secs: parseInt(get('second'), 10),
+  };
+}
+
+function toMin(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function fmt12(mins) {
+  mins = ((mins % 1440) + 1440) % 1440;
+  const h24 = Math.floor(mins / 60), m = mins % 60;
+  const h = h24 % 12 === 0 ? 12 : h24 % 12;
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  return m === 0 ? `${h} ${ampm}` : `${h}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function fmtRange(iv) {
+  const s = toMin(iv[0]), e = toMin(iv[1]);
+  if (s === 0 && (e === 1440 || iv[1] === '24:00')) return 'Open 24 hours';
+  return `${fmt12(s)} – ${fmt12(e)}`;
+}
+
+function dayHours(venue, dow) {
+  const h = venue.hours[((dow % 7) + 7) % 7];
+  return Array.isArray(h) ? h : [];
+}
+
+/* An interval ending exactly at midnight continues into the next day if that
+   day opens at 00:00 — e.g. Butler runs Sun 9 AM straight through Fri 11 PM.
+   Returns the true closing time in minutes from the start of `dow`. */
+function chainEnd(venue, dow, endMin) {
+  let end = endMin, guard = 0;
+  while (end % 1440 === 0 && guard < 8) {
+    const next = dayHours(venue, dow + end / 1440);
+    if (!next.length) break;
+    const first = next[0];
+    if (toMin(first[0]) !== 0) break;
+    const fe = first[1] === '24:00' ? 1440 : toMin(first[1]);
+    if (fe === 0) break;
+    end += fe;
+    guard++;
+    if (fe !== 1440) break;
+  }
+  return end;
+}
+
+/* Absolute-minute intervals for yesterday + today, relative to today's midnight. */
+function activeIntervals(venue, dow) {
+  const out = [];
+  for (const off of [-1, 0]) {
+    for (const iv of dayHours(venue, dow + off)) {
+      const s = toMin(iv[0]);
+      let e = iv[1] === '24:00' ? 1440 : toMin(iv[1]);
+      if (e <= s) e += 1440;
+      e = chainEnd(venue, dow + off, e);
+      out.push({ start: s + off * 1440, end: e + off * 1440 });
+    }
+  }
+  return out;
+}
+
+/* "at 11 PM" / "Friday at 11 PM", where endAbs is minutes from today's midnight. */
+function describeClose(endAbs, dow) {
+  const t = fmt12(endAbs);
+  if (endAbs <= 1440 + 360) return `at <span class="time-value">${t}</span>`;
+  const day = DAY_NAMES[(dow + Math.floor(endAbs / 1440)) % 7];
+  return `<span class="time-value">${day} at ${t}</span>`;
+}
+
+/* ══════════════════════════════════════════════════
+   STATUS ENGINE
+   ══════════════════════════════════════════════════ */
+function getStatus(venue, now) {
+  const CLOSING_SOON = 60; // minutes
+
+  // 1. Currently inside an open interval (including ones spanning midnight)
+  for (const iv of activeIntervals(venue, now.dow)) {
+    if (now.mins >= iv.start && now.mins < iv.end) {
+      const until = iv.end - now.mins;
+      return {
+        status: until <= CLOSING_SOON ? 'closing-soon' : 'open',
+        label: until <= CLOSING_SOON ? 'Closing soon' : 'Open',
+        detail: `Closes ${describeClose(iv.end, now.dow)}`,
+      };
+    }
+  }
+
+  // 2. Closed — find the next opening within 7 days
+  for (let offset = 0; offset < 8; offset++) {
+    for (const iv of dayHours(venue, now.dow + offset)) {
+      const s = toMin(iv[0]) + offset * 1440;
+      if (s > now.mins) {
+        const when = offset === 0 ? 'today'
+          : offset === 1 ? 'tomorrow'
+          : DAY_NAMES[(now.dow + offset) % 7];
+        return {
+          status: 'closed', label: 'Closed',
+          detail: `Opens <span class="time-value">${fmt12(toMin(iv[0]))} ${when}</span>`,
+        };
+      }
+    }
+  }
+
+  return { status: 'closed', label: 'Closed', detail: 'No upcoming hours listed' };
+}
+
+/* Every open block that OVERLAPS today — not just the ones published under
+   today's day-of-week. A block carried in from yesterday (JJ's noon-to-10AM
+   run) is included while it is still going and tagged with the day it began,
+   so this column can never contradict the status, which also looks back a day. */
+function todayHoursText(venue, now) {
+  const spans = activeIntervals(venue, now.dow)
+    .filter(iv => iv.end > 0 && iv.start < 1440)        // touches today at all
+    .filter(iv => iv.start >= 0 || iv.end > now.mins)   // yesterday's spill: only while live
+    .sort((a, b) => a.start - b.start);
+
+  // A multi-day 24h run yields one span per source day — merge them back.
+  const merged = [];
+  for (const s of spans) {
+    const last = merged[merged.length - 1];
+    if (last && s.start <= last.end) last.end = Math.max(last.end, s.end);
+    else merged.push({ start: s.start, end: s.end });
+  }
+  if (!merged.length) return 'Closed today';
+
+  return merged.map(iv => {
+    if (iv.start <= 0 && iv.end >= 1440) return 'Open 24 hours';
+    const from = iv.start < 0
+      ? `${DAY_SHORT[(now.dow + 6) % 7]} ${fmt12(iv.start)}`
+      : fmt12(iv.start);
+    const to = iv.end > 1440 + 360
+      ? `${fmt12(iv.end)} ${DAY_SHORT[(now.dow + Math.floor(iv.end / 1440)) % 7]}`
+      : fmt12(iv.end);
+    return `${from} – ${to}`;
+  }).join(', ');
+}
+
+
+/* ══════════════════════════════════════════════════
+   TIMELINE HELPERS
+   ══════════════════════════════════════════════════ */
+/* Open windows overlapping today, clipped to the 0–1440 view. */
+function todayWindows(venue, dow) {
+  const out = [];
+  for (const iv of activeIntervals(venue, dow)) {
+    const s = Math.max(iv.start, 0), e = Math.min(iv.end, 1440);
+    if (e > s) out.push({ start: s, end: e, continues: iv.end > 1440 });
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+
+/* ══════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════ */
+const VARIANTS = [
+  { id:'cards',    label:'Cards',        note:'Roomy and familiar — but 32 of them is a lot of scrolling.' },
+  { id:'list',     label:'Dense list',   note:'~3× the density. Best for a utility people check in 5 seconds.' },
+  { id:'timeline', label:'Timeline',     note:'Shows split hours and overnight service that text alone hides.' },
+  { id:'board',    label:'Status board', note:'Answers "what is open right now" before you read a word.' },
+  { id:'rich',     label:'Cards + day bar', note:'Fills the empty card with information rather than decoration.' },
+];
+let variant = 'cards';
+let activeCat = 'all';
+let searchTerm = '';
+
+function visible(now) {
+  const term = searchTerm.trim().toLowerCase();
+  return VENUES.filter(v => {
+    if (activeCat !== 'all' && v.cat !== activeCat) return false;
+    if (term && !`${v.name} ${v.loc} ${CAT_MAP[v.cat].label}`.toLowerCase().includes(term)) return false;
+    return true;
+  });
+}
+
+const ORDER = { 'open':0, 'closing-soon':1, 'closed':2 };
+function sortByStatus(list, now) {
+  return [...list].sort((a, b) => {
+    const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
+    return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
+  });
+}
+
+function groupByCat(list) {
+  return CATEGORIES.filter(c => c.id !== 'all')
+    .map(c => ({ cat: c, items: list.filter(v => v.cat === c.id) }))
+    .filter(g => g.items.length);
+}
+
+function secHead(cat, items, now) {
+  const openN = items.filter(v => getStatus(v, now).status !== 'closed').length;
+  return `<div class="sec-head">
+    <span class="sec-title">${cat.icon} ${cat.label}</span>
+    <span class="sec-rule"></span>
+    <span class="sec-meta">${openN} of ${items.length} open</span>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════
+   VARIANT A — Cards
+   ══════════════════════════════════════════════════ */
+function renderCards(list, now) {
+  return groupByCat(list).map(g => {
+    const items = sortByStatus(g.items, now);
+    return secHead(g.cat, g.items, now) + '<div class="grid">' + items.map(v => {
+      const st = getStatus(v, now);
+      return `<div class="card ${st.status}">
+        <div class="card-top">
+          <div class="card-name">${v.name}</div>
+          <span class="badge ${st.status}">${st.label}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-line">${st.detail}</div>
+          <div class="card-line">Today: ${todayHoursText(v, now)}</div>
+          ${v.note ? `<div class="card-note">${v.note}</div>` : ''}
+        </div>
+        <button class="card-toggle" type="button">Weekly schedule</button>
+        <div class="drawer"><div class="drawer-inner">${weekRows(v, now)}</div></div>
+      </div>`;
+    }).join('') + '</div>';
+  }).join('');
+}
+
+function weekRows(v, now) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const dow = (now.dow + i) % 7;
+    const h = dayHours(v, dow);
+    return `<div style="display:flex;justify-content:space-between;gap:1rem;padding:.28rem 0;${
+      i === 0 ? 'font-weight:600;color:var(--columbia-blue);' : 'color:var(--text-secondary);'}">
+      <span>${DAY_NAMES[dow]}${i === 0 ? ' (today)' : ''}</span>
+      <span style="font-variant-numeric:tabular-nums">${h.length ? h.map(fmtRange).join(', ') : 'Closed'}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   VARIANT B — Dense list
+   ══════════════════════════════════════════════════ */
+function renderList(list, now) {
+  return groupByCat(list).map(g => {
+    const items = sortByStatus(g.items, now);
+    return secHead(g.cat, g.items, now) + `<div class="list">
+      <div class="list-head">
+        <span></span><span>Place</span><span>Today</span><span style="text-align:right">Status</span>
+      </div>` + items.map(v => {
+      const st = getStatus(v, now);
+      return `<div class="row ${st.status === 'closed' ? 'is-closed' : ''}">
+        <span class="dot ${st.status}"></span>
+        <span class="row-name">${v.name}</span>
+        <span class="row-hours">${todayHoursText(v, now)}</span>
+        <span class="row-badge"><span class="badge ${st.status}">${st.label}</span></span>
+      </div>`;
+    }).join('') + '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   Shared 24-hour track (used by Timeline + Rich cards)
+   ══════════════════════════════════════════════════ */
+const pctOfDay = m => (m / 1440 * 100).toFixed(2) + '%';
+
+function trackHTML(v, now, st) {
+  const segs = todayWindows(v, now.dow).map(w => {
+    const past = w.end <= now.mins;
+    const live = now.mins >= w.start && now.mins < w.end;
+    const cls = past ? 'past' : (live && st.status === 'closing-soon' ? 'is-soon' : '');
+    const label = `${fmt12(w.start)} – ${fmt12(w.end)}${w.continues ? ' (continues past midnight)' : ''}`;
+    return `<div class="tl-seg ${cls}" style="left:${pctOfDay(w.start)};width:${pctOfDay(Math.max(w.end - w.start, 6))}" title="${label}"></div>`;
+  }).join('');
+  return `<div class="tl-track">
+    <div class="tl-grid"><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div>
+    ${segs}
+    <div class="tl-now" style="left:${pctOfDay(now.mins)}"></div>
+  </div>`;
+}
+
+const AXIS = [0, 6, 12, 18, 24];
+const axisLabel = h => h === 0 || h === 24 ? '12a' : h === 12 ? '12p' : h > 12 ? (h - 12) + 'p' : h + 'a';
+
+/* One legend for the whole view — status color never travels without its label. */
+const TL_LEGEND = `<div class="tl-legend">
+  <span class="tl-key"><i style="background:var(--open)"></i>Open</span>
+  <span class="tl-key"><i style="background:var(--soon)"></i>Closing within the hour</span>
+  <span class="tl-key"><i style="background:#cbd5e1"></i>Earlier today</span>
+  <span class="tl-key"><i style="background:var(--columbia-blue);width:3px;height:12px;border-radius:1px"></i>Now</span>
+</div>`;
+
+/* ══════════════════════════════════════════════════
+   VARIANT C — Timeline
+   ══════════════════════════════════════════════════ */
+function renderTimeline(list, now) {
+  const axisHtml = `<div class="tl-axis"><span></span><div class="tl-axis-inner">` +
+    AXIS.map(h => `<span style="left:${h / 24 * 100}%">${axisLabel(h)}</span>`).join('') +
+    `</div><span></span></div>`;
+
+  return `<div style="padding-top:.6rem">${TL_LEGEND}</div>` + groupByCat(list).map(g => {
+    const items = sortByStatus(g.items, now);
+    return secHead(g.cat, g.items, now) + `<div class="tl-wrap">` + items.map(v => {
+      const st = getStatus(v, now);
+      return `<div class="tl-row ${st.status === 'closed' ? 'is-closed' : ''}">
+        <div>
+          <div class="tl-name">${v.name}</div>
+          <div class="tl-sub">${todayHoursText(v, now)}</div>
+        </div>
+        ${trackHTML(v, now, st)}
+        <span class="tl-badge"><span class="badge ${st.status}">${st.label}</span></span>
+      </div>`;
+    }).join('') + axisHtml + `</div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   VARIANT E — Rich cards
+   Same card footprint, but the empty middle carries a day-shape
+   instead of decoration.
+   ══════════════════════════════════════════════════ */
+function renderRich(list, now) {
+  const scale = `<div class="rcard-scale">` +
+    AXIS.map(h => `<span style="left:${h / 24 * 100}%">${axisLabel(h)}</span>`).join('') + `</div>`;
+
+  return `<div style="padding-top:.6rem">${TL_LEGEND}</div>` + groupByCat(list).map(g => {
+    const items = sortByStatus(g.items, now);
+    return secHead(g.cat, g.items, now) + '<div class="grid">' + items.map(v => {
+      const st = getStatus(v, now);
+      return `<div class="rcard ${st.status}">
+        <div class="rcard-top">
+          <div class="rcard-name">${v.name}</div>
+          <span class="badge ${st.status}">${st.label}</span>
+        </div>
+        ${trackHTML(v, now, st)}
+        ${scale}
+        <div class="rcard-hours">${st.detail}<br>Today: ${todayHoursText(v, now)}</div>
+        ${v.note ? `<div class="rcard-note">${v.note}</div>` : ''}
+      </div>`;
+    }).join('') + '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   VARIANT D — Status board
+   ══════════════════════════════════════════════════ */
+function renderBoard(list, now) {
+  const cols = [
+    { id:'open',         title:'Open now' },
+    { id:'closing-soon', title:'Closing soon' },
+    { id:'closed',       title:'Closed' },
+  ];
+  return '<div class="board">' + cols.map(c => {
+    const items = sortByStatus(list.filter(v => getStatus(v, now).status === c.id), now);
+    return `<section class="col ${c.id}">
+      <div class="col-head"><span class="dot ${c.id}"></span>${c.title}<span class="count">${items.length}</span></div>
+      ${items.length ? items.map(v => {
+        const st = getStatus(v, now);
+        return `<div class="item">
+          <div class="item-top">
+            <span class="item-name">${v.name}</span>
+            <span class="item-time">${st.detail.replace(/<[^>]+>/g, '').replace(/^(Closes|Opens)\s*/, '')}</span>
+          </div>
+          <div class="item-cat">${CAT_MAP[v.cat].label}</div>
+        </div>`;
+      }).join('') : '<div class="col-empty">Nothing here right now</div>'}
+    </section>`;
+  }).join('') + '</div>';
+}
+
+/* ══════════════════════════════════════════════════
+   SHELL
+   ══════════════════════════════════════════════════ */
+function buildChrome() {
+  document.getElementById('variant-tabs').innerHTML = VARIANTS.map(v =>
+    `<button class="variant-btn${v.id === variant ? ' active' : ''}" data-variant="${v.id}">${v.label}</button>`).join('');
+  document.getElementById('variant-note').textContent = VARIANTS.find(v => v.id === variant).note;
+  document.getElementById('cat-chips').innerHTML = CATEGORIES.map(c =>
+    `<button class="chip${c.id === activeCat ? ' active' : ''}" data-cat="${c.id}">${c.icon} ${c.label}</button>`).join('');
+}
+
+function render() {
+  const now = nowET();
+  const list = visible(now);
+  const stage = document.getElementById('stage');
+  stage.className = 'stage v-' + variant;
+  if (!list.length) { stage.innerHTML = '<div class="empty">Nothing matches those filters.</div>'; return; }
+  stage.innerHTML =
+    variant === 'cards'    ? renderCards(list, now) :
+    variant === 'list'     ? renderList(list, now) :
+    variant === 'timeline' ? renderTimeline(list, now) :
+    variant === 'rich'     ? renderRich(list, now) :
+                             renderBoard(list, now);
+}
+
+function updateClock() {
+  const d = new Date();
+  const t = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true }).format(d);
+  const day = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', weekday:'long', month:'long', day:'numeric' }).format(d);
+  document.getElementById('clock').textContent = `${day} · ${t} ET`;
+}
+
+document.getElementById('variant-tabs').addEventListener('click', e => {
+  const b = e.target.closest('.variant-btn'); if (!b) return;
+  variant = b.dataset.variant; buildChrome(); render();
+});
+document.getElementById('cat-chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  activeCat = b.dataset.cat; buildChrome(); render();
+});
+document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
+document.getElementById('stage').addEventListener('click', e => {
+  const b = e.target.closest('.card-toggle'); if (!b) return;
+  const d = b.nextElementSibling;
+  b.textContent = d.classList.toggle('open') ? 'Hide schedule' : 'Weekly schedule';
+});
+
+buildChrome();
+updateClock();
+render();
+setInterval(updateClock, 1000);
+setInterval(render, 60000);
+</script>
+
+</body>
+</html>
