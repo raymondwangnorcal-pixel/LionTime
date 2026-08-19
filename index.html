@@ -3,28 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LionHour — Columbia University Library Hours</title>
+<title>LionHour — What's open at Columbia</title>
 <link rel="canonical" href="https://lionhour.com" />
 <style>
   :root {
     --columbia-blue: #1D4F91;
     --columbia-light: #75AADB;
     --columbia-pale: #B9D9EB;
-    --columbia-white: #FFFFFF;
     --bg: #F0F4F8;
-    --card-bg: #FFFFFF;
+    --surface: #FFFFFF;
     --text: #1a1a2e;
     --text-secondary: #5a6278;
-    --open-green: #16a34a;
-    --open-green-bg: #dcfce7;
-    --closed-red: #dc2626;
-    --closed-red-bg: #fee2e2;
-    --closing-soon: #d97706;
-    --closing-soon-bg: #fef3c7;
-    --temporarily-closed-bg: #f3f4f6;
-    --temporarily-closed: #6b7280;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    --muted: #898781;
+    --hairline: #e4e9ef;
+    --row-line: #f1f4f7;
+
+    /* Status palette — reserved. Always paired with a text label,
+       so color never carries the meaning on its own. */
+    --open: #0ca30c;
+    --open-ink: #15803d;
+    --open-bg: #dcfce7;
+    --soon: #b45309;
+    --soon-bg: #fef3c7;
+    --closed: #d03b3b;
+    --closed-ink: #b91c1c;
+    --closed-bg: #fee2e2;
+
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
     --radius: 12px;
   }
 
@@ -32,793 +37,889 @@
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
+    background: var(--bg); color: var(--text); min-height: 100vh;
   }
 
-  /* Header */
+  /* ── Header ────────────────────────────────────── */
   .header {
     background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
-    color: white;
-    padding: 2rem 1.5rem 1.5rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+    color: white; padding: 1.8rem 1.5rem 1.4rem;
+    text-align: center; position: relative; overflow: visible; z-index: 40;
   }
-
   .header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 400px;
-    height: 400px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 50%;
+    content: ''; position: absolute; top: -50%; right: -18%;
+    width: 380px; height: 380px; background: rgba(255,255,255,0.04); border-radius: 50%;
   }
-
   .header::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -10%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 50%;
+    content: ''; position: absolute; bottom: -30%; left: -8%;
+    width: 280px; height: 280px; background: rgba(255,255,255,0.03); border-radius: 50%;
+  }
+  .header-content { position: relative; z-index: 1; }
+
+  /* ── Hamburger menu button ───────────────────── */
+  .hamburger {
+    position: absolute; top: 1.4rem; left: 1.2rem; z-index: 5;
+    width: 38px; height: 38px; border: none; background: rgba(255,255,255,0.15);
+    border-radius: 8px; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 5px;
+    transition: background 0.2s;
+  }
+  .hamburger:hover { background: rgba(255,255,255,0.28); }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .hamburger span {
+    display: block; width: 20px; height: 2.5px;
+    background: white; border-radius: 1px;
+    transition: transform 0.25s, opacity 0.25s;
   }
 
-  .header-content {
-    position: relative;
-    z-index: 1;
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar-overlay {
+    position: fixed; inset: 0; z-index: 49;
+    background: rgba(0,0,0,0.35); opacity: 0;
+    pointer-events: none; transition: opacity 0.3s;
   }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    margin-bottom: 0.5rem;
+  .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+    width: 280px; max-width: 80vw;
+    background: #fff; box-shadow: 2px 0 16px rgba(0,0,0,0.12);
+    transform: translateX(-100%); transition: transform 0.3s ease;
+    display: flex; flex-direction: column; overflow-y: auto;
   }
-
-  .lion-icon {
-    font-size: 2rem;
-    line-height: 1;
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-header {
+    background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
+    color: white; padding: 1.6rem 1.4rem 1.2rem;
   }
-
-  .site-title {
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-
-  .site-title span {
-    color: var(--columbia-pale);
-    font-weight: 400;
-  }
-
-  .subtitle {
-    font-size: 0.95rem;
-    opacity: 0.85;
-    margin-bottom: 1rem;
-    font-weight: 400;
-  }
-
-  .clock {
-    font-size: 1.1rem;
-    font-weight: 500;
-    background: rgba(255,255,255,0.12);
-    display: inline-block;
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    letter-spacing: 0.5px;
-  }
-
-  /* Summary Bar */
-  .summary-bar {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 1rem 1.5rem;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    flex-wrap: wrap;
-  }
-
-  .summary-stat {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-
-  .summary-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-
-  .summary-dot.open { background: var(--open-green); }
-  .summary-dot.closed { background: var(--closed-red); }
-  .summary-dot.unavailable { background: var(--temporarily-closed); }
-
-  /* Filter bar */
-  .filter-bar {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem 1.5rem 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .filter-btn {
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    border: 1.5px solid #d1d5db;
-    background: white;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .filter-btn:hover {
-    border-color: var(--columbia-blue);
-    color: var(--columbia-blue);
-  }
-
-  .filter-btn.active {
-    background: var(--columbia-blue);
-    color: white;
-    border-color: var(--columbia-blue);
-  }
-
-  /* Grid */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 1rem;
-    padding: 1rem 1.5rem 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  /* Library Card */
-  .card {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-
-  .card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-  }
-
-  .card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 1.25rem 1.25rem 0.75rem;
-    gap: 0.75rem;
-  }
-
-  .card-name {
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.35;
-    color: var(--text);
-    flex: 1;
-  }
-
-  .card-name a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .card-name a:hover {
-    color: var(--columbia-blue);
-  }
-
-  .status-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.3rem 0.7rem;
-    border-radius: 20px;
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    flex-shrink: 0;
-  }
-
-  .status-badge.open {
-    background: var(--open-green-bg);
-    color: var(--open-green);
-  }
-
-  .status-badge.closed {
-    background: var(--closed-red-bg);
-    color: var(--closed-red);
-  }
-
-  .status-badge.closing-soon {
-    background: var(--closing-soon-bg);
-    color: var(--closing-soon);
-  }
-
-  .status-badge.temp-closed {
-    background: var(--temporarily-closed-bg);
-    color: var(--temporarily-closed);
-  }
-
-  .card-body {
-    padding: 0 1.25rem 1.25rem;
-  }
-
-  .card-countdown {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .card-countdown .time-value {
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .card-hours {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-  }
-
-  .card-hours .today-label {
-    font-weight: 500;
-  }
-
-  .card-note {
-    font-size: 0.8rem;
-    color: var(--temporarily-closed);
-    font-style: italic;
-    margin-top: 0.4rem;
-  }
-
-  /* Schedule Drawer */
-  .schedule-toggle {
-    display: block;
-    width: 100%;
-    padding: 0.65rem 1.25rem;
-    background: #f8fafc;
-    border: none;
-    border-top: 1px solid #f0f0f0;
-    color: var(--columbia-blue);
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: center;
+  .sidebar-header .logo { justify-content: flex-start; margin-bottom: 0.15rem; }
+  .sidebar-header .subtitle { font-size: 0.78rem; opacity: 0.8; text-align: left; }
+  .sidebar-nav { padding: 0.6rem 0; flex: 1; }
+  .sidebar-nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.75rem 1.4rem; font-size: 0.92rem; font-weight: 500;
+    color: var(--text); cursor: pointer; border: none; background: none;
+    width: 100%; text-align: left; font-family: inherit;
     transition: background 0.15s;
   }
+  .sidebar-nav-item:hover { background: var(--bg); }
+  .sidebar-nav-item.active {
+    background: #eaf1fa; color: var(--columbia-blue); font-weight: 600;
+    border-right: 3px solid var(--columbia-blue);
+  }
+  .sidebar-nav-item .nav-icon { font-size: 1.15rem; width: 1.5rem; text-align: center; }
+  .sidebar-nav-item .nav-count {
+    margin-left: auto; font-size: 0.75rem; font-weight: 600;
+    color: var(--text-secondary); opacity: 0.7;
+  }
+  .sidebar-divider { height: 1px; background: var(--hairline); margin: 0.4rem 1.2rem; }
 
-  .schedule-toggle:hover {
-    background: #eef3f9;
+  /* ── Header nav links (top-right) ────────────── */
+  .header-actions {
+    position: absolute; top: 1.9rem; right: 1.8rem;
+    display: grid; justify-items: end; gap: 0.3rem;
+    text-align: right; z-index: 2;
+  }
+  .header-link {
+    color: white; font-size: 1rem; font-weight: 600;
+    text-decoration: underline; text-underline-offset: 0.18rem;
+    cursor: pointer;
+  }
+  .header-link:hover { color: var(--columbia-pale); }
+  .about-details { position: relative; z-index: 3; }
+  .about-details summary { list-style: none; }
+  .about-details summary::-webkit-details-marker { display: none; }
+  .about-copy {
+    position: absolute; top: calc(100% + 0.45rem); right: 0;
+    width: min(18rem, calc(100vw - 2rem)); padding: 0.75rem;
+    border-radius: 8px; background: white; color: var(--text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    font-size: 0.78rem; font-weight: 400; line-height: 1.45;
+    text-align: left; z-index: 20;
+  }
+  .logo { display: flex; align-items: center; justify-content: center; gap: 0.55rem; margin-bottom: 0.3rem; }
+  .lion-icon { font-size: 1.8rem; line-height: 1; }
+  .site-title { font-size: 1.85rem; font-weight: 700; letter-spacing: -0.5px; }
+  .site-title span { color: var(--columbia-pale); font-weight: 400; }
+  .subtitle { font-size: 0.88rem; opacity: 0.85; }
+  .clock {
+    font-size: 0.95rem; font-weight: 500; margin-top: 0.7rem;
+    background: rgba(255,255,255,0.13); display: inline-block;
+    padding: 0.34rem 0.95rem; border-radius: 20px;
+    font-variant-numeric: tabular-nums;
   }
 
-  .schedule-drawer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-    background: #f8fafc;
+  /* ── Sticky control bar ────────────────────────── */
+  .controls {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: saturate(180%) blur(8px);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .controls-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0.75rem 1.5rem 0.7rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+  }
+  .search-input {
+    width: 180px; padding: 0.42rem 0.9rem; font-size: 0.84rem;
+    border: 1.5px solid #d5dbe3; border-radius: 20px; background: #fff;
+    color: var(--text); outline: none; font-family: inherit; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--columbia-blue); }
+  .search-input::placeholder { color: #a3abb6; }
+
+  .chips { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; }
+  .chip {
+    padding: 0.3rem 0.7rem; border-radius: 16px;
+    border: 1px solid var(--hairline); background: #fbfcfd;
+    color: var(--text-secondary); font-size: 0.77rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--columbia-light); color: var(--columbia-blue); }
+  .chip.active { background: var(--columbia-blue); color: #fff; border-color: var(--columbia-blue); }
+  .chip .n { opacity: 0.62; font-size: 0.72rem; font-weight: 600; margin-left: 0.2rem; }
+  .chip-sep { width: 1px; height: 18px; background: var(--hairline); margin: 0 0.15rem; }
+  .chip.stat-filter.active { background: var(--columbia-pale); color: #14406f; border-color: var(--columbia-light); }
+
+  /* ── List ──────────────────────────────────────── */
+  main { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+
+  .sec {
+    /* offset is measured from the real control-bar height at runtime */
+    position: sticky; top: var(--controls-h, 118px); z-index: 10;
+    display: flex; align-items: baseline; gap: 0.6rem;
+    padding: 1.15rem 0 0.35rem; background: var(--bg);
+  }
+  .sec-title {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--columbia-blue);
+  }
+  .sec-rule { flex: 1; height: 1px; background: var(--hairline); }
+  .sec-meta { font-size: 0.74rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+  .list {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
   }
 
-  .schedule-drawer.open {
-    max-height: 400px;
+  .cols, .row {
+    display: grid;
+    grid-template-columns: 12px minmax(0,2fr) minmax(0,1.9fr) 86px 14px;
+    align-items: center; gap: 0.85rem;
+  }
+  .cols {
+    padding: 0.45rem 1.1rem; background: #f8fafc;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .cols .r { text-align: right; }
+
+  .row {
+    width: 100%; padding: 0.6rem 1.1rem; border: none; background: none;
+    border-bottom: 1px solid var(--row-line); text-align: left;
+    font-family: inherit; cursor: pointer; transition: background 0.12s;
+  }
+  .row:hover { background: #f8fafc; }
+  .row:focus-visible { outline: 2px solid var(--columbia-light); outline-offset: -2px; }
+  .entry:last-child .row { border-bottom: none; }
+  .entry.expanded .row { background: #f8fafc; border-bottom-color: transparent; }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .dot.open { background: var(--open); }
+  .dot.closing-soon { background: var(--soon); }
+  .dot.closed { background: var(--closed); }
+
+  .name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+  .row.is-closed .name { font-weight: 500; color: var(--text-secondary); }
+
+  /* tabular figures keep the time columns aligned down the whole page */
+  .hours {
+    font-size: 0.815rem; color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
   }
 
-  .schedule-table {
-    width: 100%;
-    padding: 0.5rem 1.25rem 1rem;
-    font-size: 0.82rem;
+  .badge {
+    justify-self: end;
+    font-size: 0.63rem; font-weight: 700; padding: 0.24rem 0.5rem;
+    border-radius: 20px; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .badge.open { background: var(--open-bg); color: var(--open-ink); }
+  .badge.closing-soon { background: var(--soon-bg); color: var(--soon); }
+  .badge.closed { background: var(--closed-bg); color: var(--closed-ink); }
+
+  .chev {
+    width: 14px; height: 14px; color: var(--muted);
+    transition: transform 0.2s; flex-shrink: 0;
+  }
+  .entry.expanded .chev { transform: rotate(90deg); }
+
+  /* ── Expanded detail ───────────────────────────── */
+  .detail {
+    display: none; padding: 0.2rem 1.1rem 0.9rem 2.95rem;
+    background: #f8fafc; border-bottom: 1px solid var(--row-line);
+  }
+  .entry.expanded .detail { display: block; }
+  .week {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+    gap: 0 1.8rem; max-width: 860px;
+  }
+  .wk-row {
+    display: flex; justify-content: space-between; gap: 0.8rem;
+    padding: 0.24rem 0; font-size: 0.78rem; white-space: nowrap;
+    border-bottom: 1px solid #eaeff4; color: var(--text-secondary);
+  }
+  .wk-row.today { color: var(--columbia-blue); font-weight: 600; }
+  .wk-row span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
+  .note {
+    font-size: 0.76rem; color: var(--muted); font-style: italic;
+    margin-top: 0.55rem; line-height: 1.45; max-width: 620px;
+  }
+  .est {
+    display: inline-block; font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.4px; text-transform: uppercase; font-style: normal;
+    background: #eef1f4; color: var(--muted);
+    padding: 0.1rem 0.35rem; border-radius: 4px; margin-left: 0.3rem;
   }
 
-  .schedule-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.35rem 0;
-    border-bottom: 1px solid #eef0f2;
-  }
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 0.9rem; }
 
-  .schedule-row:last-child {
-    border-bottom: none;
-  }
-
-  .schedule-row.today {
-    font-weight: 600;
-    color: var(--columbia-blue);
-  }
-
-  .schedule-day { flex: 1; }
-  .schedule-time { text-align: right; color: var(--text-secondary); }
-  .schedule-row.today .schedule-time { color: var(--columbia-blue); }
-
-  /* Footer */
   .footer {
-    text-align: center;
-    padding: 1.5rem;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    border-top: 1px solid #e5e7eb;
-    background: white;
+    text-align: center; padding: 1.5rem; color: var(--text-secondary);
+    font-size: 0.78rem; border-top: 1px solid var(--hairline); background: #fff;
   }
-
-  .footer a {
-    color: var(--columbia-blue);
-    text-decoration: none;
-  }
-
+  .footer a { color: var(--columbia-blue); text-decoration: none; }
   .footer a:hover { text-decoration: underline; }
+  .footer-sub { margin-top: 0.45rem; font-size: 0.72rem; opacity: 0.8; line-height: 1.6; }
 
-  .last-updated {
-    margin-top: 0.3rem;
-    font-size: 0.75rem;
-    opacity: 0.7;
+  /* ── Responsive ────────────────────────────────── */
+  @media (max-width: 860px) {
+    .cols, .row { grid-template-columns: 12px minmax(0,1.7fr) minmax(0,1.5fr) 82px 14px; }
   }
-
-  /* Pulse animation for open indicator */
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  .pulse-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--open-green);
-    display: inline-block;
-    animation: pulse 2s ease-in-out infinite;
-    margin-right: 2px;
-    vertical-align: middle;
-  }
-
-  /* Loading state */
-  .loading-msg {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-  }
-
-  /* Responsive */
-  @media (max-width: 600px) {
-    .grid {
-      grid-template-columns: 1fr;
-      padding: 0.75rem;
-      gap: 0.75rem;
+  /* Below 620px the row becomes two lines: name + status, hours beneath. */
+  @media (max-width: 620px) {
+    main { padding: 0 0.8rem 2.5rem; }
+    .controls-inner { padding: 0.6rem 0.8rem; }
+    .cols { display: none; }
+    .row {
+      grid-template-columns: 12px minmax(0,1fr) auto 14px;
+      row-gap: 0.18rem; padding: 0.62rem 0.85rem; gap: 0.6rem;
     }
-    .header { padding: 1.5rem 1rem 1.25rem; }
-    .site-title { font-size: 1.6rem; }
-    .summary-bar { gap: 1rem; }
+    .row .dot   { grid-area: 1 / 1 / 2 / 2; }
+    .row .name  { grid-area: 1 / 2 / 2 / 3; }
+    .row .badge { grid-area: 1 / 3 / 2 / 4; }
+    .row .chev  { grid-area: 1 / 4 / 2 / 5; }
+    .row .hours { grid-area: 2 / 2 / 3 / 5; font-size: 0.78rem; }
+    .detail { padding-left: 1.75rem; }
+    .week { grid-template-columns: 1fr; }
+    .summary { gap: 0.9rem; }
+    .stat { font-size: 0.8rem; }
+    .search-input { flex: 1 1 100%; }
+    .header-actions { top: 1rem; right: 1rem; }
+    /* one scrollable row of chips instead of three wrapped rows —
+       keeps the sticky bar from eating a fifth of a phone screen */
+    .chips {
+      width: 100%; flex-wrap: nowrap; justify-content: flex-start;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; padding-bottom: 1px;
+    }
+    .chips::-webkit-scrollbar { display: none; }
   }
 </style>
 </head>
 <body>
 
-<div class="header">
+<!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo"><span class="lion-icon">🦁</span><h2 class="site-title" style="font-size:1.4rem">Lion<span>Hour</span></h2></div>
+    <p class="subtitle">Campus building hours</p>
+  </div>
+  <div class="sidebar-nav" id="sidebar-nav"></div>
+</nav>
+
+<header class="header">
+  <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+  <div class="header-actions">
+    <a class="header-link" href="https://docs.google.com/forms/d/e/1FAIpQLSdpToXB8tdcgGGDQYynTmuKIf2JU-3d3ojvyx7o9GIn8mRSSg/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Feedback</a>
+    <details class="about-details" id="about-details">
+      <summary class="header-link">About</summary>
+      <p class="about-copy">LionHour is an aggregator for building times at Columbia University. I created this because I was tired of parsing through all the random building links lol</p>
+    </details>
+  </div>
   <div class="header-content">
-    <div class="logo">
-      <div class="lion-icon">&#x1F981;</div>
-      <div class="site-title">Lion<span>Hour</span></div>
-    </div>
-    <div class="subtitle">Columbia University Library Hours</div>
-    <div class="clock" id="clock"></div>
+    <div class="logo"><span class="lion-icon">🦁</span><h1 class="site-title">Lion<span>Hour</span></h1></div>
+    <p class="subtitle">What's open right now at Columbia</p>
+    <div class="clock" id="clock">—</div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="controls-inner">
+    <div class="chips" id="chips"></div>
+    <span class="chip-sep"></span>
+    <input type="text" class="search-input" id="search" placeholder="Search buildings…" autocomplete="off">
   </div>
 </div>
 
-<div class="summary-bar" id="summary-bar"></div>
+<main id="stage"></main>
 
-<div class="filter-bar" id="filter-bar">
-  <button class="filter-btn active" data-filter="all">All</button>
-  <button class="filter-btn" data-filter="open">Open Now</button>
-  <button class="filter-btn" data-filter="closed">Closed</button>
-</div>
-
-<div class="grid" id="library-grid">
-  <div class="loading-msg">Loading library hours...</div>
-</div>
-
-<div class="footer">
-  Hours sourced from <a href="https://hours.library.columbia.edu/" target="_blank" rel="noopener">Columbia University Libraries</a>. Verify hours before visiting.
-  <div class="last-updated" id="last-updated"></div>
-</div>
+<footer class="footer">
+  <div>LionHour · <a href="https://lionhour.com">lionhour.com</a> · All times Eastern</div>
+  <div class="footer-sub">
+    Hours from Columbia Dining, Physical Education &amp; Recreation, Lerner Hall, and Columbia Health.
+    Verify before you go — hours shift during breaks and holidays.
+  </div>
+</footer>
 
 <!-- Schedule data: generated by scrape.py, or falls back to built-in defaults -->
 <script src="data.js"></script>
 
 <script>
-// =====================================================
-// FALLBACK DATA (used if data.js hasn't been generated)
-// =====================================================
-
-const FALLBACK_LIBRARIES = [
-  {
-    id: "butler_24", name: "Butler Library",
-    url: "https://hours.library.columbia.edu/locations/butler-24", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-14", end: "2026-09-05",
-        hours: { "0": null, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"19:00"}, "6": {open:"11:00",close:"18:00"} } },
-      { label: "Regular", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": {open:"12:00",close:"19:00"}, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"19:00"}, "6": {open:"11:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "science_engineering", name: "NoCo Library",
-    url: "https://hours.library.columbia.edu/locations/science-engineering", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-15", end: "2026-09-04",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": {open:"10:00",close:"18:00"}, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "lehman", name: "Lehman Social Sciences Library",
-    url: "https://hours.library.columbia.edu/locations/lehman", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-17", end: "2026-09-04",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "business", name: "Uris Library",
-    url: "https://hours.library.columbia.edu/locations/business", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-17", end: "2026-09-04",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": {open:"10:00",close:"18:00"}, "1": {open:"09:00",close:"21:00"}, "2": {open:"09:00",close:"21:00"}, "3": {open:"09:00",close:"21:00"}, "4": {open:"09:00",close:"21:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "avery", name: "Avery Library",
-    url: "https://hours.library.columbia.edu/locations/avery", note: "Service desk closes 15 min before the library",
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-14", end: "2026-09-05",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"09:00",close:"19:00"}, "2": {open:"09:00",close:"19:00"}, "3": {open:"09:00",close:"19:00"}, "4": {open:"09:00",close:"19:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "math", name: "Mathematics Library",
-    url: "https://hours.library.columbia.edu/locations/math", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-09", end: "2026-09-04",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"09:00",close:"19:00"}, "2": {open:"09:00",close:"19:00"}, "3": {open:"09:00",close:"19:00"}, "4": {open:"09:00",close:"19:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } }
-    ]
-  },
-  {
-    id: "journalism", name: "Journalism Library",
-    url: "https://hours.library.columbia.edu/locations/journalism", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Regular", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"10:00",close:"17:00"}, "2": {open:"10:00",close:"17:00"}, "3": {open:"10:00",close:"17:00"}, "4": {open:"10:00",close:"17:00"}, "5": {open:"10:00",close:"17:00"}, "6": {open:"10:00",close:"17:00"} } }
-    ]
-  },
-  {
-    id: "music", name: "Gabe M. Wiener Music & Arts Library",
-    url: "https://hours.library.columbia.edu/locations/music", note: "In-person reference Mon–Fri during daytime hours only",
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-14", end: "2026-09-05",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"09:00",close:"19:00"}, "2": {open:"09:00",close:"19:00"}, "3": {open:"09:00",close:"19:00"}, "4": {open:"09:00",close:"19:00"}, "5": {open:"09:00",close:"17:00"}, "6": {open:"10:00",close:"18:00"} } }
-    ]
-  },
-  {
-    id: "social_work", name: "Social Work Library",
-    url: "https://hours.library.columbia.edu/locations/social-work", note: null,
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Intersession", start: "2026-08-16", end: "2026-09-04",
-        hours: { "0": null, "1": {open:"10:00",close:"18:00"}, "2": {open:"10:00",close:"18:00"}, "3": {open:"10:00",close:"18:00"}, "4": {open:"10:00",close:"18:00"}, "5": {open:"10:00",close:"18:00"}, "6": null } },
-      { label: "Summer", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"10:00",close:"20:00"}, "2": {open:"10:00",close:"20:00"}, "3": {open:"10:00",close:"20:00"}, "4": {open:"10:00",close:"20:00"}, "5": {open:"10:00",close:"18:00"}, "6": null } }
-    ]
-  },
-  {
-    id: "business_manhattanville", name: "S. Steven Pan '88 Business Library",
-    url: "https://hours.library.columbia.edu/locations/business-manhattanville", note: "May close 1–2 PM for staff lunch. Geffen Hall access required.",
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Regular", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"10:00",close:"14:00"}, "2": {open:"10:00",close:"14:00"}, "3": {open:"10:00",close:"14:00"}, "4": {open:"10:00",close:"14:00"}, "5": {open:"10:00",close:"14:00"}, "6": null } }
-    ]
-  },
-  {
-    id: "eastasian", name: "C. V. Starr East Asian Library",
-    url: "https://hours.library.columbia.edu/locations/eastasian", note: "Currently closed for upgrades. Collections & services still accessible.",
-    temporarilyClosed: true,
-    schedules: [
-      { label: "Closed for Renovation", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": null, "2": null, "3": null, "4": null, "5": null, "6": null } }
-    ]
-  },
-  {
-    id: "burke", name: "The Burke Library at Union Theological Seminary",
-    url: "https://hours.library.columbia.edu/locations/burke", note: "Special Collections by appointment",
-    temporarilyClosed: false,
-    schedules: [
-      { label: "Regular", start: "2026-01-01", end: "2026-12-31",
-        hours: { "0": null, "1": {open:"09:00",close:"17:00"}, "2": {open:"09:00",close:"17:00"}, "3": {open:"09:00",close:"17:00"}, "4": {open:"09:00",close:"17:00"}, "5": {open:"09:00",close:"17:00"}, "6": null } }
-    ]
-  }
+/* ══════════════════════════════════════════════════
+   CATEGORIES
+   ══════════════════════════════════════════════════ */
+const CATEGORIES = [
+  { id: 'all',      label: 'All',            icon: '' },
+  { id: 'library',  label: 'Libraries',      icon: '📚' },
+  { id: 'dining',   label: 'Dining',         icon: '🍜' },
+  { id: 'cafe',     label: 'Cafes',          icon: '☕' },
+  { id: 'fitness',  label: 'Fitness',        icon: '💪' },
+  { id: 'student',  label: 'Student Life & Services', icon: '🎓' },
 ];
 
-// =====================================================
-// LOAD DATA — prefer scraped data.js, fall back to built-in
-// =====================================================
+const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 
-let libraries;
-let dataTimestamp;
+/* ══════════════════════════════════════════════════
+   VENUE DATA
+   hours: { dayOfWeek 0=Sun … 6=Sat : [[open, close], …] }
+   null / omitted = closed that day.
+   close <= open  → spans past midnight (e.g. ["12:00","10:00"])
+   ══════════════════════════════════════════════════ */
+const D = (mon, tue, wed, thu, fri, sat, sun) => ({0:sun,1:mon,2:tue,3:wed,4:thu,5:fri,6:sat});
+const ALL = h => D(h,h,h,h,h,h,h);
+const WEEKDAYS = (wd, sat=null, sun=null) => D(wd,wd,wd,wd,wd,sat,sun);
+
+const VENUES = [
+  /* ── LIBRARIES (top 6 by traffic) ───────────────── */
+  { id:'butler', name:'Butler Library', cat:'library', loc:'535 W 114th St',
+    hours: D([['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],
+             [['00:00','23:00']],[['09:00','23:00']],[['09:00','24:00']]),
+    note:'Open 24 hours Sun 9 AM through Fri 11 PM during the semester.' },
+
+  { id:'noco', name:'NoCo Library', cat:'library', loc:'Northwest Corner Building, 4th fl',
+    hours: WEEKDAYS([['09:00','23:00']], [['11:00','20:00']], [['11:00','23:00']]) },
+
+  { id:'lehman', name:'Lehman Social Sciences Library', cat:'library', loc:'International Affairs Building, 3rd fl',
+    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+
+  { id:'uris', name:'Uris Library', cat:'library', loc:'Uris Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+
+  { id:'avery', name:'Avery Library', cat:'library', loc:'Avery Hall, 2nd fl',
+    hours: WEEKDAYS([['09:00','21:00']], [['11:00','18:00']], [['12:00','21:00']]),
+    note:'Service desk closes 15 minutes before the library.' },
+
+  { id:'math', name:'Mathematics Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','20:00']], null, [['13:00','20:00']]) },
+
+  /* ── DINING ─────────────────────────────────────── */
+  { id:'johnjay', name:'John Jay Dining', cat:'dining', loc:'John Jay Hall, 1st fl',
+    hours: D([['09:30','21:00']],[['09:30','21:00']],[['09:30','21:00']],[['09:30','21:00']],
+             null,null,[['09:30','21:00']]),
+    note:'Closed Friday and Saturday for Fall 2026.' },
+
+  { id:'ferris', name:'Ferris Dining Hall', cat:'dining', loc:'Lerner Hall, 3rd fl',
+    hours: D([['07:30','20:00']],[['07:30','20:00']],[['07:30','20:00']],[['07:30','20:00']],
+             [['07:30','20:00']],[['09:00','20:00']],[['10:00','14:00'],['16:00','20:00']]) },
+
+  { id:'jjs', name:"JJ's Place", cat:'dining', loc:'John Jay Hall, lower level',
+    hours: ALL([['12:00','10:00']]),
+    note:'Runs overnight — opens noon, closes 10 AM the next morning.' },
+
+  { id:'chefmikes', name:"Chef Mike's Subs", cat:'dining', loc:'Hartley Hall, lower level',
+    hours: ALL([['11:00','02:00']]) },
+
+  { id:'chefdons', name:"Chef Don's Pizza", cat:'dining', loc:'Wien Hall, lower level',
+    hours: WEEKDAYS([['08:00','19:00']]) },
+
+  { id:'gracedodge', name:'Grace Dodge Dining Hall', cat:'dining', loc:'Grace Dodge Hall, Teachers College',
+    hours: D([['11:00','19:30']],[['11:00','19:30']],[['11:00','19:30']],[['11:00','19:30']],null,null,null) },
+
+  { id:'facultyhouse', name:'Faculty House — 2nd Floor', cat:'dining', loc:'64 Morningside Dr',
+    hours: D([['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],
+             [['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],null,null,null) },
+
+  { id:'facshack', name:'Fac Shack', cat:'dining', loc:'Faculty House patio',
+    hours: D([['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],
+             null,null,[['15:00','20:00']]) },
+
+  { id:'johnnys', name:"Johnny's Food Truck", cat:'dining', loc:'Broadway at 115th St',
+    hours: D([['11:00','15:00']],[['11:00','15:00']],[['11:00','15:00']],
+             [['11:00','15:00'],['19:00','23:00']],[['11:00','15:00'],['19:00','23:00']],
+             [['19:00','23:00']],[['18:00','22:00']]) },
+
+  /* ── CAFES ──────────────────────────────────────── */
+  { id:'bj-butler', name:'Butler Cafe', cat:'cafe', loc:'Butler Library, 1st fl',
+    hours: D([['08:00','24:00']],[['08:00','24:00']],[['08:00','24:00']],[['08:00','24:00']],
+             [['09:00','21:00']],[['09:00','21:00']],[['09:00','21:00']]) },
+
+  { id:'joe-noco', name:"Joe's Coffee (NoCo)", cat:'cafe', loc:'Northwest Corner Building, 550 W 120th St',
+    hours: WEEKDAYS([['07:00','19:00']], [['09:00','17:00']], [['09:00','17:00']]),
+    note:'Columbia ID required for entry.' },
+
+  { id:'cafe-east', name:'Cafe East', cat:'cafe', loc:'Lerner Hall, Room 2E',
+    hours: WEEKDAYS([['10:30','19:30']], [['11:00','19:30']], [['11:00','19:30']]) },
+
+  { id:'bj-uris', name:'Uris Cafe', cat:'cafe', loc:'Uris Hall, lower level',
+    hours: WEEKDAYS([['08:00','21:00']], [['08:00','18:00']]) },
+
+  { id:'bj-mudd', name:'Mudd Cafe', cat:'cafe', loc:'Mudd Building, 1st fl',
+    hours: WEEKDAYS([['08:00','18:00']]) },
+
+  { id:'joe-journalism', name:"Joe's Coffee (Journalism)", cat:'cafe', loc:'Pulitzer Hall, 2950 Broadway',
+    hours: WEEKDAYS([['07:00','19:00']], [['09:00','16:00']], [['09:00','16:00']]),
+    note:'Columbia ID required for entry.' },
+
+  { id:'joe-dodge', name:"Joe's Coffee (Dodge)", cat:'cafe', loc:'Dodge Hall, 2960 Broadway',
+    hours: WEEKDAYS([['08:00','18:00']]),
+    note:'Columbia ID required for entry.' },
+
+  { id:'bj-everett', name:'Everett Cafe', cat:'cafe', loc:'Lenfest Hall, Law School',
+    hours: D([['08:30','19:30']],[['08:30','19:30']],[['08:30','19:30']],[['08:30','19:30']],
+             [['08:30','14:00']],null,null) },
+
+  { id:'lenfest-cafe', name:'Lenfest Cafe', cat:'cafe', loc:'Lenfest Hall',
+    hours: D([['08:00','18:30']],[['08:00','18:30']],[['08:00','18:30']],[['08:00','18:30']],
+             [['08:00','15:00']],null,null) },
+
+  /* ── FITNESS ────────────────────────────────────── */
+  { id:'dodge', name:'Dodge Fitness Center', cat:'fitness', loc:'3030 Broadway',
+    hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]),
+    note:'All members must be out of the building at the posted closing time.' },
+
+  { id:'uris-pool', name:'Uris Pool', cat:'fitness', loc:'Dodge Fitness Center, lower level',
+    hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
+                    [['13:00','17:00']], [['13:00','17:00']]),
+    note:'Pool areas must be vacated at posted closing times.' },
+
+  { id:'dodge-membership', name:'Dodge Membership Office', cat:'fitness', loc:'Dodge Fitness Center, main level',
+    hours: WEEKDAYS([['09:30','16:30']]) },
+
+  /* ── STUDENT LIFE & SERVICES ────────────────────── */
+  { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
+    hours: WEEKDAYS([['07:30','00:30']], [['08:30','00:30']], [['08:30','00:30']]),
+    note:'Times are subject to change throughout the academic year.' },
+
+  { id:'bookstore', name:'Columbia University Bookstore', cat:'student', loc:'Lerner Hall, lower level',
+    hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
+    estimated: true },
+
+  { id:'package', name:'Lerner Package Center', cat:'student', loc:'Lerner Hall, lower level',
+    hours: WEEKDAYS([['09:00','20:00']], [['10:00','17:00']], null),
+    estimated: true },
+
+  { id:'medical', name:'Medical Services', cat:'student', loc:'John Jay Hall, 4th fl',
+    hours: D([['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],
+             [['08:00','16:00']],null,null),
+    note:'Check-in closes 30 minutes before closing. After-hours nurse line available 24/7.' },
+
+  { id:'caps', name:'Counseling & Psychological Services', cat:'student', loc:'Lerner Hall, 8th fl',
+    hours: D([['08:00','19:00']],[['08:00','19:00']],[['08:00','19:00']],[['08:00','19:00']],
+             [['08:00','17:00']],null,null),
+    note:'24/7 phone support available outside office hours.' },
+
+  { id:'disability', name:'Disability Services', cat:'student', loc:'Wien Hall, Suite 108A',
+    hours: WEEKDAYS([['09:00','17:00']]),
+    note:'By appointment; virtual drop-in hours select days.' },
+
+  { id:'svr', name:'Sexual Violence Response', cat:'student', loc:'Lerner Hall, Suite 700',
+    hours: WEEKDAYS([['09:00','17:00']]),
+    note:'24/7 helpline available outside office hours.' },
+
+  { id:'immunization', name:'Immunization Compliance Office', cat:'student', loc:'John Jay Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','17:00']]),
+    note:'Virtual appointments only.' },
+];
+
+/* ══════════════════════════════════════════════════
+   LIVE DATA OVERLAY — merge scraped library hours
+   ══════════════════════════════════════════════════ */
+const SCRAPER_ID_MAP = {
+  butler_24: 'butler', science_engineering: 'noco', lehman: 'lehman',
+  business: 'uris', avery: 'avery', math: 'math'
+};
 
 if (typeof LIONHOUR_DATA !== 'undefined' && LIONHOUR_DATA.libraries) {
-  libraries = LIONHOUR_DATA.libraries;
-  dataTimestamp = LIONHOUR_DATA.generatedDisplay;
-} else {
-  libraries = FALLBACK_LIBRARIES;
-  dataTimestamp = "August 16, 2026 (built-in fallback)";
-}
-
-document.getElementById('last-updated').textContent = `Schedule data last updated: ${dataTimestamp}`;
-
-// =====================================================
-// CORE LOGIC
-// =====================================================
-
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function getNow() {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-}
-
-function dateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function getHoursForDate(library, date) {
-  const ds = dateStr(date);
-  const dow = date.getDay();
-  for (const sched of library.schedules) {
-    if (ds >= sched.start && ds <= sched.end) {
-      return sched.hours[String(dow)] || null;
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  LIONHOUR_DATA.libraries.forEach(lib => {
+    const venueId = SCRAPER_ID_MAP[lib.id];
+    if (!venueId) return;
+    const venue = VENUES.find(v => v.id === venueId);
+    if (!venue) return;
+    // Find the active schedule (first matching date range, or last as fallback)
+    const sched = lib.schedules.find(s => today >= s.start && today <= s.end)
+               || lib.schedules[lib.schedules.length - 1];
+    if (!sched) return;
+    // Convert { "0": {open,close}|null, ... } → { 0: [[open,close]]|null, ... }
+    const hours = {};
+    for (let d = 0; d < 7; d++) {
+      const h = sched.hours[String(d)];
+      hours[d] = h ? [[h.open, h.close]] : null;
     }
-  }
-  return null;
+    venue.hours = hours;
+    if (lib.note) venue.note = lib.note;
+  });
 }
 
-function timeToMinutes(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
+/* ══════════════════════════════════════════════════
+   TIME HELPERS (Eastern Time)
+   ══════════════════════════════════════════════════ */
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function nowET() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short', hour: '2-digit', minute: '2-digit',
+    second: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t).value;
+  const dow = DAY_SHORT.indexOf(get('weekday'));
+  let hour = parseInt(get('hour'), 10);
+  if (hour === 24) hour = 0;
+  return {
+    dow,
+    mins: hour * 60 + parseInt(get('minute'), 10),
+    secs: parseInt(get('second'), 10),
+  };
+}
+
+function toMin(t) {
+  const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 }
 
-function formatTime12(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+function fmt12(mins) {
+  mins = ((mins % 1440) + 1440) % 1440;
+  const h24 = Math.floor(mins / 60), m = mins % 60;
+  const h = h24 % 12 === 0 ? 12 : h24 % 12;
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  return m === 0 ? `${h} ${ampm}` : `${h}:${String(m).padStart(2,'0')} ${ampm}`;
 }
 
-function getLibraryStatus(library) {
-  if (library.temporarilyClosed) {
-    return { status: 'temp-closed', label: 'Closed', countdown: null, todayHours: null };
+function fmtRange(iv) {
+  const s = toMin(iv[0]), e = toMin(iv[1]);
+  if (s === 0 && (e === 1440 || iv[1] === '24:00')) return 'Open 24 hours';
+  return `${fmt12(s)} – ${fmt12(e)}`;
+}
+
+function dayHours(venue, dow) {
+  const h = venue.hours[((dow % 7) + 7) % 7];
+  return Array.isArray(h) ? h : [];
+}
+
+/* An interval ending exactly at midnight continues into the next day if that
+   day opens at 00:00 — e.g. Butler runs Sun 9 AM straight through Fri 11 PM.
+   Returns the true closing time in minutes from the start of `dow`. */
+function chainEnd(venue, dow, endMin) {
+  let end = endMin, guard = 0;
+  while (end % 1440 === 0 && guard < 8) {
+    const next = dayHours(venue, dow + end / 1440);
+    if (!next.length) break;
+    const first = next[0];
+    if (toMin(first[0]) !== 0) break;
+    const fe = first[1] === '24:00' ? 1440 : toMin(first[1]);
+    if (fe === 0) break;
+    end += fe;
+    guard++;
+    if (fe !== 1440) break;
+  }
+  return end;
+}
+
+/* Absolute-minute intervals for yesterday + today, relative to today's midnight. */
+function activeIntervals(venue, dow) {
+  const out = [];
+  for (const off of [-1, 0]) {
+    for (const iv of dayHours(venue, dow + off)) {
+      const s = toMin(iv[0]);
+      let e = iv[1] === '24:00' ? 1440 : toMin(iv[1]);
+      if (e <= s) e += 1440;
+      e = chainEnd(venue, dow + off, e);
+      out.push({ start: s + off * 1440, end: e + off * 1440 });
+    }
+  }
+  return out;
+}
+
+/* "at 11 PM" / "Friday at 11 PM", where endAbs is minutes from today's midnight. */
+function describeClose(endAbs, dow) {
+  const t = fmt12(endAbs);
+  if (endAbs <= 1440 + 360) return `at <span class="time-value">${t}</span>`;
+  const day = DAY_NAMES[(dow + Math.floor(endAbs / 1440)) % 7];
+  return `<span class="time-value">${day} at ${t}</span>`;
+}
+
+/* ══════════════════════════════════════════════════
+   STATUS ENGINE
+   ══════════════════════════════════════════════════ */
+function getStatus(venue, now) {
+  const CLOSING_SOON = 60; // minutes
+
+  // 1. Currently inside an open interval (including ones spanning midnight)
+  for (const iv of activeIntervals(venue, now.dow)) {
+    if (now.mins >= iv.start && now.mins < iv.end) {
+      const until = iv.end - now.mins;
+      return {
+        status: until <= CLOSING_SOON ? 'closing-soon' : 'open',
+        label: until <= CLOSING_SOON ? 'Closing soon' : 'Open',
+        detail: `Closes ${describeClose(iv.end, now.dow)}`,
+      };
+    }
   }
 
-  const now = getNow();
-  const todayHours = getHoursForDate(library, now);
-
-  if (!todayHours) {
-    let nextOpen = null;
-    for (let i = 1; i <= 7; i++) {
-      const future = new Date(now);
-      future.setDate(future.getDate() + i);
-      const fh = getHoursForDate(library, future);
-      if (fh) {
-        nextOpen = { day: DAY_NAMES[future.getDay()], hours: fh };
-        break;
+  // 2. Closed — find the next opening within 7 days
+  for (let offset = 0; offset < 8; offset++) {
+    for (const iv of dayHours(venue, now.dow + offset)) {
+      const s = toMin(iv[0]) + offset * 1440;
+      if (s > now.mins) {
+        const when = offset === 0 ? 'today'
+          : offset === 1 ? 'tomorrow'
+          : DAY_NAMES[(now.dow + offset) % 7];
+        return {
+          status: 'closed', label: 'Closed',
+          detail: `Opens <span class="time-value">${fmt12(toMin(iv[0]))} ${when}</span>`,
+        };
       }
     }
-    return { status: 'closed', label: 'Closed', countdown: null, todayHours: null, nextOpen };
   }
 
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const openMin = timeToMinutes(todayHours.open);
-  const closeMin = timeToMinutes(todayHours.close);
-
-  if (nowMin < openMin) {
-    return { status: 'closed', label: 'Closed', countdown: `Opens at ${formatTime12(todayHours.open)}`, todayHours };
-  } else if (nowMin < closeMin) {
-    const closingSoon = (closeMin - nowMin) <= 60;
-    return {
-      status: closingSoon ? 'closing-soon' : 'open',
-      label: closingSoon ? 'Closing Soon' : 'Open',
-      countdown: `Closes at ${formatTime12(todayHours.close)}`,
-      todayHours
-    };
-  } else {
-    let nextOpen = null;
-    for (let i = 1; i <= 7; i++) {
-      const future = new Date(now);
-      future.setDate(future.getDate() + i);
-      const fh = getHoursForDate(library, future);
-      if (fh) {
-        nextOpen = { day: DAY_NAMES[future.getDay()], hours: fh };
-        break;
-      }
-    }
-    return { status: 'closed', label: 'Closed', countdown: null, todayHours, nextOpen };
-  }
+  return { status: 'closed', label: 'Closed', detail: 'No upcoming hours listed' };
 }
 
-function getWeekSchedule(library) {
-  const now = getNow();
-  const today = now.getDay();
-  const week = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - today + i);
-    const hours = getHoursForDate(library, d);
-    week.push({ day: DAY_NAMES[i], short: DAY_SHORT[i], hours, isToday: i === today });
+/* Every open block that OVERLAPS today — not just the ones published under
+   today's day-of-week. A block carried in from yesterday (JJ's noon-to-10AM
+   run) is included while it is still going and tagged with the day it began,
+   so this column can never contradict the status, which also looks back a day. */
+function todayHoursText(venue, now) {
+  const spans = activeIntervals(venue, now.dow)
+    .filter(iv => iv.end > 0 && iv.start < 1440)        // touches today at all
+    .filter(iv => iv.start >= 0 || iv.end > now.mins)   // yesterday's spill: only while live
+    .sort((a, b) => a.start - b.start);
+
+  // A multi-day 24h run yields one span per source day — merge them back.
+  const merged = [];
+  for (const s of spans) {
+    const last = merged[merged.length - 1];
+    if (last && s.start <= last.end) last.end = Math.max(last.end, s.end);
+    else merged.push({ start: s.start, end: s.end });
   }
-  return week;
+  if (!merged.length) return 'Closed today';
+
+  return merged.map(iv => {
+    if (iv.start <= 0 && iv.end >= 1440) return 'Open 24 hours';
+    const from = iv.start < 0
+      ? `${DAY_SHORT[(now.dow + 6) % 7]} ${fmt12(iv.start)}`
+      : fmt12(iv.start);
+    const to = iv.end > 1440 + 360
+      ? `${fmt12(iv.end)} ${DAY_SHORT[(now.dow + Math.floor(iv.end / 1440)) % 7]}`
+      : fmt12(iv.end);
+    return `${from} – ${to}`;
+  }).join(', ');
 }
 
-// =====================================================
-// RENDERING
-// =====================================================
 
-let currentFilter = 'all';
+/* ══════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════ */
+let activeCat = 'all';
+let activeStatus = 'all';
+let searchTerm = '';
+const expanded = new Set();
 
-function renderCard(library) {
-  const s = getLibraryStatus(library);
-  const week = getWeekSchedule(library);
+const STATUS_FILTERS = [
+  { id:'all',          label:'All Buildings' },
+  { id:'open',         label:'Open now' },
+  { id:'closing-soon', label:'Closing soon' },
+  { id:'closed',       label:'Closed' },
+];
+const ORDER = { 'open':0, 'closing-soon':1, 'closed':2 };
 
-  let countdownHtml = '';
-  if (s.countdown) {
-    countdownHtml = `<div class="card-countdown">${s.status === 'open' || s.status === 'closing-soon' ? '<span class="pulse-dot"></span>' : ''}<span class="time-value">${s.countdown}</span></div>`;
-  } else if (s.nextOpen) {
-    countdownHtml = `<div class="card-countdown">Opens ${s.nextOpen.day} at ${formatTime12(s.nextOpen.hours.open)}</div>`;
-  }
+const CHEV = `<svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-  let todayHoursHtml = '';
-  if (s.todayHours) {
-    todayHoursHtml = `<div class="card-hours"><span class="today-label">Today:</span> ${formatTime12(s.todayHours.open)} – ${formatTime12(s.todayHours.close)}</div>`;
-  } else if (!library.temporarilyClosed) {
-    todayHoursHtml = `<div class="card-hours"><span class="today-label">Today:</span> Closed</div>`;
-  }
+function matchesFilters(v, now, ignoreStatus) {
+  if (activeCat !== 'all' && v.cat !== activeCat) return false;
+  const term = searchTerm.trim().toLowerCase();
+  if (term && !`${v.name} ${v.loc} ${CAT_MAP[v.cat].label}`.toLowerCase().includes(term)) return false;
+  if (!ignoreStatus && activeStatus !== 'all' && getStatus(v, now).status !== activeStatus) return false;
+  return true;
+}
 
-  let noteHtml = library.note ? `<div class="card-note">${library.note}</div>` : '';
-  if (library.scrapeFailed) {
-    noteHtml += `<div class="card-note">Hours may be outdated — check Columbia's site</div>`;
-  }
+/* ══════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════ */
+function renderChrome(now) {
+  const statChips = STATUS_FILTERS.map(f =>
+    `<button class="chip stat-filter${f.id === activeStatus ? ' active' : ''}" data-status="${f.id}">${f.label}</button>`).join('');
+  document.getElementById('chips').innerHTML = statChips;
+}
 
-  const scheduleRows = week.map(d =>
-    `<div class="schedule-row${d.isToday ? ' today' : ''}">
-      <span class="schedule-day">${d.day}${d.isToday ? ' (today)' : ''}</span>
-      <span class="schedule-time">${d.hours ? formatTime12(d.hours.open) + ' – ' + formatTime12(d.hours.close) : 'Closed'}</span>
-    </div>`
-  ).join('');
+function weekHTML(v, now) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const dow = (now.dow + i) % 7;
+    const h = dayHours(v, dow);
+    return `<div class="wk-row${i === 0 ? ' today' : ''}">
+      <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
+      <span>${h.length ? h.map(fmtRange).join(', ') : 'Closed'}</span>
+    </div>`;
+  }).join('');
+}
 
-  const badgeClass = s.status === 'temp-closed' ? 'temp-closed' : s.status;
-
-  return `
-    <div class="card" data-status="${s.status}">
-      <div class="card-top">
-        <div class="card-name"><a href="${library.url}" target="_blank" rel="noopener">${library.name}</a></div>
-        <div class="status-badge ${badgeClass}">${s.label}</div>
-      </div>
-      <div class="card-body">
-        ${countdownHtml}
-        ${todayHoursHtml}
-        ${noteHtml}
-      </div>
-      <button class="schedule-toggle" onclick="toggleSchedule('${library.id}')">View weekly schedule</button>
-      <div class="schedule-drawer" id="drawer-${library.id}">
-        <div class="schedule-table">${scheduleRows}</div>
-      </div>
+function rowHTML(v, now) {
+  const st = getStatus(v, now);
+  const isOpen = expanded.has(v.id);
+  return `<div class="entry${isOpen ? ' expanded' : ''}" data-id="${v.id}">
+    <button class="row ${st.status === 'closed' ? 'is-closed' : ''}" type="button"
+            aria-expanded="${isOpen}" aria-label="${v.name} — ${st.label}">
+      <span class="dot ${st.status}"></span>
+      <span class="name">${v.name}</span>
+      <span class="hours">${todayHoursText(v, now)}</span>
+      <span class="badge ${st.status}">${st.label}</span>
+      ${CHEV}
+    </button>
+    <div class="detail">
+      <div class="week">${weekHTML(v, now)}</div>
+      ${v.note ? `<div class="note">${v.note}</div>` : ''}
+      ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
     </div>
-  `;
+  </div>`;
 }
 
-function toggleSchedule(id) {
-  const drawer = document.getElementById(`drawer-${id}`);
-  const btn = drawer.previousElementSibling;
-  const isOpen = drawer.classList.toggle('open');
-  btn.textContent = isOpen ? 'Hide weekly schedule' : 'View weekly schedule';
+function render() {
+  const now = nowET();
+  renderChrome(now);
+  renderSidebarNav();
+
+  const stage = document.getElementById('stage');
+  const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
+    const all = VENUES.filter(v => v.cat === c.id && matchesFilters(v, now, true));
+    const shown = all.filter(v => activeStatus === 'all' || getStatus(v, now).status === activeStatus);
+    if (!shown.length) return '';
+    shown.sort((a, b) => {
+      const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
+      return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
+    });
+    const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
+    return `<div class="sec">
+        <span class="sec-title">${c.icon} ${c.label}</span>
+        <span class="sec-rule"></span>
+        <span class="sec-meta">${openN} of ${all.length} open</span>
+      </div>
+      <div class="list">
+        <div class="cols">
+          <span></span><span>Place</span><span>Today</span>
+          <span class="r">Status</span><span></span>
+        </div>
+        ${shown.map(v => rowHTML(v, now)).join('')}
+      </div>`;
+  }).join('');
+
+  stage.innerHTML = sections || `<div class="empty">Nothing matches those filters right now.</div>`;
+  syncStickyOffset();
 }
 
-function renderAll() {
-  const grid = document.getElementById('library-grid');
-  const order = { 'open': 0, 'closing-soon': 1, 'closed': 2, 'temp-closed': 3 };
-  const sorted = [...libraries].sort((a, b) => {
-    const sa = getLibraryStatus(a);
-    const sb = getLibraryStatus(b);
-    const statusDiff = (order[sa.status] ?? 9) - (order[sb.status] ?? 9);
-    if (statusDiff !== 0) return statusDiff;
-    return libraries.indexOf(a) - libraries.indexOf(b);
-  });
-
-  const filtered = sorted.filter(lib => {
-    if (currentFilter === 'all') return true;
-    const s = getLibraryStatus(lib);
-    if (currentFilter === 'open') return s.status === 'open' || s.status === 'closing-soon';
-    if (currentFilter === 'closed') return s.status === 'closed' || s.status === 'temp-closed';
-    return true;
-  });
-
-  grid.innerHTML = filtered.map(renderCard).join('');
-
-  const counts = { open: 0, closed: 0, unavailable: 0 };
-  libraries.forEach(lib => {
-    const s = getLibraryStatus(lib);
-    if (s.status === 'open' || s.status === 'closing-soon') counts.open++;
-    else if (s.status === 'temp-closed') counts.unavailable++;
-    else counts.closed++;
-  });
-
-  document.getElementById('summary-bar').innerHTML = `
-    <div class="summary-stat"><div class="summary-dot open"></div>${counts.open} Open</div>
-    <div class="summary-stat"><div class="summary-dot closed"></div>${counts.closed} Closed</div>
-    ${counts.unavailable ? `<div class="summary-stat"><div class="summary-dot unavailable"></div>${counts.unavailable} Temporarily Closed</div>` : ''}
-  `;
+/* The control bar's height changes as chips wrap, so measure it rather
+   than hard-coding a sticky offset per breakpoint. */
+function syncStickyOffset() {
+  const h = document.querySelector('.controls').offsetHeight;
+  document.documentElement.style.setProperty('--controls-h', h + 'px');
 }
 
 function updateClock() {
-  const now = getNow();
-  const opts = { weekday: 'long', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/New_York' };
-  document.getElementById('clock').textContent = now.toLocaleString('en-US', opts) + ' ET';
+  const d = new Date();
+  const t = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true }).format(d);
+  const day = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', weekday:'long', month:'long', day:'numeric' }).format(d);
+  document.getElementById('clock').textContent = `${day} · ${t} ET`;
 }
 
-// Filter buttons
-document.getElementById('filter-bar').addEventListener('click', (e) => {
-  if (!e.target.classList.contains('filter-btn')) return;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  e.target.classList.add('active');
-  currentFilter = e.target.dataset.filter;
-  renderAll();
+/* ── Events ─────────────────────────────────────── */
+document.getElementById('chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  if (b.dataset.cat !== undefined) activeCat = b.dataset.cat;
+  else activeStatus = b.dataset.status;
+  render();
+});
+document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
+document.getElementById('stage').addEventListener('click', e => {
+  const row = e.target.closest('.row'); if (!row) return;
+  const entry = row.closest('.entry');
+  const id = entry.dataset.id;
+  if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
+  entry.classList.toggle('expanded');
+  row.setAttribute('aria-expanded', expanded.has(id));
 });
 
-// Initial render + live updates
+window.addEventListener('resize', syncStickyOffset);
+
+/* ── Sidebar ───────────────────────────────────── */
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const hamburger = document.querySelector('.hamburger');
+
+function toggleSidebar(forceOpen) {
+  const open = forceOpen !== undefined ? forceOpen : !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', open);
+  sidebarOverlay.classList.toggle('open', open);
+  hamburger.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+
+hamburger.addEventListener('click', () => toggleSidebar());
+sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+function renderSidebarNav() {
+  const nav = document.getElementById('sidebar-nav');
+  const items = CATEGORIES.map(c => {
+    const count = c.id === 'all' ? VENUES.length : VENUES.filter(v => v.cat === c.id).length;
+    const label = c.id === 'all' ? 'Home' : c.label;
+    const icon = c.id === 'all' ? '🏠' : c.icon;
+    return `<button class="sidebar-nav-item${c.id === activeCat ? ' active' : ''}" data-cat="${c.id}">
+      <span class="nav-icon">${icon}</span>${label}<span class="nav-count">${count}</span>
+    </button>`;
+  });
+  nav.innerHTML = items.join('');
+}
+
+document.getElementById('sidebar-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.sidebar-nav-item');
+  if (!btn) return;
+  activeCat = btn.dataset.cat;
+  toggleSidebar(false);
+  render();
+});
+
+renderSidebarNav();
+
+function configureAboutDismissal(about, eventTarget, scrollTarget = eventTarget) {
+  const close = () => { about.open = false; };
+  eventTarget.addEventListener('pointerdown', event => {
+    if (!about.contains(event.target)) close();
+  });
+  eventTarget.addEventListener('wheel', close, { passive: true });
+  eventTarget.addEventListener('touchmove', close, { passive: true });
+  scrollTarget.addEventListener('scroll', close, { passive: true });
+}
+
+configureAboutDismissal(document.getElementById('about-details'), document, window);
+
 updateClock();
-renderAll();
+render();
 setInterval(updateClock, 1000);
-setInterval(renderAll, 60000);
+setInterval(render, 60000);
 </script>
 
 </body>
