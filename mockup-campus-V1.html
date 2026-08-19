@@ -40,89 +40,25 @@
     background: var(--bg); color: var(--text); min-height: 100vh;
   }
 
-  .mockup-banner {
-    background: #fef3c7; color: #92400e; text-align: center;
-    padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 500;
-    border-bottom: 1px solid #fde68a;
-  }
-  .mockup-banner strong { font-weight: 700; }
-
   /* ── Header ────────────────────────────────────── */
   .header {
     background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
     color: white; padding: 1.8rem 1.5rem 1.4rem;
     text-align: center; position: relative; overflow: visible; z-index: 40;
   }
-  .header::before {
+  .header-art {
+    position: absolute; inset: 0; overflow: hidden;
+    pointer-events: none; z-index: 0;
+  }
+  .header-art::before {
     content: ''; position: absolute; top: -50%; right: -18%;
     width: 380px; height: 380px; background: rgba(255,255,255,0.04); border-radius: 50%;
   }
-  .header::after {
+  .header-art::after {
     content: ''; position: absolute; bottom: -30%; left: -8%;
     width: 280px; height: 280px; background: rgba(255,255,255,0.03); border-radius: 50%;
   }
   .header-content { position: relative; z-index: 1; }
-
-  /* ── Hamburger menu button ───────────────────── */
-  .hamburger {
-    position: absolute; top: 1.4rem; left: 1.2rem; z-index: 5;
-    width: 38px; height: 38px; border: none; background: rgba(255,255,255,0.15);
-    border-radius: 8px; cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 5px;
-    transition: background 0.2s;
-  }
-  .hamburger:hover { background: rgba(255,255,255,0.28); }
-  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
-  .hamburger.open span:nth-child(2) { opacity: 0; }
-  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
-  .hamburger span {
-    display: block; width: 20px; height: 2.5px;
-    background: white; border-radius: 1px;
-    transition: transform 0.25s, opacity 0.25s;
-  }
-
-  /* ── Sidebar ─────────────────────────────────── */
-  .sidebar-overlay {
-    position: fixed; inset: 0; z-index: 49;
-    background: rgba(0,0,0,0.35); opacity: 0;
-    pointer-events: none; transition: opacity 0.3s;
-  }
-  .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
-  .sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
-    width: 280px; max-width: 80vw;
-    background: #fff; box-shadow: 2px 0 16px rgba(0,0,0,0.12);
-    transform: translateX(-100%); transition: transform 0.3s ease;
-    display: flex; flex-direction: column; overflow-y: auto;
-  }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-header {
-    background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
-    color: white; padding: 1.6rem 1.4rem 1.2rem;
-  }
-  .sidebar-header .logo { justify-content: flex-start; margin-bottom: 0.15rem; }
-  .sidebar-header .subtitle { font-size: 0.78rem; opacity: 0.8; text-align: left; }
-  .sidebar-nav { padding: 0.6rem 0; flex: 1; }
-  .sidebar-nav-item {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.75rem 1.4rem; font-size: 0.92rem; font-weight: 500;
-    color: var(--text); cursor: pointer; border: none; background: none;
-    width: 100%; text-align: left; font-family: inherit;
-    transition: background 0.15s;
-  }
-  .sidebar-nav-item:hover { background: var(--bg); }
-  .sidebar-nav-item.active {
-    background: #eaf1fa; color: var(--columbia-blue); font-weight: 600;
-    border-right: 3px solid var(--columbia-blue);
-  }
-  .sidebar-nav-item .nav-icon { font-size: 1.15rem; width: 1.5rem; text-align: center; }
-  .sidebar-nav-item .nav-count {
-    margin-left: auto; font-size: 0.75rem; font-weight: 600;
-    color: var(--text-secondary); opacity: 0.7;
-  }
-  .sidebar-divider { height: 1px; background: var(--hairline); margin: 0.4rem 1.2rem; }
-
-  /* ── Header nav links (top-right) ────────────── */
   .header-actions {
     position: absolute; top: 1.9rem; right: 1.8rem;
     display: grid; justify-items: end; gap: 0.3rem;
@@ -154,8 +90,9 @@
     font-size: 0.95rem; font-weight: 500; margin-top: 0.7rem;
     background: rgba(255,255,255,0.13); display: inline-block;
     padding: 0.34rem 0.95rem; border-radius: 20px;
-    font-variant-numeric: tabular-nums;
+      font-variant-numeric: tabular-nums; white-space: pre-line; line-height: 1.58;
   }
+  .clock::first-line { font-weight: 700; }
 
   /* ── Sticky control bar ────────────────────────── */
   .controls {
@@ -164,12 +101,23 @@
     backdrop-filter: saturate(180%) blur(8px);
     border-bottom: 1px solid var(--hairline);
   }
-  .controls-inner {
-    max-width: 1200px; margin: 0 auto; padding: 0.75rem 1.5rem 0.7rem;
-    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+  .controls-inner { max-width: 1200px; margin: 0 auto; padding: 0.75rem 1.5rem 0.7rem; }
+
+  .summary {
+    display: flex; justify-content: center; gap: 1.4rem;
+    flex-wrap: wrap; margin-bottom: 0.7rem;
+  }
+  .stat {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.86rem; font-weight: 500; color: var(--text-secondary);
+  }
+  .stat b { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .filter-row {
+    display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center;
   }
   .search-input {
-    width: 180px; padding: 0.42rem 0.9rem; font-size: 0.84rem;
+    flex: 0 1 250px; padding: 0.42rem 0.9rem; font-size: 0.84rem;
     border: 1.5px solid #d5dbe3; border-radius: 20px; background: #fff;
     color: var(--text); outline: none; font-family: inherit; transition: border-color 0.2s;
   }
@@ -338,22 +286,13 @@
 </head>
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<nav class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <div class="logo"><span class="lion-icon">🦁</span><h2 class="site-title" style="font-size:1.4rem">Lion<span>Hour</span></h2></div>
-    <p class="subtitle">Campus building hours</p>
-  </div>
-  <div class="sidebar-nav" id="sidebar-nav"></div>
-</nav>
-
-<div class="mockup-banner">
-  <strong>Mockup</strong> — LionHour across all campus buildings. Fall 2026 published hours; a few marked <em>est.</em>
-</div>
-
 <header class="header">
-  <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+  <div class="header-art" aria-hidden="true"></div>
+  <div class="header-content">
+    <div class="logo"><span class="lion-icon">🦁</span><h1 class="site-title">Lion<span>Hour</span></h1></div>
+    <p class="subtitle">What's open right now at Columbia</p>
+    <div class="clock" id="clock">—</div>
+  </div>
   <div class="header-actions">
     <a class="header-link" href="https://docs.google.com/forms/d/e/1FAIpQLSdpToXB8tdcgGGDQYynTmuKIf2JU-3d3ojvyx7o9GIn8mRSSg/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Feedback</a>
     <details class="about-details" id="about-details">
@@ -361,18 +300,15 @@
       <p class="about-copy">LionHour is an aggregator for building times at Columbia University. I created this because I was tired of parsing through all the random building links lol</p>
     </details>
   </div>
-  <div class="header-content">
-    <div class="logo"><span class="lion-icon">🦁</span><h1 class="site-title">Lion<span>Hour</span></h1></div>
-    <p class="subtitle">What's open right now at Columbia</p>
-    <div class="clock" id="clock">—</div>
-  </div>
 </header>
 
 <div class="controls">
   <div class="controls-inner">
-    <div class="chips" id="chips"></div>
-    <span class="chip-sep"></span>
-    <input type="text" class="search-input" id="search" placeholder="Search buildings…" autocomplete="off">
+    <div class="summary" id="summary"></div>
+    <div class="filter-row">
+      <input type="text" class="search-input" id="search" placeholder="Search buildings…" autocomplete="off">
+      <div class="chips" id="chips"></div>
+    </div>
   </div>
 </div>
 
@@ -720,7 +656,7 @@ let searchTerm = '';
 const expanded = new Set();
 
 const STATUS_FILTERS = [
-  { id:'all',          label:'All Buildings' },
+  { id:'all',          label:'All' },
   { id:'open',         label:'Open now' },
   { id:'closing-soon', label:'Closing soon' },
   { id:'closed',       label:'Closed' },
@@ -741,9 +677,20 @@ function matchesFilters(v, now, ignoreStatus) {
    RENDER
    ══════════════════════════════════════════════════ */
 function renderChrome(now) {
+  const counts = { open:0, 'closing-soon':0, closed:0 };
+  VENUES.forEach(v => counts[getStatus(v, now).status]++);
+  document.getElementById('summary').innerHTML = `
+    <span class="stat"><span class="dot open"></span><b>${counts.open}</b> open now</span>
+    <span class="stat"><span class="dot closing-soon"></span><b>${counts['closing-soon']}</b> closing soon</span>
+    <span class="stat"><span class="dot closed"></span><b>${counts.closed}</b> closed</span>`;
+
+  const catChips = CATEGORIES.map(c => {
+    const n = c.id === 'all' ? VENUES.length : VENUES.filter(v => v.cat === c.id).length;
+    return `<button class="chip${c.id === activeCat ? ' active' : ''}" data-cat="${c.id}">${c.icon ? c.icon + ' ' : ''}${c.label}<span class="n">${n}</span></button>`;
+  }).join('');
   const statChips = STATUS_FILTERS.map(f =>
     `<button class="chip stat-filter${f.id === activeStatus ? ' active' : ''}" data-status="${f.id}">${f.label}</button>`).join('');
-  document.getElementById('chips').innerHTML = statChips;
+  document.getElementById('chips').innerHTML = catChips + '<span class="chip-sep"></span>' + statChips;
 }
 
 function weekHTML(v, now) {
@@ -780,7 +727,6 @@ function rowHTML(v, now) {
 function render() {
   const now = nowET();
   renderChrome(now);
-  renderSidebarNav();
 
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
@@ -821,7 +767,17 @@ function updateClock() {
   const d = new Date();
   const t = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true }).format(d);
   const day = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', weekday:'long', month:'long', day:'numeric' }).format(d);
-  document.getElementById('clock').textContent = `${day} · ${t} ET`;
+  document.getElementById('clock').textContent = `${day}\n${t} ET`;
+}
+
+function configureAboutDismissal(about, eventTarget, scrollTarget = eventTarget) {
+  const close = () => { about.open = false; };
+  eventTarget.addEventListener('pointerdown', event => {
+    if (!about.contains(event.target)) close();
+  });
+  eventTarget.addEventListener('wheel', close, { passive: true });
+  eventTarget.addEventListener('touchmove', close, { passive: true });
+  scrollTarget.addEventListener('scroll', close, { passive: true });
 }
 
 /* ── Events ─────────────────────────────────────── */
@@ -842,56 +798,6 @@ document.getElementById('stage').addEventListener('click', e => {
 });
 
 window.addEventListener('resize', syncStickyOffset);
-
-/* ── Sidebar ───────────────────────────────────── */
-const sidebar = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
-const hamburger = document.querySelector('.hamburger');
-
-function toggleSidebar(forceOpen) {
-  const open = forceOpen !== undefined ? forceOpen : !sidebar.classList.contains('open');
-  sidebar.classList.toggle('open', open);
-  sidebarOverlay.classList.toggle('open', open);
-  hamburger.classList.toggle('open', open);
-  document.body.style.overflow = open ? 'hidden' : '';
-}
-
-hamburger.addEventListener('click', () => toggleSidebar());
-sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
-
-function renderSidebarNav() {
-  const nav = document.getElementById('sidebar-nav');
-  const items = CATEGORIES.map(c => {
-    const count = c.id === 'all' ? VENUES.length : VENUES.filter(v => v.cat === c.id).length;
-    const label = c.id === 'all' ? 'Home' : c.label;
-    const icon = c.id === 'all' ? '🏠' : c.icon;
-    return `<button class="sidebar-nav-item${c.id === activeCat ? ' active' : ''}" data-cat="${c.id}">
-      <span class="nav-icon">${icon}</span>${label}<span class="nav-count">${count}</span>
-    </button>`;
-  });
-  nav.innerHTML = items.join('');
-}
-
-document.getElementById('sidebar-nav').addEventListener('click', e => {
-  const btn = e.target.closest('.sidebar-nav-item');
-  if (!btn) return;
-  activeCat = btn.dataset.cat;
-  toggleSidebar(false);
-  render();
-});
-
-renderSidebarNav();
-
-function configureAboutDismissal(about, eventTarget, scrollTarget = eventTarget) {
-  const close = () => { about.open = false; };
-  eventTarget.addEventListener('pointerdown', event => {
-    if (!about.contains(event.target)) close();
-  });
-  eventTarget.addEventListener('wheel', close, { passive: true });
-  eventTarget.addEventListener('touchmove', close, { passive: true });
-  scrollTarget.addEventListener('scroll', close, { passive: true });
-}
-
 configureAboutDismissal(document.getElementById('about-details'), document, window);
 
 updateClock();
