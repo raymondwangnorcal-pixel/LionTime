@@ -73,4 +73,5 @@ test('renders embedded hours before guarded live hydration and exposes data stat
   const hydration = indexHtml.lastIndexOf('LionHourLibraryHours.hydrate');
   assert.ok(initialRender >= 0 && hydration > initialRender);
   assert.match(indexHtml, /if \(window\.LionHourLibraryHours\)/);
+  assert.match(indexHtml, /5 of 6 live/);
 });

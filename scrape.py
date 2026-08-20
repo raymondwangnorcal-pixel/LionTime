@@ -37,6 +37,8 @@ DISPLAYED_LIBRARIES = [
     {"id": "math", "slug": "math", "venue_id": "math", "name": "Mathematics Library"},
 ]
 DISPLAYED_LIBRARY_IDS = {library["id"] for library in DISPLAYED_LIBRARIES}
+EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman"}
+EMBEDDED_FALLBACK_REASON = "unapproved-overnight-hours"
 
 TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$")
 RANGE_RE = re.compile(
@@ -148,6 +150,30 @@ def _fallback_entry(definition: dict, reference_date: datetime) -> dict:
     }
 
 
+def _embedded_fallback_entry(definition: dict) -> dict:
+    """Tell clients to retain the checked-in schedule for a known source anomaly."""
+    return {
+        "id": definition["id"],
+        "name": definition["name"],
+        "url": f"{BASE_URL}/{definition['slug']}",
+        "note": definition.get("note"),
+        "temporarilyClosed": False,
+        "useEmbeddedFallback": True,
+        "fallbackReason": EMBEDDED_FALLBACK_REASON,
+        "schedules": [],
+    }
+
+
+def _has_unapproved_overnight(library_id: str, schedules: list[dict]) -> bool:
+    if library_id == "butler_24":
+        return False
+    return any(
+        interval is not None and interval["close"] <= interval["open"]
+        for schedule in schedules
+        for interval in schedule["hours"].values()
+    )
+
+
 def scrape_library(
     definition: dict,
     reference_date: datetime,
@@ -177,6 +203,11 @@ def scrape_library(
     )
     if not schedules:
         return _fallback_entry(definition, reference_date)
+    if (
+        definition["id"] in EMBEDDED_FALLBACK_LIBRARY_IDS
+        and _has_unapproved_overnight(definition["id"], schedules)
+    ):
+        return _embedded_fallback_entry(definition)
     return {
         "id": definition["id"],
         "name": definition["name"],
@@ -237,6 +268,22 @@ def validate_publishable_payload(payload: object, required_ids: set[str]) -> lis
         url = library.get("url", "")
         if not isinstance(url, str) or not url.startswith(f"{BASE_URL}/"):
             errors.append(f"{library_id}: invalid Columbia hours URL")
+        use_embedded_fallback = library.get("useEmbeddedFallback", False)
+        if not isinstance(use_embedded_fallback, bool):
+            errors.append(f"{library_id}: useEmbeddedFallback must be boolean")
+            use_embedded_fallback = False
+        if use_embedded_fallback:
+            if library_id not in EMBEDDED_FALLBACK_LIBRARY_IDS:
+                errors.append(f"{library_id}: embedded fallback is not allowed")
+            if library.get("fallbackReason") != EMBEDDED_FALLBACK_REASON:
+                errors.append(f"{library_id}: invalid fallback reason")
+            if library.get("temporarilyClosed") is not False:
+                errors.append(f"{library_id}: fallback cannot be temporarily closed")
+            if library.get("schedules") != []:
+                errors.append(f"{library_id}: fallback schedules must be empty")
+            continue
+        if "fallbackReason" in library:
+            errors.append(f"{library_id}: fallback reason requires embedded fallback")
         schedules = library.get("schedules")
         if not isinstance(schedules, list) or not schedules:
             errors.append(f"{library_id}: schedules must be a non-empty array")

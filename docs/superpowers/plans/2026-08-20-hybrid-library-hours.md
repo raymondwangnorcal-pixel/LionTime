@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md`
 
-**Implementation status (2026-08-20):** Tasks 1–5 are implemented and locally verified. Task 6 remains an external rollout checklist because provisioning Upstash, configuring Vercel/GitHub secrets and variables, deploying, and enabling production publishing require the project owner's accounts.
+**Implementation status (2026-08-20):** Tasks 1–5 are implemented and locally verified. A post-review amendment permits an explicit Lehman-only embedded fallback for Columbia's suspicious overnight source interval, allowing five live updates without guessed Lehman hours. Task 6 remains an external rollout checklist because provisioning Upstash, configuring Vercel/GitHub secrets and variables, deploying, and enabling production publishing require the project owner's accounts.
 
 ## Global Constraints
 
@@ -18,7 +18,7 @@
 - Only the six existing library cards (`butler`, `noco`, `lehman`, `uris`, `avery`, and `math`) receive dynamic hours in this release.
 - Keep scraper IDs, Columbia slugs, and frontend venue IDs explicit; never derive application identity from a source slug.
 - Treat explicit closure and unparseable source text as distinct parser outcomes; any parse error rejects publication.
-- Allow overnight-style intervals only for Butler; reject close times at or before opening for the other five displayed libraries.
+- Allow overnight-style intervals only for Butler; convert the known Lehman anomaly to an explicit embedded-fallback entry and reject raw close times at or before opening for the other displayed libraries.
 - Render embedded schedules before making a network request, and retain them on every dynamic-data failure path.
 - Show the generated timestamp for live data and visibly mark data older than eight hours or embedded fallback data as stale.
 - Never overwrite the latest successful snapshot with partial, missing, unparseable, unauthenticated, or schema-invalid data.
@@ -1044,7 +1044,7 @@ Expected: every command exits `0`, all tests pass, YAML and JSON parse, and `git
 Confirm each requirement in `docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md` has evidence:
 
 - static page renders before API completion;
-- all six library IDs update from a valid snapshot;
+- all six library IDs are present; normal entries update from the snapshot and an explicit Lehman fallback retains embedded hours;
 - invalid and partial data cannot mutate either browser venues or Redis;
 - GET is public and cacheable;
 - PUT is authenticated and non-cacheable;
@@ -1091,6 +1091,6 @@ Do not stage `docs/decisions.md` automatically; decision tracking explicitly lea
 
 - A manual and a scheduled GitHub Actions run both publish valid snapshots.
 - The public API returns the latest snapshot with the required cache policy.
-- LionHour applies all six library schedules without delaying its initial static render.
+- LionHour applies every live library schedule without delaying its initial static render and reports any explicit Lehman fallback.
 - Network, schema, authentication, scraper, and storage failures preserve the last usable hours.
 - All Python and Node tests pass, configuration files parse, and the production comparison matches Columbia's published hours.

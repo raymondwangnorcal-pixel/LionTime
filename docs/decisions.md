@@ -111,3 +111,25 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md` and the live-source verification documented by the implementation tests.
 - Privacy waivers: none
+
+## DEC-0009 — Use embedded fallback for the Lehman source anomaly
+
+- Date: 2026-08-20
+- Owner: user
+- Status at record: active
+- Decision: When Columbia publishes Lehman's known unapproved overnight interval, the snapshot retains embedded Lehman hours while applying validated dynamic schedules to the other five libraries.
+- Rationale: This keeps fresh trustworthy hours flowing without interpreting the source inversion as a twenty-hour opening or guessing a corrected Lehman time.
+- Scope: Scraper output, schema and API validation, browser overlay behavior, freshness status, tests, and library-hours source policy.
+- Implementation: pending
+- Recorded against HEAD: `deadaf21a7a835e5fdbee564bf3e94281437810f`
+- Supersedes: DEC-0008
+- Evidence: `docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md` and live scraper verification on 2026-08-20.
+- Privacy waivers: none
+
+## Update — 2026-08-20 — DEC-0008
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0009
+- Note: The all-or-nothing rejection policy is replaced by a narrow explicit Lehman fallback; raw unapproved overnight intervals remain invalid.
+- Privacy waivers: none

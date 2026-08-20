@@ -15,6 +15,7 @@ from scrape import (
     extract_schedule_from_page,
     main,
     parse_hours_text,
+    scrape_library,
     validate_publishable_payload,
 )
 
@@ -121,6 +122,45 @@ class ScraperContractTests(unittest.TestCase):
         lehman["schedules"][0]["hours"]["1"] = {"open": "21:00", "close": "17:00"}
         errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
         self.assertIn("lehman: overnight hours are not allowed", errors)
+
+    def test_marks_suspicious_lehman_hours_for_embedded_fallback(self):
+        html = """
+        <table><tr><td>
+          <div class="fulldate">2026-08-20</div>
+          <div class="day-hours">9:00PM-5:00PM</div>
+        </td></tr></table>
+        """
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "lehman")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+        )
+        self.assertTrue(entry["useEmbeddedFallback"])
+        self.assertEqual(entry["fallbackReason"], "unapproved-overnight-hours")
+        self.assertEqual(entry["schedules"], [])
+        self.assertNotIn("scrapeFailed", entry)
+
+    def test_accepts_explicit_lehman_embedded_fallback(self):
+        payload = make_complete_payload()
+        lehman = next(item for item in payload["libraries"] if item["id"] == "lehman")
+        lehman.update({
+            "useEmbeddedFallback": True,
+            "fallbackReason": "unapproved-overnight-hours",
+            "schedules": [],
+        })
+        self.assertEqual(validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS), [])
+
+    def test_rejects_embedded_fallback_for_other_libraries(self):
+        payload = make_complete_payload()
+        avery = next(item for item in payload["libraries"] if item["id"] == "avery")
+        avery.update({
+            "useEmbeddedFallback": True,
+            "fallbackReason": "unapproved-overnight-hours",
+            "schedules": [],
+        })
+        errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
+        self.assertIn("avery: embedded fallback is not allowed", errors)
 
     def test_build_payload_publishes_only_displayed_libraries(self):
         html = (FIXTURES / "butler-august-2026-full.html").read_text()

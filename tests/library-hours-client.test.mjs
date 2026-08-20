@@ -81,3 +81,31 @@ test('does not apply an unapproved overnight interval', () => {
   lehman.schedules[0].hours['1'] = { open: '21:00', close: '17:00' };
   assert.equal(api.buildUpdates(snapshot, venues(), '2026-08-20').ok, false);
 });
+
+test('updates five libraries while preserving embedded Lehman hours', async () => {
+  const snapshot = makeValidSnapshot();
+  const lehman = snapshot.libraries.find((library) => library.id === 'lehman');
+  Object.assign(lehman, {
+    useEmbeddedFallback: true,
+    fallbackReason: 'unapproved-overnight-hours',
+    schedules: [],
+  });
+  const list = venues();
+  const embeddedLehman = structuredClone(list.find((venue) => venue.id === 'lehman'));
+  let status;
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => ({ ok: true, json: async () => snapshot }),
+    render() {},
+    setStatus: (next) => { status = next; },
+    today: '2026-08-20',
+    now: new Date('2026-08-20T17:00:00Z'),
+  });
+  assert.equal(result.applied, true);
+  assert.equal(result.updatedCount, 5);
+  assert.deepEqual(Array.from(result.fallbackIds), ['lehman']);
+  assert.deepEqual(list.find((venue) => venue.id === 'lehman'), embeddedLehman);
+  assert.equal(status.kind, 'partial');
+  assert.equal(status.updatedCount, 5);
+  assert.deepEqual(Array.from(status.fallbackIds), ['lehman']);
+});

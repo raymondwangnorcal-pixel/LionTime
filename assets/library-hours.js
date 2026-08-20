@@ -9,6 +9,7 @@
   });
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
+  const FALLBACK_REASON = 'unapproved-overnight-hours';
 
   function buildUpdates(snapshot, venues, today) {
     if (!snapshot || snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.libraries)
@@ -25,6 +26,7 @@
     if (byId.size !== expectedIds.length || expectedIds.some((id) => !byId.has(id))) return { ok: false };
 
     const entries = [];
+    const fallbackIds = [];
     for (const scraperId of expectedIds) {
       const library = byId.get(scraperId);
       if (library.scrapeFailed || typeof library.temporarilyClosed !== 'boolean'
@@ -32,8 +34,21 @@
         || !/^https:\/\/hours\.library\.columbia\.edu\/locations\/[^/?#]+(?:\?.*)?$/.test(library.url || '')) {
         return { ok: false };
       }
-      const schedule = library.schedules.find((item) => item && item.start <= today && today <= item.end);
       const venue = venues.find((item) => item.id === ID_MAP[scraperId]);
+      if (!venue) return { ok: false };
+      if (library.useEmbeddedFallback === true) {
+        if (scraperId !== 'lehman' || library.fallbackReason !== FALLBACK_REASON
+          || library.temporarilyClosed !== false || library.schedules.length !== 0) {
+          return { ok: false };
+        }
+        fallbackIds.push(scraperId);
+        continue;
+      }
+      if (library.useEmbeddedFallback !== undefined && library.useEmbeddedFallback !== false) {
+        return { ok: false };
+      }
+      if (library.fallbackReason !== undefined) return { ok: false };
+      const schedule = library.schedules.find((item) => item && item.start <= today && today <= item.end);
       if (!schedule || !venue || !schedule.hours || Object.keys(schedule.hours).length !== 7) {
         return { ok: false };
       }
@@ -54,7 +69,7 @@
       if (typeof library.note === 'string' && library.note.trim()) next.note = library.note.trim();
       entries.push([venue, next]);
     }
-    return { ok: true, entries };
+    return { ok: true, entries, fallbackIds };
   }
 
   async function hydrate({
@@ -74,9 +89,18 @@
       for (const [venue, next] of updates.entries) Object.assign(venue, next);
       render();
       const ageMilliseconds = now.getTime() - Date.parse(snapshot.generated);
-      const kind = ageMilliseconds > 8 * 60 * 60 * 1000 ? 'stale' : 'live';
-      setStatus({ kind, generated: snapshot.generated, generatedDisplay: snapshot.generatedDisplay });
-      return { applied: true, generated: snapshot.generated, stale: kind === 'stale' };
+      const stale = ageMilliseconds > 8 * 60 * 60 * 1000;
+      const kind = stale ? 'stale' : updates.fallbackIds.length ? 'partial' : 'live';
+      const status = {
+        kind,
+        generated: snapshot.generated,
+        generatedDisplay: snapshot.generatedDisplay,
+        updatedCount: updates.entries.length,
+        totalCount: Object.keys(ID_MAP).length,
+        fallbackIds: updates.fallbackIds,
+      };
+      setStatus(status);
+      return { applied: true, generated: snapshot.generated, stale, ...status };
     } catch (error) {
       setStatus({ kind: 'fallback' });
       return { applied: false, reason: error?.message || 'network-error' };

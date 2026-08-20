@@ -297,6 +297,7 @@
     margin-top: 0.55rem; font-size: 0.72rem; line-height: 1.5;
   }
   .library-hours-status[data-kind="live"] { color: #28753f; }
+  .library-hours-status[data-kind="partial"],
   .library-hours-status[data-kind="stale"],
   .library-hours-status[data-kind="fallback"] { color: #8a5a00; }
 
@@ -907,7 +908,10 @@ function setLibraryHoursStatus(status) {
       timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
     });
   const prefix = status.kind === 'stale' ? 'Library hours may be stale' : 'Library hours updated';
-  element.textContent = `${prefix}: ${generated} ET`;
+  const fallback = status.fallbackIds?.length
+    ? ' · 5 of 6 live; Lehman using embedded fallback'
+    : '';
+  element.textContent = `${prefix}: ${generated} ET${fallback}`;
 }
 
 function easternISODate() {

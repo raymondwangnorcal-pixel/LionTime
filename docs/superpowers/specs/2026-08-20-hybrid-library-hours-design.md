@@ -35,7 +35,7 @@ Application identity is explicit and independent of Columbia URL slugs. Each sou
 | `avery` | `avery` | `avery` |
 | `math` | `math` | `math` |
 
-Calendar parsing has three outcomes: a valid open interval, an explicitly closed day, or a parse error. A parse error is never represented as closed and makes the snapshot unpublishable. Midnight closing is normalized to `00:00`. Butler is the only displayed library approved for an overnight interval; a close time less than or equal to its open time for any other displayed library is treated as suspicious source data and rejects the snapshot.
+Calendar parsing has three outcomes: a valid open interval, an explicitly closed day, or a parse error. A parse error is never represented as closed and makes the snapshot unpublishable. Midnight closing is normalized to `00:00`. Butler is the only displayed library approved for an overnight interval. The known Lehman source inversion is represented by an explicit per-library embedded-fallback marker, never coerced into guessed hours; raw unapproved overnight intervals remain invalid.
 
 ```mermaid
 flowchart LR
@@ -84,19 +84,19 @@ The stored and returned document keeps the current scraper's library structure a
 }
 ```
 
-Validation requires schema version `1`, an ISO timestamp, exactly the six displayed scraper IDs, at least one schedule covering the generated Eastern date for each displayed library, canonical `HH:MM` times, and source URLs under `hours.library.columbia.edu`.
+Validation requires schema version `1`, an ISO timestamp, exactly the six displayed scraper IDs, canonical `HH:MM` times, and source URLs under `hours.library.columbia.edu`. A normal entry requires a schedule covering the generated Eastern date. Only Lehman may instead use `useEmbeddedFallback: true`, `fallbackReason: "unapproved-overnight-hours"`, and an empty schedule array.
 
-Published snapshots contain exactly the six displayed libraries. `temporarilyClosed` must be Boolean; when true, the active schedule must contain only closed days.
+Published snapshots contain exactly the six displayed libraries. `temporarilyClosed` must be Boolean; when true, the active schedule must contain only closed days. An embedded-fallback entry cannot also be temporarily closed or carry dynamic schedules.
 
 ## Reliability and Safety
 
-- A scrape is publishable only when all six displayed libraries parse successfully and contain a schedule covering the generated date.
+- A scrape is publishable when every normal entry parses successfully and covers the generated date; the single approved Lehman anomaly may explicitly retain its embedded schedule while the other five update.
 - Closed is valid source data; missing or unparseable hours are failures and cannot overwrite the current snapshot.
-- Only Butler may publish overnight-style intervals. This prevents apparent source-data inversions, such as Lehman's live August 20, 2026 `9:00PM-5:00PM` entry, from becoming misleading twenty-hour windows.
+- Only Butler may publish overnight-style intervals. Lehman's live August 20, 2026 `9:00PM-5:00PM` entry becomes a narrow embedded-fallback marker rather than a misleading twenty-hour window or a guessed correction.
 - The API validates before writing. Validation, authentication, Redis, or network failure preserves the previous value.
 - Public reads are cached for five minutes. A stale response may be served while background revalidation runs for up to one hour; healthy revalidation refreshes subsequent responses.
 - The frontend validates again before applying data and retains built-in schedules on every failure path.
-- The Libraries section shows the snapshot's generated time. Data older than eight hours, or embedded fallback data used after an API failure, is visibly marked stale and links to Columbia's source hours.
+- The Libraries section shows the snapshot's generated time. Data older than eight hours, or embedded fallback data used after an API failure, is visibly marked stale and links to Columbia's source hours. A fresh partial snapshot reports that five of six libraries are live and that Lehman is using its embedded fallback.
 - The update secret is stored separately in GitHub Actions and Vercel environment secrets and is never sent to browsers.
 - The update route uses a timing-safe bearer-token comparison and accepts only `PUT`; public access is read-only through `GET`.
 
@@ -112,7 +112,7 @@ The initial storage target is one Upstash Redis free database. The workload is s
 
 - Python unit tests cover time parsing, explicit closed days, parse errors, stable identity mapping, calendar extraction, schedule selection, complete-snapshot validation, suspicious overnight rejection, and failed-library behavior using both minimal and fuller captured Columbia HTML fixtures.
 - Node tests cover the shared JSON validator, authenticated writes, rejected writes, public reads, missing snapshots, and cache headers with an in-memory store.
-- Browser-oriented Node tests cover successful overlay, invalid response fallback, network failure fallback, and the existing status calculations after hydration.
+- Browser-oriented Node tests cover successful overlay, explicit Lehman-only fallback, invalid response fallback, network failure fallback, and status calculations after hydration.
 - A manual staging run seeds Redis, reads the public API, loads the page, and verifies Butler against the Columbia source page before production rollout.
 
 ## Rollout and Rollback

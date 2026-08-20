@@ -41,3 +41,19 @@ test('rejects overnight hours for libraries other than Butler', () => {
   lehman.schedules[0].hours['1'] = { open: '21:00', close: '17:00' };
   assert.match(validateLibraryHoursSnapshot(snapshot).errors.join('\n'), /lehman: overnight hours are not allowed/);
 });
+
+test('accepts only the explicit Lehman embedded-fallback shape', () => {
+  const snapshot = makeValidSnapshot();
+  const lehman = snapshot.libraries.find((library) => library.id === 'lehman');
+  Object.assign(lehman, {
+    useEmbeddedFallback: true,
+    fallbackReason: 'unapproved-overnight-hours',
+    schedules: [],
+  });
+  assert.equal(validateLibraryHoursSnapshot(snapshot).ok, true);
+
+  lehman.id = 'avery';
+  const result = validateLibraryHoursSnapshot(snapshot);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /embedded fallback is not allowed/);
+});
