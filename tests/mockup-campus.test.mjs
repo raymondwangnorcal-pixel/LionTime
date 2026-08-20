@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const mockupPath = new URL('../mockup-campus.html', import.meta.url);
+const mockupPath = new URL('../mockup-campus-V1.html', import.meta.url);
 const html = readFileSync(mockupPath, 'utf8');
 const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1];
 

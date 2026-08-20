@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import test from 'node:test';
+
+const workflow = fs.readFileSync(new URL('../.github/workflows/update-library-hours.yml', import.meta.url), 'utf8');
+
+test('publisher runs every four hours with least privilege and a deployment gate', () => {
+  assert.match(workflow, /cron: ['"]17 \*\/4 \* \* \*['"]/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /contents: read/);
+  assert.doesNotMatch(workflow, /contents: write/);
+  assert.match(workflow, /vars\.LIBRARY_HOURS_PUBLISH_ENABLED == 'true'/);
+  assert.match(workflow, /vars\.LIBRARY_HOURS_API_URL/);
+  assert.match(workflow, /secrets\.LIBRARY_HOURS_UPDATE_SECRET/);
+});

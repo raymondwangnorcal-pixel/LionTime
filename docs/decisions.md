@@ -83,3 +83,31 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/specs/2026-08-16-campus-hours-layout-design.md`
 - Privacy waivers: none
+
+## DEC-0007 — Combine static rendering with dynamic library hours
+
+- Date: 2026-08-20
+- Owner: user
+- Status at record: active
+- Decision: LionHour will retain its static frontend and embedded fallback schedules while adding a dynamic library-hours data path refreshed by GitHub Actions every four hours.
+- Rationale: This preserves the current site's speed and failure resilience while providing fresher library hours without requiring Vercel Pro cron scheduling.
+- Scope: Library-hours scraping, scheduled delivery, server-side snapshot storage, the public hours API, and the Libraries section data overlay.
+- Implementation: pending
+- Recorded against HEAD: `81ddc708ed7d37dc9b9394ba5e5ddb3d538c5adf`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md` and `docs/superpowers/plans/2026-08-20-hybrid-library-hours.md`
+- Privacy waivers: none
+
+## DEC-0008 — Restrict dynamic overnight library intervals
+
+- Date: 2026-08-20
+- Owner: agent
+- Status at record: active
+- Decision: Dynamic overnight-style intervals are publishable only for Butler; a close time at or before opening for another displayed library rejects the entire snapshot.
+- Rationale: Columbia's live Lehman page listed 9:00 PM to 5:00 PM on August 20, 2026, which would otherwise become a misleading twenty-hour overnight window instead of preserving the latest known-good data.
+- Scope: Python snapshot validation, shared API validation, browser overlay validation, tests, and library-hours source policy.
+- Implementation: pending
+- Recorded against HEAD: `ddc63b89b6e310ab63b9750b6be336711894379b`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md` and the live-source verification documented by the implementation tests.
+- Privacy waivers: none

@@ -1,385 +1,323 @@
 #!/usr/bin/env python3
-"""
-LionHour Scraper
-Fetches current library hours from hours.library.columbia.edu
-and writes data.js for the website to consume.
+"""Scrape the six LionHour library cards from Columbia's hours site."""
 
-Usage:
-    python3 scrape.py            # scrape and write data.js
-    python3 scrape.py --dry-run  # print JSON to stdout without writing
+from __future__ import annotations
 
-Schedule daily with cron:
-    0 6 * * * cd /path/to/LionHour && python3 scrape.py >> scrape.log 2>&1
-"""
-
+import argparse
 import json
 import re
 import sys
-import os
-from datetime import datetime, timedelta
-from typing import Optional
+import tempfile
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Callable, Optional
+from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
 
-# ── Library definitions ──────────────────────────────────────────────
-# slug: the URL path segment on hours.library.columbia.edu
-# name: display name on the site
-
-LIBRARIES = [
-    {"slug": "butler-24",              "name": "Butler Library"},
-    {"slug": "science-engineering",    "name": "NoCo Library"},
-    {"slug": "lehman",                 "name": "Lehman Social Sciences Library"},
-    {"slug": "business",               "name": "Uris Library"},
-    {"slug": "avery",                  "name": "Avery Library",
-     "note": "Service desk closes 15 min before the library"},
-    {"slug": "math",                   "name": "Mathematics Library"},
-    {"slug": "journalism",             "name": "Journalism Library"},
-    {"slug": "music",                  "name": "Gabe M. Wiener Music & Arts Library",
-     "note": "In-person reference Mon–Fri during daytime hours only"},
-    {"slug": "social-work",            "name": "Social Work Library"},
-    {"slug": "business-manhattanville", "name": "S. Steven Pan '88 Business Library",
-     "note": "May close 1–2 PM for staff lunch. Geffen Hall access required."},
-    {"slug": "eastasian",              "name": "C. V. Starr East Asian Library"},
-    {"slug": "burke",                  "name": "The Burke Library at Union Theological Seminary",
-     "note": "Special Collections by appointment"},
-]
-
 BASE_URL = "https://hours.library.columbia.edu/locations"
-HEADERS = {
-    "User-Agent": "LionHour/1.0 (Columbia University student project)"
-}
+EASTERN = ZoneInfo("America/New_York")
+HEADERS = {"User-Agent": "LionHour/1.0 (Columbia University student project)"}
+
+# These identifiers are deliberately independent. id joins scraped data to the
+# existing frontend card; slug belongs to Columbia; venue_id belongs to LionHour.
+DISPLAYED_LIBRARIES = [
+    {"id": "butler_24", "slug": "butler-24", "venue_id": "butler", "name": "Butler Library"},
+    {"id": "science_engineering", "slug": "science-engineering", "venue_id": "noco", "name": "NoCo Library"},
+    {"id": "lehman", "slug": "lehman", "venue_id": "lehman", "name": "Lehman Social Sciences Library"},
+    {"id": "business", "slug": "business", "venue_id": "uris", "name": "Uris Library"},
+    {
+        "id": "avery",
+        "slug": "avery",
+        "venue_id": "avery",
+        "name": "Avery Library",
+        "note": "Service desk closes 15 min before the library",
+    },
+    {"id": "math", "slug": "math", "venue_id": "math", "name": "Mathematics Library"},
+]
+DISPLAYED_LIBRARY_IDS = {library["id"] for library in DISPLAYED_LIBRARIES}
+
+TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$")
+RANGE_RE = re.compile(
+    r"(\d{1,2}:\d{2}\s*[AaPp][Mm])\s*[-–—]\s*(\d{1,2}:\d{2}\s*[AaPp][Mm])"
+)
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+CANONICAL_TIME_RE = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 
 
-# ── Parsing ──────────────────────────────────────────────────────────
+class ScheduleParseError(ValueError):
+    """Raised when source markup contains hours that are not understood."""
 
-def parse_time(time_str: str) -> Optional[str]:
-    """Convert '9:00AM' or '12:30PM' to 24h 'HH:MM' format."""
-    time_str = time_str.strip().upper().replace(" ", "")
-    m = re.match(r"(\d{1,2}):(\d{2})\s*(AM|PM)", time_str)
-    if not m:
+
+def parse_time(value: str) -> str:
+    """Convert a 12-hour clock value to canonical 24-hour HH:MM."""
+    match = TIME_RE.fullmatch(value.strip())
+    if not match:
+        raise ScheduleParseError(f"unrecognized time: {value!r}")
+    hour, minute, meridiem = int(match.group(1)), int(match.group(2)), match.group(3).upper()
+    if hour < 1 or hour > 12 or minute > 59:
+        raise ScheduleParseError(f"invalid time: {value!r}")
+    if meridiem == "AM":
+        hour = 0 if hour == 12 else hour
+    elif hour != 12:
+        hour += 12
+    return f"{hour:02d}:{minute:02d}"
+
+
+def parse_hours_text(text: str) -> Optional[dict[str, str]]:
+    """Parse hours text, distinguishing a real closure from a parse failure."""
+    normalized = " ".join(text.split())
+    if normalized.casefold() == "closed":
         return None
-    h, mins, ampm = int(m.group(1)), m.group(2), m.group(3)
-    if ampm == "PM" and h != 12:
-        h += 12
-    elif ampm == "AM" and h == 12:
-        h = 0
-    return f"{h:02d}:{mins}"
+    match = RANGE_RE.search(normalized)
+    if not match:
+        raise ScheduleParseError(f"unrecognized hours text: {normalized!r}")
+    return {"open": parse_time(match.group(1)), "close": parse_time(match.group(2))}
 
 
-def parse_hours_text(text: str) -> Optional[dict]:
-    """
-    Parse a cell's text like '9:00AM-5:00PM' into {"open": "09:00", "close": "17:00"}.
-    Returns None if closed or unparseable.
-    """
-    text = text.strip()
-    if not text or text.lower() in ("closed", "tbd", ""):
-        return None
-
-    # Match pattern like "9:00AM-5:00PM" or "9:00AM - 5:00PM"
-    m = re.search(r"(\d{1,2}:\d{2}\s*[AaPp][Mm])\s*[-–]\s*(\d{1,2}:\d{2}\s*[AaPp][Mm])", text)
-    if not m:
-        return None
-
-    open_time = parse_time(m.group(1))
-    close_time = parse_time(m.group(2))
-    if open_time and close_time:
-        return {"open": open_time, "close": close_time}
-    return None
-
-
-def fetch_library_page(slug: str, date: Optional[str] = None) -> Optional[BeautifulSoup]:
-    """Fetch a library's hours page. date format: YYYY-MM-DD."""
+def fetch_library_page(slug: str, date_value: Optional[str] = None) -> Optional[BeautifulSoup]:
     url = f"{BASE_URL}/{slug}"
-    if date:
-        url += f"?date={date}"
+    if date_value:
+        url = f"{url}?date={date_value}"
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
-        resp.raise_for_status()
-        return BeautifulSoup(resp.text, "html.parser")
-    except requests.RequestException as e:
-        print(f"  [ERROR] Failed to fetch {slug}: {e}", file=sys.stderr)
+        response = requests.get(url, headers=HEADERS, timeout=20)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[ERROR] Failed to fetch {slug}: {exc}", file=sys.stderr)
         return None
+    return BeautifulSoup(response.text, "html.parser")
 
 
-def extract_schedule_from_page(soup: BeautifulSoup) -> dict:
-    """
-    Parse the hours table and return a dict mapping ISO date strings
-    to their hours: { "2026-08-18": {"open": "09:00", "close": "17:00"}, ... }
-    Dates with no hours or 'Closed' map to None.
-    """
-    schedule = {}
-
-    # The calendar table contains <td> cells with date info and hours.
-    # Strategy: find all <td> elements that contain a date pattern (YYYY-MM-DD)
-    # in their text or data attributes, then extract the hours text.
-
-    # Approach 1: Look for cells with ISO dates in text content
-    all_tds = soup.find_all("td")
-    for td in all_tds:
-        cell_text = td.get_text(separator=" ", strip=True)
-
-        # Look for ISO date pattern
-        date_match = re.search(r"(\d{4}-\d{2}-\d{2})", cell_text)
-        if not date_match:
+def extract_schedule_from_page(soup: BeautifulSoup) -> dict[str, Optional[dict[str, str]]]:
+    """Extract ISO-dated calendar cells from Columbia's location page."""
+    schedule: dict[str, Optional[dict[str, str]]] = {}
+    for cell in soup.select("td"):
+        date_element = cell.select_one(".fulldate")
+        date_value = date_element.get_text(strip=True) if date_element else cell.get("data-date")
+        if not date_value or not ISO_DATE_RE.fullmatch(date_value):
             continue
-
-        date_str = date_match.group(1)
-        # Remove the date from the text to find the hours
-        hours_text = cell_text.replace(date_str, "").strip()
-        # Also remove day numbers that might be in the cell
-        hours_text = re.sub(r"^\d{1,2}\s*", "", hours_text).strip()
-
-        schedule[date_str] = parse_hours_text(hours_text)
-
-    # Approach 2: If no ISO dates found, try data attributes
+        hours_element = cell.select_one(".day-hours")
+        if hours_element is None:
+            raise ScheduleParseError(f"{date_value}: missing .day-hours")
+        schedule[date_value] = parse_hours_text(hours_element.get_text(" ", strip=True))
     if not schedule:
-        for td in all_tds:
-            date_attr = td.get("data-date") or td.get("data-day")
-            if date_attr and re.match(r"\d{4}-\d{2}-\d{2}", date_attr):
-                hours_text = td.get_text(separator=" ", strip=True)
-                hours_text = re.sub(r"^\d{1,2}\s*", "", hours_text).strip()
-                schedule[date_attr] = parse_hours_text(hours_text)
-
-    # Approach 3: Try anchor tags or spans with dates
-    if not schedule:
-        for el in soup.find_all(["a", "span", "div"]):
-            text = el.get_text(strip=True)
-            date_match = re.match(r"(\d{4}-\d{2}-\d{2})", text)
-            if date_match:
-                parent_td = el.find_parent("td")
-                if parent_td:
-                    full_text = parent_td.get_text(separator=" ", strip=True)
-                    hours_text = full_text.replace(date_match.group(1), "").strip()
-                    hours_text = re.sub(r"^\d{1,2}\s*", "", hours_text).strip()
-                    schedule[date_match.group(1)] = parse_hours_text(hours_text)
-
+        raise ScheduleParseError("no dated calendar cells found")
     return schedule
 
 
-def dates_to_weekly_schedule(date_hours: dict, reference_date: datetime) -> list:
-    """
-    Convert a dict of {date_str: hours} into a weekly schedule structure.
-    Looks at the current week and next week to determine the pattern,
-    then builds schedule blocks with start/end dates.
-    """
+def _sunday_on_or_before(value: date) -> date:
+    return value - timedelta(days=(value.weekday() + 1) % 7)
+
+
+def _week_block(date_hours: dict, start: date, label: str) -> dict:
+    return {
+        "label": label,
+        "start": start.isoformat(),
+        "end": (start + timedelta(days=6)).isoformat(),
+        "hours": {
+            str(index): date_hours.get((start + timedelta(days=index)).isoformat())
+            for index in range(7)
+        },
+    }
+
+
+def dates_to_weekly_schedule(date_hours: dict, reference_date: datetime) -> list[dict]:
+    """Create exact Sunday–Saturday current and, when present, upcoming blocks."""
     if not date_hours:
         return []
-
-    # Sort dates
-    sorted_dates = sorted(date_hours.keys())
-    if not sorted_dates:
-        return []
-
-    # Group into weekly patterns
-    # Build a day-of-week → hours mapping for each contiguous stretch
-    # For simplicity, compute one weekly pattern from the current week's data
-
-    today = reference_date.date()
-    # Find the Sunday of the current week
-    week_start = today - timedelta(days=today.weekday() + 1)  # Monday=0, so +1 for Sunday
-    if today.weekday() == 6:  # If today is Sunday
-        week_start = today
-
-    # Collect hours for this week (Sun-Sat)
-    current_week = {}
-    for i in range(7):
-        d = week_start + timedelta(days=i)
-        ds = d.isoformat()
-        if ds in date_hours:
-            current_week[i] = date_hours[ds]
-        # i: 0=Sun, 1=Mon, ..., 6=Sat
-
-    # Also look at next week to see if the pattern changes
-    next_week_start = week_start + timedelta(days=7)
-    next_week = {}
-    for i in range(7):
-        d = next_week_start + timedelta(days=i)
-        ds = d.isoformat()
-        if ds in date_hours:
-            next_week[i] = date_hours[ds]
-
-    schedules = []
-
-    # Build a schedule block for the current data range
-    first_date = sorted_dates[0]
-    last_date = sorted_dates[-1]
-
-    # Use current week as the primary pattern
-    hours_map = {}
-    for dow in range(7):
-        if dow in current_week:
-            hours_map[str(dow)] = current_week[dow]
-        else:
-            hours_map[str(dow)] = None
-
-    schedules.append({
-        "label": "Current",
-        "start": first_date,
-        "end": last_date,
-        "hours": hours_map
-    })
-
-    # If next week has a different pattern, add it as a separate block
-    if next_week and next_week != current_week:
-        next_first = (next_week_start).isoformat()
-        next_hours_map = {}
-        for dow in range(7):
-            if dow in next_week:
-                next_hours_map[str(dow)] = next_week[dow]
-            else:
-                next_hours_map[str(dow)] = None
-        # Only add if meaningfully different
-        if next_hours_map != hours_map:
-            schedules.insert(0, {
-                "label": "Upcoming",
-                "start": next_first,
-                "end": last_date,
-                "hours": next_hours_map
-            })
-
+    current_start = _sunday_on_or_before(reference_date.date())
+    schedules = [_week_block(date_hours, current_start, "Current")]
+    next_start = current_start + timedelta(days=7)
+    next_dates = {(next_start + timedelta(days=index)).isoformat() for index in range(7)}
+    if any(day in date_hours for day in next_dates):
+        schedules.append(_week_block(date_hours, next_start, "Upcoming"))
     return schedules
 
 
-def scrape_library(lib_def: dict, reference_date: datetime) -> dict:
-    """Scrape a single library and return its data structure."""
-    slug = lib_def["slug"]
-    name = lib_def["name"]
-    note = lib_def.get("note")
+def _fallback_entry(definition: dict, reference_date: datetime) -> dict:
+    start = _sunday_on_or_before(reference_date.date())
+    return {
+        "id": definition["id"],
+        "name": definition["name"],
+        "url": f"{BASE_URL}/{definition['slug']}",
+        "note": definition.get("note") or "Hours unavailable — check Columbia Libraries website",
+        "temporarilyClosed": False,
+        "schedules": [_week_block({}, start, "Unknown")],
+        "scrapeFailed": True,
+    }
 
-    print(f"  Scraping {name} ({slug})...", file=sys.stderr)
 
-    # Fetch current month
-    soup = fetch_library_page(slug)
-    if not soup:
-        return make_fallback_entry(lib_def)
-
-    date_hours = extract_schedule_from_page(soup)
-
-    # Check if library is marked as temporarily closed
-    page_text = soup.get_text().lower()
-    temporarily_closed = (
-        "currently closed" in page_text
-        or "temporarily closed" in page_text
-        or "closed for renovation" in page_text
-        or "closed for upgrades" in page_text
+def scrape_library(
+    definition: dict,
+    reference_date: datetime,
+    fetcher: Callable = fetch_library_page,
+) -> dict:
+    """Fetch and parse one configured library without publishing guessed hours."""
+    soup = fetcher(definition["slug"], reference_date.date().isoformat())
+    if soup is None:
+        return _fallback_entry(definition, reference_date)
+    page_text = soup.get_text(" ", strip=True).casefold()
+    temporarily_closed = any(
+        phrase in page_text
+        for phrase in ("currently closed", "temporarily closed", "closed for renovation", "closed for upgrades")
     )
-
-    if temporarily_closed and not date_hours:
-        # Get the note from the page if we don't have one
-        if not note:
-            for p in soup.find_all("p"):
-                text = p.get_text(strip=True)
-                if "closed" in text.lower() and len(text) < 200:
-                    note = text
-                    break
-        return {
-            "id": slug.replace("-", "_"),
-            "name": name,
-            "url": f"{BASE_URL}/{slug}",
-            "note": note,
-            "temporarilyClosed": True,
-            "schedules": [{
-                "label": "Temporarily Closed",
-                "start": "2026-01-01",
-                "end": "2026-12-31",
-                "hours": {str(d): None for d in range(7)}
-            }]
-        }
-
-    # If we got date-hours, convert to weekly schedule
-    if date_hours:
-        schedules = dates_to_weekly_schedule(date_hours, reference_date)
-    else:
-        # Couldn't parse — check next month too
-        next_month = reference_date + timedelta(days=35)
-        next_date = next_month.strftime("%Y-%m-%d")
-        soup2 = fetch_library_page(slug, date=next_date)
-        if soup2:
-            date_hours2 = extract_schedule_from_page(soup2)
-            date_hours.update(date_hours2)
-        schedules = dates_to_weekly_schedule(date_hours, reference_date) if date_hours else []
-
+    try:
+        date_hours = extract_schedule_from_page(soup)
+    except ScheduleParseError as exc:
+        if not temporarily_closed:
+            print(f"[ERROR] Failed to parse {definition['slug']}: {exc}", file=sys.stderr)
+            return _fallback_entry(definition, reference_date)
+        date_hours = {}
+    start = _sunday_on_or_before(reference_date.date())
+    schedules = (
+        [_week_block({}, start, "Temporarily Closed")]
+        if temporarily_closed and not date_hours
+        else dates_to_weekly_schedule(date_hours, reference_date)
+    )
     if not schedules:
-        return make_fallback_entry(lib_def)
-
+        return _fallback_entry(definition, reference_date)
     return {
-        "id": slug.replace("-", "_"),
-        "name": name,
-        "url": f"{BASE_URL}/{slug}",
-        "note": note,
-        "temporarilyClosed": False,
-        "schedules": schedules
+        "id": definition["id"],
+        "name": definition["name"],
+        "url": f"{BASE_URL}/{definition['slug']}",
+        "note": definition.get("note"),
+        "temporarilyClosed": temporarily_closed,
+        "schedules": schedules,
     }
 
 
-def make_fallback_entry(lib_def: dict) -> dict:
-    """Return a minimal entry when scraping fails — marks hours as unknown."""
+def build_payload(reference_date: datetime, fetcher: Callable = fetch_library_page) -> dict:
+    if reference_date.tzinfo is None:
+        reference_date = reference_date.replace(tzinfo=EASTERN)
+    reference_date = reference_date.astimezone(EASTERN)
     return {
-        "id": lib_def["slug"].replace("-", "_"),
-        "name": lib_def["name"],
-        "url": f"{BASE_URL}/{lib_def['slug']}",
-        "note": lib_def.get("note", "Hours unavailable — check Columbia Libraries website"),
-        "temporarilyClosed": False,
-        "schedules": [{
-            "label": "Unknown",
-            "start": "2026-01-01",
-            "end": "2026-12-31",
-            "hours": {str(d): None for d in range(7)}
-        }],
-        "scrapeFailed": True
+        "schemaVersion": 1,
+        "generated": reference_date.isoformat(timespec="seconds"),
+        "generatedDisplay": reference_date.strftime("%B %-d, %Y at %-I:%M %p"),
+        "libraries": [scrape_library(item, reference_date, fetcher) for item in DISPLAYED_LIBRARIES],
     }
 
 
-# ── Main ─────────────────────────────────────────────────────────────
+def validate_publishable_payload(payload: object, required_ids: set[str]) -> list[str]:
+    """Return validation errors; an empty list means the snapshot is safe to publish."""
+    errors: list[str] = []
+    if not isinstance(payload, dict):
+        return ["payload must be an object"]
+    if payload.get("schemaVersion") != 1:
+        errors.append("schemaVersion must be 1")
+    try:
+        generated = datetime.fromisoformat(payload.get("generated", ""))
+        if generated.tzinfo is None:
+            raise ValueError
+        generated_day = generated.astimezone(EASTERN).date()
+    except (TypeError, ValueError):
+        errors.append("generated must be a timezone-aware ISO timestamp")
+        generated_day = None
 
-def main():
-    dry_run = "--dry-run" in sys.argv
-    now = datetime.now()
+    libraries = payload.get("libraries")
+    if not isinstance(libraries, list):
+        return errors + ["libraries must be an array"]
+    seen: set[str] = set()
+    for library in libraries:
+        if not isinstance(library, dict):
+            errors.append("library must be an object")
+            continue
+        library_id = library.get("id")
+        if not isinstance(library_id, str):
+            errors.append("library id must be a string")
+            continue
+        if library_id in seen:
+            errors.append(f"duplicate library: {library_id}")
+        seen.add(library_id)
+        if library.get("scrapeFailed") is True:
+            errors.append(f"{library_id}: scrape failed")
+        if not isinstance(library.get("temporarilyClosed"), bool):
+            errors.append(f"{library_id}: temporarilyClosed must be boolean")
+        url = library.get("url", "")
+        if not isinstance(url, str) or not url.startswith(f"{BASE_URL}/"):
+            errors.append(f"{library_id}: invalid Columbia hours URL")
+        schedules = library.get("schedules")
+        if not isinstance(schedules, list) or not schedules:
+            errors.append(f"{library_id}: schedules must be a non-empty array")
+            continue
+        active = None
+        for schedule in schedules:
+            if not isinstance(schedule, dict):
+                continue
+            try:
+                start = date.fromisoformat(schedule.get("start", ""))
+                end = date.fromisoformat(schedule.get("end", ""))
+            except (TypeError, ValueError):
+                errors.append(f"{library_id}: invalid schedule date range")
+                continue
+            hours = schedule.get("hours")
+            if not isinstance(hours, dict) or set(hours) != {str(index) for index in range(7)}:
+                errors.append(f"{library_id}: hours must contain days 0 through 6")
+                continue
+            for day, interval in hours.items():
+                if interval is None:
+                    continue
+                valid_interval = (
+                    isinstance(interval, dict)
+                    and set(interval) == {"open", "close"}
+                    and all(
+                        isinstance(interval.get(key), str)
+                        and CANONICAL_TIME_RE.fullmatch(interval[key])
+                        for key in ("open", "close")
+                    )
+                )
+                if not valid_interval:
+                    errors.append(f"{library_id}: invalid hours for day {day}")
+                elif library_id != "butler_24" and interval["close"] <= interval["open"]:
+                    error = f"{library_id}: overnight hours are not allowed"
+                    if error not in errors:
+                        errors.append(error)
+            if generated_day is not None and start <= generated_day <= end:
+                active = schedule
+        if active is None:
+            errors.append(f"{library_id}: no schedule covers generated date")
+        elif library.get("temporarilyClosed") and any(active["hours"].values()):
+            errors.append(f"{library_id}: temporarily closed schedule must contain only closed days")
 
-    print(f"LionHour Scraper — {now.strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
-    print(f"Scraping {len(LIBRARIES)} libraries...\n", file=sys.stderr)
+    for library_id in sorted(required_ids - seen):
+        errors.append(f"missing required library: {library_id}")
+    for library_id in sorted(seen - required_ids):
+        errors.append(f"unexpected library: {library_id}")
+    return errors
 
-    results = []
-    failed = []
 
-    for lib_def in LIBRARIES:
-        entry = scrape_library(lib_def, now)
-        results.append(entry)
-        if entry.get("scrapeFailed"):
-            failed.append(entry["name"])
+def _atomic_write(destination: Path, content: str) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", dir=destination.parent, delete=False) as handle:
+        handle.write(content)
+        temporary = Path(handle.name)
+    temporary.replace(destination)
 
-    # Build the JS output
-    timestamp = now.strftime("%B %d, %Y at %I:%M %p")
-    data_obj = {
-        "generated": now.isoformat(),
-        "generatedDisplay": timestamp,
-        "libraries": results
-    }
 
-    js_content = (
-        "// Auto-generated by scrape.py — do not edit by hand\n"
-        f"// Last updated: {timestamp}\n"
-        f"const LIONHOUR_DATA = {json.dumps(data_obj, indent=2)};\n"
-    )
-
-    if dry_run:
-        print(js_content)
+def main(argv: Optional[list[str]] = None, builder: Callable[[datetime], dict] = build_payload) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-run", action="store_true", help="print generated data.js")
+    parser.add_argument("--json-out", type=Path, help="write the validated JSON snapshot")
+    args = parser.parse_args(argv)
+    payload = builder(datetime.now(EASTERN))
+    errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
+    if errors:
+        for error in errors:
+            print(f"[VALIDATION] {error}", file=sys.stderr)
+        return 1
+    serialized = json.dumps(payload, indent=2) + "\n"
+    if args.json_out:
+        _atomic_write(args.json_out, serialized)
     else:
-        out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.js")
-        with open(out_path, "w") as f:
-            f.write(js_content)
-        print(f"\nWrote {out_path} ({len(js_content)} bytes)", file=sys.stderr)
-
-    # Summary
-    ok = len(results) - len(failed)
-    print(f"\nDone: {ok}/{len(results)} libraries scraped successfully.", file=sys.stderr)
-    if failed:
-        print(f"Failed: {', '.join(failed)}", file=sys.stderr)
-        print("(Failed libraries show 'Hours unavailable' on the site)", file=sys.stderr)
-
-    return 0 if not failed else 1
+        js = "// Auto-generated by scrape.py — do not edit by hand\n"
+        js += f"const LIONHOUR_DATA = {json.dumps(payload, indent=2)};\n"
+        if args.dry_run:
+            print(js, end="")
+        else:
+            _atomic_write(Path(__file__).with_name("data.js"), js)
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

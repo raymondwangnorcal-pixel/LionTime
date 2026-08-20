@@ -3,8 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const mockupPath = new URL('../mockup-campus.html', import.meta.url);
+const mockupPath = new URL('../mockup-campus-V1.html', import.meta.url);
 const html = readFileSync(mockupPath, 'utf8');
+const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1];
 
 if (!script) {
@@ -64,4 +65,12 @@ test('closes About when the visitor scrolls or presses outside it', () => {
   about.open = true;
   listeners.get('pointerdown')({ target: insidePanel });
   assert.equal(about.open, true);
+});
+
+test('renders embedded hours before guarded live hydration and exposes data status', () => {
+  assert.match(indexHtml, /id="library-hours-status"[^>]*data-kind="fallback"/);
+  const initialRender = indexHtml.lastIndexOf('updateClock();\nrender();');
+  const hydration = indexHtml.lastIndexOf('LionHourLibraryHours.hydrate');
+  assert.ok(initialRender >= 0 && hydration > initialRender);
+  assert.match(indexHtml, /if \(window\.LionHourLibraryHours\)/);
 });

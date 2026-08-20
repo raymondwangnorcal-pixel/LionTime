@@ -1,0 +1,42 @@
+name: Update library hours
+
+on:
+  schedule:
+    - cron: '17 */4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-library-hours
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Test scraper
+        run: python -m unittest tests/test_scrape.py -v
+      - name: Scrape current library hours
+        run: python scrape.py --json-out "$RUNNER_TEMP/library-hours.json"
+      - name: Publish validated snapshot
+        if: vars.LIBRARY_HOURS_PUBLISH_ENABLED == 'true'
+        env:
+          UPDATE_SECRET: ${{ secrets.LIBRARY_HOURS_UPDATE_SECRET }}
+          API_URL: ${{ vars.LIBRARY_HOURS_API_URL }}
+        run: >-
+          curl --fail-with-body --silent --show-error
+          --retry 3 --retry-all-errors
+          -X PUT "$API_URL"
+          -H "Authorization: Bearer $UPDATE_SECRET"
+          -H "Content-Type: application/json"
+          --data-binary "@$RUNNER_TEMP/library-hours.json"
