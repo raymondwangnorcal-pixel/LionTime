@@ -189,3 +189,11 @@
 - Supersedes: none
 - Evidence: Live Columbia Dining smoke tests on 2026-08-21 and `docs/superpowers/specs/2026-08-21-live-dining-hours-design.md`.
 - Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0013
+
+- Type: implementation
+- Implementation commit: `e68996b96ee1e600329db046fe180c41daa2e07b` — fix: run dining scraper in headed Chromium
+- Superseded by: none
+- Note: Headed Chromium under xvfb now retrieves and validates the official structured payload in live verification.
+- Privacy waivers: none
