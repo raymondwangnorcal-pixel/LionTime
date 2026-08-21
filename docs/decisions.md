@@ -133,3 +133,45 @@
 - Superseded by: DEC-0009
 - Note: The all-or-nothing rejection policy is replaced by a narrow explicit Lehman fallback; raw unapproved overnight intervals remain invalid.
 - Privacy waivers: none
+
+## DEC-0010 — Preserve unmatched cafés as static fallbacks
+
+- Date: 2026-08-20
+- Owner: user
+- Status at record: active
+- Decision: LionHour will mirror every current Columbia Dining location with live data while retaining Joe's NoCo, Café East, Joe's Journalism, and Joe's Dodge as static fallback cards.
+- Rationale: The live catalog should track Columbia's current feed without removing four existing café listings that remain useful to LionHour visitors.
+- Scope: Dining and café catalog membership, source mapping, frontend status labels, and fallback behavior.
+- Implementation: pending
+- Recorded against HEAD: `3280e4856a89ede45c6eaf93dcc0a7eac5777270`
+- Supersedes: none
+- Evidence: User-approved dining location policy in the implementation conversation on 2026-08-20.
+- Privacy waivers: none
+
+## DEC-0011 — Use a browser-backed independent dining pipeline
+
+- Date: 2026-08-21
+- Owner: user
+- Status at record: active
+- Decision: LionHour will use Playwright to read Columbia Dining's structured `dining_nodes` payload and publish a separately validated dining snapshot every four hours through its own API and Redis key.
+- Rationale: Columbia's plain HTTP and Drupal endpoints are Cloudflare-challenged, while a separate browser-backed pipeline preserves direct-source fidelity and isolates dining failures from library updates.
+- Scope: Dining source acquisition, snapshot schema, GitHub Actions delivery, Vercel API, Redis storage, and failure policy.
+- Implementation: pending
+- Recorded against HEAD: `3280e4856a89ede45c6eaf93dcc0a7eac5777270`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-21-live-dining-hours-design.md` and user approval on 2026-08-21.
+- Privacy waivers: none
+
+## DEC-0012 — Treat structured dining intervals as authoritative
+
+- Date: 2026-08-21
+- Owner: user
+- Status at record: active
+- Decision: LionHour will calculate dining availability from Columbia's structured daily intervals and preserve `displayed_hours` only as descriptive source status, including exact closure messages when no intervals exist.
+- Rationale: This mirrors the official day selector without guessing times from prose and still communicates statuses such as Closed for Summer.
+- Scope: Dining normalization, schema, client overlay, status rendering, and source-data conflict handling.
+- Implementation: pending
+- Recorded against HEAD: `3280e4856a89ede45c6eaf93dcc0a7eac5777270`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-21-live-dining-hours-design.md` and user approval on 2026-08-21.
+- Privacy waivers: none

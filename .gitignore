@@ -1,6 +1,7 @@
 scrape.log
 data.js
 node_modules/
+.worktrees/
 .venv/
 __pycache__/
 *.pyc
