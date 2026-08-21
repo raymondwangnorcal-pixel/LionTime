@@ -197,3 +197,27 @@
 - Superseded by: none
 - Note: Headed Chromium under xvfb now retrieves and validates the official structured payload in live verification.
 - Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0010
+
+- Type: implementation
+- Implementation commit: `619c0eb34e1115b653529bf9f9a9eba467bb9fed` — feat: overlay live dining hours in frontend
+- Superseded by: none
+- Note: The client now overlays all sixteen matched locations while retaining the four unmatched café cards as embedded fallbacks.
+- Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0011
+
+- Type: implementation
+- Implementation commit: `c78ed77b7ae4fe2dd98295a5251a044d30954416` — feat: publish dining hours independently
+- Superseded by: none
+- Note: The separate Playwright, API, Redis, and scheduled publishing path is now implemented independently of library updates.
+- Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0012
+
+- Type: implementation
+- Implementation commit: `e62c9e4a67be52ca2a0419e9aa08d65a2485a2d8` — feat: normalize Columbia dining hours
+- Superseded by: none
+- Note: Structured daily intervals now drive availability while descriptive and exact closure statuses are preserved.
+- Privacy waivers: none
