@@ -5,6 +5,9 @@
   "outputDirectory": ".",
   "cleanUrls": true,
   "functions": {
+    "api/dining-hours.js": {
+      "maxDuration": 10
+    },
     "api/library-hours.js": {
       "maxDuration": 10
     }
