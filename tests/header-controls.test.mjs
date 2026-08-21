@@ -75,3 +75,13 @@ test('renders embedded hours before guarded live hydration and exposes data stat
   assert.match(indexHtml, /if \(window\.LionHourLibraryHours\)/);
   assert.match(indexHtml, /5 of 6 live/);
 });
+
+test('loads dining live data after static cards and identifies static café fallbacks', () => {
+  assert.match(indexHtml, /id="dining-hours-status"[^>]*data-kind="fallback"/);
+  assert.match(indexHtml, /assets\/dining-hours\.js/);
+  assert.match(indexHtml, /id:'facultyhouse-4'/);
+  assert.match(indexHtml, /id:'smith-dining'/);
+  assert.match(indexHtml, /LionHourDiningHours\.hydrate/);
+  assert.match(indexHtml, /16 of 20 live/);
+  assert.match(indexHtml, /4 cafés using embedded schedules/);
+});

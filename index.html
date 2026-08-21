@@ -205,7 +205,7 @@
 
   .cols, .row {
     display: grid;
-    grid-template-columns: 12px minmax(0,2fr) minmax(0,1.9fr) 86px 14px;
+    grid-template-columns: 12px minmax(0,2fr) minmax(0,1.9fr) 132px 14px;
     align-items: center; gap: 0.85rem;
   }
   .cols {
@@ -294,7 +294,7 @@
   .footer a:hover { text-decoration: underline; }
   .footer-sub { margin-top: 0.45rem; font-size: 0.72rem; opacity: 0.8; line-height: 1.6; }
   .library-hours-status {
-    margin-top: 0.55rem; font-size: 0.72rem; line-height: 1.5;
+    display: block; margin-top: 0.55rem; font-size: 0.72rem; line-height: 1.5;
   }
   .library-hours-status[data-kind="live"] { color: #28753f; }
   .library-hours-status[data-kind="partial"],
@@ -303,7 +303,7 @@
 
   /* ── Responsive ────────────────────────────────── */
   @media (max-width: 860px) {
-    .cols, .row { grid-template-columns: 12px minmax(0,1.7fr) minmax(0,1.5fr) 82px 14px; }
+    .cols, .row { grid-template-columns: 12px minmax(0,1.7fr) minmax(0,1.5fr) 116px 14px; }
   }
   /* Below 620px the row becomes two lines: name + status, hours beneath. */
   @media (max-width: 620px) {
@@ -384,9 +384,14 @@
      href="https://hours.library.columbia.edu/" target="_blank" rel="noopener noreferrer">
     Library hours: embedded fallback · Verify before you go
   </a>
+  <a class="library-hours-status" id="dining-hours-status" data-kind="fallback" role="status"
+     href="https://dining.columbia.edu/content/locations-hours" target="_blank" rel="noopener noreferrer">
+    Dining hours: embedded fallback · Verify before you go
+  </a>
 </footer>
 
 <script src="assets/library-hours.js"></script>
+<script src="assets/dining-hours.js"></script>
 
 <script>
 /* ══════════════════════════════════════════════════
@@ -463,6 +468,9 @@ const VENUES = [
     hours: D([['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],
              [['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],null,null,null) },
 
+  { id:'facultyhouse-4', name:'Faculty House — 4th Floor', cat:'dining', loc:'64 Morningside Dr',
+    hours: ALL(null), note:'Live Columbia Dining schedule loads when available.' },
+
   { id:'facshack', name:'Fac Shack', cat:'dining', loc:'Faculty House patio',
     hours: D([['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],
              null,null,[['15:00','20:00']]) },
@@ -471,6 +479,9 @@ const VENUES = [
     hours: D([['11:00','15:00']],[['11:00','15:00']],[['11:00','15:00']],
              [['11:00','15:00'],['19:00','23:00']],[['11:00','15:00'],['19:00','23:00']],
              [['19:00','23:00']],[['18:00','22:00']]) },
+
+  { id:'smith-dining', name:'Robert F. Smith Dining Hall', cat:'dining', loc:'Columbia Business School',
+    hours: ALL(null), note:'Live Columbia Dining schedule loads when available.' },
 
   /* ── CAFES ──────────────────────────────────────── */
   { id:'bj-butler', name:'Butler Cafe', cat:'cafe', loc:'Butler Library, 1st fl',
@@ -602,6 +613,16 @@ function dayHours(venue, dow) {
   return Array.isArray(h) ? h : [];
 }
 
+function sourceStatus(venue, dow) {
+  const value = venue.sourceStatuses?.[((dow % 7) + 7) % 7];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function sourceClosureStatus(venue, dow) {
+  const value = sourceStatus(venue, dow);
+  return value && /^closed\b/i.test(value) ? value : null;
+}
+
 /* An interval ending exactly at midnight continues into the next day if that
    day opens at 00:00 — e.g. Butler runs Sun 9 AM straight through Fri 11 PM.
    Returns the true closing time in minutes from the start of `dow`. */
@@ -649,6 +670,7 @@ function describeClose(endAbs, dow) {
    ══════════════════════════════════════════════════ */
 function getStatus(venue, now) {
   const CLOSING_SOON = 60; // minutes
+  const closureLabel = sourceClosureStatus(venue, now.dow);
 
   // 1. Currently inside an open interval (including ones spanning midnight)
   for (const iv of activeIntervals(venue, now.dow)) {
@@ -671,14 +693,14 @@ function getStatus(venue, now) {
           : offset === 1 ? 'tomorrow'
           : DAY_NAMES[(now.dow + offset) % 7];
         return {
-          status: 'closed', label: 'Closed',
+          status: 'closed', label: closureLabel || 'Closed',
           detail: `Opens <span class="time-value">${fmt12(toMin(iv[0]))} ${when}</span>`,
         };
       }
     }
   }
 
-  return { status: 'closed', label: 'Closed', detail: 'No upcoming hours listed' };
+  return { status: 'closed', label: closureLabel || 'Closed', detail: 'No upcoming hours listed' };
 }
 
 /* Every open block that OVERLAPS today — not just the ones published under
@@ -698,7 +720,7 @@ function todayHoursText(venue, now) {
     if (last && s.start <= last.end) last.end = Math.max(last.end, s.end);
     else merged.push({ start: s.start, end: s.end });
   }
-  if (!merged.length) return 'Closed today';
+  if (!merged.length) return sourceClosureStatus(venue, now.dow) || 'Closed today';
 
   return merged.map(iv => {
     if (iv.start <= 0 && iv.end >= 1440) return 'Open 24 hours';
@@ -754,7 +776,7 @@ function weekHTML(v, now) {
     const h = dayHours(v, dow);
     return `<div class="wk-row${i === 0 ? ' today' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
-      <span>${h.length ? h.map(fmtRange).join(', ') : 'Closed'}</span>
+      <span>${h.length ? h.map(fmtRange).join(', ') : sourceClosureStatus(v, dow) || 'Closed'}</span>
     </div>`;
   }).join('');
 }
@@ -773,6 +795,7 @@ function rowHTML(v, now) {
     </button>
     <div class="detail">
       <div class="week">${weekHTML(v, now)}</div>
+      ${v.sourceNote ? `<div class="note">Columbia Dining: ${v.sourceNote}</div>` : ''}
       ${v.note ? `<div class="note">${v.note}</div>` : ''}
       ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
     </div>
@@ -914,6 +937,20 @@ function setLibraryHoursStatus(status) {
   element.textContent = `${prefix}: ${generated} ET${fallback}`;
 }
 
+function setDiningHoursStatus(status) {
+  const element = document.getElementById('dining-hours-status');
+  element.dataset.kind = status.kind;
+  if (status.kind === 'fallback') {
+    element.textContent = 'Dining hours: embedded fallback · Verify before you go';
+    return;
+  }
+  const generated = new Date(status.generated).toLocaleString('en-US', {
+    timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
+  });
+  const prefix = status.kind === 'stale' ? 'Dining hours may be stale' : 'Dining hours updated';
+  element.textContent = `${prefix}: ${generated} ET · 16 of 20 live; 4 cafés using embedded schedules`;
+}
+
 function easternISODate() {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -929,6 +966,14 @@ if (window.LionHourLibraryHours) {
     venues: VENUES,
     render,
     setStatus: setLibraryHoursStatus,
+    today: easternISODate(),
+  });
+}
+if (window.LionHourDiningHours) {
+  LionHourDiningHours.hydrate({
+    venues: VENUES,
+    render,
+    setStatus: setDiningHoursStatus,
     today: easternISODate(),
   });
 }
