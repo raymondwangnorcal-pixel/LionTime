@@ -221,3 +221,17 @@
 - Superseded by: none
 - Note: Structured daily intervals now drive availability while descriptive and exact closure statuses are preserved.
 - Privacy waivers: none
+
+## DEC-0014 — Use an independent recreation-hours pipeline
+
+- Date: 2026-08-21
+- Owner: user
+- Status at record: active
+- Decision: LionHour will publish Dodge Fitness Center and Uris Pool through a separate browser-backed recreation-hours pipeline, with Uris Pool inheriting Dodge closures while retaining its own hours and independent maintenance closures.
+- Rationale: Recreation data needs source-specific acquisition and parent-facility rules without coupling failures to library or dining updates.
+- Scope: Recreation source acquisition, snapshot schema, scheduled publishing, Vercel API, Redis storage, frontend overlay, maintenance statuses, and fallback behavior.
+- Implementation: pending
+- Recorded against HEAD: `f04e58586c4e2f53995850967b0bbbe927dadee8`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-21-live-recreation-hours-design.md` and user approval on 2026-08-21.
+- Privacy waivers: none
