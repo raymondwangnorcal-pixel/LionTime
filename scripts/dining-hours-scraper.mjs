@@ -1,3 +1,6 @@
+import { writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+
 const SOURCE_URL = 'https://dining.columbia.edu/content/locations-hours';
 
 export const DINING_LOCATION_MAP = Object.freeze({
@@ -196,6 +199,48 @@ export function buildDiningSnapshot(dataset, generated = new Date()) {
     windowEnd: dates.at(-1),
     locations,
   };
+}
+
+export async function scrapeDiningHours({ outputPath, now = new Date(), chromiumImpl } = {}) {
+  if (typeof outputPath !== 'string' || !outputPath.trim()) {
+    throw new Error('--json-out requires a path');
+  }
+  const chromium = chromiumImpl || (await import('playwright')).chromium;
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({ timezoneId: 'America/New_York' });
+    await page.goto(SOURCE_URL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+    await page.waitForFunction(
+      () => typeof globalThis.dining_nodes === 'string',
+      { timeout: 90_000 },
+    );
+    const raw = await page.evaluate(() => globalThis.dining_nodes);
+    const snapshot = buildDiningSnapshot(parseDiningNodes(raw), now);
+    await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
+    return snapshot;
+  } finally {
+    await browser.close();
+  }
+}
+
+function outputPathFromArgs(args) {
+  const index = args.indexOf('--json-out');
+  if (index < 0 || !args[index + 1] || args[index + 1].startsWith('--')) {
+    throw new Error('--json-out requires a path');
+  }
+  return args[index + 1];
+}
+
+const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
+if (invokedPath === import.meta.url) {
+  scrapeDiningHours({ outputPath: outputPathFromArgs(process.argv.slice(2)) })
+    .then((snapshot) => {
+      process.stdout.write(`Published ${snapshot.locations.length} dining locations through ${snapshot.windowEnd}\n`);
+    })
+    .catch((error) => {
+      process.stderr.write(`Dining scrape failed: ${error?.message || 'unknown error'}\n`);
+      process.exitCode = 1;
+    });
 }
 
 export { SOURCE_URL };

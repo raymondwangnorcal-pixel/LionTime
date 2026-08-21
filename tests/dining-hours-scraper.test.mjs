@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { mkdtemp, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import {
   DINING_LOCATION_MAP,
   buildDiningSnapshot,
   parseDiningNodes,
+  scrapeDiningHours,
 } from '../scripts/dining-hours-scraper.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/dining-nodes.json', import.meta.url), 'utf8'));
@@ -23,7 +27,7 @@ function closedPeriod(status = 'Closed for Summer') {
 }
 
 function completeDataset() {
-  const byId = new Map(fixture.nodes.map((node) => [String(node.nid), node]));
+  const byId = new Map(structuredClone(fixture).nodes.map((node) => [String(node.nid), node]));
   return {
     nodes: Object.entries(DINING_LOCATION_MAP).map(([sourceId, mapping]) => byId.get(sourceId) || {
       nid: sourceId,
@@ -87,4 +91,57 @@ test('rejects missing official locations and malformed time values', () => {
   const malformed = completeDataset();
   malformed.nodes[0].open_hours_fields[0].days.days_friday = [{ hours_from: '25:00', hours_to: '14:00' }];
   assert.throws(() => buildDiningSnapshot(malformed, new Date('2026-08-21T12:00:00Z')), /invalid dining time/);
+});
+
+test('acquires dining_nodes through a browser and always closes Chromium', async () => {
+  const calls = [];
+  const page = {
+    async goto(url, options) { calls.push(['goto', url, options]); },
+    async waitForFunction(_fn, options) { calls.push(['waitForFunction', options]); },
+    async evaluate() { calls.push(['evaluate']); return JSON.stringify(completeDataset()); },
+  };
+  const browser = {
+    async newPage() { calls.push(['newPage']); return page; },
+    async close() { calls.push(['close']); },
+  };
+  const chromiumImpl = {
+    async launch(options) { calls.push(['launch', options]); return browser; },
+  };
+  const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-'));
+  const outputPath = join(directory, 'snapshot.json');
+
+  const snapshot = await scrapeDiningHours({
+    outputPath,
+    now: new Date('2026-08-21T12:00:00Z'),
+    chromiumImpl,
+  });
+
+  assert.equal(snapshot.locations.length, 16);
+  assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), snapshot);
+  assert.equal(calls[0][0], 'launch');
+  assert.equal(calls.at(-1)[0], 'close');
+  assert.match(calls.find(([name]) => name === 'goto')[1], /^https:\/\/dining\.columbia\.edu\//);
+  assert.ok(calls.some(([name]) => name === 'waitForFunction'));
+  assert.ok(calls.some(([name]) => name === 'evaluate'));
+});
+
+test('closes Chromium when page acquisition fails', async () => {
+  let closed = false;
+  const chromiumImpl = {
+    async launch() {
+      return {
+        async newPage() {
+          return {
+            async goto() { throw new Error('challenge did not complete'); },
+          };
+        },
+        async close() { closed = true; },
+      };
+    },
+  };
+  await assert.rejects(
+    scrapeDiningHours({ outputPath: '/tmp/unused-dining.json', chromiumImpl }),
+    /challenge did not complete/,
+  );
+  assert.equal(closed, true);
 });
