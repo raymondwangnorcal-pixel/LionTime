@@ -235,3 +235,17 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/specs/2026-08-21-live-recreation-hours-design.md` and user approval on 2026-08-21.
 - Privacy waivers: none
+
+## DEC-0015 — Expand Recreation coverage and prioritize specific official notices
+
+- Date: 2026-08-21
+- Owner: user
+- Status at record: active
+- Decision: LionHour will cover Dodge, its five independently scheduled spaces, Uris Pool, Barnard Fitness Center, and explicitly confirmed student-accessible facilities while resolving official sources by specificity, effective date, and modification priority without inventing missing hours.
+- Rationale: Building-wide schedules alone can misrepresent room, pool, event, seasonal, maintenance, reservation, and access availability.
+- Scope: Recreation catalog, source policy, seasonal resolution, modified-hours handling, nested Dodge UI, Barnard access, conflict states, and validation.
+- Implementation: pending
+- Recorded against HEAD: `00766b89ed75cced738839bff33751adc1475a86`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-21-live-recreation-hours-design.md`, `docs/superpowers/plans/2026-08-21-live-recreation-hours.md`, and user approval on 2026-08-21.
+- Privacy waivers: none
