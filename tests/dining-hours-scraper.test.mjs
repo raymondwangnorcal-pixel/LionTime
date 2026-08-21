@@ -83,6 +83,25 @@ test('preserves legitimate overnight intervals', () => {
   );
 });
 
+test('normalizes Columbia live ISO dates, compact times, array days, and display titles', () => {
+  const dataset = completeDataset();
+  const johnJay = dataset.nodes.find(({ nid }) => String(nid) === '10');
+  johnJay.open_hours_fields = [{
+    date_from: '2026-08-21T04:00:00',
+    date_to: '2026-09-04T03:59:59',
+    displayed_hours: [{ title: 'Summer Hours' }],
+    excluded: [],
+    days: [{
+      days_friday: [{ hours_from: '930', hours_to: '2100' }],
+    }],
+  }];
+  const snapshot = buildDiningSnapshot(dataset, new Date('2026-08-21T12:00:00Z'));
+  const day = snapshot.locations.find(({ id }) => id === 'johnjay').days[0];
+  assert.deepEqual(day, {
+    date: '2026-08-21', intervals: [['09:30', '21:00']], status: 'Summer Hours',
+  });
+});
+
 test('rejects missing official locations and malformed time values', () => {
   const missing = completeDataset();
   missing.nodes.pop();
@@ -97,7 +116,7 @@ test('acquires dining_nodes through a browser and always closes Chromium', async
   const calls = [];
   const page = {
     async goto(url, options) { calls.push(['goto', url, options]); },
-    async waitForFunction(_fn, options) { calls.push(['waitForFunction', options]); },
+    async waitForFunction(_fn, argument, options) { calls.push(['waitForFunction', argument, options]); },
     async evaluate() { calls.push(['evaluate']); return JSON.stringify(completeDataset()); },
   };
   const browser = {
@@ -119,9 +138,11 @@ test('acquires dining_nodes through a browser and always closes Chromium', async
   assert.equal(snapshot.locations.length, 16);
   assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), snapshot);
   assert.equal(calls[0][0], 'launch');
+  assert.deepEqual(calls[0][1], { headless: false });
   assert.equal(calls.at(-1)[0], 'close');
   assert.match(calls.find(([name]) => name === 'goto')[1], /^https:\/\/dining\.columbia\.edu\//);
   assert.ok(calls.some(([name]) => name === 'waitForFunction'));
+  assert.deepEqual(calls.find(([name]) => name === 'waitForFunction').slice(1), [null, { timeout: 90_000 }]);
   assert.ok(calls.some(([name]) => name === 'evaluate'));
 });
 

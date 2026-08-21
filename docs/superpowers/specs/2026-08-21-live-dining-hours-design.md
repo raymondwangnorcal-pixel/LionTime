@@ -8,7 +8,7 @@ Add a failure-resilient live data path for Columbia Dining halls and cafés whil
 
 The official source is `https://dining.columbia.edu/content/locations-hours`. The page is protected by a Cloudflare managed challenge and rejects plain HTTP clients, including direct Drupal JSON requests. Its client-side day selector reads a structured global named `dining_nodes`, which contains location IDs, active date ranges, excluded dates, daily intervals, and display labels.
 
-A dedicated Node.js Playwright scraper will load the official page in headless Chromium, wait for `window.dining_nodes`, retrieve that value directly from the page runtime, and parse it as JSON. It will not scrape rendered cards. It will not attempt to solve interactive CAPTCHAs or copy browser cookies. If the managed challenge does not complete or the structured value is missing, the run fails without publishing.
+A dedicated Node.js Playwright scraper will load the official page in headed Chromium inside GitHub Actions' virtual X display, wait for `window.dining_nodes`, retrieve that value directly from the page runtime, and parse it as JSON. Live verification showed that Columbia's managed challenge remains on its interstitial in headless mode but completes without interaction in a fresh headed Chromium profile. The scraper will not scrape rendered cards, solve interactive CAPTCHAs, or copy browser cookies. If the managed challenge does not complete or the structured value is missing, the run fails without publishing.
 
 ## Catalog policy
 
@@ -82,7 +82,7 @@ Validation requires exactly the 16 mapped live IDs, the matching source IDs and 
 
 Dining uses a separate Redis key, `lionhour:dining-hours:v1`, and a separate Vercel function at `/api/dining-hours`. GET is public and cached for five minutes with stale-while-revalidate. PUT uses the existing `LIBRARY_HOURS_UPDATE_SECRET`, constant-time bearer-token comparison, and validates the entire snapshot before replacing Redis.
 
-`.github/workflows/update-dining-hours.yml` runs every four hours on an offset schedule, supports manual dispatch, uses read-only repository permissions, installs Playwright Chromium, runs focused tests, scrapes, and publishes only when `DINING_HOURS_PUBLISH_ENABLED` equals `true`. It reads the destination from `DINING_HOURS_API_URL` and the shared secret from `LIBRARY_HOURS_UPDATE_SECRET`.
+`.github/workflows/update-dining-hours.yml` runs every four hours on an offset schedule, supports manual dispatch, uses read-only repository permissions, installs Playwright Chromium, runs focused tests, starts the scraper through `xvfb-run`, and publishes only when `DINING_HOURS_PUBLISH_ENABLED` equals `true`. It reads the destination from `DINING_HOURS_API_URL` and the shared secret from `LIBRARY_HOURS_UPDATE_SECRET`.
 
 Library and dining publishing are independent. A dining scrape, validation, or publish failure leaves the prior dining snapshot intact and cannot block library updates.
 
@@ -95,4 +95,3 @@ Two new embedded cards are added for Faculty House 4th Floor and Robert F. Smith
 ## Verification
 
 Unit tests cover structured payload parsing, active periods, excluded dates, split and overnight intervals, status preservation, schema validation, API authentication and storage failures, client-side atomic application and fallback, catalog mapping, and workflow security/schedule configuration. The full Node test suite and Python library scraper suite must remain green. A live scraper smoke test writes a temporary snapshot and validates it without publishing.
-

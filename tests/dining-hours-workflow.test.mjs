@@ -19,7 +19,7 @@ test('workflow installs Chromium, tests, scrapes, and publishes behind configura
   assert.match(workflow, /npm ci/);
   assert.match(workflow, /npx playwright install --with-deps chromium/);
   assert.match(workflow, /node --test tests\/dining-hours-/);
-  assert.match(workflow, /node scripts\/dining-hours-scraper\.mjs --json-out/);
+  assert.match(workflow, /xvfb-run --auto-servernum node scripts\/dining-hours-scraper\.mjs --json-out/);
   assert.match(workflow, /vars\.DINING_HOURS_PUBLISH_ENABLED == 'true'/);
   assert.match(workflow, /vars\.DINING_HOURS_API_URL/);
   assert.match(workflow, /secrets\.LIBRARY_HOURS_UPDATE_SECRET/);

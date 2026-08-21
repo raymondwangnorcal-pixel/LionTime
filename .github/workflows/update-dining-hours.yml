@@ -29,7 +29,7 @@ jobs:
       - name: Test dining pipeline
         run: node --test tests/dining-hours-*.test.mjs
       - name: Scrape current dining hours
-        run: node scripts/dining-hours-scraper.mjs --json-out "$RUNNER_TEMP/dining-hours.json"
+        run: xvfb-run --auto-servernum node scripts/dining-hours-scraper.mjs --json-out "$RUNNER_TEMP/dining-hours.json"
       - name: Publish validated snapshot
         if: vars.DINING_HOURS_PUBLISH_ENABLED == 'true'
         env:

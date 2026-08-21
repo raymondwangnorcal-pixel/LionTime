@@ -54,11 +54,19 @@ function sourceDate(value, field) {
   if (typeof value === 'number' && Number.isFinite(value)) return easternDate(new Date(value * 1000));
   if (typeof value === 'string' && /^\d+$/.test(value)) return easternDate(new Date(Number(value) * 1000));
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
   throw new Error(`invalid ${field}`);
 }
 
 function cleanStatus(value) {
   if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) {
+    const parts = value.map((item) => cleanStatus(item)).filter(Boolean);
+    return parts.length ? parts.join(' · ') : null;
+  }
+  if (isRecord(value)) return cleanStatus(value.title ?? value.value ?? value.text);
   const cleaned = String(value).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ')
     .replace(/\s+/g, ' ').trim();
   return cleaned || null;
@@ -66,6 +74,14 @@ function cleanStatus(value) {
 
 function normalizeTime(value, allow24 = false) {
   const raw = String(value ?? '').trim();
+  const compact = raw.match(/^(\d{1,2})(\d{2})$/);
+  if (compact) {
+    const hour = Number(compact[1]);
+    const minute = Number(compact[2]);
+    if (minute < 60 && (hour < 24 || (allow24 && hour === 24 && minute === 0))) {
+      return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    }
+  }
   const twentyFour = raw.match(/^(\d{1,2}):(\d{2})$/);
   if (twentyFour) {
     const hour = Number(twentyFour[1]);
@@ -129,7 +145,10 @@ function periodsFor(node) {
 
 function intervalsFor(period, date) {
   const dayIndex = new Date(`${date}T12:00:00Z`).getUTCDay();
-  const values = period.days?.[DAY_KEYS[dayIndex]] ?? [];
+  const dayValues = Array.isArray(period.days)
+    ? period.days.find((item) => isRecord(item) && DAY_KEYS[dayIndex] in item)
+    : period.days;
+  const values = dayValues?.[DAY_KEYS[dayIndex]] ?? [];
   if (!Array.isArray(values)) throw new Error(`invalid intervals for ${date}`);
   return values.map((interval) => {
     if (!isRecord(interval)) throw new Error(`invalid interval for ${date}`);
@@ -206,12 +225,13 @@ export async function scrapeDiningHours({ outputPath, now = new Date(), chromium
     throw new Error('--json-out requires a path');
   }
   const chromium = chromiumImpl || (await import('playwright')).chromium;
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: false });
   try {
     const page = await browser.newPage({ timezoneId: 'America/New_York' });
     await page.goto(SOURCE_URL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
     await page.waitForFunction(
       () => typeof globalThis.dining_nodes === 'string',
+      null,
       { timeout: 90_000 },
     );
     const raw = await page.evaluate(() => globalThis.dining_nodes);

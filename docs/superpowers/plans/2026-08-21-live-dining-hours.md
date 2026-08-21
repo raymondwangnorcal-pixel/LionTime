@@ -53,7 +53,7 @@
 
 - [ ] **Step 1: Add failing dependency-injection and CLI argument tests** proving the scraper waits for and evaluates `window.dining_nodes`, closes Chromium in `finally`, and rejects a missing output path.
 - [ ] **Step 2: Run the focused test** and confirm the new acquisition tests fail.
-- [ ] **Step 3: Add Playwright as a development dependency** and implement browser launch, navigation, structured-global extraction, snapshot normalization, JSON output, and guaranteed cleanup.
+- [ ] **Step 3: Add Playwright as a development dependency** and implement headed browser launch, navigation, structured-global extraction, snapshot normalization, JSON output, and guaranteed cleanup.
 - [ ] **Step 4: Run the focused test** and confirm the acquisition tests pass without launching a real browser.
 
 ### Task 3: Snapshot schema, store, and service
@@ -91,7 +91,7 @@
 
 - [ ] **Step 1: Write a failing workflow/configuration test** requiring four-hour cadence, manual dispatch, read-only permissions, Playwright browser installation, focused tests, the publish gate, destination variable, and shared secret.
 - [ ] **Step 2: Run `node --test tests/dining-hours-workflow.test.mjs`** and confirm failure because the workflow is absent.
-- [ ] **Step 3: Implement the thin API handler and independent workflow** with a ten-minute timeout, Chromium installation, temporary JSON output, curl retries, and no repository writes.
+- [ ] **Step 3: Implement the thin API handler and independent workflow** with a ten-minute timeout, Chromium installation, an `xvfb-run` virtual display, temporary JSON output, curl retries, and no repository writes.
 - [ ] **Step 4: Run the focused workflow and service tests** and confirm they pass.
 
 ### Task 5: Atomic browser overlay and source statuses
@@ -125,4 +125,3 @@
 - [ ] **Step 3: Run `git diff --check` and inspect `git status --short`.**
 - [ ] **Step 4: Run the live scraper to a temporary path and validate the resulting snapshot without publishing.**
 - [ ] **Step 5: Reconcile the approved dining decisions with the implementation state through the decision tracker.**
-

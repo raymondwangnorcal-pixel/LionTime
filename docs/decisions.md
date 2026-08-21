@@ -175,3 +175,17 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/specs/2026-08-21-live-dining-hours-design.md` and user approval on 2026-08-21.
 - Privacy waivers: none
+
+## DEC-0013 — Run dining Chromium in a virtual display
+
+- Date: 2026-08-21
+- Owner: agent
+- Status at record: active
+- Decision: The scheduled dining scraper will run headed Playwright Chromium inside `xvfb` instead of using Playwright's headless mode.
+- Rationale: Repeated live tests showed that both bundled Chromium and standard Chrome remained on Columbia's managed challenge in headless mode, while fresh headed profiles loaded the official structured payload without interaction.
+- Scope: Dining scraper launch configuration, GitHub Actions runtime, live verification, and operational documentation.
+- Implementation: pending
+- Recorded against HEAD: `619c0eb34e1115b653529bf9f9a9eba467bb9fed`
+- Supersedes: none
+- Evidence: Live Columbia Dining smoke tests on 2026-08-21 and `docs/superpowers/specs/2026-08-21-live-dining-hours-design.md`.
+- Privacy waivers: none
