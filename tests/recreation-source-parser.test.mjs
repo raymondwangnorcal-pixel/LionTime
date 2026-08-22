@@ -53,6 +53,20 @@ test('parses specific closures, reasons, and maintenance without guessing', asyn
   assert.equal(find(evidence, 'blue-gym').availabilityType, 'reservation-required');
 });
 
+test('rejects a date section instead of dropping an unsupported known-target sibling', async () => {
+  const html = await readFixture('recreation-columbia-modifications-partial-known-target.html');
+
+  assert.deepEqual(parseColumbiaModifications(html), []);
+  assert.equal(isSafeEmptyColumbiaModificationsPage(html), false);
+});
+
+test('safe-empty rejects a known target beneath an unrecognized sibling section', async () => {
+  const html = await readFixture('recreation-columbia-modifications-unrecognized-section.html');
+
+  assert.deepEqual(parseColumbiaModifications(html), []);
+  assert.equal(isSafeEmptyColumbiaModificationsPage(html), false);
+});
+
 test('recognizes the current recurring-closures layout without widening an uncataloged area', async () => {
   const html = await readFixture('recreation-columbia-modifications.html');
 

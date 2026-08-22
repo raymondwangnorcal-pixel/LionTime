@@ -275,6 +275,15 @@ test('returns validation errors for malformed child intervals without throwing',
   assert.match(result.errors.join('\n'), /times must use HH:MM/);
 });
 
+test('returns validation errors for non-string evidence identities without throwing', () => {
+  const snapshot = setDay(validSnapshot(), 'dodge', { evidenceRefs: [null] });
+
+  const result = validateRecreationHoursSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /trusted target-specific evidence identity/);
+});
+
 test('rejects wrong-target sources, missing provenance, and reservation mismatches', () => {
   const wrongTarget = setSpaceDay(validSnapshot(), 'blue-gym', { sourceRefs: ['barnardFitness'] });
   assert.match(validateRecreationHoursSnapshot(wrongTarget).errors.join('\n'), /not allowed for blue-gym/);

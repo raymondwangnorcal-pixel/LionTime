@@ -162,7 +162,7 @@
       if (evidenceTarget === targetId) targetSpecific = true;
     }
     for (const sourceRef of sourceRefs) {
-      if (!value.some(evidenceRef => evidenceRef.startsWith(`${sourceRef}:`))) {
+      if (!value.some(evidenceRef => typeof evidenceRef === 'string' && evidenceRef.startsWith(`${sourceRef}:`))) {
         errors.push(`${path}.sourceRefs must correspond to trusted evidence identities`);
         trusted = false;
       }

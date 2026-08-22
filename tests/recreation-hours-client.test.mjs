@@ -129,6 +129,17 @@ test('fails closed on malformed provenance and unknown snapshot fields', () => {
   assert.equal(api.buildUpdates(malformed, venueFixture(), '2026-08-21').ok, false);
 });
 
+test('fails closed without throwing for non-string evidence identities', () => {
+  const malformed = validSnapshot();
+  malformed.facilities[0].days[0].evidenceRefs = [null];
+
+  let result;
+  assert.doesNotThrow(() => {
+    result = api.buildUpdates(malformed, venueFixture(), '2026-08-21');
+  });
+  assert.equal(result.ok, false);
+});
+
 test('rejects parent or peer evidence identity copied onto a Dodge space', () => {
   const parentOnly = setSpaceDay(validSnapshot(), 'blue-gym', {
     evidenceRefs: ['columbiaHours:dodge'],
