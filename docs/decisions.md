@@ -249,3 +249,41 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/specs/2026-08-21-live-recreation-hours-design.md`, `docs/superpowers/plans/2026-08-21-live-recreation-hours.md`, and user approval on 2026-08-21.
 - Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0014
+
+- Type: implementation
+- Implementation commit: `1c62328f6555bdf985c44d437aa11be2a972f3ee` — feat: show live recreation spaces
+- Superseded by: none
+- Note: This completion commit makes the independent browser scraper, scheduled publisher, API and Redis path, guarded frontend hydration, and parent-aware Recreation interface reachable together.
+- Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0015
+
+- Type: implementation
+- Implementation commit: `1c62328f6555bdf985c44d437aa11be2a972f3ee` — feat: show live recreation spaces
+- Superseded by: none
+- Note: This completion commit makes the fixed facility hierarchy, source-priority resolver, five nested Dodge spaces, Barnard access policy, explicit conflict states, and no-guessing interface reachable together.
+- Privacy waivers: none
+
+## DEC-0016 — Fail closed on incomplete recreation evidence
+
+- Date: 2026-08-22
+- Owner: agent
+- Status at record: active
+- Decision: Recreation snapshots will represent timed restrictions separately from operating intervals, require target-specific evidence identity, reject partially parsed known-target notices, and publish unbounded seasonal schedules only as verification-unavailable states.
+- Rationale: Partial or ambiguous official-source interpretation can silently invent availability or omit a higher-priority closure, so completeness and provenance must be validated before publication.
+- Scope: Recreation acquisition, parsing, resolution, snapshot schema, server and client validation, status rendering, and deployment migration policy.
+- Implementation: recorded in update event below
+- Recorded against HEAD: `37069f9d5ad2bc83ca9b79714caeea41bfa4bddc`
+- Supersedes: none
+- Evidence: `docs/superpowers/specs/2026-08-21-live-recreation-hours-design.md`, `.superpowers/sdd/2026-08-21-live-recreation-hours/final-review.md`, and the approved final repair review.
+- Privacy waivers: none
+
+## Update — 2026-08-22 — DEC-0016
+
+- Type: implementation
+- Implementation commit: `37069f9d5ad2bc83ca9b79714caeea41bfa4bddc` — fix: reject partial recreation notices
+- Superseded by: none
+- Note: The completed repair enforces explicit restrictions, exact or unavailable seasonal evidence, target-specific provenance, and all-or-nothing handling of catalog-target modification notices.
+- Privacy waivers: none

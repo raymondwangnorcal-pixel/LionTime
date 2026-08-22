@@ -85,3 +85,30 @@ test('loads dining live data after static cards and identifies static café fall
   assert.match(indexHtml, /16 of 20 live/);
   assert.match(indexHtml, /4 cafés using embedded schedules/);
 });
+
+test('loads Recreation hydration after embedded Fitness cards', () => {
+  assert.match(indexHtml, /<script src="assets\/recreation-hours\.js"><\/script>/);
+  assert.match(indexHtml, /id="recreation-hours-status"/);
+  assert.match(indexHtml, /id:'barnard-fitness'.*cat:'fitness'/s);
+  assert.match(indexHtml, /LionHourRecreationHours\.hydrate/);
+  assert.ok(indexHtml.indexOf('<script src="assets/recreation-hours.js"></script>') > indexHtml.indexOf('const VENUES = ['));
+});
+
+test('keeps the live Recreation source control an atomic polite link', () => {
+  const recreationAnchor = indexHtml.match(/<a class="library-hours-status" id="recreation-hours-status"[\s\S]*?<\/a>/)?.[0];
+  assert.ok(recreationAnchor, 'expected a Recreation source anchor');
+  assert.match(recreationAnchor, /href="https:\/\/perec\.columbia\.edu\/hours-operation"/);
+  assert.match(recreationAnchor, /aria-live="polite"/);
+  assert.match(recreationAnchor, /aria-atomic="true"/);
+  assert.doesNotMatch(recreationAnchor, /\brole="status"/);
+});
+
+test('keeps Dodge spaces nested instead of creating five Fitness venue cards', () => {
+  assert.match(indexHtml, /<script src="assets\/recreation-hours-view\.js"><\/script>/);
+  assert.match(indexHtml, /LionHourRecreationView\.renderSpaces/);
+  assert.match(indexHtml, /View spaces/);
+  assert.match(indexHtml, /recreation-spaces/);
+  for (const id of ['blue-gym', 'levien-gymnasium', 'functional-fitness-studio', 'aerobics-room-4', 'squash-courts']) {
+    assert.doesNotMatch(indexHtml, new RegExp(`id:'${id}'.*cat:'fitness'`));
+  }
+});
