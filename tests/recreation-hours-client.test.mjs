@@ -63,11 +63,34 @@ function hydrateFixture({ responseStatus = 200, snapshot = validSnapshot(), ageH
 }
 
 function officialize(snapshot) {
+  const officialSourceFor = (sourceId, targetId) => {
+    if (targetId === 'barnard-fitness') return 'barnardFitness';
+    return /modification|maintenance|reservation|blue-b/.test(sourceId)
+      ? 'columbiaModifications'
+      : 'columbiaHours';
+  };
+  const officializeDay = day => {
+    day.evidenceRefs = [...new Set(day.evidenceRefs.map(ref => {
+      const separator = ref.indexOf(':');
+      const sourceId = ref.slice(0, separator);
+      const targetId = ref.slice(separator + 1);
+      return `${officialSourceFor(sourceId, targetId)}:${targetId}`;
+    }))].sort();
+    day.sourceRefs = [...new Set(day.evidenceRefs.map(ref => ref.slice(0, ref.indexOf(':'))))].sort();
+    for (const restriction of day.restrictions) {
+      restriction.evidenceRefs = [...new Set(restriction.evidenceRefs.map(ref => {
+        const separator = ref.indexOf(':');
+        const sourceId = ref.slice(0, separator);
+        const targetId = ref.slice(separator + 1);
+        return `${officialSourceFor(sourceId, targetId)}:${targetId}`;
+      }))].sort();
+      restriction.sourceRefs = [...new Set(restriction.evidenceRefs.map(ref => ref.slice(0, ref.indexOf(':'))))].sort();
+    }
+  };
   for (const facility of snapshot.facilities) {
-    const source = facility.id === 'barnard-fitness' ? 'barnardFitness' : 'columbiaHours';
-    for (const day of facility.days) day.sourceRefs = [source];
+    for (const day of facility.days) officializeDay(day);
     for (const space of facility.spaces || []) {
-      for (const day of space.days) day.sourceRefs = ['columbiaHours'];
+      for (const day of space.days) officializeDay(day);
     }
   }
   return snapshot;
@@ -104,6 +127,52 @@ test('fails closed on malformed provenance and unknown snapshot fields', () => {
   malformed.facilities[0].days[0].sourceRefs = null;
   assert.doesNotThrow(() => api.buildUpdates(malformed, venueFixture(), '2026-08-21'));
   assert.equal(api.buildUpdates(malformed, venueFixture(), '2026-08-21').ok, false);
+});
+
+test('rejects parent or peer evidence identity copied onto a Dodge space', () => {
+  const parentOnly = setSpaceDay(validSnapshot(), 'blue-gym', {
+    evidenceRefs: ['columbiaHours:dodge'],
+  });
+  const peerOnly = setSpaceDay(validSnapshot(), 'blue-gym', {
+    evidenceRefs: ['columbiaHours:levien-gymnasium'],
+  });
+
+  for (const snapshot of [parentOnly, peerOnly]) {
+    const result = api.buildUpdates(snapshot, venueFixture(), '2026-08-21');
+    assert.equal(result.ok, false);
+    assert.match(Array.from(result.errors).join('\n'), /target-specific evidence/i);
+  }
+});
+
+test('preserves explicit restriction windows through client hydration', () => {
+  const restriction = {
+    targetId: 'barnard-fitness',
+    intervals: [['12:00', '14:00']],
+    status: 'Reservation required',
+    reason: 'Private reservation',
+    availabilityType: 'reservation-required',
+    accessRestrictions: [],
+    sourceRefs: ['barnardFitness'],
+    evidenceRefs: ['barnardFitness:barnard-fitness'],
+  };
+  const snapshot = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [['06:00', '12:00'], ['14:00', '23:00']],
+    restrictions: [restriction],
+  });
+
+  const updates = api.buildUpdates(snapshot, venueFixture(), '2026-08-21');
+  assert.equal(updates.ok, true);
+  const barnard = updates.entries.find(([venue]) => venue.id === 'barnard-fitness')[1];
+  assert.deepEqual(Array.from(barnard.sourceRestrictions[5][0].intervals[0]), ['12:00', '14:00']);
+  assert.equal(barnard.recreationCurrent.restrictions[0].status, 'Reservation required');
+  assert.deepEqual(Array.from(barnard.recreationCurrent.evidenceRefs), ['barnardFitness:barnard-fitness']);
+
+  const invalid = setDay(snapshot, 'barnard-fitness', {
+    restrictions: [{ ...restriction, status: 'Closed for dragons' }],
+  });
+  const rejected = api.buildUpdates(invalid, venueFixture(), '2026-08-21');
+  assert.equal(rejected.ok, false);
+  assert.match(Array.from(rejected.errors).join('\n'), /approved restriction status/i);
 });
 
 test('preserves split intervals, closures, reservations, verification, and access restrictions', () => {
@@ -199,6 +268,23 @@ test('reports verification when a current resolved state needs verification', as
   assert.equal(result.status.verificationCount > 0, true);
 });
 
+test('counts an unpublished Dodge space in the verification footer state', async () => {
+  const snapshot = setSpaceDay(validSnapshot(), 'blue-gym', {
+    intervals: [],
+    status: 'Separate hours not published',
+    reason: null,
+    availabilityType: null,
+    sourceRefs: [],
+    evidenceRefs: [],
+    restrictions: [],
+    conflict: false,
+  });
+  const result = await hydrateFixture({ snapshot });
+
+  assert.equal(result.status.kind, 'verification');
+  assert.ok(Array.from(result.status.verificationIds).includes('blue-gym'));
+});
+
 test('does not infer room hours from Dodge when room data is unavailable', () => {
   const snapshot = validSnapshot();
   const blueGym = snapshot.facilities.find(facility => facility.id === 'dodge').spaces
@@ -207,6 +293,8 @@ test('does not infer room hours from Dodge when room data is unavailable', () =>
   blueGym.days[0].status = 'Separate hours not published';
   blueGym.days[0].reason = null;
   blueGym.days[0].sourceRefs = [];
+  blueGym.days[0].evidenceRefs = [];
+  blueGym.days[0].restrictions = [];
   blueGym.days[0].conflict = false;
   blueGym.days[0].availabilityType = null;
   const result = api.buildUpdates(snapshot, venueFixture(), '2026-08-21');

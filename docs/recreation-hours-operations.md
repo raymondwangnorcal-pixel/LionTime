@@ -29,9 +29,9 @@ The allowlisted source manifest contains only these official sources:
 
 | Source | URL | Operational use |
 | --- | --- | --- |
-| Columbia Recreation Hours of Operation | `https://perec.columbia.edu/hours-operation` | Baseline Dodge and Uris schedules and named Dodge activity spaces. |
-| Columbia Recreation Modified Hours & Closures | `https://perec.columbia.edu/content/modified-hours-closures` | Date-specific, facility-specific, and area closure overrides. |
-| Barnard Physical Well-Being / Fitness Center | `https://barnard.edu/lefrak-center/physical-well-being` | Barnard Fitness Center hours and access restrictions. |
+| Columbia Recreation Hours of Operation | `https://perec.columbia.edu/hours-operation` | Exact-bounded Dodge/Uris baselines, named Dodge activity spaces, and explicit maintenance notices. An ambiguous seasonal label yields verification, not hours. |
+| Columbia Recreation Modified Hours & Closures | `https://perec.columbia.edu/content/modified-hours-closures` | Date-specific, facility-specific, and recurring area restrictions. Unknown catalog targets are ignored; a known recurring target with ambiguous applicability yields verification. |
+| Barnard Physical Well-Being / Fitness Center | `https://barnard.edu/lefrak-center/physical-well-being` | Exact-bounded Barnard Fitness Center hours and separate access restrictions. An ambiguous seasonal label yields verification, not hours. |
 
 The fixed published catalog is exactly these three top-level facilities:
 
@@ -41,13 +41,29 @@ The fixed published catalog is exactly these three top-level facilities:
 
 Dodge carries exactly five nested spaces, never additional top-level cards: Blue Gym, Levien Gymnasium, Functional Fitness Studio, Aerobics Room 4, and Squash Courts. Each snapshot must cover fourteen consecutive Eastern dates for every top-level facility and nested space.
 
+The minimal parser fixtures were sanitized from headed, rendered official pages on August 21, 2026. At that observation:
+
+- Columbia labelled its facility tables `Summer 2026 Facility Hours` without exact effective endpoints, so those table times are retained only as parser-shape evidence and are not published as current hours.
+- Columbia explicitly published an annual Dodge maintenance notice from August 17 through the August 24 6 AM reopening. That exact notice is modeled as whole-day closures through August 23 and an August 24 `00:00–06:00` restriction; the parser validates the season year, dates, reopening weekday, and reopening time before emitting it.
+- The recurring-closures page named Middle Tri Level, which is outside the fixed catalog. It is deliberately ignored. The scraper accepts an empty modification result only when the official article/section shape is recognized, at least one notice exists, and none of its notice headings maps to a catalog target.
+- Four Dodge spaces exposed official calendar embeds but no schedule facts in the acquired DOM, and Squash exposed only a booking link. They publish verification or unavailable semantics, never copied Dodge intervals.
+- Barnard labelled its table `Summer 2026` without exact effective endpoints. Its times are not published until the official page supplies exact validated start and end dates; its stated Barnard community access restriction remains independently usable.
+
 Do not add facilities or sources merely because they appear in page text. The reviewed official Squash Courts booking portal (`https://recreation.columbia.edu/`) is excluded: it is an official reservation system but the reviewed context did not establish a fixed schedule or a general undergraduate-access rule. Columbia's `https://perec.columbia.edu/membershipinfo` is likewise excluded from acquisition because it is access policy, not a schedule source. Athletics-only, staff-only, access-unclear, or otherwise unconfirmed facilities are excluded; no other reviewed facility had a published regular undergraduate-access rule suitable for the fixed catalog.
 
 When sources disagree, use the shipped resolver order: date-specific facility closures or modified-hours notices; room-specific availability; current official Recreation schedule; in-range seasonal schedule; general facility page; then a general university directory. A lower-priority normal schedule never overrides a specific closure. Unresolved conflicts must remain `Hours need verification`; no operator may guess an interval or copy Dodge hours to a room with no room-specific schedule.
 
+## Snapshot trust and restriction contract
+
+Every resolved day contains `sourceRefs`, `evidenceRefs`, and `restrictions`. An evidence identity is the exact trusted pair `<official source id>:<catalog target id>`, for example `columbiaHours:blue-gym`. Page-level provenance alone is insufficient: a target publishing intervals must carry its own target-specific identity. A Dodge child may additionally carry `*:dodge` identities only when Dodge constrained that child. Identical independently published schedules remain valid because each target has its own identity.
+
+Timed maintenance and reservation restrictions are not day statuses. `intervals` contains only residual operating intervals; each explicit restriction retains its own windows, status, reason, availability, access restrictions, source references, and evidence identities. A restriction window cannot overlap the residual intervals. Dodge restrictions are clipped to a child's independently supported availability; when a child schedule is unavailable, a known whole-facility restriction is still carried without inventing child hours. The browser derives `Open`, `Closing soon`, or the active restriction label from the current Eastern minute, so a timed notice does not label the venue closed before or after its window.
+
+This is a required-field migration of the existing `v1` payload. A previously stored snapshot without `evidenceRefs` and `restrictions` fails closed in the new browser and leaves embedded schedules visible until a new validated scrape is published. Conversely, the previous browser rejects the new fields as unknown. Deploy the server and browser together, then seed the new snapshot immediately; do not publish the new shape before its browser deployment. The Redis key is unchanged and a valid new `PUT` atomically replaces the prior value.
+
 ## First deployment and seed
 
-1. Merge and deploy the Recreation implementation so Vercel serves `https://www.lionhour.com/api/recreation-hours` and has the variables above.
+1. Merge and deploy the Recreation implementation so Vercel serves `https://www.lionhour.com/api/recreation-hours` and has the variables above. For this required-field migration, deploy the new browser/schema before running the first new-format publisher.
 2. Before publishing any snapshot, make a read-only `GET` request to that URL. A newly deployed but unseeded endpoint must return `503`, `Cache-Control: no-store`, and `{ "error": "Recreation hours are not initialized" }`.
 3. Install local dependencies and Chromium if this runner has not done so:
 
@@ -65,7 +81,7 @@ When sources disagree, use the shipped resolver order: date-specific facility cl
 
    Success requires `valid: true`, exactly three facilities, exactly five Dodge spaces, and fourteen dates. The scraper success line identifies the catalog facility count and final covered date.
 5. In GitHub, run **Actions → Update recreation hours → Run workflow** on the deployed branch. Confirm that `Scrape validated Recreation hours` succeeds and that `Publish validated snapshot` ran rather than being skipped.
-6. Repeat the read-only API `GET`. It must return `200` with exactly the three required facilities, five Dodge spaces, and fourteen dates per facility. The response snapshot has `generated` and `facilities` at its top level; `v1` belongs only to the private Redis key, not the public response. A valid authenticated `PUT` returns `204` with no body; missing or incorrect bearer authentication returns `401`, malformed snapshots return `422`, and other methods return `405` with `Allow: GET, PUT`.
+6. Repeat the read-only API `GET`. It must return `200` with exactly the three required facilities, five Dodge spaces, and fourteen dates per facility. Every day must include `evidenceRefs` and `restrictions`; an empty list is explicit, not an omitted field. The response snapshot has `generated` and `facilities` at its top level; `v1` belongs only to the private Redis key, not the public response. A valid authenticated `PUT` returns `204` with no body; missing or incorrect bearer authentication returns `401`, malformed snapshots return `422`, and other methods return `405` with `Allow: GET, PUT`.
 7. Reload LionHour. The Recreation footer should report a live, stale, verification, or embedded-fallback state that reflects the snapshot; it should not imply that every Dodge space is open.
 
 ## Routine verification
@@ -85,10 +101,10 @@ The workflow itself runs the focused Recreation acquisition, parser, resolver, s
 ## Failure, rollback, and visitor-facing states
 
 - Columbia's site may present a managed challenge to direct HTTP or interactive browser sessions. The scraper uses headed Chromium but never attempts to bypass a CAPTCHA. A challenge or missing official content fails the job before writing a local snapshot or publishing it; record the source-specific failure and keep validation strict.
-- Missing source evidence, a parser mismatch, missing Dodge/Uris/Barnard evidence, incomplete catalog, invalid source provenance, invalid fourteen-day coverage, or a violated Dodge child constraint rejects the snapshot. Room hours are never inferred from Dodge; an unavailable room remains `Separate hours not published` when that is what the source supports.
+- Missing source evidence, a parser mismatch, missing Dodge/Uris/Barnard evidence, incomplete catalog, invalid target-specific evidence identity, overlapping residual/restriction windows, invalid fourteen-day coverage, or a violated Dodge child constraint rejects the snapshot. Room hours are never inferred from Dodge; an unavailable room remains `Separate hours not published` when that is what the source supports.
 - The workflow publishes only a validated file with a bearer secret. A missing secret fails closed; `curl --fail-with-body` retries transient upload failures three times. The API validates again before replacing Redis, so an invalid or partial upload leaves the last known-good snapshot intact.
 - The browser keeps embedded top-level cards if its request, response, schema validation, preflight, render, or fallback-status callback fails. Live updates are all-or-nothing across Dodge, Uris Pool, and Barnard. A render failure restores the prior embedded model/view; a status-callback failure is reported as degraded rather than discarding an already committed live model/view.
-- Footer states are: **live** for a fresh validated snapshot, **stale** when the generated snapshot is older than eight hours, **fallback** when embedded schedules remain after a network/API/schema/hydration failure, and **verification** when official conflicts or unavailable current schedules require visitor confirmation. The static fallback copy is `Recreation hours: embedded fallback · Verify before you go`.
+- Footer states are: **live** for a fresh validated snapshot, **stale** when the generated snapshot is older than eight hours, **fallback** when embedded schedules remain after a network/API/schema/hydration failure, and **verification** when official conflicts, `Hours need verification`, or `Separate hours not published` require visitor confirmation. The static fallback copy is `Recreation hours: embedded fallback · Verify before you go`.
 - A Dodge closure is inherited by Uris Pool and Dodge spaces; a Dodge maintenance closure is shown as `Closed for maintenance` for those children. Uris maintenance remains independent and Dodge being open never makes Uris or a room open.
 - Recreation failure affects neither Library nor Dining data or their scheduled updates.
 

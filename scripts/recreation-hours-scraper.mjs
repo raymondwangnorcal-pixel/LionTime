@@ -7,6 +7,7 @@ import {
   parseBarnardHours,
   parseColumbiaHours,
   parseColumbiaModifications,
+  isSafeEmptyColumbiaModificationsPage,
 } from '../lib/recreation-source-parser.js';
 import { acquireRecreationSources } from './recreation-hours-acquire.mjs';
 
@@ -52,7 +53,11 @@ function parseAllSources(acquired, parsers) {
       throw invalidSnapshotError(`missing ${sourceId} source or parser`);
     }
     const parsed = parser(html);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    const recognizedEmptyModifications = sourceId === 'columbiaModifications'
+      && Array.isArray(parsed)
+      && parsed.length === 0
+      && isSafeEmptyColumbiaModificationsPage(html);
+    if (!Array.isArray(parsed) || (parsed.length === 0 && !recognizedEmptyModifications)) {
       throw invalidSnapshotError(`no usable ${sourceId} evidence`);
     }
     return parsed;

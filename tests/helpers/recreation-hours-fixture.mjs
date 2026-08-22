@@ -4,29 +4,35 @@ import { resolveRecreationSnapshot } from '../../lib/recreation-hours-resolver.j
 
 export const generated = new Date('2026-08-21T16:00:00-04:00');
 
-export const evidence = (overrides = {}) => ({
-  targetId: 'dodge',
-  sourceId: 'fall-dodge',
-  priority: 3,
-  effectiveStart: '2026-08-17',
-  effectiveEnd: '2026-12-23',
-  weeklyIntervals: {
-    0: [],
-    1: [['06:00', '23:00']],
-    2: [['06:00', '23:00']],
-    3: [['06:00', '23:00']],
-    4: [['06:00', '23:00']],
-    5: [['06:00', '23:00']],
-    6: [],
-  },
-  dateIntervals: null,
-  status: null,
-  reason: null,
-  availabilityType: 'facility-hours',
-  accessRestrictions: [],
-  sourceUpdatedAt: null,
-  ...overrides,
-});
+export const evidence = (overrides = {}) => {
+  const targetId = overrides.targetId || 'dodge';
+  const sourceId = overrides.sourceId || 'fall-dodge';
+  return {
+    targetId,
+    sourceId,
+    evidenceRef: `${sourceId}:${targetId}`,
+    priority: 3,
+    effectiveStart: '2026-08-17',
+    effectiveEnd: '2026-12-23',
+    weeklyIntervals: {
+      0: [],
+      1: [['06:00', '23:00']],
+      2: [['06:00', '23:00']],
+      3: [['06:00', '23:00']],
+      4: [['06:00', '23:00']],
+      5: [['06:00', '23:00']],
+      6: [],
+    },
+    dateIntervals: null,
+    status: null,
+    reason: null,
+    availabilityType: 'facility-hours',
+    accessRestrictions: [],
+    sourceUpdatedAt: null,
+    unavailableStatus: null,
+    ...overrides,
+  };
+};
 
 export const openDodge = evidence();
 export const fallDodge = openDodge;
@@ -128,10 +134,24 @@ export function validSnapshot() {
     })),
   ]);
   const officialSourceFor = id => id === 'barnard-fitness' ? 'barnardFitness' : 'columbiaHours';
+  const officializeDay = resolvedDay => {
+    resolvedDay.evidenceRefs = [...new Set(resolvedDay.evidenceRefs.map(ref => {
+      const targetId = ref.slice(ref.indexOf(':') + 1);
+      return `${officialSourceFor(targetId)}:${targetId}`;
+    }))].sort();
+    resolvedDay.sourceRefs = [...new Set(resolvedDay.evidenceRefs.map(ref => ref.slice(0, ref.indexOf(':'))))].sort();
+    for (const restriction of resolvedDay.restrictions) {
+      restriction.evidenceRefs = [...new Set(restriction.evidenceRefs.map(ref => {
+        const targetId = ref.slice(ref.indexOf(':') + 1);
+        return `${officialSourceFor(targetId)}:${targetId}`;
+      }))].sort();
+      restriction.sourceRefs = [...new Set(restriction.evidenceRefs.map(ref => ref.slice(0, ref.indexOf(':'))))].sort();
+    }
+  };
   for (const facility of snapshot.facilities) {
-    for (const resolvedDay of facility.days) resolvedDay.sourceRefs = [officialSourceFor(facility.id)];
+    for (const resolvedDay of facility.days) officializeDay(resolvedDay);
     for (const space of facility.spaces || []) {
-      for (const resolvedDay of space.days) resolvedDay.sourceRefs = ['columbiaHours'];
+      for (const resolvedDay of space.days) officializeDay(resolvedDay);
     }
   }
   return snapshot;

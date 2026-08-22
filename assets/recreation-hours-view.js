@@ -42,26 +42,74 @@
     return formatted.every(Boolean) ? formatted.join(', ') : null;
   }
 
-  function stateFor(space, now) {
-    const status = typeof space?.status === 'string' && space.status.trim() ? space.status.trim() : null;
-    const hours = intervalText(space?.intervals);
-    if (status === 'Closed for maintenance'
-      || status === 'Separate hours not published'
-      || status === 'Hours need verification'
-      || status === 'Reservation required'
-      || /^Closed\b/i.test(status || '')) {
-      return { label: status, hours };
-    }
-    if (!hours) return { label: 'Closed', hours: null };
-    const minutes = Number.isFinite(now?.mins) ? now.mins : null;
-    const open = minutes !== null && space.intervals.some(interval => {
+  function activeInterval(intervals, minutes) {
+    if (!Array.isArray(intervals) || minutes === null) return null;
+    return intervals.find(interval => {
+      if (!Array.isArray(interval) || interval.length !== 2) return false;
       const start = toMinutes(interval[0]);
       let end = toMinutes(interval[1]);
       if (start === null || end === null) return false;
       if (end <= start) end += 1440;
       return minutes >= start && minutes < end;
-    });
-    return { label: open ? 'Open' : 'Closed', hours };
+    }) || null;
+  }
+
+  function availabilityLabel(value) {
+    return ({
+      'facility-hours': 'Facility hours',
+      'open-recreation': 'Open recreation',
+      'lap-swim': 'Lap swim',
+      'recreation-swim': 'Recreation swim',
+      'reservation-required': 'Reservation required',
+    })[value] || value || null;
+  }
+
+  function stateFor(space, now) {
+    const status = typeof space?.status === 'string' && space.status.trim() ? space.status.trim() : null;
+    const hours = intervalText(space?.intervals);
+    const minutes = Number.isFinite(now?.mins) ? now.mins : null;
+    const activeRestriction = (Array.isArray(space?.restrictions) ? space.restrictions : [])
+      .find(restriction => activeInterval(restriction?.intervals, minutes));
+    if (activeRestriction) {
+      return {
+        label: activeRestriction.status || 'Closed',
+        hours,
+        reason: activeRestriction.reason || null,
+        availabilityType: activeRestriction.availabilityType || null,
+        accessRestrictions: [...new Set([
+          ...(Array.isArray(space?.accessRestrictions) ? space.accessRestrictions : []),
+          ...(Array.isArray(activeRestriction.accessRestrictions) ? activeRestriction.accessRestrictions : []),
+        ])],
+      };
+    }
+    if (status === 'Closed for maintenance'
+      || status === 'Separate hours not published'
+      || status === 'Hours need verification'
+      || status === 'Reservation required'
+      || /^Closed\b/i.test(status || '')) {
+      return {
+        label: status,
+        hours,
+        reason: space?.reason || null,
+        availabilityType: space?.availabilityType || null,
+        accessRestrictions: Array.isArray(space?.accessRestrictions) ? space.accessRestrictions : [],
+      };
+    }
+    if (!hours) return {
+      label: 'Closed', hours: null, reason: space?.reason || null,
+      availabilityType: space?.availabilityType || null,
+      accessRestrictions: Array.isArray(space?.accessRestrictions) ? space.accessRestrictions : [],
+    };
+    const openInterval = activeInterval(space.intervals, minutes);
+    const close = openInterval ? toMinutes(openInterval[1]) : null;
+    const closingSoon = close !== null && close - minutes <= 60;
+    return {
+      label: openInterval ? (closingSoon ? 'Closing soon' : 'Open') : 'Closed',
+      hours,
+      reason: space?.reason || null,
+      availabilityType: space?.availabilityType || null,
+      accessRestrictions: Array.isArray(space?.accessRestrictions) ? space.accessRestrictions : [],
+    };
   }
 
   function line(className, label, value) {
@@ -71,13 +119,13 @@
 
   function spaceHTML(space, now) {
     const state = stateFor(space, now);
-    const restrictions = Array.isArray(space?.accessRestrictions) ? space.accessRestrictions : [];
+    const restrictions = Array.isArray(state.accessRestrictions) ? state.accessRestrictions : [];
     const restrictionsText = restrictions.filter(Boolean).join(' · ');
     return `<li class="recreation-space">
       <div class="recreation-space-heading"><span class="recreation-space-name">${text(space?.name)}</span><span class="recreation-space-status">${text(state.label)}</span></div>
       ${line('recreation-space-hours', 'Hours: ', state.hours)}
-      ${line('recreation-space-reason', 'Reason: ', space?.reason)}
-      ${line('recreation-space-availability', 'Availability: ', space?.availabilityType)}
+      ${line('recreation-space-reason', 'Reason: ', state.reason)}
+      ${line('recreation-space-availability', 'Availability: ', availabilityLabel(state.availabilityType))}
       ${line('recreation-space-access', 'Access: ', restrictionsText)}
     </li>`;
   }

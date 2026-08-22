@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
+import { validateRecreationHoursSnapshot } from '../lib/recreation-hours-schema.js';
 import { runRecreationScraper } from '../scripts/recreation-hours-scraper.mjs';
 
 test('acquires, parses, resolves, validates, and writes one snapshot', async () => {
@@ -28,6 +30,41 @@ test('does not write when parsing yields an incomplete snapshot', async () => {
   }), /invalid recreation snapshot/i);
 
   assert.equal(wrote, false);
+});
+
+test('turns sanitized current acquired pages into a conservative valid snapshot', async () => {
+  const writes = [];
+  const pages = Object.fromEntries(await Promise.all([
+    ['columbiaHours', 'recreation-columbia-hours.html'],
+    ['columbiaModifications', 'recreation-columbia-modifications.html'],
+    ['barnardFitness', 'recreation-barnard-hours.html'],
+  ].map(async ([sourceId, fixture]) => [sourceId, {
+    url: `https://official.example/${sourceId}`,
+    html: await readFile(new URL(`./fixtures/${fixture}`, import.meta.url), 'utf8'),
+  }])));
+
+  const snapshot = await runRecreationScraper({
+    acquire: async () => ({ generated: new Date('2026-08-21T16:00:00-04:00'), pages }),
+    writeJson: async (path, value) => writes.push([path, value]),
+    outputPath: '/tmp/current-recreation.json',
+  });
+
+  assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
+  assert.equal(snapshot.facilities.length, 3);
+  const dodge = snapshot.facilities.find(item => item.id === 'dodge');
+  const barnard = snapshot.facilities.find(item => item.id === 'barnard-fitness');
+  assert.equal(dodge.spaces.length, 5);
+  assert.equal(dodge.days[0].status, 'Closed for maintenance');
+  assert.deepEqual(dodge.days[0].intervals, []);
+  const reopeningDay = dodge.days.find(day => day.date === '2026-08-24');
+  const blueReopeningDay = dodge.spaces.find(space => space.id === 'blue-gym').days
+    .find(day => day.date === '2026-08-24');
+  assert.deepEqual(reopeningDay.restrictions[0].intervals, [['00:00', '06:00']]);
+  assert.deepEqual(blueReopeningDay.restrictions[0].intervals, [['00:00', '06:00']]);
+  assert.deepEqual(blueReopeningDay.intervals, []);
+  assert.equal(barnard.days[0].status, 'Hours need verification');
+  assert.deepEqual(barnard.days[0].intervals, []);
+  assert.deepEqual(writes, [['/tmp/current-recreation.json', snapshot]]);
 });
 
 function acquiredFixture() {
@@ -71,9 +108,12 @@ function invalidParserFixture() {
 }
 
 function evidence(overrides = {}) {
+  const targetId = overrides.targetId || 'dodge';
+  const sourceId = overrides.sourceId || 'columbiaHours';
   return {
-    targetId: 'dodge',
-    sourceId: 'columbiaHours',
+    targetId,
+    sourceId,
+    evidenceRef: `${sourceId}:${targetId}`,
     priority: 3,
     effectiveStart: '2026-08-17',
     effectiveEnd: '2026-12-23',
@@ -88,6 +128,7 @@ function evidence(overrides = {}) {
     availabilityType: 'facility-hours',
     accessRestrictions: [],
     sourceUpdatedAt: null,
+    unavailableStatus: null,
     ...overrides,
   };
 }

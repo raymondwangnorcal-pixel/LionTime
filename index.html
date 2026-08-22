@@ -655,6 +655,18 @@ function sourceDisplayStatus(venue, dow) {
     || value === 'Hours need verification') ? value : null;
 }
 
+function activeSourceRestriction(venue, now) {
+  const restrictions = venue.sourceRestrictions?.[((now.dow % 7) + 7) % 7];
+  if (!Array.isArray(restrictions)) return null;
+  return restrictions.find(restriction => Array.isArray(restriction?.intervals)
+    && restriction.intervals.some(interval => {
+      if (!Array.isArray(interval) || interval.length !== 2) return false;
+      const start = toMin(interval[0]);
+      const end = interval[1] === '24:00' ? 1440 : toMin(interval[1]);
+      return now.mins >= start && now.mins < end;
+    })) || null;
+}
+
 /* An interval ending exactly at midnight continues into the next day if that
    day opens at 00:00 — e.g. Butler runs Sun 9 AM straight through Fri 11 PM.
    Returns the true closing time in minutes from the start of `dow`. */
@@ -702,6 +714,14 @@ function describeClose(endAbs, dow) {
    ══════════════════════════════════════════════════ */
 function getStatus(venue, now) {
   const CLOSING_SOON = 60; // minutes
+  const restriction = activeSourceRestriction(venue, now);
+  if (restriction) {
+    return {
+      status: 'closed',
+      label: restriction.status || 'Closed',
+      detail: restriction.reason || 'See details',
+    };
+  }
   const closureLabel = sourceDisplayStatus(venue, now.dow);
   if (closureLabel) return { status: 'closed', label: closureLabel, detail: 'See details' };
 
@@ -870,16 +890,24 @@ function render() {
   }).join('');
 
   stage.innerHTML = sections || `<div class="empty">Nothing matches those filters right now.</div>`;
-  appendRecreationMetadata(stage);
+  appendRecreationMetadata(stage, now);
   syncStickyOffset();
 }
 
-function appendRecreationMetadata(stage) {
+function appendRecreationMetadata(stage, now) {
   for (const venue of VENUES) {
     if (!venue.recreationLive) continue;
     const target = stage.querySelector(`[data-recreation-metadata="${venue.id}"]`);
     if (!target) continue;
-    const current = venue.recreationCurrent || {};
+    const baseline = venue.recreationCurrent || {};
+    const activeRestriction = activeSourceRestriction(venue, now);
+    const current = activeRestriction ? {
+      ...activeRestriction,
+      accessRestrictions: [...new Set([
+        ...(baseline.accessRestrictions || []),
+        ...(activeRestriction.accessRestrictions || []),
+      ])],
+    } : baseline;
     const append = (label, value) => {
       if (!value) return;
       const line = document.createElement('div');

@@ -57,8 +57,130 @@ test('composes replacement hours with a compatible timed restriction', () => {
     }),
   ]);
 
-  assert.deepEqual(day(result, 'dodge').intervals, [['06:00', '12:00'], ['14:00', '18:00']]);
-  assert.deepEqual(day(result, 'dodge').sourceRefs, ['dodge-replacement', 'dodge-timed-maintenance', 'fall-dodge']);
+  const resolved = day(result, 'dodge');
+  assert.deepEqual(resolved.intervals, [['06:00', '12:00'], ['14:00', '18:00']]);
+  assert.equal(resolved.status, null);
+  assert.equal(resolved.reason, null);
+  assert.equal(resolved.availabilityType, 'facility-hours');
+  assert.deepEqual(resolved.restrictions, [{
+    targetId: 'dodge',
+    intervals: [['12:00', '14:00']],
+    status: 'Closed for maintenance',
+    reason: 'Court repair',
+    availabilityType: 'facility-hours',
+    accessRestrictions: [],
+    sourceRefs: ['dodge-timed-maintenance'],
+    evidenceRefs: ['dodge-timed-maintenance:dodge'],
+  }]);
+  assert.deepEqual(resolved.sourceRefs, ['dodge-replacement', 'dodge-timed-maintenance', 'fall-dodge']);
+  assert.deepEqual(resolved.evidenceRefs, [
+    'dodge-replacement:dodge',
+    'dodge-timed-maintenance:dodge',
+    'fall-dodge:dodge',
+  ]);
+});
+
+test('clips an inherited Dodge restriction to a child-specific availability window', () => {
+  const result = resolveWith([
+    openDodge,
+    evidence({
+      sourceId: 'dodge-timed-maintenance', priority: 1,
+      effectiveStart: '2026-08-21', effectiveEnd: '2026-08-21',
+      weeklyIntervals: null, dateIntervals: [['12:00', '14:00']],
+      status: 'Closed for maintenance', reason: 'Floor maintenance',
+    }),
+    evidence({
+      targetId: 'blue-gym', sourceId: 'blue-specific',
+      weeklyIntervals: { 5: [['13:00', '16:00']] }, availabilityType: 'open-recreation',
+    }),
+  ]);
+
+  const blue = spaceDay(result, 'blue-gym');
+  assert.deepEqual(blue.intervals, [['14:00', '16:00']]);
+  assert.deepEqual(blue.restrictions, [{
+    targetId: 'dodge',
+    intervals: [['13:00', '14:00']],
+    status: 'Closed for maintenance',
+    reason: 'Floor maintenance',
+    availabilityType: 'facility-hours',
+    accessRestrictions: [],
+    sourceRefs: ['dodge-timed-maintenance'],
+    evidenceRefs: ['dodge-timed-maintenance:dodge'],
+  }]);
+  assert.ok(blue.evidenceRefs.includes('blue-specific:blue-gym'));
+  assert.ok(blue.evidenceRefs.includes('dodge-timed-maintenance:dodge'));
+});
+
+test('inherits a known Dodge restriction without inventing an unavailable child schedule', () => {
+  const result = resolveWith([
+    evidence({
+      effectiveStart: null, effectiveEnd: null,
+      weeklyIntervals: null, dateIntervals: null,
+      unavailableStatus: 'Hours need verification',
+    }),
+    evidence({
+      targetId: 'blue-gym', sourceId: 'blue-unavailable',
+      effectiveStart: null, effectiveEnd: null,
+      weeklyIntervals: null, dateIntervals: null,
+      unavailableStatus: 'Separate hours not published',
+      availabilityType: null,
+    }),
+    evidence({
+      sourceId: 'dodge-timed-maintenance', priority: 1,
+      effectiveStart: '2026-08-21', effectiveEnd: '2026-08-21',
+      weeklyIntervals: null, dateIntervals: [['00:00', '06:00']],
+      status: 'Closed for maintenance', reason: 'Annual maintenance',
+    }),
+  ]);
+
+  const blue = spaceDay(result, 'blue-gym');
+  assert.deepEqual(blue.intervals, []);
+  assert.equal(blue.status, 'Separate hours not published');
+  assert.deepEqual(blue.restrictions, [{
+    targetId: 'dodge', intervals: [['00:00', '06:00']], status: 'Closed for maintenance',
+    reason: 'Annual maintenance', availabilityType: 'facility-hours', accessRestrictions: [],
+    sourceRefs: ['dodge-timed-maintenance'], evidenceRefs: ['dodge-timed-maintenance:dodge'],
+  }]);
+});
+
+test('resolves explicit unavailable evidence without assigning seasonal intervals', () => {
+  const result = resolveWith([evidence({
+    targetId: 'barnard-fitness', sourceId: 'barnardFitness',
+    evidenceRef: 'barnardFitness:barnard-fitness',
+    effectiveStart: null, effectiveEnd: null,
+    weeklyIntervals: null, dateIntervals: null,
+    unavailableStatus: 'Hours need verification',
+    accessRestrictions: ['Barnard students, faculty, and staff'],
+  })]);
+
+  const barnard = day(result, 'barnard-fitness');
+  assert.deepEqual(barnard.intervals, []);
+  assert.equal(barnard.status, 'Hours need verification');
+  assert.deepEqual(barnard.accessRestrictions, ['Barnard students, faculty, and staff']);
+  assert.deepEqual(barnard.sourceRefs, ['barnardFitness']);
+  assert.deepEqual(barnard.evidenceRefs, ['barnardFitness:barnard-fitness']);
+  assert.deepEqual(barnard.restrictions, []);
+});
+
+test('lets a higher-priority ambiguous recurring closure suppress a normal baseline', () => {
+  const result = resolveWith([
+    openDodge,
+    evidence({
+      sourceId: 'ambiguous-recurring-closure',
+      priority: 1,
+      effectiveStart: null,
+      effectiveEnd: null,
+      weeklyIntervals: null,
+      dateIntervals: null,
+      unavailableStatus: 'Hours need verification',
+      availabilityType: 'facility-hours',
+    }),
+  ]);
+
+  const dodge = day(result, 'dodge');
+  assert.deepEqual(dodge.intervals, []);
+  assert.equal(dodge.status, 'Hours need verification');
+  assert.deepEqual(dodge.sourceRefs, ['ambiguous-recurring-closure']);
 });
 
 test('surfaces equal-priority unresolved conflicts instead of guessing', () => {

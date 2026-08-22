@@ -32,6 +32,9 @@
   const TIMEZONE_AWARE_ISO = /(?:Z|[+-]\d{2}:\d{2})$/;
   const MAX_TEXT_LENGTH = 200;
   const UNAVAILABLE_STATUSES = new Set(['Separate hours not published', 'Hours need verification']);
+  const RESTRICTION_STATUS_VALUES = new Set([
+    'Closed', 'Closed for maintenance', 'Closed for Athletics event', 'Reservation required',
+  ]);
 
   function isRecord(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -86,6 +89,87 @@
     return targetId === 'barnard-fitness' ? new Set(['barnardFitness']) : COLUMBIA_SOURCES;
   }
 
+  function availabilityAllowed(targetId, availabilityType) {
+    if (availabilityType === null) return true;
+    if (targetId === 'uris-pool') return ['lap-swim', 'recreation-swim', 'reservation-required'].includes(availabilityType);
+    if (Object.hasOwn(SPACES, targetId)) return ['open-recreation', 'reservation-required'].includes(availabilityType);
+    return ['facility-hours', 'reservation-required'].includes(availabilityType);
+  }
+
+  function validateTextList(value, path, errors) {
+    if (!Array.isArray(value)) {
+      errors.push(`${path} must be an array`);
+      return;
+    }
+    if (!canonicalUnique(value)) errors.push(`${path} must use canonical unique order`);
+    value.forEach((item, index) => {
+      if (!validText(item)) errors.push(`${path}[${index}] must be bounded plain text`);
+    });
+  }
+
+  function validateSourceRefs(value, path, targetId, errors) {
+    if (!Array.isArray(value)) {
+      errors.push(`${path}.sourceRefs must be an array`);
+      return { trusted: false, allowed: false, present: false };
+    }
+    let trusted = true;
+    let allowed = true;
+    if (!canonicalUnique(value)) errors.push(`${path}.sourceRefs must use canonical unique order`);
+    const sources = allowedSources(targetId);
+    for (const [index, source] of value.entries()) {
+      if (!OFFICIAL_SOURCES.has(source)) {
+        errors.push(`${path}.sourceRefs[${index}] must reference an official source manifest entry`);
+        trusted = false;
+      } else if (!sources.has(source)) {
+        errors.push(`${path}.sourceRefs[${index}] is not allowed for ${targetId}`);
+        allowed = false;
+      }
+    }
+    return { trusted, allowed, present: value.length > 0 };
+  }
+
+  function validateEvidenceRefs(value, path, targetId, isDodgeChild, sourceRefs, errors) {
+    if (!Array.isArray(value)) {
+      errors.push(`${path}.evidenceRefs must be an array`);
+      return { trusted: false, present: false, targetSpecific: false };
+    }
+    if (!canonicalUnique(value)) errors.push(`${path}.evidenceRefs must use canonical unique order`);
+    let trusted = true;
+    let targetSpecific = false;
+    for (const [index, evidenceRef] of value.entries()) {
+      const evidencePath = `${path}.evidenceRefs[${index}]`;
+      if (typeof evidenceRef !== 'string') {
+        errors.push(`${evidencePath} must be a trusted target-specific evidence identity`);
+        trusted = false;
+        continue;
+      }
+      const separator = evidenceRef.indexOf(':');
+      const sourceId = separator > 0 ? evidenceRef.slice(0, separator) : '';
+      const evidenceTarget = separator > 0 ? evidenceRef.slice(separator + 1) : '';
+      const knownTarget = Object.hasOwn(FACILITIES, evidenceTarget) || Object.hasOwn(SPACES, evidenceTarget);
+      const allowedTarget = evidenceTarget === targetId || (isDodgeChild && evidenceTarget === 'dodge');
+      if (!OFFICIAL_SOURCES.has(sourceId) || !knownTarget
+        || !allowedSources(evidenceTarget).has(sourceId)
+        || evidenceRef !== `${sourceId}:${evidenceTarget}` || !allowedTarget) {
+        errors.push(`${evidencePath} must be a trusted target-specific evidence identity for ${targetId}`);
+        trusted = false;
+        continue;
+      }
+      if (!sourceRefs.includes(sourceId)) {
+        errors.push(`${evidencePath} must correspond to ${path}.sourceRefs`);
+        trusted = false;
+      }
+      if (evidenceTarget === targetId) targetSpecific = true;
+    }
+    for (const sourceRef of sourceRefs) {
+      if (!value.some(evidenceRef => evidenceRef.startsWith(`${sourceRef}:`))) {
+        errors.push(`${path}.sourceRefs must correspond to trusted evidence identities`);
+        trusted = false;
+      }
+    }
+    return { trusted, present: value.length > 0, targetSpecific };
+  }
+
   function validateIntervals(value, path, errors) {
     if (!Array.isArray(value)) {
       errors.push(`${path}.intervals must be an array`);
@@ -115,16 +199,84 @@
     return valid;
   }
 
+  function intervalsOverlap(left, right) {
+    return left[0] < right[1] && right[0] < left[1];
+  }
+
+  function validateRestriction(restriction, path, targetId, isDodgeChild, dayIntervals, errors) {
+    if (!isRecord(restriction)) {
+      errors.push(`${path} must be an object`);
+      return null;
+    }
+    exactKeys(restriction, new Set([
+      'targetId', 'intervals', 'status', 'reason', 'availabilityType', 'accessRestrictions', 'sourceRefs', 'evidenceRefs',
+    ]), path, errors);
+    const restrictionTargetAllowed = restriction.targetId === targetId
+      || (isDodgeChild && restriction.targetId === 'dodge');
+    if (!restrictionTargetAllowed) errors.push(`${path}.targetId must identify ${targetId} or its Dodge parent`);
+    const validIntervals = validateIntervals(restriction.intervals, path, errors);
+    if (validIntervals && restriction.intervals.length === 0) errors.push(`${path}.intervals must contain a restriction window`);
+    if (validIntervals && restriction.intervals.some(window => dayIntervals.some(interval => intervalsOverlap(window, interval)))) {
+      errors.push(`${path} restriction windows must not overlap residual operating intervals`);
+    }
+    if (!RESTRICTION_STATUS_VALUES.has(restriction.status)) {
+      errors.push(`${path}.status must be an approved restriction status`);
+    }
+    if (restriction.reason !== null && !validText(restriction.reason)) errors.push(`${path}.reason must be bounded plain text`);
+    if (restriction.availabilityType !== null && !AVAILABILITY_TYPES.has(restriction.availabilityType)) {
+      errors.push(`${path}.availabilityType must be approved`);
+    } else if (restrictionTargetAllowed && !availabilityAllowed(restriction.targetId, restriction.availabilityType)) {
+      errors.push(`${path}.availabilityType is not valid for ${restriction.targetId}`);
+    }
+    if (restriction.status === 'Reservation required' && restriction.availabilityType !== 'reservation-required') {
+      errors.push(`${path}.Reservation required must use reservation-required availability`);
+    }
+    validateTextList(restriction.accessRestrictions, `${path}.accessRestrictions`, errors);
+    const provenance = validateSourceRefs(restriction.sourceRefs, path, restriction.targetId, errors);
+    const evidence = validateEvidenceRefs(
+      restriction.evidenceRefs,
+      path,
+      restriction.targetId,
+      false,
+      Array.isArray(restriction.sourceRefs) ? restriction.sourceRefs : [],
+      errors,
+    );
+    if (!provenance.trusted || !provenance.allowed || !provenance.present
+      || !evidence.trusted || !evidence.present || !evidence.targetSpecific) {
+      errors.push(`${path} requires trusted target-specific evidence`);
+    }
+    return validIntervals ? restriction : null;
+  }
+
+  function validateRestrictions(value, path, targetId, isDodgeChild, dayIntervals, errors) {
+    if (!Array.isArray(value)) {
+      errors.push(`${path}.restrictions must be an array`);
+      return [];
+    }
+    if (!canonicalUnique(value.map(item => JSON.stringify(item)))) {
+      errors.push(`${path}.restrictions must use canonical unique order`);
+    }
+    const restrictions = value.map((restriction, index) => validateRestriction(
+      restriction, `${path}.restrictions[${index}]`, targetId, isDodgeChild, dayIntervals, errors,
+    )).filter(Boolean);
+    const windows = restrictions.flatMap(restriction => restriction.intervals)
+      .sort(([left], [right]) => left.localeCompare(right));
+    if (windows.some((window, index) => index > 0 && intervalsOverlap(window, windows[index - 1]))) {
+      errors.push(`${path}.restriction windows must not overlap each other`);
+    }
+    return restrictions;
+  }
+
   function validateDay(day, path, expectedDate, targetId, isSpace, isDodgeChild, errors) {
     if (!isRecord(day)) {
       errors.push(`${path} must be an object`);
       return {
         date: expectedDate, intervals: [], status: null, reason: null, availabilityType: null,
-        accessRestrictions: [], sourceRefs: [], conflict: false, validIntervals: false,
+        accessRestrictions: [], sourceRefs: [], evidenceRefs: [], restrictions: [], conflict: false, validIntervals: false,
       };
     }
     exactKeys(day, new Set([
-      'date', 'intervals', 'status', 'reason', 'availabilityType', 'accessRestrictions', 'sourceRefs', 'conflict',
+      'date', 'intervals', 'status', 'reason', 'availabilityType', 'accessRestrictions', 'sourceRefs', 'evidenceRefs', 'restrictions', 'conflict',
     ]), path, errors);
     if (day.date !== expectedDate) errors.push(`${path}.date must be ${expectedDate}`);
     const validIntervals = validateIntervals(day.intervals, path, errors);
@@ -144,43 +296,25 @@
     if (day.availabilityType !== null && !AVAILABILITY_TYPES.has(day.availabilityType)) {
       errors.push(`${path}.availabilityType must be approved`);
     }
-    const availabilityAllowed = day.availabilityType === null
-      || (targetId === 'uris-pool'
-        ? ['lap-swim', 'recreation-swim', 'reservation-required'].includes(day.availabilityType)
-        : isSpace
-          ? ['open-recreation', 'reservation-required'].includes(day.availabilityType)
-          : ['facility-hours', 'reservation-required'].includes(day.availabilityType));
-    if (!availabilityAllowed) errors.push(`${path}.availabilityType is not valid for ${targetId}`);
+    if (!availabilityAllowed(targetId, day.availabilityType)) errors.push(`${path}.availabilityType is not valid for ${targetId}`);
     const reservationMismatch = day.status === 'Reservation required'
       && day.availabilityType !== 'reservation-required';
     if (reservationMismatch && !isDodgeChild) {
       errors.push(`${path}.Reservation required must use reservation-required availability`);
     }
-    if (!Array.isArray(day.accessRestrictions)) {
-      errors.push(`${path}.accessRestrictions must be an array`);
-    } else {
-      if (!canonicalUnique(day.accessRestrictions)) errors.push(`${path}.accessRestrictions must use canonical unique order`);
-      day.accessRestrictions.forEach((item, index) => {
-        if (!validText(item)) errors.push(`${path}.accessRestrictions[${index}] must be bounded plain text`);
-      });
-    }
-    let trusted = Array.isArray(day.sourceRefs);
-    let allowed = trusted;
-    if (!trusted) {
-      errors.push(`${path}.sourceRefs must be an array`);
-    } else {
-      if (!canonicalUnique(day.sourceRefs)) errors.push(`${path}.sourceRefs must use canonical unique order`);
-      const sources = allowedSources(targetId);
-      for (const [index, source] of day.sourceRefs.entries()) {
-        if (!OFFICIAL_SOURCES.has(source)) {
-          errors.push(`${path}.sourceRefs[${index}] must reference an official source manifest entry`);
-          trusted = false;
-        } else if (!sources.has(source)) {
-          errors.push(`${path}.sourceRefs[${index}] is not allowed for ${targetId}`);
-          allowed = false;
-        }
-      }
-    }
+    validateTextList(day.accessRestrictions, `${path}.accessRestrictions`, errors);
+    const provenance = validateSourceRefs(day.sourceRefs, path, targetId, errors);
+    const evidence = validateEvidenceRefs(
+      day.evidenceRefs,
+      path,
+      targetId,
+      isDodgeChild,
+      Array.isArray(day.sourceRefs) ? day.sourceRefs : [],
+      errors,
+    );
+    const restrictions = validateRestrictions(
+      day.restrictions, path, targetId, isDodgeChild, validIntervals ? day.intervals : [], errors,
+    );
     if (typeof day.conflict !== 'boolean') errors.push(`${path}.conflict must be boolean`);
     const requiresProvenance = day.status === null
       || day.conflict === true
@@ -189,13 +323,12 @@
       || day.availabilityType !== null
       || day.reason !== null
       || (Array.isArray(day.accessRestrictions) && day.accessRestrictions.length > 0);
-    const sourceCount = Array.isArray(day.sourceRefs) ? day.sourceRefs.length : 0;
-    if (requiresProvenance && (!trusted || !allowed || !sourceCount)) {
+    if (requiresProvenance && (!provenance.trusted || !provenance.allowed || !provenance.present
+      || !evidence.trusted || !evidence.present)) {
       errors.push(`${path} requires official provenance`);
     }
-    if (isSpace && validIntervals && day.intervals.length > 0
-      && (!trusted || !allowed || !sourceCount)) {
-      errors.push(`${path} requires room-specific provenance for published intervals`);
+    if (validIntervals && day.intervals.length > 0 && !evidence.targetSpecific) {
+      errors.push(`${path} requires target-specific evidence for published intervals`);
     }
     return {
       date: day.date,
@@ -205,9 +338,12 @@
       availabilityType: day.availabilityType,
       accessRestrictions: Array.isArray(day.accessRestrictions) ? day.accessRestrictions : [],
       sourceRefs: Array.isArray(day.sourceRefs) ? day.sourceRefs : [],
+      evidenceRefs: Array.isArray(day.evidenceRefs) ? day.evidenceRefs : [],
+      restrictions,
       conflict: day.conflict,
       validIntervals,
-      hasOfficialProvenance: trusted && allowed && sourceCount > 0,
+      hasOfficialProvenance: provenance.trusted && provenance.allowed && provenance.present
+        && evidence.trusted && evidence.present,
       reservationMismatch,
       path,
     };
@@ -281,6 +417,7 @@
 
   function verifiedClosure(day) {
     return day.validIntervals && day.intervals.length === 0 && !day.conflict
+      && day.restrictions.length === 0
       && day.status !== 'Hours need verification' && day.hasOfficialProvenance;
   }
 
@@ -295,19 +432,31 @@
     if (!parent.sourceRefs.every(source => child.sourceRefs.includes(source))) {
       errors.push(`${id} day ${index} must retain Dodge closure provenance`);
     }
+    if (!parent.evidenceRefs.every(ref => child.evidenceRefs.includes(ref))) {
+      errors.push(`${id} day ${index} must retain Dodge closure evidence identity`);
+    }
   }
 
   function inheritedUnresolved(child, parent, id, index, errors, isSpace) {
-    const unpublished = isSpace && child.validIntervals && child.intervals.length === 0
-      && child.status === 'Separate hours not published' && child.reason === null
-      && child.sourceRefs.length === 0 && child.conflict === false;
-    if (unpublished) return;
+    const unavailable = child.validIntervals && child.intervals.length === 0
+      && UNAVAILABLE_STATUSES.has(child.status) && child.conflict === false;
+    if (unavailable) {
+      for (const restriction of parent.restrictions) {
+        if (!child.restrictions.some(candidate => JSON.stringify(candidate) === JSON.stringify(restriction))) {
+          errors.push(`${id} day ${index} must retain known Dodge restriction windows`);
+        }
+      }
+      return;
+    }
     if (!child.validIntervals || child.intervals.length) errors.push(`${id} day ${index} cannot publish intervals while Dodge is unresolved`);
     if (child.status !== 'Hours need verification') errors.push(`${id} day ${index} must inherit Dodge unresolved status`);
     if (child.reason !== parent.reason) errors.push(`${id} day ${index} must inherit Dodge unresolved reason`);
     if (child.conflict !== true) errors.push(`${id} day ${index} must inherit Dodge unresolved conflict`);
     if (!parent.sourceRefs.every(source => child.sourceRefs.includes(source))) {
       errors.push(`${id} day ${index} must retain Dodge unresolved provenance`);
+    }
+    if (!parent.evidenceRefs.every(ref => child.evidenceRefs.includes(ref))) {
+      errors.push(`${id} day ${index} must retain Dodge unresolved evidence identity`);
     }
   }
 
@@ -388,6 +537,19 @@
     return intervals.map(interval => [interval[0], interval[1]]);
   }
 
+  function cloneRestrictions(restrictions) {
+    return restrictions.map(restriction => ({
+      targetId: restriction.targetId,
+      intervals: cloneIntervals(restriction.intervals),
+      status: restriction.status,
+      reason: restriction.reason,
+      availabilityType: restriction.availabilityType,
+      accessRestrictions: [...restriction.accessRestrictions],
+      sourceRefs: [...restriction.sourceRefs],
+      evidenceRefs: [...restriction.evidenceRefs],
+    }));
+  }
+
   function buildUpdates(snapshot, venues, today) {
     const errors = validateSnapshot(snapshot);
     if (errors.length || !Array.isArray(venues)) return { ok: false, errors };
@@ -406,11 +568,13 @@
       const selectedDays = facility.days.slice(firstIndex, firstIndex + 7);
       const hours = {};
       const sourceStatuses = {};
+      const sourceRestrictions = {};
       const recreationDays = {};
       for (const day of selectedDays) {
         const dow = new Date(`${day.date}T12:00:00Z`).getUTCDay();
         hours[dow] = cloneIntervals(day.intervals);
         sourceStatuses[dow] = day.status;
+        sourceRestrictions[dow] = cloneRestrictions(day.restrictions);
         recreationDays[dow] = {
           date: day.date,
           status: day.status,
@@ -418,6 +582,8 @@
           availabilityType: day.availabilityType,
           accessRestrictions: [...day.accessRestrictions],
           sourceRefs: [...day.sourceRefs],
+          evidenceRefs: [...day.evidenceRefs],
+          restrictions: cloneRestrictions(day.restrictions),
           conflict: day.conflict,
         };
       }
@@ -429,11 +595,14 @@
         availabilityType: current.availabilityType,
         accessRestrictions: [...current.accessRestrictions],
         sourceRefs: [...current.sourceRefs],
+        evidenceRefs: [...current.evidenceRefs],
+        restrictions: cloneRestrictions(current.restrictions),
         conflict: current.conflict,
       };
       const next = {
         hours,
         sourceStatuses,
+        sourceRestrictions,
         accessRestrictions: [...current.accessRestrictions],
         recreationLive: true,
         recreationSpaces: [],
@@ -444,11 +613,11 @@
         recreationAvailabilityType: current.availabilityType,
         recreationConflict: current.conflict,
       };
-      if (current.conflict === true || current.status === 'Hours need verification') verificationIds.push(id);
+      if (current.conflict === true || UNAVAILABLE_STATUSES.has(current.status)) verificationIds.push(id);
       if (id === 'dodge') {
         next.recreationSpaces = facility.spaces.map(space => {
           const day = space.days[firstIndex];
-          if (day.conflict === true || day.status === 'Hours need verification') verificationIds.push(space.id);
+          if (day.conflict === true || UNAVAILABLE_STATUSES.has(day.status)) verificationIds.push(space.id);
           return {
             id: space.id,
             name: space.name,
@@ -457,6 +626,9 @@
             reason: day.reason,
             availabilityType: day.availabilityType,
             accessRestrictions: [...day.accessRestrictions],
+            sourceRefs: [...day.sourceRefs],
+            evidenceRefs: [...day.evidenceRefs],
+            restrictions: cloneRestrictions(day.restrictions),
             conflict: day.conflict,
           };
         });

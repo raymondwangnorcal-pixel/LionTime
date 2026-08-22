@@ -41,6 +41,86 @@ test('accepts the complete fourteen-day recreation snapshot', () => {
   assert.equal(validateRecreationHoursSnapshot(validSnapshot()).ok, true);
 });
 
+test('accepts explicit timed restrictions only when residual intervals exclude their windows', () => {
+  const restriction = {
+    targetId: 'barnard-fitness',
+    intervals: [['12:00', '14:00']],
+    status: 'Reservation required',
+    reason: 'Private reservation',
+    availabilityType: 'reservation-required',
+    accessRestrictions: [],
+    sourceRefs: ['barnardFitness'],
+    evidenceRefs: ['barnardFitness:barnard-fitness'],
+  };
+  const valid = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [['06:00', '12:00'], ['14:00', '23:00']],
+    sourceRefs: ['barnardFitness'],
+    evidenceRefs: ['barnardFitness:barnard-fitness'],
+    restrictions: [restriction],
+  });
+  assert.equal(validateRecreationHoursSnapshot(valid).ok, true);
+
+  const overlapping = setDay(valid, 'barnard-fitness', {
+    intervals: [['06:00', '23:00']],
+  });
+  assert.match(validateRecreationHoursSnapshot(overlapping).errors.join('\n'), /restriction.*overlap|residual.*restriction/i);
+
+  const unsupportedStatus = setDay(valid, 'barnard-fitness', {
+    restrictions: [{ ...restriction, status: 'Closed for dragons' }],
+  });
+  assert.match(validateRecreationHoursSnapshot(unsupportedStatus).errors.join('\n'), /approved restriction status/i);
+
+  const overlappingRestrictions = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [['06:00', '10:00'], ['16:00', '23:00']],
+    restrictions: [
+      { ...restriction, intervals: [['10:00', '14:00']] },
+      { ...restriction, intervals: [['12:00', '16:00']], reason: 'Second reservation' },
+    ].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))),
+  });
+  assert.match(
+    validateRecreationHoursSnapshot(overlappingRestrictions).errors.join('\n'),
+    /restriction windows must not overlap each other/i,
+  );
+});
+
+test('rejects copied parent or peer hours without target-specific evidence identity', () => {
+  const parentOnly = setSpaceDay(validSnapshot(), 'blue-gym', {
+    intervals: [['06:00', '23:00']],
+    sourceRefs: ['columbiaHours'],
+    evidenceRefs: ['columbiaHours:dodge'],
+  });
+  assert.match(validateRecreationHoursSnapshot(parentOnly).errors.join('\n'), /target-specific evidence/i);
+
+  const peerOnly = setSpaceDay(validSnapshot(), 'blue-gym', {
+    intervals: [['06:00', '23:00']],
+    sourceRefs: ['columbiaHours'],
+    evidenceRefs: ['columbiaHours:levien-gymnasium'],
+  });
+  assert.match(validateRecreationHoursSnapshot(peerOnly).errors.join('\n'), /target-specific evidence/i);
+
+  const independentIdentical = validSnapshot();
+  assert.deepEqual(
+    independentIdentical.facilities.find(item => item.id === 'dodge').days[0].intervals,
+    independentIdentical.facilities.find(item => item.id === 'dodge').spaces[0].days[0].intervals,
+  );
+  assert.equal(validateRecreationHoursSnapshot(independentIdentical).ok, true);
+});
+
+test('accepts resolver-generated Dodge restriction clipping with parent and child evidence', () => {
+  const snapshot = resolverSnapshotWithOfficialSources([evidence({
+    sourceId: 'columbiaModifications', priority: 1,
+    effectiveStart: '2026-08-21', effectiveEnd: '2026-08-21',
+    weeklyIntervals: null, dateIntervals: [['12:00', '14:00']],
+    status: 'Closed for maintenance', reason: 'Annual maintenance',
+  })]);
+
+  assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
+  const blue = snapshot.facilities.find(item => item.id === 'dodge').spaces[0].days[0];
+  assert.equal(blue.restrictions[0].targetId, 'dodge');
+  assert.ok(blue.evidenceRefs.includes('columbiaHours:blue-gym'));
+  assert.ok(blue.evidenceRefs.includes('columbiaModifications:dodge'));
+});
+
 test('accepts the resolver closure-plus-conflict state inherited from Dodge', () => {
   const snapshot = resolverSnapshotWithOfficialSources([
     evidence({
@@ -61,7 +141,14 @@ test('accepts the resolver closure-plus-conflict state inherited from Dodge', ()
   assert.deepEqual(blue, {
     date: '2026-08-21', intervals: [], status: 'Closed for maintenance', reason: 'Repairs',
     availabilityType: null, accessRestrictions: [],
-    sourceRefs: ['columbiaHours', 'columbiaModifications'], conflict: true,
+    sourceRefs: ['columbiaHours', 'columbiaModifications'],
+    evidenceRefs: [
+      'columbiaHours:blue-gym',
+      'columbiaHours:dodge',
+      'columbiaModifications:blue-gym',
+      'columbiaModifications:dodge',
+    ],
+    restrictions: [], conflict: true,
   });
   assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
 });
@@ -80,7 +167,7 @@ test('accepts resolver reservation-required availability without a redundant sta
   assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
 });
 
-test('accepts exact full-day Dodge reservation propagation while preserving child availability', () => {
+test('accepts exact full-window Dodge reservation restrictions while preserving child availability', () => {
   const snapshot = resolverSnapshotWithOfficialSources([
     evidence({
       sourceId: 'columbiaModifications', priority: 1,
@@ -91,11 +178,15 @@ test('accepts exact full-day Dodge reservation propagation while preserving chil
   ]);
   const dodge = snapshot.facilities.find(facility => facility.id === 'dodge');
   const pool = snapshot.facilities.find(facility => facility.id === 'uris-pool');
-  const expectedSources = ['columbiaHours', 'columbiaModifications'];
-  assert.deepEqual(dodge.days[0], {
-    date: '2026-08-21', intervals: [], status: 'Reservation required', reason: 'Private event',
-    availabilityType: 'reservation-required', accessRestrictions: [], sourceRefs: expectedSources, conflict: false,
-  });
+  const expectedRestriction = {
+    targetId: 'dodge', intervals: [['06:00', '23:00']], status: 'Reservation required',
+    reason: 'Private event', availabilityType: 'reservation-required', accessRestrictions: [],
+    sourceRefs: ['columbiaModifications'], evidenceRefs: ['columbiaModifications:dodge'],
+  };
+  assert.deepEqual(dodge.days[0].intervals, []);
+  assert.equal(dodge.days[0].status, null);
+  assert.equal(dodge.days[0].availabilityType, 'facility-hours');
+  assert.deepEqual(dodge.days[0].restrictions, [expectedRestriction]);
   for (const [id, availabilityType] of [
     ['uris-pool', 'lap-swim'],
     ...SPACE_IDS.map(id => [id, 'open-recreation']),
@@ -103,10 +194,10 @@ test('accepts exact full-day Dodge reservation propagation while preserving chil
     const day = id === 'uris-pool'
       ? pool.days[0]
       : dodge.spaces.find(space => space.id === id).days[0];
-    assert.deepEqual(day, {
-      date: '2026-08-21', intervals: [], status: 'Reservation required', reason: 'Private event',
-      availabilityType, accessRestrictions: [], sourceRefs: expectedSources, conflict: false,
-    });
+    assert.deepEqual(day.intervals, []);
+    assert.equal(day.status, null);
+    assert.equal(day.availabilityType, availabilityType);
+    assert.deepEqual(day.restrictions, [expectedRestriction]);
   }
   assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
 });
@@ -134,10 +225,15 @@ test('requires Dodge maintenance closure details to propagate to the pool and sp
   let snapshot = setDay(validSnapshot(), 'dodge', {
     intervals: [], status: 'Closed for maintenance', reason: 'Repairs',
     sourceRefs: ['columbiaHours', 'columbiaModifications'],
+    evidenceRefs: ['columbiaHours:dodge', 'columbiaModifications:dodge'],
   });
-  snapshot = setDay(snapshot, 'uris-pool', { intervals: [], status: null, reason: null, sourceRefs: [] });
+  snapshot = setDay(snapshot, 'uris-pool', {
+    intervals: [], status: null, reason: null, sourceRefs: [], evidenceRefs: [], restrictions: [],
+  });
   for (const id of SPACE_IDS) {
-    snapshot = setSpaceDay(snapshot, id, { intervals: [], status: null, reason: null, sourceRefs: [] });
+    snapshot = setSpaceDay(snapshot, id, {
+      intervals: [], status: null, reason: null, sourceRefs: [], evidenceRefs: [], restrictions: [],
+    });
   }
   const errors = validateRecreationHoursSnapshot(snapshot).errors.join('\n');
   for (const id of ['uris-pool', ...SPACE_IDS]) {
@@ -164,11 +260,12 @@ test('rejects intervals paired with an unavailable status', () => {
   assert.match(validateRecreationHoursSnapshot(snapshot).errors.join('\n'), /Closed status cannot include intervals/);
 });
 
-test('rejects room intervals without room-specific provenance', () => {
+test('rejects room intervals without target-specific evidence', () => {
   const snapshot = setSpaceDay(validSnapshot(), 'blue-gym', {
-    intervals: [['10:00', '12:00']], sourceRefs: ['dodge-baseline'],
+    intervals: [['10:00', '12:00']], sourceRefs: ['columbiaHours'],
+    evidenceRefs: ['columbiaHours:dodge'],
   });
-  assert.match(validateRecreationHoursSnapshot(snapshot).errors.join('\n'), /room-specific provenance/);
+  assert.match(validateRecreationHoursSnapshot(snapshot).errors.join('\n'), /target-specific evidence/);
 });
 
 test('returns validation errors for malformed child intervals without throwing', () => {
