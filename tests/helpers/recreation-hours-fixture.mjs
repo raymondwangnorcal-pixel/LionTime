@@ -1,0 +1,130 @@
+import assert from 'node:assert/strict';
+
+import { resolveRecreationSnapshot } from '../../lib/recreation-hours-resolver.js';
+
+export const generated = new Date('2026-08-21T16:00:00-04:00');
+
+export const evidence = (overrides = {}) => ({
+  targetId: 'dodge',
+  sourceId: 'fall-dodge',
+  priority: 3,
+  effectiveStart: '2026-08-17',
+  effectiveEnd: '2026-12-23',
+  weeklyIntervals: {
+    0: [],
+    1: [['06:00', '23:00']],
+    2: [['06:00', '23:00']],
+    3: [['06:00', '23:00']],
+    4: [['06:00', '23:00']],
+    5: [['06:00', '23:00']],
+    6: [],
+  },
+  dateIntervals: null,
+  status: null,
+  reason: null,
+  availabilityType: 'facility-hours',
+  accessRestrictions: [],
+  sourceUpdatedAt: null,
+  ...overrides,
+});
+
+export const openDodge = evidence();
+export const fallDodge = openDodge;
+export const springDodge = evidence({
+  sourceId: 'spring-dodge',
+  effectiveStart: '2026-01-20',
+  effectiveEnd: '2026-05-15',
+  weeklyIntervals: { 1: [['07:00', '22:00']] },
+});
+export const openPool = evidence({
+  targetId: 'uris-pool',
+  sourceId: 'pool-lap-swim',
+  priority: 2,
+  weeklyIntervals: { 5: [['12:00', '14:00']] },
+  availabilityType: 'lap-swim',
+});
+export const dodgeMaintenance = evidence({
+  sourceId: 'dodge-maintenance',
+  priority: 1,
+  effectiveStart: '2026-08-21',
+  effectiveEnd: '2026-08-21',
+  weeklyIntervals: null,
+  dateIntervals: [],
+  status: 'Closed for maintenance',
+  reason: 'Floor maintenance',
+});
+export const poolMaintenance = evidence({
+  targetId: 'uris-pool',
+  sourceId: 'pool-maintenance',
+  priority: 1,
+  effectiveStart: '2026-08-21',
+  effectiveEnd: '2026-08-21',
+  weeklyIntervals: null,
+  dateIntervals: [],
+  status: 'Closed for maintenance',
+  reason: 'Pool maintenance',
+});
+export const modifiedDodgeClose = evidence({
+  sourceId: 'modified-dodge-close',
+  priority: 1,
+  effectiveStart: '2026-08-21',
+  effectiveEnd: '2026-08-21',
+  weeklyIntervals: null,
+  dateIntervals: [['06:00', '18:00']],
+});
+export const conflictingBlueGymA = evidence({
+  targetId: 'blue-gym',
+  sourceId: 'blue-a',
+  priority: 2,
+  weeklyIntervals: { 5: [['10:00', '12:00']] },
+  availabilityType: 'open-recreation',
+});
+export const conflictingBlueGymB = evidence({
+  targetId: 'blue-gym',
+  sourceId: 'blue-b',
+  priority: 2,
+  weeklyIntervals: { 5: [['14:00', '16:00']] },
+  availabilityType: 'open-recreation',
+});
+
+export function resolveWith(items, options = {}) {
+  return resolveRecreationSnapshot({ evidence: items, generated: options.generated || generated });
+}
+
+export function day(snapshot, facilityId, date = '2026-08-21') {
+  const facility = snapshot.facilities.find(candidate => candidate.id === facilityId);
+  assert.ok(facility, `missing facility ${facilityId}`);
+  const result = facility.days.find(candidate => candidate.date === date);
+  assert.ok(result, `missing ${facilityId} day ${date}`);
+  return result;
+}
+
+export function spaceDay(snapshot, spaceId, date = '2026-08-21') {
+  const dodge = snapshot.facilities.find(candidate => candidate.id === 'dodge');
+  assert.ok(dodge, 'missing Dodge facility');
+  const space = dodge.spaces.find(candidate => candidate.id === spaceId);
+  assert.ok(space, `missing Dodge space ${spaceId}`);
+  const result = space.days.find(candidate => candidate.date === date);
+  assert.ok(result, `missing ${spaceId} day ${date}`);
+  return result;
+}
+
+export function validSnapshot() {
+  return resolveWith([
+    openDodge,
+    evidence({ targetId: 'uris-pool', sourceId: 'pool-baseline', priority: 3, availabilityType: 'lap-swim' }),
+    evidence({ targetId: 'barnard-fitness', sourceId: 'barnard-baseline', priority: 3 }),
+    ...[
+      'blue-gym',
+      'levien-gymnasium',
+      'functional-fitness-studio',
+      'aerobics-room-4',
+      'squash-courts',
+    ].map(targetId => evidence({
+      targetId,
+      sourceId: `${targetId}-baseline`,
+      priority: 3,
+      availabilityType: 'open-recreation',
+    })),
+  ]);
+}
