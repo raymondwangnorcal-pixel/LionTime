@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 <title>LionHour — What's open at Columbia</title>
 <link rel="canonical" href="https://lionhour.com" />
 <style>
@@ -35,10 +35,32 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* `clip` — not `hidden`. On iOS Safari, overflow-x:hidden turns the root
+     into a scroll container, which makes it size to the pre-clip content
+     width and then shrink-to-fit the whole page (the site renders small
+     with a dead strip down the right). `clip` never creates a scroll
+     container, so neither happens, and position:sticky keeps working.
+     The `hidden` line is the fallback for pre-Safari-16 browsers. */
+  html, body {
+    overflow-x: hidden;
+    overflow-x: clip;
+    max-width: 100%;
+    overscroll-behavior-x: none;
+  }
+
+  /* iOS Safari ignores overflow-x on the root elements for touch scrolling.
+     A plain <div> wrapper fixes it: overflow-x:hidden on a non-root element
+     reliably blocks horizontal scroll on every browser.
+     Fixed-position children (sidebar, overlay) live OUTSIDE this div. */
+  .page-wrap {
+    width: 100%;
+    overflow-x: hidden;   /* fallback for pre-Safari-16 */
+    overflow-x: clip;
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: var(--bg); color: var(--text); min-height: 100vh;
-    overflow-x: hidden;
   }
 
   /* ── Header ────────────────────────────────────── */
@@ -47,11 +69,18 @@
     color: white; padding: 1.8rem 1.5rem 1.4rem;
     text-align: center; position: relative; overflow: visible; z-index: 40;
   }
-  .header::before {
+  /* The decorative circles get their own clipped layer, so they can never
+     widen the page. The header itself stays overflow:visible so the About
+     dropdown can still hang below it. */
+  .header-bg {
+    position: absolute; inset: 0; overflow: hidden;
+    pointer-events: none; z-index: 0;
+  }
+  .header-bg::before {
     content: ''; position: absolute; top: -50%; right: -18%;
     width: 380px; height: 380px; background: rgba(255,255,255,0.04); border-radius: 50%;
   }
-  .header::after {
+  .header-bg::after {
     content: ''; position: absolute; bottom: -30%; left: -8%;
     width: 280px; height: 280px; background: rgba(255,255,255,0.03); border-radius: 50%;
   }
@@ -349,7 +378,9 @@
   <div class="sidebar-nav" id="sidebar-nav"></div>
 </nav>
 
+<div class="page-wrap">
 <header class="header">
+  <div class="header-bg" aria-hidden="true"></div>
   <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
   <div class="header-actions">
     <a class="header-link" href="https://docs.google.com/forms/d/e/1FAIpQLSdpToXB8tdcgGGDQYynTmuKIf2JU-3d3ojvyx7o9GIn8mRSSg/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Feedback</a>
@@ -390,11 +421,28 @@
     Dining hours: embedded fallback · Verify before you go
   </a>
 </footer>
+</div><!-- .page-wrap -->
 
 <script src="assets/library-hours.js"></script>
 <script src="assets/dining-hours.js"></script>
 
 <script>
+/* ── iOS Safari horizontal-scroll lock ────────────
+   Safari on iOS ignores overflow-x:hidden/clip on root elements for touch
+   gestures. This listener catches any horizontal drift and snaps it back. */
+(function(){
+  function lockX(){
+    if(window.scrollX) window.scrollTo(0,window.scrollY);
+    if(document.documentElement.scrollLeft) document.documentElement.scrollLeft=0;
+    if(document.body.scrollLeft) document.body.scrollLeft=0;
+    var w=document.querySelector('.page-wrap');
+    if(w&&w.scrollLeft) w.scrollLeft=0;
+  }
+  window.addEventListener('scroll',lockX,{passive:true});
+  var w=document.querySelector('.page-wrap');
+  if(w) w.addEventListener('scroll',lockX,{passive:true});
+})();
+
 /* ══════════════════════════════════════════════════
    CATEGORIES
    ══════════════════════════════════════════════════ */
