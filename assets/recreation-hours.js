@@ -535,7 +535,38 @@
     }
   }
 
-  async function hydrate({ venues, fetchImpl = global.fetch, render = () => {}, setStatus = () => {}, today, now = new Date() }) {
+  function messageFor(error, fallback) {
+    return error?.message || fallback;
+  }
+
+  function fallbackResult(setStatus, failureReason, failureMessage = failureReason) {
+    const result = {
+      applied: false,
+      reason: failureReason,
+      failureReason,
+      failureMessage,
+    };
+    try {
+      setStatus({ kind: 'fallback', failureReason });
+      return result;
+    } catch (error) {
+      return {
+        ...result,
+        reason: 'status-error',
+        statusError: messageFor(error, 'status-error'),
+      };
+    }
+  }
+
+  async function hydrate({
+    venues,
+    fetchImpl = global.fetch,
+    render = () => {},
+    restore = () => {},
+    setStatus = () => {},
+    today,
+    now = new Date(),
+  }) {
     let updates;
     let status;
     try {
@@ -558,32 +589,51 @@
         verificationCount: updates.verificationIds.length,
       };
     } catch (error) {
-      setStatus({ kind: 'fallback' });
-      return { applied: false, reason: error?.message || 'network-error' };
+      const failureReason = messageFor(error, 'network-error');
+      return fallbackResult(setStatus, failureReason, failureReason);
     }
     const states = prepareTransaction(updates.entries);
     if (!states) {
-      setStatus({ kind: 'fallback' });
-      return { applied: false, reason: 'venue-update-failed' };
+      return fallbackResult(setStatus, 'venue-update-failed');
     }
     try {
       applyTransaction(states);
     } catch (error) {
       rollbackTransaction(states);
-      setStatus({ kind: 'fallback' });
-      return { applied: false, reason: error?.message || 'venue-update-failed' };
+      return fallbackResult(setStatus, 'venue-update-failed', messageFor(error, 'venue-update-failed'));
     }
     try {
       render();
-    } catch {
+    } catch (error) {
       rollbackTransaction(states);
-      return { applied: false, reason: 'render-error' };
+      try {
+        restore({ kind: 'embedded', reason: 'render-error' });
+      } catch (restoreError) {
+        return {
+          applied: false,
+          reason: 'rollback-error',
+          failureReason: 'render-error',
+          renderingError: messageFor(error, 'render-error'),
+          restorationError: messageFor(restoreError, 'restore-error'),
+        };
+      }
+      return {
+        applied: false,
+        reason: 'render-error',
+        failureReason: 'render-error',
+        renderingError: messageFor(error, 'render-error'),
+      };
     }
     try {
       setStatus(status);
-    } catch {
-      rollbackTransaction(states);
-      return { applied: false, reason: 'status-error' };
+    } catch (error) {
+      return {
+        applied: true,
+        degraded: true,
+        reason: 'status-error',
+        statusError: messageFor(error, 'status-error'),
+        ...status,
+      };
     }
     return { applied: true, stale: status.kind === 'stale', ...status };
   }

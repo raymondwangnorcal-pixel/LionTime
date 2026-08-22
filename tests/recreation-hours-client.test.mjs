@@ -151,6 +151,35 @@ test('preserves embedded schedules and marks fallback when request or validation
   }
 });
 
+test('returns a stable status-error when fallback status reporting throws', async () => {
+  const failures = [
+    { responseStatus: 503, expectedFailure: 'http-503' },
+    { snapshot: withoutFacility('dodge'), expectedFailure: 'invalid-data' },
+  ];
+  for (const options of failures) {
+    const venues = venueFixture();
+    let externalStatus = 'embedded';
+    const result = await api.hydrate({
+      venues,
+      fetchImpl: async () => ({
+        ok: options.responseStatus ? false : true,
+        status: options.responseStatus || 200,
+        json: async () => options.snapshot,
+      }),
+      render: () => assert.fail('fallback must not render'),
+      setStatus: () => { externalStatus = 'fallback-partial'; throw new Error('fallback-status-boom'); },
+      today: '2026-08-21',
+      now: new Date('2026-08-21T20:00:00Z'),
+    });
+    assert.equal(result.applied, false);
+    assert.equal(result.reason, 'status-error');
+    assert.equal(result.failureReason, options.expectedFailure);
+    assert.equal(result.statusError, 'fallback-status-boom');
+    assert.equal(externalStatus, 'fallback-partial');
+    assert.deepEqual(venues, venueFixture());
+  }
+});
+
 test('marks a valid snapshot older than eight hours as stale', async () => {
   const result = await hydrateFixture({ ageHours: 9 });
   assert.equal(result.applied, true);
@@ -241,14 +270,48 @@ test('rolls back every venue when a later target cannot accept updates', async (
   assert.deepEqual(venues, original);
 });
 
+test('returns a stable status-error for preflight and mid-apply failures', async () => {
+  const preflightVenues = venueFixture();
+  Object.preventExtensions(preflightVenues[1]);
+  const preflight = await api.hydrate({
+    venues: preflightVenues,
+    fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
+    render: () => assert.fail('preflight failure must not render'),
+    setStatus: () => { throw new Error('preflight-status-boom'); },
+    today: '2026-08-21', now: new Date('2026-08-21T20:00:00Z'),
+  });
+  assert.equal(preflight.reason, 'status-error');
+  assert.equal(preflight.failureReason, 'venue-update-failed');
+  assert.equal(preflight.statusError, 'preflight-status-boom');
+
+  const applyVenues = venueFixture();
+  const applyTarget = applyVenues[1];
+  applyVenues[1] = new Proxy(applyTarget, {
+    defineProperty() { throw new Error('apply-boom'); },
+  });
+  const apply = await api.hydrate({
+    venues: applyVenues,
+    fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
+    render: () => assert.fail('apply failure must not render'),
+    setStatus: () => { throw new Error('apply-status-boom'); },
+    today: '2026-08-21', now: new Date('2026-08-21T20:00:00Z'),
+  });
+  assert.equal(apply.reason, 'status-error');
+  assert.equal(apply.failureReason, 'venue-update-failed');
+  assert.equal(apply.statusError, 'apply-status-boom');
+  assert.deepEqual(applyTarget, venueFixture()[1]);
+});
+
 test('rolls back venue updates when rendering fails without reporting request fallback', async () => {
   const venues = venueFixture();
   const original = structuredClone(venues);
+  let externalView = 'embedded';
   let status;
   const result = await api.hydrate({
     venues,
     fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
-    render: () => { throw new Error('render exploded'); },
+    render: () => { externalView = 'live'; throw new Error('render exploded'); },
+    restore: () => { externalView = 'embedded'; },
     setStatus: next => { status = next; },
     today: '2026-08-21',
     now: new Date('2026-08-21T20:00:00Z'),
@@ -256,23 +319,42 @@ test('rolls back venue updates when rendering fails without reporting request fa
   assert.equal(result.applied, false);
   assert.equal(result.reason, 'render-error');
   assert.equal(status, undefined);
+  assert.equal(externalView, 'embedded');
   assert.deepEqual(venues, original);
 });
 
 test('does not relabel a post-commit status callback failure as fallback', async () => {
   const venues = venueFixture();
-  const original = structuredClone(venues);
+  let externalView = 'embedded';
   const result = await api.hydrate({
     venues,
     fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
-    render() {},
-    setStatus: () => { throw new Error('status exploded'); },
+    render: () => { externalView = 'live'; },
+    setStatus: () => { externalView = 'live-status'; throw new Error('status exploded'); },
     today: '2026-08-21',
     now: new Date('2026-08-21T20:00:00Z'),
   });
-  assert.equal(result.applied, false);
+  assert.equal(result.applied, true);
+  assert.equal(result.degraded, true);
   assert.equal(result.reason, 'status-error');
-  assert.deepEqual(venues, original);
+  assert.equal(externalView, 'live-status');
+  assert.equal(venues[0].recreationLive, true);
+});
+
+test('distinguishes restoration failure after renderer failure', async () => {
+  const venues = venueFixture();
+  const result = await api.hydrate({
+    venues,
+    fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
+    render: () => { throw new Error('render exploded'); },
+    restore: () => { throw new Error('restore exploded'); },
+    setStatus: () => assert.fail('renderer failure must not publish status'),
+    today: '2026-08-21', now: new Date('2026-08-21T20:00:00Z'),
+  });
+  assert.equal(result.applied, false);
+  assert.equal(result.reason, 'rollback-error');
+  assert.equal(result.failureReason, 'render-error');
+  assert.equal(result.restorationError, 'restore exploded');
 });
 
 test('preserves structured top-level reasons, swim modes, reservations, access, and conflicts', () => {
