@@ -63,9 +63,9 @@ When sources disagree, use the shipped resolver order: date-specific facility cl
    node -e "import('./lib/recreation-hours-schema.js').then(async ({validateRecreationHoursSnapshot}) => { const fs = await import('node:fs/promises'); const value = JSON.parse(await fs.readFile('/tmp/lionhour-recreation-hours.json', 'utf8')); const result = validateRecreationHoursSnapshot(value); console.log(JSON.stringify({ valid: result.ok, facilities: value.facilities?.length, dodgeSpaces: value.facilities?.find(item => item.id === 'dodge')?.spaces?.length, dates: value.facilities?.[0]?.days?.length, errors: result.errors }, null, 2)); process.exitCode = result.ok ? 0 : 1; })"
    ```
 
-   Success requires `valid: true`, at least three facilities, exactly five Dodge spaces, and fourteen dates. The scraper success line identifies the catalog facility count and final covered date.
+   Success requires `valid: true`, exactly three facilities, exactly five Dodge spaces, and fourteen dates. The scraper success line identifies the catalog facility count and final covered date.
 5. In GitHub, run **Actions → Update recreation hours → Run workflow** on the deployed branch. Confirm that `Scrape validated Recreation hours` succeeds and that `Publish validated snapshot` ran rather than being skipped.
-6. Repeat the read-only API `GET`. It must return `200`, schema version 1, the three required facilities, five Dodge spaces, and fourteen dates per facility. A valid authenticated `PUT` returns `204` with no body; missing or incorrect bearer authentication returns `401`, malformed snapshots return `422`, and other methods return `405` with `Allow: GET, PUT`.
+6. Repeat the read-only API `GET`. It must return `200` with exactly the three required facilities, five Dodge spaces, and fourteen dates per facility. The response snapshot has `generated` and `facilities` at its top level; `v1` belongs only to the private Redis key, not the public response. A valid authenticated `PUT` returns `204` with no body; missing or incorrect bearer authentication returns `401`, malformed snapshots return `422`, and other methods return `405` with `Allow: GET, PUT`.
 7. Reload LionHour. The Recreation footer should report a live, stale, verification, or embedded-fallback state that reflects the snapshot; it should not imply that every Dodge space is open.
 
 ## Routine verification
