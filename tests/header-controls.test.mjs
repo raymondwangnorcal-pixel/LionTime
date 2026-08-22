@@ -94,6 +94,15 @@ test('loads Recreation hydration after embedded Fitness cards', () => {
   assert.ok(indexHtml.indexOf('<script src="assets/recreation-hours.js"></script>') > indexHtml.indexOf('const VENUES = ['));
 });
 
+test('keeps the live Recreation source control an atomic polite link', () => {
+  const recreationAnchor = indexHtml.match(/<a class="library-hours-status" id="recreation-hours-status"[\s\S]*?<\/a>/)?.[0];
+  assert.ok(recreationAnchor, 'expected a Recreation source anchor');
+  assert.match(recreationAnchor, /href="https:\/\/perec\.columbia\.edu\/hours-operation"/);
+  assert.match(recreationAnchor, /aria-live="polite"/);
+  assert.match(recreationAnchor, /aria-atomic="true"/);
+  assert.doesNotMatch(recreationAnchor, /\brole="status"/);
+});
+
 test('keeps Dodge spaces nested instead of creating five Fitness venue cards', () => {
   assert.match(indexHtml, /<script src="assets\/recreation-hours-view\.js"><\/script>/);
   assert.match(indexHtml, /LionHourRecreationView\.renderSpaces/);
