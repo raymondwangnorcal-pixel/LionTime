@@ -64,6 +64,18 @@ test('rejects modifications with multiple or unmatched temporal expressions', ()
   }
 });
 
+test('rejects a supported range followed by an unsupported 24-hour clock cue', () => {
+  const notice = 'Reservation required from 4 PM - 6 PM; reopens at 19:00';
+
+  assert.deepEqual(parseColumbiaModifications(columbiaModificationHtml(notice)), []);
+});
+
+test('rejects a supported range followed by an unsupported named time cue', () => {
+  const notice = 'Closed for maintenance from 9 AM - 11 AM; reopens at noon';
+
+  assert.deepEqual(parseColumbiaModifications(columbiaModificationHtml(notice)), []);
+});
+
 test('keeps Barnard access restrictions separate from operating intervals', async () => {
   const html = await readFixture('recreation-barnard-hours.html');
   const item = find(parseBarnardHours(html), 'barnard-fitness');
