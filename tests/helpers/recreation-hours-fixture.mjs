@@ -110,7 +110,7 @@ export function spaceDay(snapshot, spaceId, date = '2026-08-21') {
 }
 
 export function validSnapshot() {
-  return resolveWith([
+  const snapshot = resolveWith([
     openDodge,
     evidence({ targetId: 'uris-pool', sourceId: 'pool-baseline', priority: 3, availabilityType: 'lap-swim' }),
     evidence({ targetId: 'barnard-fitness', sourceId: 'barnard-baseline', priority: 3 }),
@@ -127,4 +127,68 @@ export function validSnapshot() {
       availabilityType: 'open-recreation',
     })),
   ]);
+  const officialSourceFor = id => id === 'barnard-fitness' ? 'barnardFitness' : 'columbiaHours';
+  for (const facility of snapshot.facilities) {
+    for (const resolvedDay of facility.days) resolvedDay.sourceRefs = [officialSourceFor(facility.id)];
+    for (const space of facility.spaces || []) {
+      for (const resolvedDay of space.days) resolvedDay.sourceRefs = ['columbiaHours'];
+    }
+  }
+  return snapshot;
+}
+
+export function withoutFacility(id) {
+  const snapshot = structuredClone(validSnapshot());
+  snapshot.facilities = snapshot.facilities.filter(facility => facility.id !== id);
+  return snapshot;
+}
+
+export function withoutSpace(id) {
+  const snapshot = structuredClone(validSnapshot());
+  const dodge = snapshot.facilities.find(facility => facility.id === 'dodge');
+  dodge.spaces = dodge.spaces.filter(space => space.id !== id);
+  return snapshot;
+}
+
+export function withSource(url) {
+  const snapshot = structuredClone(validSnapshot());
+  snapshot.facilities[0].days[0].sourceRefs = [url];
+  return snapshot;
+}
+
+export function setDay(snapshot, id, changes) {
+  const copy = structuredClone(snapshot);
+  const facility = copy.facilities.find(candidate => candidate.id === id);
+  assert.ok(facility, `missing facility ${id}`);
+  Object.assign(facility.days[0], changes);
+  return copy;
+}
+
+export function setSpaceDay(snapshot, id, changes) {
+  const copy = structuredClone(snapshot);
+  const dodge = copy.facilities.find(candidate => candidate.id === 'dodge');
+  const space = dodge?.spaces.find(candidate => candidate.id === id);
+  assert.ok(space, `missing Dodge space ${id}`);
+  Object.assign(space.days[0], changes);
+  return copy;
+}
+
+export function nextSnapshot() {
+  const snapshot = structuredClone(validSnapshot());
+  snapshot.generated = '2026-08-22T16:00:00.000Z';
+  for (const facility of snapshot.facilities) {
+    for (const resolvedDay of facility.days) {
+      const next = new Date(`${resolvedDay.date}T12:00:00Z`);
+      next.setUTCDate(next.getUTCDate() + 1);
+      resolvedDay.date = next.toISOString().slice(0, 10);
+    }
+    for (const space of facility.spaces || []) {
+      for (const resolvedDay of space.days) {
+        const next = new Date(`${resolvedDay.date}T12:00:00Z`);
+        next.setUTCDate(next.getUTCDate() + 1);
+        resolvedDay.date = next.toISOString().slice(0, 10);
+      }
+    }
+  }
+  return snapshot;
 }

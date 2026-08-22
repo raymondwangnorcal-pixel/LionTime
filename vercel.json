@@ -10,6 +10,9 @@
     },
     "api/library-hours.js": {
       "maxDuration": 10
+    },
+    "api/recreation-hours.js": {
+      "maxDuration": 10
     }
   }
 }
