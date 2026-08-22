@@ -45,6 +45,16 @@ test('parses specific closures, reasons, and maintenance without guessing', asyn
   assert.equal(find(evidence, 'blue-gym').availabilityType, 'reservation-required');
 });
 
+test('rejects modifications with unsupported or non-increasing time-limited wording', () => {
+  for (const notice of [
+    'Reservation required from four PM to six PM',
+    'Reservation required from 5 PM - 9 AM',
+    'Closed for maintenance from 9 AM - 9 AM',
+  ]) {
+    assert.deepEqual(parseColumbiaModifications(columbiaModificationHtml(notice)), []);
+  }
+});
+
 test('keeps Barnard access restrictions separate from operating intervals', async () => {
   const html = await readFixture('recreation-barnard-hours.html');
   const item = find(parseBarnardHours(html), 'barnard-fitness');
@@ -124,4 +134,10 @@ function columbiaSeasonalHtml(range, rows = '<tr><td>Monday</td><td>6 AM - 11 PM
       <table><tbody>${rows}</tbody></table>
     </div>
   </div></div></main>`;
+}
+
+function columbiaModificationHtml(notice) {
+  return `<main><article><h1>Modified Hours &amp; Closures</h1>
+    <div><h2>August 21, 2026</h2><h3>Blue Gym</h3><p>${notice}</p></div>
+  </article></main>`;
 }
