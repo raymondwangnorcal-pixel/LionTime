@@ -288,18 +288,12 @@
     return day.conflict === true || day.status === 'Hours need verification';
   }
 
-  function inheritedClosure(child, parent, id, index, errors, isSpace) {
+  function inheritedClosure(child, parent, id, index, errors) {
     if (!child.validIntervals || child.intervals.length) errors.push(`${id} day ${index} cannot open while Dodge is closed`);
     if (child.status !== (parent.status || 'Closed')) errors.push(`${id} day ${index} must inherit Dodge closure status`);
     if (child.reason !== parent.reason) errors.push(`${id} day ${index} must inherit Dodge closure reason`);
     if (!parent.sourceRefs.every(source => child.sourceRefs.includes(source))) {
       errors.push(`${id} day ${index} must retain Dodge closure provenance`);
-    }
-    if (isSpace && child.status === 'Reservation required' && child.availabilityType !== 'reservation-required') {
-      // The accepted resolver permits an inherited all-day reservation to retain the room's type.
-      if (!(parent.status === 'Reservation required' && parent.intervals.length === 0)) {
-        errors.push(`${id} day ${index} reservation availability mismatch`);
-      }
     }
   }
 
@@ -331,7 +325,10 @@
         if (!child.days[index]) continue;
         const day = child.days[index];
         if (!parent.validIntervals || !day.validIntervals) continue;
-        if (verifiedClosure(parent)) inheritedClosure(day, parent, child.id, index, errors, child.isSpace);
+        if (verifiedClosure(parent)) {
+          inheritedClosure(day, parent, child.id, index, errors);
+          continue;
+        }
         else if (unresolved(parent)) inheritedUnresolved(day, parent, child.id, index, errors, child.isSpace);
         else if (day.intervals.some(interval => !within(interval, parent.intervals))) {
           errors.push(`${child.id} day ${index} intervals must be within Dodge hours`);
@@ -409,18 +406,43 @@
       const selectedDays = facility.days.slice(firstIndex, firstIndex + 7);
       const hours = {};
       const sourceStatuses = {};
+      const recreationDays = {};
       for (const day of selectedDays) {
         const dow = new Date(`${day.date}T12:00:00Z`).getUTCDay();
         hours[dow] = cloneIntervals(day.intervals);
         sourceStatuses[dow] = day.status;
+        recreationDays[dow] = {
+          date: day.date,
+          status: day.status,
+          reason: day.reason,
+          availabilityType: day.availabilityType,
+          accessRestrictions: [...day.accessRestrictions],
+          sourceRefs: [...day.sourceRefs],
+          conflict: day.conflict,
+        };
       }
       const current = selectedDays[0];
+      const recreationCurrent = {
+        date: current.date,
+        status: current.status,
+        reason: current.reason,
+        availabilityType: current.availabilityType,
+        accessRestrictions: [...current.accessRestrictions],
+        sourceRefs: [...current.sourceRefs],
+        conflict: current.conflict,
+      };
       const next = {
         hours,
         sourceStatuses,
         accessRestrictions: [...current.accessRestrictions],
         recreationLive: true,
         recreationSpaces: [],
+        recreationDays,
+        recreationCurrent,
+        recreationStatus: current.status,
+        recreationReason: current.reason,
+        recreationAvailabilityType: current.availabilityType,
+        recreationConflict: current.conflict,
       };
       if (current.conflict === true || current.status === 'Hours need verification') verificationIds.push(id);
       if (id === 'dodge') {
@@ -444,21 +466,90 @@
     return { ok: true, entries, verificationIds };
   }
 
-  async function hydrate({ venues, fetchImpl = global.fetch, render, setStatus = () => {}, today, now = new Date() }) {
+  function inheritedDescriptor(target, key) {
+    let current = Object.getPrototypeOf(target);
+    while (current) {
+      const descriptor = Object.getOwnPropertyDescriptor(current, key);
+      if (descriptor) return descriptor;
+      current = Object.getPrototypeOf(current);
+    }
+    return null;
+  }
+
+  function prepareTransaction(entries) {
+    const states = [];
+    try {
+      for (const [venue, next] of entries) {
+        if (!venue || (typeof venue !== 'object' && typeof venue !== 'function')) {
+          return null;
+        }
+        const descriptors = new Map();
+        for (const key of Object.keys(next)) {
+          const own = Object.getOwnPropertyDescriptor(venue, key);
+          const descriptor = own || inheritedDescriptor(venue, key);
+          if (own) {
+            if (!('value' in own) || own.writable !== true) return null;
+          } else {
+            if (!Object.isExtensible(venue)) return null;
+            if (descriptor && (!('value' in descriptor) || descriptor.writable !== true)) return null;
+          }
+          descriptors.set(key, own || null);
+        }
+        states.push({ venue, next, descriptors });
+      }
+    } catch {
+      return null;
+    }
+    return states;
+  }
+
+  function rollbackTransaction(states) {
+    for (const state of [...states].reverse()) {
+      for (const [key, descriptor] of state.descriptors) {
+        try {
+          if (descriptor) Object.defineProperty(state.venue, key, descriptor);
+          else Reflect.deleteProperty(state.venue, key);
+        } catch {
+          // The original descriptors are restored on ordinary objects. Proxies are unsupported.
+        }
+      }
+    }
+  }
+
+  function applyTransaction(states) {
+    const applied = [];
+    try {
+      for (const state of states) {
+        for (const key of Object.keys(state.next)) {
+          const descriptor = state.descriptors.get(key);
+          const nextDescriptor = descriptor
+            ? { ...descriptor, value: state.next[key] }
+            : { value: state.next[key], writable: true, enumerable: true, configurable: true };
+          Object.defineProperty(state.venue, key, nextDescriptor);
+        }
+        applied.push(state);
+      }
+    } catch (error) {
+      rollbackTransaction(applied.concat(states.filter(state => !applied.includes(state))));
+      throw error;
+    }
+  }
+
+  async function hydrate({ venues, fetchImpl = global.fetch, render = () => {}, setStatus = () => {}, today, now = new Date() }) {
+    let updates;
+    let status;
     try {
       const response = await fetchImpl('/api/recreation-hours', { headers: { Accept: 'application/json' } });
       if (!response || !response.ok) throw new Error(`http-${response?.status || 0}`);
       const snapshot = await response.json();
-      const updates = buildUpdates(snapshot, venues, today);
+      updates = buildUpdates(snapshot, venues, today);
       if (!updates.ok) throw new Error('invalid-data');
       const generatedAt = Date.parse(snapshot.generated);
       const nowAt = now instanceof Date ? now.getTime() : Date.parse(now);
       if (!Number.isFinite(generatedAt) || !Number.isFinite(nowAt)) throw new Error('invalid-freshness');
       const stale = nowAt - generatedAt > 8 * 60 * 60 * 1000;
       const kind = stale ? 'stale' : updates.verificationIds.length ? 'verification' : 'live';
-      for (const [venue, next] of updates.entries) Object.assign(venue, next);
-      render();
-      const status = {
+      status = {
         kind,
         generated: snapshot.generated,
         updatedCount: updates.entries.length,
@@ -466,12 +557,35 @@
         verificationIds: updates.verificationIds,
         verificationCount: updates.verificationIds.length,
       };
-      setStatus(status);
-      return { applied: true, stale, ...status };
     } catch (error) {
       setStatus({ kind: 'fallback' });
       return { applied: false, reason: error?.message || 'network-error' };
     }
+    const states = prepareTransaction(updates.entries);
+    if (!states) {
+      setStatus({ kind: 'fallback' });
+      return { applied: false, reason: 'venue-update-failed' };
+    }
+    try {
+      applyTransaction(states);
+    } catch (error) {
+      rollbackTransaction(states);
+      setStatus({ kind: 'fallback' });
+      return { applied: false, reason: error?.message || 'venue-update-failed' };
+    }
+    try {
+      render();
+    } catch {
+      rollbackTransaction(states);
+      return { applied: false, reason: 'render-error' };
+    }
+    try {
+      setStatus(status);
+    } catch {
+      rollbackTransaction(states);
+      return { applied: false, reason: 'status-error' };
+    }
+    return { applied: true, stale: status.kind === 'stale', ...status };
   }
 
   global.LionHourRecreationHours = { buildUpdates, hydrate };

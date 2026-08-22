@@ -4,6 +4,12 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 import {
+  conflictingBlueGymA,
+  conflictingBlueGymB,
+  dodgeMaintenance,
+  evidence,
+  openDodge,
+  resolveWith,
   validSnapshot,
   withoutFacility,
   withoutSpace,
@@ -54,6 +60,28 @@ function hydrateFixture({ responseStatus = 200, snapshot = validSnapshot(), ageH
     today: '2026-08-21',
     now,
   }).then(result => ({ ...result, status, venues, renders }));
+}
+
+function officialize(snapshot) {
+  for (const facility of snapshot.facilities) {
+    const source = facility.id === 'barnard-fitness' ? 'barnardFitness' : 'columbiaHours';
+    for (const day of facility.days) day.sourceRefs = [source];
+    for (const space of facility.spaces || []) {
+      for (const day of space.days) day.sourceRefs = ['columbiaHours'];
+    }
+  }
+  return snapshot;
+}
+
+function resolverBaselineEvidence() {
+  return [
+    openDodge,
+    evidence({ targetId: 'uris-pool', sourceId: 'pool-baseline', availabilityType: 'lap-swim' }),
+    evidence({ targetId: 'barnard-fitness', sourceId: 'barnard-baseline' }),
+    ...[
+      'blue-gym', 'levien-gymnasium', 'functional-fitness-studio', 'aerobics-room-4', 'squash-courts',
+    ].map(targetId => evidence({ targetId, sourceId: `${targetId}-baseline`, availabilityType: 'open-recreation' })),
+  ];
 }
 
 test('atomically overlays Dodge, Uris Pool, and Barnard', () => {
@@ -158,4 +186,131 @@ test('does not infer room hours from Dodge when room data is unavailable', () =>
     .recreationSpaces.find(space => space.id === 'blue-gym');
   assert.deepEqual(blueGymUpdate.intervals, []);
   assert.equal(blueGymUpdate.status, 'Separate hours not published');
+});
+
+test('accepts and hydrates resolver-generated maintenance closure with inherited conflict', async () => {
+  const snapshot = officialize(resolveWith([
+    ...resolverBaselineEvidence(), dodgeMaintenance, conflictingBlueGymA, conflictingBlueGymB,
+  ]));
+  const blueGym = snapshot.facilities.find(facility => facility.id === 'dodge').spaces
+    .find(space => space.id === 'blue-gym').days[0];
+  assert.equal(blueGym.status, 'Closed for maintenance');
+  assert.equal(blueGym.conflict, true);
+  assert.equal(api.buildUpdates(snapshot, venueFixture(), '2026-08-21').ok, true);
+  const result = await hydrateFixture({ snapshot });
+  assert.equal(result.applied, true);
+});
+
+test('accepts and hydrates resolver-generated all-day reservation inheritance', async () => {
+  const reservation = evidence({
+    targetId: 'dodge',
+    sourceId: 'dodge-reservation',
+    priority: 1,
+    effectiveStart: '2026-08-21',
+    effectiveEnd: '2026-08-21',
+    weeklyIntervals: null,
+    dateIntervals: [],
+    status: 'Reservation required',
+    availabilityType: 'reservation-required',
+    reason: 'Reserve the facility',
+  });
+  const snapshot = officialize(resolveWith([...resolverBaselineEvidence(), reservation]));
+  const poolDay = snapshot.facilities.find(facility => facility.id === 'uris-pool').days[0];
+  assert.equal(poolDay.status, 'Reservation required');
+  assert.equal(poolDay.availabilityType, 'lap-swim');
+  assert.equal(api.buildUpdates(snapshot, venueFixture(), '2026-08-21').ok, true);
+  const result = await hydrateFixture({ snapshot });
+  assert.equal(result.applied, true);
+});
+
+test('rolls back every venue when a later target cannot accept updates', async () => {
+  const venues = venueFixture();
+  Object.preventExtensions(venues[1]);
+  const original = structuredClone(venues);
+  let status;
+  const result = await api.hydrate({
+    venues,
+    fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
+    render: () => assert.fail('preflight failure must not render'),
+    setStatus: next => { status = next; },
+    today: '2026-08-21',
+    now: new Date('2026-08-21T20:00:00Z'),
+  });
+  assert.equal(result.applied, false);
+  assert.equal(status.kind, 'fallback');
+  assert.deepEqual(venues, original);
+});
+
+test('rolls back venue updates when rendering fails without reporting request fallback', async () => {
+  const venues = venueFixture();
+  const original = structuredClone(venues);
+  let status;
+  const result = await api.hydrate({
+    venues,
+    fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
+    render: () => { throw new Error('render exploded'); },
+    setStatus: next => { status = next; },
+    today: '2026-08-21',
+    now: new Date('2026-08-21T20:00:00Z'),
+  });
+  assert.equal(result.applied, false);
+  assert.equal(result.reason, 'render-error');
+  assert.equal(status, undefined);
+  assert.deepEqual(venues, original);
+});
+
+test('does not relabel a post-commit status callback failure as fallback', async () => {
+  const venues = venueFixture();
+  const original = structuredClone(venues);
+  const result = await api.hydrate({
+    venues,
+    fetchImpl: async () => ({ ok: true, json: async () => validSnapshot() }),
+    render() {},
+    setStatus: () => { throw new Error('status exploded'); },
+    today: '2026-08-21',
+    now: new Date('2026-08-21T20:00:00Z'),
+  });
+  assert.equal(result.applied, false);
+  assert.equal(result.reason, 'status-error');
+  assert.deepEqual(venues, original);
+});
+
+test('preserves structured top-level reasons, swim modes, reservations, access, and conflicts', () => {
+  let snapshot = validSnapshot();
+  snapshot = setDay(snapshot, 'uris-pool', {
+    reason: 'Recreational swimmers only after 7 PM',
+    availabilityType: 'recreation-swim',
+    accessRestrictions: ['Columbia ID required'],
+  });
+  snapshot = setDay(snapshot, 'barnard-fitness', {
+    intervals: [],
+    status: 'Closed for maintenance',
+    reason: 'Floor maintenance',
+  });
+  let updates = api.buildUpdates(snapshot, venueFixture(), '2026-08-21');
+  assert.equal(updates.ok, true);
+  let pool = updates.entries.find(([venue]) => venue.id === 'uris-pool')[1];
+  assert.equal(pool.recreationDays[5].reason, 'Recreational swimmers only after 7 PM');
+  assert.equal(pool.recreationDays[5].availabilityType, 'recreation-swim');
+  assert.deepEqual(Array.from(pool.recreationDays[5].accessRestrictions), ['Columbia ID required']);
+  const barnard = updates.entries.find(([venue]) => venue.id === 'barnard-fitness')[1];
+  assert.equal(barnard.recreationCurrent.reason, 'Floor maintenance');
+  assert.equal(barnard.recreationCurrent.status, 'Closed for maintenance');
+
+  snapshot = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [], status: 'Reservation required', availabilityType: 'reservation-required',
+    reason: 'Reserve online', accessRestrictions: ['Barnard ID required'],
+  });
+  updates = api.buildUpdates(snapshot, venueFixture(), '2026-08-21');
+  const reservation = updates.entries.find(([venue]) => venue.id === 'barnard-fitness')[1];
+  assert.equal(reservation.recreationCurrent.availabilityType, 'reservation-required');
+  assert.deepEqual(Array.from(reservation.accessRestrictions), ['Barnard ID required']);
+
+  snapshot = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [], status: 'Hours need verification', sourceRefs: ['barnardFitness'], conflict: true,
+  });
+  updates = api.buildUpdates(snapshot, venueFixture(), '2026-08-21');
+  const conflict = updates.entries.find(([venue]) => venue.id === 'barnard-fitness')[1];
+  assert.equal(conflict.recreationCurrent.conflict, true);
+  assert.equal(conflict.recreationCurrent.status, 'Hours need verification');
 });
