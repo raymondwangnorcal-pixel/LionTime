@@ -249,3 +249,19 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/specs/2026-08-21-live-recreation-hours-design.md`, `docs/superpowers/plans/2026-08-21-live-recreation-hours.md`, and user approval on 2026-08-21.
 - Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0014
+
+- Type: implementation
+- Implementation commit: `1c62328f6555bdf985c44d437aa11be2a972f3ee` — feat: show live recreation spaces
+- Superseded by: none
+- Note: This completion commit makes the independent browser scraper, scheduled publisher, API and Redis path, guarded frontend hydration, and parent-aware Recreation interface reachable together.
+- Privacy waivers: none
+
+## Update — 2026-08-21 — DEC-0015
+
+- Type: implementation
+- Implementation commit: `1c62328f6555bdf985c44d437aa11be2a972f3ee` — feat: show live recreation spaces
+- Superseded by: none
+- Note: This completion commit makes the fixed facility hierarchy, source-priority resolver, five nested Dodge spaces, Barnard access policy, explicit conflict states, and no-guessing interface reachable together.
+- Privacy waivers: none
