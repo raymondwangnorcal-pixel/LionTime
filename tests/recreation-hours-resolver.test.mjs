@@ -34,11 +34,57 @@ test('applies a specific modified close before the baseline', () => {
   assert.deepEqual(day(result, 'dodge', '2026-08-21').intervals, [['06:00', '18:00']]);
 });
 
+test('composes replacement hours with a compatible timed restriction', () => {
+  const result = resolveWith([
+    openDodge,
+    evidence({
+      sourceId: 'dodge-replacement',
+      priority: 1,
+      effectiveStart: '2026-08-21',
+      effectiveEnd: '2026-08-21',
+      weeklyIntervals: null,
+      dateIntervals: [['06:00', '18:00']],
+    }),
+    evidence({
+      sourceId: 'dodge-timed-maintenance',
+      priority: 1,
+      effectiveStart: '2026-08-21',
+      effectiveEnd: '2026-08-21',
+      weeklyIntervals: null,
+      dateIntervals: [['12:00', '14:00']],
+      status: 'Closed for maintenance',
+      reason: 'Court repair',
+    }),
+  ]);
+
+  assert.deepEqual(day(result, 'dodge').intervals, [['06:00', '12:00'], ['14:00', '18:00']]);
+  assert.deepEqual(day(result, 'dodge').sourceRefs, ['dodge-replacement', 'dodge-timed-maintenance', 'fall-dodge']);
+});
+
 test('surfaces equal-priority unresolved conflicts instead of guessing', () => {
   const result = resolveWith([conflictingBlueGymA, conflictingBlueGymB]);
 
   assert.equal(spaceDay(result, 'blue-gym').status, 'Hours need verification');
   assert.equal(spaceDay(result, 'blue-gym').conflict, true);
+});
+
+test('canonicalizes conflict source references regardless of evidence arrival order', () => {
+  const forward = resolveWith([openDodge, conflictingBlueGymA, conflictingBlueGymB]);
+  const reverse = resolveWith([openDodge, conflictingBlueGymB, conflictingBlueGymA]);
+
+  assert.deepEqual(spaceDay(forward, 'blue-gym').sourceRefs, ['blue-a', 'blue-b']);
+  assert.deepEqual(spaceDay(reverse, 'blue-gym').sourceRefs, ['blue-a', 'blue-b']);
+});
+
+test('uses a stable source-ID tie break for identical equal-priority evidence', () => {
+  const first = evidence({ targetId: 'blue-gym', sourceId: 'blue-a', priority: 2, weeklyIntervals: { 5: [['10:00', '12:00']] } });
+  const second = evidence({ targetId: 'blue-gym', sourceId: 'blue-b', priority: 2, weeklyIntervals: { 5: [['10:00', '12:00']] } });
+
+  const forward = resolveWith([openDodge, first, second]);
+  const reverse = resolveWith([openDodge, second, first]);
+
+  assert.deepEqual(spaceDay(forward, 'blue-gym').sourceRefs, ['blue-a']);
+  assert.deepEqual(spaceDay(reverse, 'blue-gym').sourceRefs, ['blue-a']);
 });
 
 test('prefers the narrower equal-priority time-specific modification', () => {
@@ -106,6 +152,41 @@ test('Dodge maintenance closes Dodge, Uris Pool, and every nested Dodge space', 
   assert.equal(spaceDay(result, 'functional-fitness-studio').status, 'Closed for maintenance');
 });
 
+test('clips Uris Pool and nested-space hours at a Dodge early close', () => {
+  const result = resolveWith([
+    openDodge,
+    modifiedDodgeClose,
+    evidence({ targetId: 'uris-pool', sourceId: 'pool-evening', weeklyIntervals: { 5: [['17:00', '20:00']] }, availabilityType: 'lap-swim' }),
+    evidence({ targetId: 'blue-gym', sourceId: 'blue-evening', weeklyIntervals: { 5: [['17:00', '20:00']] }, availabilityType: 'open-recreation' }),
+  ]);
+
+  assert.deepEqual(day(result, 'uris-pool').intervals, [['17:00', '18:00']]);
+  assert.deepEqual(spaceDay(result, 'blue-gym').intervals, [['17:00', '18:00']]);
+});
+
+test('clips child hours around timed Dodge maintenance without closing the whole day', () => {
+  const result = resolveWith([
+    openDodge,
+    evidence({
+      sourceId: 'dodge-timed-maintenance',
+      priority: 1,
+      effectiveStart: '2026-08-21',
+      effectiveEnd: '2026-08-21',
+      weeklyIntervals: null,
+      dateIntervals: [['12:00', '14:00']],
+      status: 'Closed for maintenance',
+      reason: 'Floor maintenance',
+    }),
+    evidence({ targetId: 'uris-pool', sourceId: 'pool-daytime', weeklyIntervals: { 5: [['10:00', '16:00']] }, availabilityType: 'lap-swim' }),
+    evidence({ targetId: 'blue-gym', sourceId: 'blue-daytime', weeklyIntervals: { 5: [['10:00', '16:00']] }, availabilityType: 'open-recreation' }),
+  ]);
+
+  assert.deepEqual(day(result, 'uris-pool').intervals, [['10:00', '12:00'], ['14:00', '16:00']]);
+  assert.deepEqual(spaceDay(result, 'blue-gym').intervals, [['10:00', '12:00'], ['14:00', '16:00']]);
+  assert.equal(day(result, 'uris-pool').status, null);
+  assert.equal(spaceDay(result, 'blue-gym').status, null);
+});
+
 test('pool-only maintenance does not close Dodge', () => {
   const result = resolveWith([openDodge, openPool, poolMaintenance]);
 
@@ -130,4 +211,54 @@ test('missing room schedule never inherits Dodge intervals', () => {
 
   assert.deepEqual(spaceDay(result, 'functional-fitness-studio').intervals, []);
   assert.equal(spaceDay(result, 'functional-fitness-studio').status, 'Separate hours not published');
+});
+
+test('preserves a missing room state when Dodge has no verifiable schedule', () => {
+  const result = resolveWith([]);
+
+  assert.deepEqual(spaceDay(result, 'functional-fitness-studio').intervals, []);
+  assert.equal(spaceDay(result, 'functional-fitness-studio').status, 'Separate hours not published');
+});
+
+test('retains baseline access restrictions and provenance through replacement hours', () => {
+  const baseline = evidence({
+    targetId: 'barnard-fitness',
+    sourceId: 'barnard-baseline',
+    accessRestrictions: ['Barnard ID required'],
+  });
+  const replacement = evidence({
+    targetId: 'barnard-fitness',
+    sourceId: 'barnard-replacement',
+    priority: 1,
+    effectiveStart: '2026-08-21',
+    effectiveEnd: '2026-08-21',
+    weeklyIntervals: null,
+    dateIntervals: [['10:00', '16:00']],
+  });
+  const result = resolveWith([baseline, replacement]);
+
+  assert.deepEqual(day(result, 'barnard-fitness').accessRestrictions, ['Barnard ID required']);
+  assert.deepEqual(day(result, 'barnard-fitness').sourceRefs, ['barnard-baseline', 'barnard-replacement']);
+});
+
+test('retains baseline access restrictions through a whole-day closure', () => {
+  const baseline = evidence({
+    targetId: 'barnard-fitness',
+    sourceId: 'barnard-baseline',
+    accessRestrictions: ['Barnard ID required'],
+  });
+  const closure = evidence({
+    targetId: 'barnard-fitness',
+    sourceId: 'barnard-closure',
+    priority: 1,
+    effectiveStart: '2026-08-21',
+    effectiveEnd: '2026-08-21',
+    weeklyIntervals: null,
+    dateIntervals: [],
+    status: 'Closed for maintenance',
+  });
+  const result = resolveWith([baseline, closure]);
+
+  assert.deepEqual(day(result, 'barnard-fitness').accessRestrictions, ['Barnard ID required']);
+  assert.deepEqual(day(result, 'barnard-fitness').sourceRefs, ['barnard-baseline', 'barnard-closure']);
 });
