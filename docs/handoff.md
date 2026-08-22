@@ -1,65 +1,59 @@
-# LionTime continuation handoff
+# LionTime Recreation deployment handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-20T16:37:18-04:00
-Current-Origin: origin-0d036c18fe90748b3fac4759
+Last-Updated: 2026-08-22T17:57:34-04:00
+Current-Origin: origin-7ea0c8cbb48c6a15c923b472
 
 ## Origins
 
 | Origin-ID | Branch | Created-At |
 |---|---|---|
-| origin-0d036c18fe90748b3fac4759 | main | 2026-08-20T16:37:18-04:00 |
+| origin-7ea0c8cbb48c6a15c923b472 | main | 2026-08-22T17:57:34-04:00 |
 
 ## Current Goal
 
-Origin-ID: origin-0d036c18fe90748b3fac4759
-Text: Deploy and enable LionHour's dynamic library-hours updater with a safe Lehman-only embedded fallback.
+Origin-ID: origin-7ea0c8cbb48c6a15c923b472
+Text: Seed and verify the merged live Recreation Hours pipeline in production while retaining the mobile horizontal-overflow fix.
 
 ## Accomplished in Latest Material Session
 
-Origin-ID: origin-0d036c18fe90748b3fac4759
-Text: Implemented an explicit Lehman-only embedded-fallback snapshot shape for Columbia's suspicious overnight interval. The API accepts the narrow shape, the browser preserves embedded Lehman hours while atomically updating the other five libraries, and the footer reports five of six live. Raw unapproved overnight intervals and all other scraper failures remain invalid. The current live Columbia scrape succeeds with five normal schedules and one Lehman fallback.
+Origin-ID: origin-7ea0c8cbb48c6a15c923b472
+Text: Implemented and adversarially reviewed the independent Recreation Hours pipeline for Dodge, Uris Pool, Barnard Fitness Center, and five nested Dodge spaces. PR #1 merged into origin/main at 4dd0db91112b9c9064dc9304a842eaa5fb03b040. A clean merge rehearsal against the post-fork mobile overflow commit preserved both change sets, passed 149 JavaScript and 14 Python tests, and showed no horizontal overflow at 320, 375, 390, or 430 pixel viewports. Production serves the new Recreation endpoint and returns the expected uninitialized 503 response.
 
 ## Outstanding Tasks
 
 | Task-ID | Origin-ID | Priority | Description |
 |---|---|---|---|
-| task-7a012080f1ec03d581ebcf5d | origin-0d036c18fe90748b3fac4759 | P1 | Provision Upstash and matching Vercel and GitHub configuration, use the canonical www API URL, redeploy, seed the first snapshot, verify five live plus Lehman fallback, and enable scheduled publishing. |
-| task-8c7ecd32a885075a463e4a3c | origin-0d036c18fe90748b3fac4759 | P1 | Review, commit, and push the uncommitted Lehman fallback implementation so Vercel can deploy it. |
+| task-41cf6bea55a050decb539ed4 | origin-7ea0c8cbb48c6a15c923b472 | P1 | Add GitHub Actions repository variables RECREATION_HOURS_PUBLISH_ENABLED=true and RECREATION_HOURS_API_URL=https://www.lionhour.com/api/recreation-hours, manually run Update recreation hours, then verify the API returns a valid three-facility, five-space, fourteen-date snapshot and the site footer reflects live or verification state. |
+| task-1913a01d97ca4411f99fd015 | origin-7ea0c8cbb48c6a15c923b472 | P2 | Fast-forward the clean local main branch from 1e6461474c8f7cc56e57d45df6bdd88887dbb3c2 to merged origin/main at 4dd0db91112b9c9064dc9304a842eaa5fb03b040 and rerun the project validation if further local work is needed. |
 
 ## Recommended Next Task
 
-Origin-ID: origin-0d036c18fe90748b3fac4759
-Task-ID: task-8c7ecd32a885075a463e4a3c
-Reason: The source change is fully verified but cannot affect production until it is committed, pushed, and deployed.
+Origin-ID: origin-7ea0c8cbb48c6a15c923b472
+Task-ID: task-41cf6bea55a050decb539ed4
+Reason: The code is merged and deployed, but the Recreation API remains intentionally uninitialized until the missing repository variables enable the first validated publication.
 
 ## Files Touched
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| assets/library-hours.js | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Validates and skips only explicit Lehman fallback entries, reporting coverage counts. |
-| docs/decisions.md | origin-0d036c18fe90748b3fac4759 | present | uncommitted | DEC-0009 supersedes DEC-0008 with the approved narrow fallback policy. |
-| docs/superpowers/plans/2026-08-20-hybrid-library-hours.md | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Records the post-review Lehman fallback amendment. |
-| docs/superpowers/specs/2026-08-20-hybrid-library-hours-design.md | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Defines the Lehman-only fallback shape and partial-live behavior. |
-| index.html | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Shows five of six live and identifies Lehman embedded fallback. |
-| lib/library-hours-schema.js | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Accepts only the constrained Lehman fallback shape. |
-| scrape.py | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Converts the known Lehman inversion to an explicit fallback entry. |
-| tests/header-controls.test.mjs | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Covers partial-live status integration. |
-| tests/library-hours-client.test.mjs | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Proves five updates occur while embedded Lehman hours remain unchanged. |
-| tests/library-hours-schema.test.mjs | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Covers accepted and rejected embedded-fallback shapes. |
-| tests/test_scrape.py | origin-0d036c18fe90748b3fac4759 | present | uncommitted | Covers fallback generation and Python payload validation. |
+| .github/workflows/update-recreation-hours.yml | origin-7ea0c8cbb48c6a15c923b472 | present | committed | Merged on origin/main; runs headed Playwright every four hours and is gated by two missing repository variables. |
+| api/recreation-hours.js | origin-7ea0c8cbb48c6a15c923b472 | present | committed | Merged production endpoint currently returns the expected uninitialized 503 before the first seed. |
+| docs/decisions.md | origin-7ea0c8cbb48c6a15c923b472 | present | committed | Merged ledger records the independent pipeline, source-priority policy, and fail-closed evidence contract. |
+| docs/recreation-hours-operations.md | origin-7ea0c8cbb48c6a15c923b472 | present | committed | Merged operating guide contains exact configuration, seed, validation, source-policy, and rollback steps. |
+| index.html | origin-7ea0c8cbb48c6a15c923b472 | present | committed | Current local main contains the mobile overflow fix; merged origin/main also contains Recreation cards, status, and hydration, and the combined tree was browser-smoke tested. |
 
 ## Git / Remote State
 
-Origin-ID: origin-0d036c18fe90748b3fac4759
+Origin-ID: origin-7ea0c8cbb48c6a15c923b472
 Branch: main
-Head: deadaf21a7a835e5fdbee564bf3e94281437810f
+Head: 1e6461474c8f7cc56e57d45df6bdd88887dbb3c2
 Upstream: origin/main
 Ahead: 0
-Behind: 0
+Behind: 26
 Remote-Freshness: verified
 Remote-Freshness-Reason: none
-Project-Working-Tree: dirty
+Project-Working-Tree: clean
 Handoff-Path-State-Before-Write: clean
 Handoff-Commit-Exception: none
 
@@ -72,20 +66,24 @@ Handoff-Commit-Exception: none
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-23c4a02466358becd621d8dd | origin-0d036c18fe90748b3fac4759 | npm test | passed | 25 Node schema, service, client, workflow, and UI tests passed. |
-| validation-a20de7a74061f1a8b75d8678 | origin-0d036c18fe90748b3fac4759 | .venv/bin/python -m unittest tests/test_scrape.py -v | passed | 14 scraper and payload tests passed. |
-| validation-ae150f555f50eeaf338885ed | origin-0d036c18fe90748b3fac4759 | live scraper plus JavaScript schema validation | passed | Current Columbia pages produced five normal schedules and one Lehman fallback; the resulting snapshot passed the shared JavaScript validator. |
+| validation-3ea817bb11855aea1fb770d3 | origin-7ea0c8cbb48c6a15c923b472 | git merge --no-commit --no-ff origin/codex/live-recreation-hours in a disposable origin/main worktree | passed | Git auto-merged index.html without conflicts and git diff --cached --check passed. |
+| validation-5f9e63a6531e2b50f59854b2 | origin-7ea0c8cbb48c6a15c923b472 | Playwright mobile overflow smoke on the rehearsed merged index.html | passed | At 320, 375, 390, and 430 pixel viewports, root, body, and page wrapper matched the viewport width and horizontal offset remained zero. |
+| validation-84f3f469565d445e315dc31b | origin-7ea0c8cbb48c6a15c923b472 | npm test on the rehearsed merged tree | passed | 149 tests passed with zero failures. |
+| validation-dd6699658bf6375de339e3f7 | origin-7ea0c8cbb48c6a15c923b472 | GET https://www.lionhour.com/api/recreation-hours and inspect GitHub Actions configuration names | partial | The deployed endpoint returns the expected 503 uninitialized response and the shared update secret exists, but both Recreation repository variables are absent. |
+| validation-ea2edfe04033252f7eadf3c0 | origin-7ea0c8cbb48c6a15c923b472 | python3 -m unittest tests/test_scrape.py -v on the rehearsed merged tree | passed | 14 tests passed. |
+| validation-f321eed1e783f3bc2db26c87 | origin-7ea0c8cbb48c6a15c923b472 | gh pr view 1 | passed | PR #1 is merged and both reported Vercel checks succeeded. |
 
 ## Risks / Decisions
 
 | Item-ID | Origin-ID | Kind | Status | Description |
 |---|---|---|---|---|
-| blocker-8c7ecd32a885075a463e4a3c | origin-0d036c18fe90748b3fac4759 | blocker | open | Production still returns an internal server error because Upstash and update configuration are absent; GitHub Actions currently has no required secret or variables. |
-| decision-74fb853a33fb4769394271a7 | origin-0d036c18fe90748b3fac4759 | decision | accepted | DEC-0009 permits only the known Lehman anomaly to retain embedded hours while the other five libraries update dynamically. |
+| decision-84f3f469565d445e315dc31b | origin-7ea0c8cbb48c6a15c923b472 | decision | accepted | The Recreation and mobile overflow changes are compatible: retain shrink-to-fit, root clipping, page-wrap, header-bg clipping, and horizontal-scroll lock alongside the merged Recreation UI. |
+| risk-3ea817bb11855aea1fb770d3 | origin-7ea0c8cbb48c6a15c923b472 | risk | open | Recreation remains on embedded fallback until the two repository variables are added and the first validated workflow publication succeeds. |
+| risk-ea2edfe04033252f7eadf3c0 | origin-7ea0c8cbb48c6a15c923b472 | risk | open | The required-field Recreation snapshot migration is fail-closed; seed only after the merged browser and schema deployment is live, which the current uninitialized endpoint indicates. |
 
 ## Archive Decision
 
-Origin-ID: origin-0d036c18fe90748b3fac4759
+Origin-ID: origin-7ea0c8cbb48c6a15c923b472
 Safe-to-Archive: no
-Reason: The fallback implementation is verified but uncommitted, and production provisioning and seeding remain outstanding.
-Next-Action: task-8c7ecd32a885075a463e4a3c
+Reason: The implementation is merged and deployed, but production Recreation data is not seeded and local main has not been fast-forwarded.
+Next-Action: task-41cf6bea55a050decb539ed4
