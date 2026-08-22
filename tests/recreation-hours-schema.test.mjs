@@ -80,6 +80,37 @@ test('accepts resolver reservation-required availability without a redundant sta
   assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
 });
 
+test('accepts exact full-day Dodge reservation propagation while preserving child availability', () => {
+  const snapshot = resolverSnapshotWithOfficialSources([
+    evidence({
+      sourceId: 'columbiaModifications', priority: 1,
+      effectiveStart: '2026-08-21', effectiveEnd: '2026-08-21',
+      weeklyIntervals: null, dateIntervals: [['06:00', '23:00']],
+      status: 'Reservation required', reason: 'Private event', availabilityType: 'reservation-required',
+    }),
+  ]);
+  const dodge = snapshot.facilities.find(facility => facility.id === 'dodge');
+  const pool = snapshot.facilities.find(facility => facility.id === 'uris-pool');
+  const expectedSources = ['columbiaHours', 'columbiaModifications'];
+  assert.deepEqual(dodge.days[0], {
+    date: '2026-08-21', intervals: [], status: 'Reservation required', reason: 'Private event',
+    availabilityType: 'reservation-required', accessRestrictions: [], sourceRefs: expectedSources, conflict: false,
+  });
+  for (const [id, availabilityType] of [
+    ['uris-pool', 'lap-swim'],
+    ...SPACE_IDS.map(id => [id, 'open-recreation']),
+  ]) {
+    const day = id === 'uris-pool'
+      ? pool.days[0]
+      : dodge.spaces.find(space => space.id === id).days[0];
+    assert.deepEqual(day, {
+      date: '2026-08-21', intervals: [], status: 'Reservation required', reason: 'Private event',
+      availabilityType, accessRestrictions: [], sourceRefs: expectedSources, conflict: false,
+    });
+  }
+  assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
+});
+
 test('rejects missing facilities, spaces, and untrusted sources', () => {
   assert.match(validateRecreationHoursSnapshot(withoutFacility('barnard-fitness')).errors.join('\n'), /missing required facility/);
   assert.match(validateRecreationHoursSnapshot(withoutSpace('blue-gym')).errors.join('\n'), /missing required Dodge space/);
@@ -158,6 +189,11 @@ test('rejects wrong-target sources, missing provenance, and reservation mismatch
     status: 'Reservation required', availabilityType: 'lap-swim',
   });
   assert.match(validateRecreationHoursSnapshot(reservationMismatch).errors.join('\n'), /Reservation required must use reservation-required/);
+
+  const forgedIndependentReservation = setDay(validSnapshot(), 'uris-pool', {
+    status: 'Reservation required', availabilityType: 'lap-swim',
+  });
+  assert.match(validateRecreationHoursSnapshot(forgedIndependentReservation).errors.join('\n'), /Reservation required must use reservation-required/);
 });
 
 test('enforces global conflict, status, and provenance invariants outside inherited child closures', () => {
