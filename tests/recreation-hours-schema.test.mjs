@@ -66,6 +66,20 @@ test('accepts the resolver closure-plus-conflict state inherited from Dodge', ()
   assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
 });
 
+test('accepts resolver reservation-required availability without a redundant status', () => {
+  const snapshot = resolverSnapshotWithOfficialSources([
+    evidence({
+      targetId: 'blue-gym', sourceId: 'columbiaHours', priority: 2,
+      weeklyIntervals: { 5: [['10:00', '12:00']] }, availabilityType: 'reservation-required',
+    }),
+  ]);
+  const blue = snapshot.facilities.find(facility => facility.id === 'dodge').spaces[0].days[0];
+  assert.deepEqual(blue.intervals, [['10:00', '12:00']]);
+  assert.equal(blue.status, null);
+  assert.equal(blue.availabilityType, 'reservation-required');
+  assert.equal(validateRecreationHoursSnapshot(snapshot).ok, true);
+});
+
 test('rejects missing facilities, spaces, and untrusted sources', () => {
   assert.match(validateRecreationHoursSnapshot(withoutFacility('barnard-fitness')).errors.join('\n'), /missing required facility/);
   assert.match(validateRecreationHoursSnapshot(withoutSpace('blue-gym')).errors.join('\n'), /missing required Dodge space/);
@@ -144,6 +158,49 @@ test('rejects wrong-target sources, missing provenance, and reservation mismatch
     status: 'Reservation required', availabilityType: 'lap-swim',
   });
   assert.match(validateRecreationHoursSnapshot(reservationMismatch).errors.join('\n'), /Reservation required must use reservation-required/);
+});
+
+test('enforces global conflict, status, and provenance invariants outside inherited child closures', () => {
+  const conflictStatus = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [], conflict: true, status: 'Closed',
+  });
+  assert.match(validateRecreationHoursSnapshot(conflictStatus).errors.join('\n'), /conflict must use Hours need verification/);
+
+  const unsourcedConflict = setDay(validSnapshot(), 'barnard-fitness', {
+    conflict: true, status: 'Hours need verification', sourceRefs: [],
+  });
+  assert.match(validateRecreationHoursSnapshot(unsourcedConflict).errors.join('\n'), /requires official provenance/);
+
+  const spaceOnlyStatus = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [], status: 'Separate hours not published', sourceRefs: ['barnardFitness'],
+  });
+  assert.match(validateRecreationHoursSnapshot(spaceOnlyStatus).errors.join('\n'), /Separate hours not published is only valid for Dodge spaces/);
+
+  const openWithoutIntervals = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [], status: 'Open', sourceRefs: ['barnardFitness'],
+  });
+  assert.match(validateRecreationHoursSnapshot(openWithoutIntervals).errors.join('\n'), /Open status requires operating intervals/);
+});
+
+test('rejects prototype and extra facility and space IDs', () => {
+  const facilities = validSnapshot();
+  for (const id of ['__proto__', 'constructor', 'extra-facility']) {
+    facilities.facilities.push({ id, parentId: null, days: [] });
+  }
+  const facilityErrors = validateRecreationHoursSnapshot(facilities).errors.join('\n');
+  for (const id of ['__proto__', 'constructor', 'extra-facility']) {
+    assert.match(facilityErrors, new RegExp(`unexpected facility: ${id}`));
+  }
+
+  const spaces = validSnapshot();
+  const dodge = spaces.facilities.find(facility => facility.id === 'dodge');
+  for (const id of ['__proto__', 'constructor', 'extra-space']) {
+    dodge.spaces.push({ id, days: [] });
+  }
+  const spaceErrors = validateRecreationHoursSnapshot(spaces).errors.join('\n');
+  for (const id of ['__proto__', 'constructor', 'extra-space']) {
+    assert.match(spaceErrors, new RegExp(`unexpected Dodge space: ${id}`));
+  }
 });
 
 test('rejects all unknown snapshot fields without stripping them into validity', () => {
