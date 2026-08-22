@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createRecreationHoursService } from '../lib/recreation-hours-service.js';
-import { nextSnapshot, validSnapshot } from './helpers/recreation-hours-fixture.mjs';
+import { nextSnapshot, setDay, validSnapshot } from './helpers/recreation-hours-fixture.mjs';
 
 function memoryStore(initial = null) {
   let snapshot = initial;
@@ -35,4 +35,14 @@ test('uses public cache headers for reads and rejects unauthenticated or unsuppo
   assert.match(get.headers['Cache-Control'], /s-maxage=300/);
   assert.equal((await service.handle({ method: 'POST' })).status, 405);
   assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer nope', body: validSnapshot() })).status, 401);
+});
+
+test('returns 422 and preserves the snapshot for malformed child intervals', async () => {
+  const original = validSnapshot();
+  const store = memoryStore(original);
+  const service = createRecreationHoursService({ store, updateSecret: 'secret' });
+  const malformed = setDay(validSnapshot(), 'uris-pool', { intervals: [null] });
+  const response = await service.handle({ method: 'PUT', authorization: 'Bearer secret', body: malformed });
+  assert.equal(response.status, 422);
+  assert.deepEqual(await store.getSnapshot(), original);
 });
