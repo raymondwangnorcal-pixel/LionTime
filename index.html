@@ -255,6 +255,11 @@
   .row:focus-visible { outline: 2px solid var(--columbia-light); outline-offset: -2px; }
   .entry:last-child .row { border-bottom: none; }
   .entry.expanded .row { background: #f8fafc; border-bottom-color: transparent; }
+  .entry.estimated { background: #f3f4f6; }
+  .entry.estimated .row { background: #f3f4f6; }
+  .entry.estimated .row:hover { background: #ebedf0; }
+  .entry.estimated.expanded .row { background: #f3f4f6; }
+  .entry.estimated .detail { background: #f3f4f6; }
 
   .dot { width: 9px; height: 9px; border-radius: 50%; }
   .dot.open { background: var(--open); }
@@ -447,29 +452,6 @@
   .library-hours-status[data-kind="partial"],
   .library-hours-status[data-kind="stale"],
   .library-hours-status[data-kind="fallback"] { color: #8a5a00; }
-  .dining-special-service {
-    margin: 0 0 0.75rem;
-    padding: 0.8rem 1rem;
-    border: 1px solid #b8d8f1;
-    border-left: 4px solid var(--columbia-blue);
-    border-radius: 0.65rem;
-    background: #f5faff;
-    color: #24364b;
-  }
-  .dining-special-service-head {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
-    margin-bottom: 0.35rem;
-  }
-  .dining-special-service-title { font-weight: 750; color: #174f7d; }
-  .dining-special-service-badge {
-    flex: none; padding: 0.15rem 0.5rem; border-radius: 999px;
-    background: #fff0c7; color: #765000; font-size: 0.72rem; font-weight: 750;
-    text-transform: uppercase; letter-spacing: 0.04em;
-  }
-  .dining-special-service-audience { margin-bottom: 0.45rem; font-size: 0.84rem; }
-  .dining-special-service-day { font-size: 0.82rem; line-height: 1.45; }
-  .dining-special-service-day strong { color: #174f7d; }
-  .dining-special-service-source { color: #235f91; font-size: 0.78rem; }
 
   /* ── Responsive ────────────────────────────────── */
   @media (max-width: 860px) {
@@ -966,7 +948,6 @@ function todayHoursText(venue, now) {
 let activeCat = 'all';
 let activeStatus = 'all';
 let searchTerm = '';
-let diningSpecialServices = [];
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
 
@@ -1004,7 +985,7 @@ function weekHTML(v, now) {
     const h = dayHours(v, dow);
     return `<div class="wk-row${i === 0 ? ' today' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
-      <span>${escapeHTML(h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed')}</span>
+      <span>${h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed'}</span>
     </div>`;
   }).join('');
 }
@@ -1020,7 +1001,7 @@ function weekHTMLDesktop(v, now) {
     const dateLabel = i === 0 ? 'Today' : `${d.getMonth() + 1}/${d.getDate()}`;
     return `<div class="wk-col${i === 0 ? ' today' : ''}">
       <span class="wk-col-heading"><span class="wk-col-day">${DAY_SHORT[dow]}</span><span class="wk-col-date">· ${dateLabel}</span></span>
-      <span class="wk-col-hours">${escapeHTML(hoursText)}</span>
+      <span class="wk-col-hours">${hoursText}</span>
     </div>`;
   }).join('');
 }
@@ -1028,22 +1009,19 @@ function weekHTMLDesktop(v, now) {
 function rowHTML(v, now) {
   const st = getStatus(v, now);
   const isOpen = expanded.has(v.id);
-  const usesOfficialSchedule = Object.values(v.sourceIds || {})
-    .some(sourceId => sourceId === 'labor-day-2026' || sourceId === 'fall-2026');
-  return `<div class="entry${isOpen ? ' expanded' : ''}" data-id="${v.id}">
+  return `<div class="entry${isOpen ? ' expanded' : ''}${v.estimated ? ' estimated' : ''}" data-id="${v.id}">
     <button class="row ${st.status === 'closed' ? 'is-closed' : ''}" type="button"
             aria-expanded="${isOpen}" aria-label="${v.name} — ${st.label}">
       <span class="dot ${st.status}"></span>
       <span class="name">${v.name}</span>
-      <span class="hours">${escapeHTML(todayHoursText(v, now))}</span>
+      <span class="hours">${todayHoursText(v, now)}</span>
       <span class="badge ${st.status}">${st.label}</span>
       ${CHEV}
     </button>
     <div class="detail">
       <div class="week week-mobile">${weekHTML(v, now)}</div>
       <div class="week week-desktop">${weekHTMLDesktop(v, now)}</div>
-      ${usesOfficialSchedule ? '<div class="note">Official Columbia Dining schedule</div>' : ''}
-      ${v.sourceNote && !usesOfficialSchedule ? `<div class="note">Columbia Dining: ${escapeHTML(v.sourceNote)}</div>` : ''}
+      ${v.sourceNote ? `<div class="note">Columbia Dining: ${v.sourceNote}</div>` : ''}
       ${v.note ? `<div class="note">${v.note}</div>` : ''}
       ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
       ${v.recreationLive ? `<div data-recreation-metadata="${v.id}"></div>` : ''}
@@ -1051,44 +1029,6 @@ function rowHTML(v, now) {
         ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(v.recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
     </div>
   </div>`;
-}
-
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[character]);
-}
-
-function diningSpecialServicesHTML() {
-  const today = easternISODate();
-  const horizon = new Date(`${today}T12:00:00Z`);
-  horizon.setUTCDate(horizon.getUTCDate() + 6);
-  const through = horizon.toISOString().slice(0, 10);
-  return diningSpecialServices.map(service => {
-    const days = service.days.filter(day => today <= day.date && day.date <= through);
-    if (!days.length) return '';
-    const dayRows = days.map(day => {
-      const date = new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-US', {
-        timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric',
-      });
-      const sessions = day.sessions.length
-        ? day.sessions.map(session => `${escapeHTML(session.label)} ${fmtRange([session.open, session.close])}`).join(' · ')
-        : escapeHTML(day.status);
-      const access = day.sessions.length && day.status !== 'Restricted NSOP service'
-        ? ` · ${escapeHTML(day.status)}`
-        : '';
-      return `<div class="dining-special-service-day"><strong>${date}</strong> — ${sessions}${access}</div>`;
-    }).join('');
-    return `<aside class="dining-special-service" aria-label="Restricted NSOP dining service">
-      <div class="dining-special-service-head">
-        <span class="dining-special-service-title">${escapeHTML(service.name)}</span>
-        <span class="dining-special-service-badge">Restricted service</span>
-      </div>
-      <div class="dining-special-service-audience">${escapeHTML(service.audience)}</div>
-      ${dayRows}
-      <a class="dining-special-service-source" href="https://dining.columbia.edu/news/new-student-orientation-program-nsop-2026-dining-service" target="_blank" rel="noopener noreferrer">Official NSOP dining schedule</a>
-    </aside>`;
-  }).join('');
 }
 
 function render() {
@@ -1106,13 +1046,12 @@ function render() {
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
     const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
-    const specialServices = c.id === 'dining' ? diningSpecialServicesHTML() : '';
     return `<div class="sec">
         <span class="sec-title">${c.icon} ${c.label}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </div>
-      ${specialServices}<div class="list">
+      <div class="list">
         <div class="cols">
           <span></span><span>Place</span><span>Today</span>
           <span class="r">Status</span><span></span>
@@ -1279,10 +1218,6 @@ function setDiningHoursStatus(status) {
   element.textContent = `${prefix}: ${generated} ET · 16 of 20 live; 4 cafés using embedded schedules`;
 }
 
-function setDiningSpecialServices(services) {
-  diningSpecialServices = services;
-}
-
 function setRecreationHoursStatus(status) {
   const element = document.getElementById('recreation-hours-status');
   element.dataset.kind = status.kind;
@@ -1322,7 +1257,6 @@ if (window.LionHourDiningHours) {
     venues: VENUES,
     render,
     setStatus: setDiningHoursStatus,
-    setSpecialServices: setDiningSpecialServices,
     today: easternISODate(),
   });
 }
