@@ -1,7 +1,7 @@
 # LionTime Recreation and schedule UI handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-22T23:19:57-04:00
+Last-Updated: 2026-08-22T23:38:27-04:00
 Current-Origin: origin-e6a7c49bef7750c537e02277
 
 ## Origins
@@ -18,7 +18,7 @@ Text: Refine the expanded horizontal seven-day hours table while preserving the 
 ## Accomplished in Latest Material Session
 
 Origin-ID: origin-e6a7c49bef7750c537e02277
-Text: Confirmed Recreation Hours is working. Refined the desktop seven-day table with separate weekday, date, and hours hierarchy; a stronger Today treatment; and clipped long values to keep each of seven equal columns stable.
+Text: Confirmed Recreation Hours is working. Refined the desktop seven-day table with separate weekday/date header and hours hierarchy, a stronger Today treatment, equal-width columns, and an inline weekday-and-date label such as SAT · 8/22.
 
 ## Outstanding Tasks
 
@@ -36,13 +36,13 @@ Reason: The visual update is complete, but the full test suite could not complet
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| index.html | origin-e6a7c49bef7750c537e02277 | present | uncommitted | Unstaged table visual refinement; existing date-label work is preserved. |
+| index.html | origin-e6a7c49bef7750c537e02277 | present | uncommitted | Unstaged responsive hours-table refinement; mobile remains a vertical list and desktop uses the inline weekday/date header. |
 
 ## Git / Remote State
 
 Origin-ID: origin-e6a7c49bef7750c537e02277
 Branch: main
-Head: 23e215409b2648f441dfd7b3ff233247dec859d2
+Head: cb21baa270edd4243fbd14fbf5aebd09412c2e0a
 Upstream: origin/main
 Ahead: unknown
 Behind: unknown
@@ -61,7 +61,7 @@ Handoff-Commit-Exception: none
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-3daf8c3497857a6fb0ef39a7 | origin-e6a7c49bef7750c537e02277 | npm test and git diff --check | partial | 126 of 130 tests passed. Three test files could not load missing playwright or cheerio dependencies, and one existing Recreation UI assertion expected an availability label absent from its renderer output. Both staged and unstaged diff checks passed. |
+| validation-3daf8c3497857a6fb0ef39a7 | origin-e6a7c49bef7750c537e02277 | npm test and git diff --check | partial | The current hours-table diff check passed. Earlier npm test run passed 126 of 130 tests; three test files could not load missing playwright or cheerio dependencies, and one existing Recreation UI assertion expected an availability label absent from its renderer output. |
 
 ## Risks / Decisions
 
