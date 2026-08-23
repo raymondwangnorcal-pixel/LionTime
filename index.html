@@ -325,28 +325,39 @@
     .week-desktop {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
+      background: #f8fafc;
     }
     .wk-col {
-      padding: 0.55rem 0.5rem;
+      min-width: 0;
+      padding: 0.65rem 0.45rem 0.6rem;
       text-align: center;
       font-size: 0.76rem;
       color: var(--text-secondary);
-      border-right: 1px solid #f1f4f7;
+      background: #fff;
+      border-right: 1px solid #e8edf3;
       font-variant-numeric: tabular-nums;
     }
     .wk-col:last-child { border-right: none; }
     .wk-col.today {
       color: var(--columbia-blue); font-weight: 600;
-      background: #eef4fb;
+      background: #eef5fc;
+      box-shadow: inset 0 3px 0 var(--columbia-blue);
     }
     .wk-col-day {
-      display: block; font-weight: 600; font-size: 0.72rem;
+      display: block; font-weight: 700; font-size: 0.68rem;
       text-transform: uppercase; letter-spacing: 0.3px;
-      margin-bottom: 0.25rem;
+      line-height: 1.1;
     }
+    .wk-col-date {
+      display: block; min-height: 1rem; margin-top: 0.18rem;
+      font-size: 0.67rem; font-weight: 500; color: var(--muted);
+      line-height: 1.1;
+    }
+    .wk-col.today .wk-col-date { color: var(--columbia-blue); font-weight: 700; }
     .wk-col-hours {
-      display: block; font-size: 0.74rem;
-      white-space: nowrap;
+      display: block; margin-top: 0.42rem; font-size: 0.75rem;
+      font-weight: 600; line-height: 1.2; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
     }
   }
   .note {
@@ -956,16 +967,12 @@ function weekHTMLDesktop(v, now) {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
     const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
-    let dayLabel;
-    if (i === 0) {
-      dayLabel = `${DAY_SHORT[dow]} · today`;
-    } else {
-      const d = new Date(todayET);
-      d.setDate(d.getDate() + i);
-      dayLabel = `${DAY_SHORT[dow]} (${d.getMonth() + 1}/${d.getDate()})`;
-    }
+    const d = new Date(todayET);
+    d.setDate(d.getDate() + i);
+    const dateLabel = i === 0 ? 'Today' : `${d.getMonth() + 1}/${d.getDate()}`;
     return `<div class="wk-col${i === 0 ? ' today' : ''}">
-      <span class="wk-col-day">${dayLabel}</span>
+      <span class="wk-col-day">${DAY_SHORT[dow]}</span>
+      <span class="wk-col-date">${dateLabel}</span>
       <span class="wk-col-hours">${hoursText}</span>
     </div>`;
   }).join('');
