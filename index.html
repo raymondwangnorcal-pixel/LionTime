@@ -343,13 +343,16 @@
       background: #eef5fc;
       box-shadow: inset 0 3px 0 var(--columbia-blue);
     }
+    .wk-col-heading {
+      display: flex; align-items: baseline; justify-content: center;
+      gap: 0.28rem; min-width: 0;
+    }
     .wk-col-day {
-      display: block; font-weight: 700; font-size: 0.68rem;
+      font-weight: 700; font-size: 0.68rem;
       text-transform: uppercase; letter-spacing: 0.3px;
       line-height: 1.1;
     }
     .wk-col-date {
-      display: block; min-height: 1rem; margin-top: 0.18rem;
       font-size: 0.67rem; font-weight: 500; color: var(--muted);
       line-height: 1.1;
     }
@@ -971,8 +974,7 @@ function weekHTMLDesktop(v, now) {
     d.setDate(d.getDate() + i);
     const dateLabel = i === 0 ? 'Today' : `${d.getMonth() + 1}/${d.getDate()}`;
     return `<div class="wk-col${i === 0 ? ' today' : ''}">
-      <span class="wk-col-day">${DAY_SHORT[dow]}</span>
-      <span class="wk-col-date">${dateLabel}</span>
+      <span class="wk-col-heading"><span class="wk-col-day">${DAY_SHORT[dow]}</span><span class="wk-col-date">· ${dateLabel}</span></span>
       <span class="wk-col-hours">${hoursText}</span>
     </div>`;
   }).join('');
