@@ -314,6 +314,24 @@
     padding: 0.1rem 0.35rem; border-radius: 4px; margin-left: 0.3rem;
   }
 
+  /* ── Recreation spaces ─────────────────────────── */
+  .recreation-spaces { margin-top: 0.65rem; max-width: 620px; }
+  .recreation-spaces-toggle {
+    border: 1px solid var(--hairline); border-radius: 6px; background: #fff;
+    color: var(--columbia-blue); cursor: pointer; font: inherit; font-size: 0.76rem;
+    font-weight: 600; padding: 0.34rem 0.55rem;
+  }
+  .recreation-spaces-toggle:hover { border-color: var(--columbia-light); }
+  .recreation-spaces-list { list-style: none; margin-top: 0.45rem; }
+  .recreation-space { border-top: 1px solid #e1e8f0; padding: 0.5rem 0; font-size: 0.76rem; color: var(--text-secondary); }
+  .recreation-space-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.7rem; color: var(--text); }
+  .recreation-space-name { font-weight: 600; }
+  .recreation-space-status { color: var(--text-secondary); font-weight: 600; text-align: right; }
+  .recreation-space-hours, .recreation-space-reason, .recreation-space-availability, .recreation-space-access,
+  .recreation-metadata { margin-top: 0.22rem; line-height: 1.4; }
+  .recreation-space-hours span, .recreation-space-reason span, .recreation-space-availability span,
+  .recreation-space-access span, .recreation-metadata span { font-weight: 600; color: var(--text-secondary); }
+
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 0.9rem; }
 
   .footer {
@@ -420,11 +438,16 @@
      href="https://dining.columbia.edu/content/locations-hours" target="_blank" rel="noopener noreferrer">
     Dining hours: embedded fallback · Verify before you go
   </a>
+  <a class="library-hours-status" id="recreation-hours-status" data-kind="fallback" aria-live="polite" aria-atomic="true"
+     href="https://perec.columbia.edu/hours-operation" target="_blank" rel="noopener noreferrer">
+    Recreation hours: embedded fallback · Verify before you go
+  </a>
 </footer>
 </div><!-- .page-wrap -->
 
 <script src="assets/library-hours.js"></script>
 <script src="assets/dining-hours.js"></script>
+<script src="assets/recreation-hours-view.js"></script>
 
 <script>
 /* ── iOS Safari horizontal-scroll lock ────────────
@@ -576,6 +599,9 @@ const VENUES = [
                     [['13:00','17:00']], [['13:00','17:00']]),
     note:'Pool areas must be vacated at posted closing times.' },
 
+  { id:'barnard-fitness', name:'Barnard Fitness Center', cat:'fitness', loc:'LeFrak Center, Barnard College',
+    hours: ALL(null), note:"Current hours load from Barnard's official schedule." },
+
   /* ── STUDENT LIFE & SERVICES ────────────────────── */
   { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
     hours: WEEKDAYS([['07:30','00:30']], [['08:30','00:30']], [['08:30','00:30']]),
@@ -669,6 +695,26 @@ function sourceClosureStatus(venue, dow) {
   return value && /^closed\b/i.test(value) ? value : null;
 }
 
+function sourceDisplayStatus(venue, dow) {
+  const value = sourceStatus(venue, dow);
+  return value && (/^closed\b/i.test(value)
+    || value === 'Reservation required'
+    || value === 'Separate hours not published'
+    || value === 'Hours need verification') ? value : null;
+}
+
+function activeSourceRestriction(venue, now) {
+  const restrictions = venue.sourceRestrictions?.[((now.dow % 7) + 7) % 7];
+  if (!Array.isArray(restrictions)) return null;
+  return restrictions.find(restriction => Array.isArray(restriction?.intervals)
+    && restriction.intervals.some(interval => {
+      if (!Array.isArray(interval) || interval.length !== 2) return false;
+      const start = toMin(interval[0]);
+      const end = interval[1] === '24:00' ? 1440 : toMin(interval[1]);
+      return now.mins >= start && now.mins < end;
+    })) || null;
+}
+
 /* An interval ending exactly at midnight continues into the next day if that
    day opens at 00:00 — e.g. Butler runs Sun 9 AM straight through Fri 11 PM.
    Returns the true closing time in minutes from the start of `dow`. */
@@ -716,7 +762,16 @@ function describeClose(endAbs, dow) {
    ══════════════════════════════════════════════════ */
 function getStatus(venue, now) {
   const CLOSING_SOON = 60; // minutes
-  const closureLabel = sourceClosureStatus(venue, now.dow);
+  const restriction = activeSourceRestriction(venue, now);
+  if (restriction) {
+    return {
+      status: 'closed',
+      label: restriction.status || 'Closed',
+      detail: restriction.reason || 'See details',
+    };
+  }
+  const closureLabel = sourceDisplayStatus(venue, now.dow);
+  if (closureLabel) return { status: 'closed', label: closureLabel, detail: 'See details' };
 
   // 1. Currently inside an open interval (including ones spanning midnight)
   for (const iv of activeIntervals(venue, now.dow)) {
@@ -766,7 +821,7 @@ function todayHoursText(venue, now) {
     if (last && s.start <= last.end) last.end = Math.max(last.end, s.end);
     else merged.push({ start: s.start, end: s.end });
   }
-  if (!merged.length) return sourceClosureStatus(venue, now.dow) || 'Closed today';
+  if (!merged.length) return sourceDisplayStatus(venue, now.dow) || 'Closed today';
 
   return merged.map(iv => {
     if (iv.start <= 0 && iv.end >= 1440) return 'Open 24 hours';
@@ -788,6 +843,7 @@ let activeCat = 'all';
 let activeStatus = 'all';
 let searchTerm = '';
 const expanded = new Set();
+const expandedRecreationSpaces = new Set();
 
 const STATUS_FILTERS = [
   { id:'all',          label:'All Buildings' },
@@ -798,6 +854,7 @@ const STATUS_FILTERS = [
 const ORDER = { 'open':0, 'closing-soon':1, 'closed':2 };
 
 const CHEV = `<svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const DODGE_SPACES_CONTROL = 'View spaces';
 
 function matchesFilters(v, now, ignoreStatus) {
   if (activeCat !== 'all' && v.cat !== activeCat) return false;
@@ -822,7 +879,7 @@ function weekHTML(v, now) {
     const h = dayHours(v, dow);
     return `<div class="wk-row${i === 0 ? ' today' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
-      <span>${h.length ? h.map(fmtRange).join(', ') : sourceClosureStatus(v, dow) || 'Closed'}</span>
+      <span>${h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed'}</span>
     </div>`;
   }).join('');
 }
@@ -844,6 +901,9 @@ function rowHTML(v, now) {
       ${v.sourceNote ? `<div class="note">Columbia Dining: ${v.sourceNote}</div>` : ''}
       ${v.note ? `<div class="note">${v.note}</div>` : ''}
       ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
+      ${v.recreationLive ? `<div data-recreation-metadata="${v.id}"></div>` : ''}
+      ${v.id === 'dodge' && v.recreationLive && window.LionHourRecreationView
+        ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(v.recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
     </div>
   </div>`;
 }
@@ -878,7 +938,37 @@ function render() {
   }).join('');
 
   stage.innerHTML = sections || `<div class="empty">Nothing matches those filters right now.</div>`;
+  appendRecreationMetadata(stage, now);
   syncStickyOffset();
+}
+
+function appendRecreationMetadata(stage, now) {
+  for (const venue of VENUES) {
+    if (!venue.recreationLive) continue;
+    const target = stage.querySelector(`[data-recreation-metadata="${venue.id}"]`);
+    if (!target) continue;
+    const baseline = venue.recreationCurrent || {};
+    const activeRestriction = activeSourceRestriction(venue, now);
+    const current = activeRestriction ? {
+      ...activeRestriction,
+      accessRestrictions: [...new Set([
+        ...(baseline.accessRestrictions || []),
+        ...(activeRestriction.accessRestrictions || []),
+      ])],
+    } : baseline;
+    const append = (label, value) => {
+      if (!value) return;
+      const line = document.createElement('div');
+      line.className = 'recreation-metadata';
+      const title = document.createElement('span');
+      title.textContent = label;
+      line.append(title, document.createTextNode(value));
+      target.append(line);
+    };
+    append('Reason: ', current.reason);
+    append('Availability: ', current.availabilityType);
+    for (const restriction of current.accessRestrictions || []) append('Access: ', restriction);
+  }
 }
 
 /* The control bar's height changes as chips wrap, so measure it rather
@@ -904,6 +994,15 @@ document.getElementById('chips').addEventListener('click', e => {
 });
 document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
 document.getElementById('stage').addEventListener('click', e => {
+  const spacesToggle = e.target.closest('.recreation-spaces-toggle');
+  if (spacesToggle) {
+    const list = document.getElementById(spacesToggle.getAttribute('aria-controls'));
+    const isExpanded = spacesToggle.getAttribute('aria-expanded') === 'true';
+    spacesToggle.setAttribute('aria-expanded', String(!isExpanded));
+    list.hidden = isExpanded;
+    if (isExpanded) expandedRecreationSpaces.delete('dodge'); else expandedRecreationSpaces.add('dodge');
+    return;
+  }
   const row = e.target.closest('.row'); if (!row) return;
   const entry = row.closest('.entry');
   const id = entry.dataset.id;
@@ -997,6 +1096,22 @@ function setDiningHoursStatus(status) {
   element.textContent = `${prefix}: ${generated} ET · 16 of 20 live; 4 cafés using embedded schedules`;
 }
 
+function setRecreationHoursStatus(status) {
+  const element = document.getElementById('recreation-hours-status');
+  element.dataset.kind = status.kind;
+  if (status.kind === 'fallback') {
+    element.textContent = 'Recreation hours: embedded fallback · Verify before you go';
+    return;
+  }
+  const generated = new Date(status.generated).toLocaleString('en-US', {
+    timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
+  });
+  const prefix = status.kind === 'stale' ? 'Recreation hours may be stale'
+    : status.kind === 'verification' ? 'Recreation hours need verification'
+      : 'Recreation hours updated';
+  element.textContent = `${prefix}: ${generated} ET · ${status.updatedCount} of ${status.totalCount} live`;
+}
+
 function easternISODate() {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -1023,9 +1138,22 @@ if (window.LionHourDiningHours) {
     today: easternISODate(),
   });
 }
+function hydrateRecreationHours() {
+  if (!window.LionHourRecreationHours) return;
+  LionHourRecreationHours.hydrate({
+    venues: VENUES,
+    render,
+    restore: render,
+    setStatus: setRecreationHoursStatus,
+    today: easternISODate(),
+  });
+}
 setInterval(updateClock, 1000);
 setInterval(render, 60000);
 </script>
+
+<script src="assets/recreation-hours.js"></script>
+<script>hydrateRecreationHours();</script>
 
 </body>
 </html>
