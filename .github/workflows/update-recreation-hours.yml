@@ -1,0 +1,53 @@
+name: Update recreation hours
+
+on:
+  schedule:
+    - cron: '27 */4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-recreation-hours
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test Recreation pipeline
+        run: >-
+          node --test
+          tests/recreation-hours-acquire.test.mjs
+          tests/recreation-source-parser.test.mjs
+          tests/recreation-hours-resolver.test.mjs
+          tests/recreation-hours-schema.test.mjs
+          tests/recreation-hours-service.test.mjs
+          tests/recreation-hours-scraper.test.mjs
+          tests/recreation-hours-workflow.test.mjs
+      - name: Scrape validated Recreation hours
+        run: xvfb-run --auto-servernum node scripts/recreation-hours-scraper.mjs --json-out "$RUNNER_TEMP/recreation-hours.json"
+      - name: Publish validated snapshot
+        if: vars.RECREATION_HOURS_PUBLISH_ENABLED == 'true' && vars.RECREATION_HOURS_API_URL != ''
+        env:
+          UPDATE_SECRET: ${{ secrets.LIBRARY_HOURS_UPDATE_SECRET }}
+          API_URL: ${{ vars.RECREATION_HOURS_API_URL }}
+        run: >-
+          test -n "$UPDATE_SECRET" &&
+          curl --fail-with-body --silent --show-error
+          --retry 3 --retry-all-errors
+          -X PUT "$API_URL"
+          -H "Authorization: Bearer $UPDATE_SECRET"
+          -H "Content-Type: application/json"
+          --data-binary "@$RUNNER_TEMP/recreation-hours.json"
