@@ -1,6 +1,15 @@
 import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
+import {
+  DINING_ARTICLE_SOURCES,
+  parseFallArticle,
+  parseLaborDayArticle,
+  parseNsopArticle,
+} from '../lib/dining-article-parser.js';
+import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
+import { validateDiningHoursSnapshot } from '../lib/dining-hours-schema.js';
+
 const SOURCE_URL = 'https://dining.columbia.edu/content/locations-hours';
 
 export const DINING_LOCATION_MAP = Object.freeze({
@@ -220,6 +229,26 @@ export function buildDiningSnapshot(dataset, generated = new Date()) {
   };
 }
 
+export function buildResolvedDiningSnapshot(dataset, articleHtml, generated = new Date()) {
+  const baseSnapshot = buildDiningSnapshot(dataset, generated);
+  return resolveDiningSnapshot({
+    baseSnapshot,
+    nsop: parseNsopArticle(articleHtml.nsop),
+    labor: parseLaborDayArticle(articleHtml.labor),
+    fall: parseFallArticle(articleHtml.fall),
+  });
+}
+
+function assertOfficialPage(page, expectedUrl) {
+  if (typeof page.url !== 'function') return;
+  const actual = new URL(page.url());
+  const expected = new URL(expectedUrl);
+  if (actual.protocol !== 'https:' || actual.hostname !== expected.hostname
+    || actual.pathname !== expected.pathname) {
+    throw new Error(`unexpected Dining redirect: ${actual.href}`);
+  }
+}
+
 export async function scrapeDiningHours({ outputPath, now = new Date(), chromiumImpl } = {}) {
   if (typeof outputPath !== 'string' || !outputPath.trim()) {
     throw new Error('--json-out requires a path');
@@ -235,7 +264,16 @@ export async function scrapeDiningHours({ outputPath, now = new Date(), chromium
       { timeout: 90_000 },
     );
     const raw = await page.evaluate(() => globalThis.dining_nodes);
-    const snapshot = buildDiningSnapshot(parseDiningNodes(raw), now);
+    assertOfficialPage(page, SOURCE_URL);
+    const articleHtml = {};
+    for (const [key, source] of Object.entries(DINING_ARTICLE_SOURCES)) {
+      await page.goto(source.url, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+      assertOfficialPage(page, source.url);
+      articleHtml[key] = await page.locator('#main-article').innerHTML();
+    }
+    const snapshot = buildResolvedDiningSnapshot(parseDiningNodes(raw), articleHtml, now);
+    const validation = validateDiningHoursSnapshot(snapshot);
+    if (!validation.ok) throw new Error(`invalid Dining snapshot: ${validation.errors.join('; ')}`);
     await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
     return snapshot;
   } finally {
