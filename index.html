@@ -380,25 +380,35 @@
     padding: 0.1rem 0.35rem; border-radius: 4px; margin-left: 0.3rem;
   }
 
-  /* ── Recreation spaces (nested sub-rows) ────────── */
-  .recreation-spaces { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--row-line); }
-  .recreation-spaces-toggle {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    border: 1px solid var(--hairline); border-radius: 8px; background: #fff;
-    color: var(--columbia-blue); cursor: pointer; font: inherit; font-size: 0.76rem;
-    font-weight: 600; padding: 0.4rem 0.75rem;
-    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  /* ── Recreation spaces (sub-accordion) ──────────── */
+  .detail:has(.recreation-spaces) { padding-bottom: 0; }
+  .recreation-spaces {
+    margin: 1rem -1.1rem 0 -2.95rem;
+    border-top: 1px solid var(--hairline);
   }
-  .recreation-spaces-toggle:hover { border-color: var(--columbia-light); background: #f0f5fb; box-shadow: 0 1px 3px rgba(29,79,145,0.08); }
+  .recreation-spaces-toggle {
+    display: flex; align-items: center; gap: 0.4rem;
+    width: 100%; border: none; border-radius: 0;
+    background: #edf0f5; color: var(--columbia-blue);
+    cursor: pointer; font: inherit; font-size: 0.76rem;
+    font-weight: 600; padding: 0.55rem 1.1rem 0.55rem 2.95rem;
+    transition: background 0.15s;
+  }
+  .recreation-spaces-toggle::after {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-right: 2px solid var(--columbia-blue); border-bottom: 2px solid var(--columbia-blue);
+    transform: rotate(-45deg); transition: transform 0.2s; margin-left: 0.15rem;
+  }
+  .recreation-spaces-toggle[aria-expanded="true"]::after { transform: rotate(45deg); }
+  .recreation-spaces-toggle:hover { background: #e2e7ef; }
   .recreation-spaces-list {
-    list-style: none; margin-top: 0.5rem;
-    background: #fff; border-radius: 10px;
-    border: 1px solid var(--hairline); overflow: hidden;
-    max-width: 500px;
+    list-style: none; margin: 0;
+    background: #f8fafc; overflow: hidden;
+    border-top: 1px solid var(--hairline);
   }
   .recreation-space {
-    padding: 0.45rem 0.8rem;
-    border-bottom: 1px solid #f1f4f7;
+    padding: 0.5rem 1.1rem 0.5rem 2.95rem;
+    border-bottom: 1px solid #ebeef2;
   }
   .recreation-space:last-child { border-bottom: none; }
   .recreation-space-heading {
@@ -454,6 +464,9 @@
     .row .chev  { grid-area: 1 / 4 / 2 / 5; }
     .row .hours { grid-area: 2 / 2 / 3 / 5; font-size: 0.78rem; }
     .detail { padding: 0.5rem 0.6rem 0.9rem 1.2rem; }
+    .recreation-spaces { margin: 0.75rem -0.6rem 0 -1.2rem; }
+    .recreation-spaces-toggle { padding-left: 1.2rem; padding-right: 0.6rem; }
+    .recreation-space { padding-left: 1.2rem; padding-right: 0.6rem; }
     .summary { gap: 0.9rem; }
     .stat { font-size: 0.8rem; }
     .search-input { flex: 1 1 100%; }
