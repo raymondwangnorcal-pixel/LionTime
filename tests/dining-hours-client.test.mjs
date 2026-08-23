@@ -3,7 +3,10 @@ import fs from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-import { makeValidDiningSnapshot } from './helpers/dining-hours-fixture.mjs';
+import {
+  makeValidDiningSnapshot,
+  makeValidDiningSnapshotV2,
+} from './helpers/dining-hours-fixture.mjs';
 
 const source = fs.readFileSync(new URL('../assets/dining-hours.js', import.meta.url), 'utf8');
 const sandbox = {};
@@ -107,4 +110,49 @@ test('marks a valid snapshot older than eight hours as stale', async () => {
     now: new Date('2026-08-22T00:01:00Z'),
   });
   assert.equal(status.kind, 'stale');
+});
+
+test('hydrates version 2 provenance and restricted NSOP service separately', async () => {
+  const list = venues();
+  const snapshot = makeValidDiningSnapshotV2();
+  const ferris = snapshot.locations.find(({ id }) => id === 'ferris');
+  ferris.days[0].sourceId = 'labor-day-2026';
+  ferris.days[0].status = 'Labor Day 2026 hours';
+  let services;
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => ({ ok: true, json: async () => snapshot }),
+    render() {},
+    setSpecialServices: (value) => { services = value; },
+    today: '2026-08-21',
+    now: new Date('2026-08-21T17:00:00Z'),
+  });
+  assert.equal(result.applied, true);
+  assert.equal(services.length, 1);
+  assert.equal(services[0].countsAsOpen, false);
+  assert.equal(services[0].days[0].sessions[0].label, 'Coffee Bar');
+  assert.equal(list.find(({ id }) => id === 'ferris').sourceIds[5], 'labor-day-2026');
+});
+
+test('rejects unsafe version 2 source and NSOP open-count claims atomically', async () => {
+  for (const mutate of [
+    (snapshot) => { snapshot.sources[0].url = 'https://example.com/hours'; },
+    (snapshot) => { snapshot.specialServices[0].countsAsOpen = true; },
+    (snapshot) => { snapshot.locations[0].days[0].sourceId = 'nsop-2026'; },
+    (snapshot) => { snapshot.specialServices[0].days[0].sessions[0].unsafe = true; },
+  ]) {
+    const snapshot = makeValidDiningSnapshotV2();
+    mutate(snapshot);
+    const list = venues();
+    const before = structuredClone(list);
+    const result = await api.hydrate({
+      venues: list,
+      fetchImpl: async () => ({ ok: true, json: async () => snapshot }),
+      render: () => assert.fail('invalid version 2 data must not render'),
+      setSpecialServices: () => assert.fail('invalid version 2 data must not expose services'),
+      today: '2026-08-21',
+    });
+    assert.equal(result.applied, false);
+    assert.deepEqual(list, before);
+  }
 });

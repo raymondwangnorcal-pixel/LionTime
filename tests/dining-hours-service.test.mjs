@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createDiningHoursService } from '../lib/dining-hours-service.js';
-import { makeValidDiningSnapshot } from './helpers/dining-hours-fixture.mjs';
+import {
+  makeValidDiningSnapshot,
+  makeValidDiningSnapshotV2,
+} from './helpers/dining-hours-fixture.mjs';
 
 function memoryStore(initial = null) {
   let snapshot = initial;
@@ -32,8 +35,7 @@ test('valid uploads replace the snapshot and invalid uploads preserve it', async
   })).status, 422);
   assert.deepEqual((await service.handle({ method: 'GET' })).body, original);
 
-  const next = makeValidDiningSnapshot();
-  next.generated = '2026-08-21T16:00:00.000Z';
+  const next = makeValidDiningSnapshotV2();
   assert.equal((await service.handle({
     method: 'PUT', authorization: 'Bearer test-secret', body: next,
   })).status, 204);

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const mockupPath = new URL('../mockup-campus-V1.html', import.meta.url);
+const mockupPath = new URL('../Mockups/mockup-campus-V1.html', import.meta.url);
 const html = readFileSync(mockupPath, 'utf8');
 const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1];
@@ -84,6 +84,12 @@ test('loads dining live data after static cards and identifies static café fall
   assert.match(indexHtml, /LionHourDiningHours\.hydrate/);
   assert.match(indexHtml, /16 of 20 live/);
   assert.match(indexHtml, /4 cafés using embedded schedules/);
+  assert.match(indexHtml, /setSpecialServices: setDiningSpecialServices/);
+  assert.match(indexHtml, /Restricted NSOP dining service/);
+  assert.match(indexHtml, /Official NSOP dining schedule/);
+  assert.match(indexHtml, /Official Columbia Dining schedule/);
+  assert.match(indexHtml, /day\.status !== 'Restricted NSOP service'/);
+  assert.match(indexHtml, /escapeHTML\(hoursText\)/);
 });
 
 test('loads Recreation hydration after embedded Fitness cards', () => {

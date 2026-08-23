@@ -449,3 +449,17 @@
 - Superseded by: DEC-0027
 - Note: The broad Lehman embedded fallback is replaced by a narrow correction for the exact known meridiem anomaly; other unexpected overnight intervals remain unapproved.
 - Privacy waivers: none
+
+## DEC-0028 — Resolve Dining transition and Fall hours from four official sources
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: LionHour Dining will merge Columbia's structured location feed with the official NSOP 2026, Labor Day 2026, and Fall 2026 articles using exact Labor Day venue exceptions first, dated feed periods including closures second, the Fall baseline from September 8 through December 23 third, and Hours not published otherwise; restricted NSOP sessions remain a separate service that never counts a venue as open.
+- Rationale: The structured feed does not currently cover the full transition into Fall, while the official articles provide complementary evidence with different location and access specificity that must not be conflated.
+- Scope: Dining article acquisition and parsing, evidence resolution, schema version 2 provenance, dual-version API and browser compatibility, restricted-service rendering, open counts and filters, tests, and publication workflow.
+- Implementation: pending
+- Recorded against HEAD: `9aac577c04e232ab309f29136be892c73f48d7b3`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-23-dining-transition-and-fall-hours.md`, official Columbia Dining source pages, and the successful live four-source scrape on 2026-08-23.
+- Privacy waivers: none

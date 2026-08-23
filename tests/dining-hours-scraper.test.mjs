@@ -114,10 +114,26 @@ test('rejects missing official locations and malformed time values', () => {
 
 test('acquires dining_nodes through a browser and always closes Chromium', async () => {
   const calls = [];
+  let currentUrl = '';
+  const articleByPath = new Map([
+    ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
+    ['/news/labor-day-2026-operating-hours', readFileSync(new URL('./fixtures/dining-labor-day-2026.html', import.meta.url), 'utf8')],
+    ['/news/fall-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-2026.html', import.meta.url), 'utf8')],
+  ]);
   const page = {
-    async goto(url, options) { calls.push(['goto', url, options]); },
+    async goto(url, options) { currentUrl = url; calls.push(['goto', url, options]); },
+    url() { return currentUrl; },
     async waitForFunction(_fn, argument, options) { calls.push(['waitForFunction', argument, options]); },
     async evaluate() { calls.push(['evaluate']); return JSON.stringify(completeDataset()); },
+    locator(selector) {
+      calls.push(['locator', selector]);
+      return {
+        async innerHTML() {
+          calls.push(['innerHTML', currentUrl]);
+          return articleByPath.get(new URL(currentUrl).pathname);
+        },
+      };
+    },
   };
   const browser = {
     async newPage() { calls.push(['newPage']); return page; },
@@ -135,15 +151,19 @@ test('acquires dining_nodes through a browser and always closes Chromium', async
     chromiumImpl,
   });
 
+  assert.equal(snapshot.schemaVersion, 2);
   assert.equal(snapshot.locations.length, 16);
+  assert.equal(snapshot.sources.length, 4);
   assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), snapshot);
   assert.equal(calls[0][0], 'launch');
   assert.deepEqual(calls[0][1], { headless: false });
   assert.equal(calls.at(-1)[0], 'close');
-  assert.match(calls.find(([name]) => name === 'goto')[1], /^https:\/\/dining\.columbia\.edu\//);
+  assert.equal(calls.filter(([name]) => name === 'goto').length, 4);
+  assert.ok(calls.filter(([name]) => name === 'goto').every((call) => /^https:\/\/dining\.columbia\.edu\//.test(call[1])));
   assert.ok(calls.some(([name]) => name === 'waitForFunction'));
   assert.deepEqual(calls.find(([name]) => name === 'waitForFunction').slice(1), [null, { timeout: 90_000 }]);
   assert.ok(calls.some(([name]) => name === 'evaluate'));
+  assert.equal(calls.filter(([name]) => name === 'innerHTML').length, 3);
 });
 
 test('closes Chromium when page acquisition fails', async () => {

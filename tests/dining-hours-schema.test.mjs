@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { validateDiningHoursSnapshot } from '../lib/dining-hours-schema.js';
-import { makeValidDiningSnapshot } from './helpers/dining-hours-fixture.mjs';
+import {
+  makeValidDiningSnapshot,
+  makeValidDiningSnapshotV2,
+} from './helpers/dining-hours-fixture.mjs';
 
 test('accepts the complete fourteen-day dining snapshot', () => {
   assert.equal(validateDiningHoursSnapshot(makeValidDiningSnapshot()).ok, true);
@@ -66,4 +69,26 @@ test('accepts split and overnight dining intervals', () => {
   snapshot.locations[0].days[0].intervals = [['10:00', '14:00'], ['16:00', '20:00']];
   snapshot.locations.find(({ id }) => id === 'jjs').days[0].intervals = [['12:00', '10:00']];
   assert.equal(validateDiningHoursSnapshot(snapshot).ok, true);
+});
+
+test('accepts provenance and restricted services in schema version 2', () => {
+  assert.equal(validateDiningHoursSnapshot(makeValidDiningSnapshotV2()).ok, true);
+});
+
+test('rejects unsafe version 2 source and NSOP open-count claims', () => {
+  const source = makeValidDiningSnapshotV2();
+  source.sources[0].url = 'https://example.com/hours';
+  assert.match(validateDiningHoursSnapshot(source).errors.join('\n'), /does not match source ID/);
+
+  const nsop = makeValidDiningSnapshotV2();
+  nsop.specialServices[0].countsAsOpen = true;
+  assert.match(validateDiningHoursSnapshot(nsop).errors.join('\n'), /countsAsOpen must be false/);
+
+  const venue = makeValidDiningSnapshotV2();
+  venue.locations[0].days[0].sourceId = 'nsop-2026';
+  assert.match(validateDiningHoursSnapshot(venue).errors.join('\n'), /cannot use restricted NSOP evidence/);
+
+  const nested = makeValidDiningSnapshotV2();
+  nested.locations[0].unsafe = true;
+  assert.match(validateDiningHoursSnapshot(nested).errors.join('\n'), /unexpected fields/);
 });
