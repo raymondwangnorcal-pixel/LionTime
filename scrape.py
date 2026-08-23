@@ -39,6 +39,8 @@ DISPLAYED_LIBRARIES = [
 DISPLAYED_LIBRARY_IDS = {library["id"] for library in DISPLAYED_LIBRARIES}
 EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman"}
 EMBEDDED_FALLBACK_REASON = "unapproved-overnight-hours"
+LEHMAN_MERIDIEM_ANOMALY = {"open": "21:00", "close": "17:00"}
+LEHMAN_CORRECTED_HOURS = {"open": "09:00", "close": "17:00"}
 
 TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$")
 RANGE_RE = re.compile(
@@ -137,6 +139,23 @@ def dates_to_weekly_schedule(date_hours: dict, reference_date: datetime) -> list
     return schedules
 
 
+def _normalize_known_source_anomalies(
+    library_id: str,
+    date_hours: dict[str, Optional[dict[str, str]]],
+) -> dict[str, Optional[dict[str, str]]]:
+    """Apply only explicitly approved, source-specific corrections."""
+    if library_id != "lehman":
+        return date_hours
+    return {
+        date_value: (
+            LEHMAN_CORRECTED_HOURS.copy()
+            if interval == LEHMAN_MERIDIEM_ANOMALY
+            else interval
+        )
+        for date_value, interval in date_hours.items()
+    }
+
+
 def _fallback_entry(definition: dict, reference_date: datetime) -> dict:
     start = _sunday_on_or_before(reference_date.date())
     return {
@@ -195,6 +214,7 @@ def scrape_library(
             print(f"[ERROR] Failed to parse {definition['slug']}: {exc}", file=sys.stderr)
             return _fallback_entry(definition, reference_date)
         date_hours = {}
+    date_hours = _normalize_known_source_anomalies(definition["id"], date_hours)
     start = _sunday_on_or_before(reference_date.date())
     schedules = (
         [_week_block({}, start, "Temporarily Closed")]

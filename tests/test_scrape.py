@@ -123,11 +123,35 @@ class ScraperContractTests(unittest.TestCase):
         errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
         self.assertIn("lehman: overnight hours are not allowed", errors)
 
-    def test_marks_suspicious_lehman_hours_for_embedded_fallback(self):
+    def test_corrects_known_lehman_meridiem_anomaly_and_preserves_closed_days(self):
+        html = """
+        <table><tr>
+          <td>
+            <div class="fulldate">2026-08-23</div>
+            <div class="day-hours">Closed</div>
+          </td>
+          <td>
+            <div class="fulldate">2026-08-24</div>
+            <div class="day-hours">9:00PM-5:00PM</div>
+          </td>
+        </tr></table>
+        """
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "lehman")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-08-23T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+        )
+        current_hours = entry["schedules"][0]["hours"]
+        self.assertNotIn("useEmbeddedFallback", entry)
+        self.assertIsNone(current_hours["0"])
+        self.assertEqual(current_hours["1"], {"open": "09:00", "close": "17:00"})
+
+    def test_marks_other_suspicious_lehman_hours_for_embedded_fallback(self):
         html = """
         <table><tr><td>
           <div class="fulldate">2026-08-20</div>
-          <div class="day-hours">9:00PM-5:00PM</div>
+          <div class="day-hours">8:00PM-5:00PM</div>
         </td></tr></table>
         """
         definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "lehman")
