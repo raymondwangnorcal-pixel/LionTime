@@ -128,7 +128,6 @@
     /* Collect non-empty meta pieces into a compact secondary line */
     const metaParts = [];
     if (state.hours) metaParts.push(text(state.hours));
-    if (state.reason) metaParts.push(text(state.reason));
     const avail = availabilityLabel(state.availabilityType);
     if (avail) metaParts.push(text(avail));
     if (restrictionsText) metaParts.push(text(restrictionsText));
