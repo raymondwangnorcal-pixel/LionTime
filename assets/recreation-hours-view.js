@@ -112,21 +112,33 @@
     };
   }
 
-  function line(className, label, value) {
-    if (!value) return '';
-    return `<div class="${className}"><span>${text(label)}</span>${text(value)}</div>`;
+  function dotClass(label) {
+    if (!label) return 'closed';
+    if (/^Open\b/i.test(label)) return 'open';
+    if (/closing soon/i.test(label)) return 'closing-soon';
+    return 'closed';
   }
 
   function spaceHTML(space, now) {
     const state = stateFor(space, now);
+    const dot = dotClass(state.label);
     const restrictions = Array.isArray(state.accessRestrictions) ? state.accessRestrictions : [];
     const restrictionsText = restrictions.filter(Boolean).join(' · ');
+
+    /* Collect non-empty meta pieces into a compact secondary line */
+    const metaParts = [];
+    if (state.hours) metaParts.push(text(state.hours));
+    if (state.reason) metaParts.push(text(state.reason));
+    const avail = availabilityLabel(state.availabilityType);
+    if (avail) metaParts.push(text(avail));
+    if (restrictionsText) metaParts.push(text(restrictionsText));
+    const metaLine = metaParts.length
+      ? `<div class="recreation-space-meta">${metaParts.join(' · ')}</div>`
+      : '';
+
     return `<li class="recreation-space">
-      <div class="recreation-space-heading"><span class="recreation-space-name">${text(space?.name)}</span><span class="recreation-space-status">${text(state.label)}</span></div>
-      ${line('recreation-space-hours', 'Hours: ', state.hours)}
-      ${line('recreation-space-reason', 'Reason: ', state.reason)}
-      ${line('recreation-space-availability', 'Availability: ', availabilityLabel(state.availabilityType))}
-      ${line('recreation-space-access', 'Access: ', restrictionsText)}
+      <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${text(space?.name)}</span><span class="recreation-space-status">${text(state.label)}</span></div>
+      ${metaLine}
     </li>`;
   }
 
