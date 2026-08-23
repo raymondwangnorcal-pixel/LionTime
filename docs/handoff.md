@@ -1,53 +1,55 @@
-# LionTime Recreation and schedule UI handoff
+# LionTime live Student Life and Services planning handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-22T23:38:27-04:00
-Current-Origin: origin-e6a7c49bef7750c537e02277
+Last-Updated: 2026-08-23T14:45:31-04:00
+Current-Origin: origin-b821297cdc90788e1c533d90
 
 ## Origins
 
 | Origin-ID | Branch | Created-At |
 |---|---|---|
-| origin-e6a7c49bef7750c537e02277 | main | 2026-08-22T23:19:57-04:00 |
+| origin-b821297cdc90788e1c533d90 | main | 2026-08-23T14:45:31-04:00 |
 
 ## Current Goal
 
-Origin-ID: origin-e6a7c49bef7750c537e02277
-Text: Refine the expanded horizontal seven-day hours table while preserving the working Recreation Hours feed.
+Origin-ID: origin-b821297cdc90788e1c533d90
+Text: Implement the approved live Student Life and Services hours plan for ten cards across four isolated official sources.
 
 ## Accomplished in Latest Material Session
 
-Origin-ID: origin-e6a7c49bef7750c537e02277
-Text: Confirmed Recreation Hours is working. Refined the desktop seven-day table with separate weekday/date header and hours hierarchy, a stronger Today treatment, equal-width columns, and an inline weekday-and-date label such as SAT · 8/22.
+Origin-ID: origin-b821297cdc90788e1c533d90
+Text: Reviewed the four official source entry pages and the existing LionTime live-hours architecture; completed a product and implementation grilling session; recorded decisions DEC-0017 through DEC-0026; and authored a 427-line implementation plan covering contracts, acquisition, parsing, source-isolated API merging, workflow, access-aware hydration, tests, operations, rollout, and rollback.
 
 ## Outstanding Tasks
 
 | Task-ID | Origin-ID | Priority | Description |
 |---|---|---|---|
-| task-3c49e0382e12543ed9a5feb0 | origin-e6a7c49bef7750c537e02277 | P2 | Install the declared Node dependencies and rerun npm test; investigate the existing Recreation UI availability-label assertion if it still fails after dependencies are installed. |
+| task-e370d779e2ca10a1ed4c4efd | origin-b821297cdc90788e1c533d90 | P1 | Execute docs/superpowers/plans/2026-08-23-live-student-services-hours.md from Task 1 through Task 7, beginning with official source fixture capture and acquisition tests while preserving the current unrelated index.html recreation-style edit. |
 
 ## Recommended Next Task
 
-Origin-ID: origin-e6a7c49bef7750c537e02277
-Task-ID: task-3c49e0382e12543ed9a5feb0
-Reason: The visual update is complete, but the full test suite could not complete in the current dependency-free workspace.
+Origin-ID: origin-b821297cdc90788e1c533d90
+Task-ID: task-e370d779e2ca10a1ed4c4efd
+Reason: All material product, source, reliability, architecture, freshness, and rollout choices are settled; the implementation plan is ready to execute test-first.
 
 ## Files Touched
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| index.html | origin-e6a7c49bef7750c537e02277 | present | uncommitted | Unstaged responsive hours-table refinement; mobile remains a vertical list and desktop uses the inline weekday/date header. |
+| docs/decisions.md | origin-b821297cdc90788e1c533d90 | present | uncommitted | Append-only ledger now includes pending decisions DEC-0017 through DEC-0026 for the Student Life pipeline. |
+| docs/superpowers/plans/2026-08-23-live-student-services-hours.md | origin-b821297cdc90788e1c533d90 | present | untracked | Implementation-ready seven-task plan with exact contracts, files, test commands, deployment sequence, and rollback. |
+| index.html | origin-b821297cdc90788e1c533d90 | present | uncommitted | Pre-existing user edit restyles the Recreation View Spaces sub-accordion; it is unrelated to this planning task and must be preserved during future Student Life integration. |
 
 ## Git / Remote State
 
-Origin-ID: origin-e6a7c49bef7750c537e02277
+Origin-ID: origin-b821297cdc90788e1c533d90
 Branch: main
-Head: cb21baa270edd4243fbd14fbf5aebd09412c2e0a
+Head: 6787e7f6bdf6499397cfb784907bf787105ad359
 Upstream: origin/main
-Ahead: unknown
-Behind: unknown
-Remote-Freshness: not-verified
-Remote-Freshness-Reason: network access was not used to fetch the upstream remote in this session
+Ahead: 0
+Behind: 0
+Remote-Freshness: verified
+Remote-Freshness-Reason: none
 Project-Working-Tree: dirty
 Handoff-Path-State-Before-Write: clean
 Handoff-Commit-Exception: none
@@ -61,17 +63,17 @@ Handoff-Commit-Exception: none
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-3daf8c3497857a6fb0ef39a7 | origin-e6a7c49bef7750c537e02277 | npm test and git diff --check | partial | The current hours-table diff check passed. Earlier npm test run passed 126 of 130 tests; three test files could not load missing playwright or cheerio dependencies, and one existing Recreation UI assertion expected an availability label absent from its renderer output. |
+| validation-69731347cf39b669ac17203a | origin-b821297cdc90788e1c533d90 | validate_ledger.py validate-ledger --repo /Users/raymondwang/PersonalProjects/LionTime --input docs/decisions.md; git diff --check; scan plan for TODO, TBD, placeholder paths, and ellipses | passed | Decision ledger schema, lifecycle, reachable-commit attribution, and privacy checks passed; diff check emitted no errors; plan placeholder scan returned no matches. |
 
 ## Risks / Decisions
 
 | Item-ID | Origin-ID | Kind | Status | Description |
 |---|---|---|---|---|
-| risk-9ab913cded91943bbb882f2c | origin-e6a7c49bef7750c537e02277 | risk | open | Full automated validation remains incomplete until declared Node dependencies are installed; the remaining UI assertion may require a baseline test or renderer reconciliation. |
+| risk-74e65da163e74883e9385829 | origin-b821297cdc90788e1c533d90 | risk | open | The official Bookstore representation and exact Lerner calendar embed must be discovered in headed Chromium before selectors or structured-response parsing can be frozen; the plan makes this the first gated implementation task and forbids third-party substitution or challenge bypass. |
 
 ## Archive Decision
 
-Origin-ID: origin-e6a7c49bef7750c537e02277
+Origin-ID: origin-b821297cdc90788e1c533d90
 Safe-to-Archive: no
-Reason: The requested visual change is complete, but full automated validation is incomplete in this workspace.
-Next-Action: task-3c49e0382e12543ed9a5feb0
+Reason: Planning is complete, but the seven-task live Student Life and Services implementation has not started.
+Next-Action: task-e370d779e2ca10a1ed4c4efd
