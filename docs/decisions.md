@@ -287,3 +287,143 @@
 - Superseded by: none
 - Note: The completed repair enforces explicit restrictions, exact or unavailable seasonal evidence, target-specific provenance, and all-or-nothing handling of catalog-target modification notices.
 - Privacy waivers: none
+
+## DEC-0017 — Replace the Lerner package card with the Student Mail Center
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: The first live Student Life and Services release will replace the outdated Lerner Package Center card with the Student Mail Center at Wien Hall, Lower Level.
+- Rationale: The current official Columbia Mail source identifies the student-facing mail facility and its published hours at Wien Hall rather than Lerner Hall.
+- Scope: Student Life and Services venue identity, location metadata, live-hours source catalog, scraper mapping, fallback data, tests, and operating documentation.
+- Implementation: pending
+- Recorded against HEAD: `a55cd12003209b016b088aa7d58b22865063c63a`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview and https://mailservices.columbia.edu/content/locations-hours.
+- Privacy waivers: none
+
+## DEC-0018 — Represent health-service access modes explicitly
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Live Student Life and Services cards for Columbia Health will distinguish walk-in, appointment-only, virtual-only, phone-support, and closed availability instead of treating staffed office hours as generic open hours.
+- Rationale: The official source publishes materially different access modes, and a generic open badge could mislead students about whether they can receive service in person.
+- Scope: Student-services snapshot schema, health-source parser, status resolver, badges and expanded details, accessibility copy, fallback data, and tests.
+- Implementation: pending
+- Recorded against HEAD: `a55cd12003209b016b088aa7d58b22865063c63a`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview and https://www.health.columbia.edu/content/hours-and-locations.
+- Privacy waivers: none
+
+## DEC-0019 — Isolate Student Life source failures
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: The live Student Life and Services pipeline will publish successful source updates independently while retaining the last known-good data and a visible stale or verification state for any failed source.
+- Rationale: A failure in one unrelated source, especially the external Bookstore storefront, should not prevent fresher official Lerner, Mail Center, or Columbia Health schedules from reaching users.
+- Scope: Source acquisition, per-source snapshot metadata, last-known-good merge behavior, API validation, frontend freshness indicators, workflow reporting, and tests.
+- Implementation: pending
+- Recorded against HEAD: `a55cd12003209b016b088aa7d58b22865063c63a`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview.
+- Privacy waivers: none
+
+## DEC-0020 — Expand live Columbia Health coverage in v1
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: The first live Student Life and Services release will add Alice! Health Promotion and the Student Health Insurance Office alongside the five Columbia Health services already represented in LionTime.
+- Rationale: The shared official Columbia Health source publishes actionable availability for both services, so excluding them would leave useful student-facing hours out of the initial live release.
+- Scope: Student Life and Services venue catalog, embedded fallbacks, health-source parsing, live snapshot schema, rendering, navigation counts, tests, and documentation.
+- Implementation: pending
+- Recorded against HEAD: `a55cd12003209b016b088aa7d58b22865063c63a`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview and https://www.health.columbia.edu/content/hours-and-locations.
+- Privacy waivers: none
+
+## DEC-0021 — Prioritize dated Lerner calendar exceptions
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Lerner Hall live hours will use the published weekday schedule as a recurring baseline and apply dated calendar entries as authoritative building-level exceptions, failing to a verification state when an exception is ambiguous.
+- Rationale: Lerner identifies its calendar as the most current source and warns that holidays, breaks, and other circumstances can change ordinary building hours.
+- Scope: Lerner acquisition and parsing, source-priority resolution, exception schema, verification behavior, tests, and operations documentation.
+- Implementation: pending
+- Recorded against HEAD: `a55cd12003209b016b088aa7d58b22865063c63a`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview and https://lernerhall.columbia.edu/.
+- Privacy waivers: none
+
+## DEC-0022 — Restrict Bookstore hours to official sources
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Columbia Bookstore hours will come only from the official Barnes and Noble storefront or official structured endpoints it calls, using browser-backed acquisition when necessary and never substituting crowd-sourced listings.
+- Rationale: Official-source provenance is more important than apparent freshness for student-facing status, and unverified third-party hours could incorrectly report whether the store is open.
+- Scope: Bookstore acquisition, source allowlist, provenance validation, fallback behavior, verification status, tests, and operating documentation.
+- Implementation: pending
+- Recorded against HEAD: `a55cd12003209b016b088aa7d58b22865063c63a`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview and https://columbia.bncollege.com/.
+- Privacy waivers: none
+
+## DEC-0023 — Use an independent Student Life hours pipeline
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Live Student Life and Services data will use a dedicated student-services-hours API, Redis namespace, scheduled workflow, and browser hydration client with four source adapters.
+- Rationale: Student Life requires access-aware statuses and per-source retention semantics that should remain isolated from the Library, Dining, and Recreation data contracts.
+- Scope: API route, snapshot schema and store, scraper orchestration, GitHub Actions workflow, browser client, shared update-secret authentication, Vercel configuration, tests, and operations documentation.
+- Implementation: pending
+- Recorded against HEAD: `6787e7f6bdf6499397cfb784907bf787105ad359`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview.
+- Privacy waivers: none
+
+## DEC-0024 — Bound Student Life freshness claims
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Student Life sources will refresh every four hours over a fourteen-day Eastern-time horizon, remain live through eight hours, display stale through twenty-four hours, and then stop asserting open or closed status while retaining details as needs verification.
+- Rationale: Time-bounded status claims preserve utility through short source outages without allowing outdated Health, Mail, Lerner, or Bookstore schedules to appear current indefinitely.
+- Scope: Workflow cadence, snapshot dates, per-source freshness calculation, status resolver, open-now counts and filters, detail rendering, cache policy, tests, and operations documentation.
+- Implementation: pending
+- Recorded against HEAD: `6787e7f6bdf6499397cfb784907bf787105ad359`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview.
+- Privacy waivers: none
+
+## DEC-0025 — Activate Student Life sources independently
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Initial production rollout will activate each Student Life source after its first validated publication while uninitialized sources retain embedded fallback data and show needs verification, and the footer will report the number of live sources.
+- Rationale: One difficult source should not delay useful verified data for the other cards, while the product must not describe the full feature as live until all four sources have succeeded.
+- Scope: Initial seeding, API uninitialized-source representation, browser fallback behavior, footer copy, deployment checks, rollback, tests, and operating documentation.
+- Implementation: pending
+- Recorded against HEAD: `6787e7f6bdf6499397cfb784907bf787105ad359`
+- Supersedes: none
+- Evidence: User approval during the 2026-08-23 Student Life and Services planning interview.
+- Privacy waivers: none
+
+## DEC-0026 — Keep restricted access out of Open now counts
+
+- Date: 2026-08-23
+- Owner: agent
+- Status at record: active
+- Decision: Student Life cards with only appointment-only, virtual-only, or phone-support availability will not count as open or match the Open now filter, while active walk-in and open-access availability will.
+- Rationale: The existing Open now language implies immediate physical access, and counting restricted access would recreate the misleading generic-open behavior the access-aware design is intended to prevent.
+- Scope: Current-status resolution, category counts, status filters, badges, accessibility copy, tests, and the Student Life implementation plan.
+- Implementation: pending
+- Recorded against HEAD: `6787e7f6bdf6499397cfb784907bf787105ad359`
+- Supersedes: none
+- Evidence: `/Users/raymondwang/PersonalProjects/LionTime/docs/superpowers/plans/2026-08-23-live-student-services-hours.md`.
+- Privacy waivers: none

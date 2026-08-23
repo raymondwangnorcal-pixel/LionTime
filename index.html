@@ -384,23 +384,23 @@
   .detail:has(.recreation-spaces) { padding-bottom: 0; }
   .recreation-spaces {
     margin: 1rem -1.1rem 0 -2.95rem;
-    border-top: 1px solid var(--hairline);
+    border-top: 3px solid var(--columbia-blue);
   }
   .recreation-spaces-toggle {
-    display: flex; align-items: center; gap: 0.4rem;
+    display: flex; align-items: center; gap: 0.45rem;
     width: 100%; border: none; border-radius: 0;
-    background: #edf0f5; color: var(--columbia-blue);
-    cursor: pointer; font: inherit; font-size: 0.76rem;
-    font-weight: 600; padding: 0.55rem 1.1rem 0.55rem 2.95rem;
+    background: #d9e4f0; color: var(--columbia-blue);
+    cursor: pointer; font: inherit; font-size: 0.8rem;
+    font-weight: 700; padding: 0.7rem 1.1rem 0.7rem 2.95rem;
     transition: background 0.15s;
   }
   .recreation-spaces-toggle::after {
-    content: ''; display: inline-block; width: 7px; height: 7px;
-    border-right: 2px solid var(--columbia-blue); border-bottom: 2px solid var(--columbia-blue);
-    transform: rotate(-45deg); transition: transform 0.2s; margin-left: 0.15rem;
+    content: ''; display: inline-block; width: 8px; height: 8px;
+    border-right: 2.5px solid var(--columbia-blue); border-bottom: 2.5px solid var(--columbia-blue);
+    transform: rotate(-45deg); transition: transform 0.2s; margin-left: auto;
   }
   .recreation-spaces-toggle[aria-expanded="true"]::after { transform: rotate(45deg); }
-  .recreation-spaces-toggle:hover { background: #e2e7ef; }
+  .recreation-spaces-toggle:hover { background: #cbdaeb; }
   .recreation-spaces-list {
     list-style: none; margin: 0;
     background: #f8fafc; overflow: hidden;
