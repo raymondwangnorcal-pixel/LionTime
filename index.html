@@ -381,36 +381,41 @@
   }
 
   /* ── Recreation spaces (nested sub-rows) ────────── */
-  .recreation-spaces { margin-top: 0.75rem; }
+  .recreation-spaces { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--row-line); }
   .recreation-spaces-toggle {
+    display: inline-flex; align-items: center; gap: 0.35rem;
     border: 1px solid var(--hairline); border-radius: 8px; background: #fff;
     color: var(--columbia-blue); cursor: pointer; font: inherit; font-size: 0.76rem;
-    font-weight: 600; padding: 0.4rem 0.7rem;
-    transition: border-color 0.15s, background 0.15s;
+    font-weight: 600; padding: 0.4rem 0.75rem;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
   }
-  .recreation-spaces-toggle:hover { border-color: var(--columbia-light); background: #f8fafc; }
+  .recreation-spaces-toggle:hover { border-color: var(--columbia-light); background: #f0f5fb; box-shadow: 0 1px 3px rgba(29,79,145,0.08); }
   .recreation-spaces-list {
     list-style: none; margin-top: 0.5rem;
     background: #fff; border-radius: 10px;
     border: 1px solid var(--hairline); overflow: hidden;
+    max-width: 500px;
   }
   .recreation-space {
-    padding: 0.5rem 0.85rem;
+    padding: 0.45rem 0.8rem;
     border-bottom: 1px solid #f1f4f7;
   }
   .recreation-space:last-child { border-bottom: none; }
   .recreation-space-heading {
-    display: flex; align-items: center; gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.45rem;
   }
   .recreation-space-heading .dot { flex-shrink: 0; }
   .recreation-space-name { font-weight: 600; font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }
   .recreation-space-status {
-    font-size: 0.72rem; font-weight: 600; color: var(--text-secondary);
+    font-size: 0.68rem; font-weight: 700; color: var(--text-secondary);
     white-space: nowrap; text-align: right;
   }
+  .recreation-space-status.open { color: var(--open-ink); }
+  .recreation-space-status.closing-soon { color: var(--soon); }
+  .recreation-space-status.closed { color: var(--closed-ink); }
   .recreation-space-meta {
-    margin-top: 0.15rem; padding-left: 1.1rem;
-    font-size: 0.72rem; color: var(--muted); line-height: 1.4;
+    margin-top: 0.1rem; padding-left: 0.95rem;
+    font-size: 0.7rem; color: var(--muted); line-height: 1.4;
   }
 
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 0.9rem; }
