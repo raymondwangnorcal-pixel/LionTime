@@ -427,3 +427,25 @@
 - Supersedes: none
 - Evidence: `/Users/raymondwang/PersonalProjects/LionTime/docs/superpowers/plans/2026-08-23-live-student-services-hours.md`.
 - Privacy waivers: none
+
+## DEC-0027 — Correct the known Lehman meridiem anomaly
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: LionHour will interpret Lehman's exact published 9:00 PM to 5:00 PM anomaly as 9:00 AM to 5:00 PM while preserving source cells marked Closed and retaining the safety fallback for any different unapproved overnight interval.
+- Rationale: The official Lehman calendar contains a repeated, apparent AM/PM typo, and the user approved the narrow correction so valid live Lehman hours can replace the embedded schedule without weakening unrelated validation.
+- Scope: Lehman library source normalization, scraper output, closed-day handling, fallback behavior, and regression tests.
+- Implementation: pending
+- Recorded against HEAD: `f46d392eed3c2c0f7da95b9ae59d116b191deb4d`
+- Supersedes: DEC-0009
+- Evidence: `scrape.py`, `tests/test_scrape.py`, and the user-approved interpretation of the official Lehman hours page on 2026-08-23.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0009
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0027
+- Note: The broad Lehman embedded fallback is replaced by a narrow correction for the exact known meridiem anomaly; other unexpected overnight intervals remain unapproved.
+- Privacy waivers: none
