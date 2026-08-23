@@ -951,12 +951,21 @@ function weekHTML(v, now) {
 }
 
 function weekHTMLDesktop(v, now) {
+  const todayET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
     const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
+    let dayLabel;
+    if (i === 0) {
+      dayLabel = `${DAY_SHORT[dow]} · today`;
+    } else {
+      const d = new Date(todayET);
+      d.setDate(d.getDate() + i);
+      dayLabel = `${DAY_SHORT[dow]} (${d.getMonth() + 1}/${d.getDate()})`;
+    }
     return `<div class="wk-col${i === 0 ? ' today' : ''}">
-      <span class="wk-col-day">${DAY_SHORT[dow]}${i === 0 ? ' · today' : ''}</span>
+      <span class="wk-col-day">${dayLabel}</span>
       <span class="wk-col-hours">${hoursText}</span>
     </div>`;
   }).join('');
