@@ -753,3 +753,11 @@
 - Supersedes: none
 - Evidence: The official Columbia Recreation Hours of Operation page and the user-approved source rule in the 2026-08-24 implementation conversation.
 - Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0039
+
+- Type: implementation
+- Implementation commit: `5f881a599c54bd40abea89c30aa52ca1ba9b7b53` — fix(recreation): derive Dodge fallback from Blue Gym
+- Superseded by: none
+- Note: The Recreation scraper now captures three stabilized weeks from the publisher-embedded Blue Gym calendar, publishes Blue Gym open-recreation intervals, uses the daily calendar envelope as a lower-priority Dodge fallback, and preserves dated building schedules and explicit closures as stronger evidence.
+- Privacy waivers: none
