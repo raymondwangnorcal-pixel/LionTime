@@ -241,28 +241,49 @@ test('publishes fourteen Barnard days when the optional third week is unavailabl
   assert.equal(nextClicks, 1);
 });
 
-test('reports a 403 challenge immediately and continues with the remaining Dining sources', async () => {
+test('allows a passive 403 challenge to clear and isolates one that remains', async () => {
   let currentUrl = '';
-  let challengedArticleRead = false;
+  let laborChallengeActive = true;
+  let laborArticleRead = false;
+  let fallArticleRead = false;
+  const challengeWaits = [];
   const articleByPath = new Map([
     ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
+    ['/news/labor-day-2026-operating-hours', readFileSync(new URL('./fixtures/dining-labor-day-2026.html', import.meta.url), 'utf8')],
     ['/news/fall-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-2026.html', import.meta.url), 'utf8')],
   ]);
   const page = {
     async goto(url) {
       currentUrl = url;
-      return { status: () => new URL(url).pathname.includes('labor-day') ? 403 : 200 };
+      return {
+        status: () => /labor-day|fall-2026/.test(new URL(url).pathname) ? 403 : 200,
+      };
     },
     url() { return currentUrl; },
-    async title() { return currentUrl.includes('labor-day') ? 'Just a moment...' : 'Columbia Dining'; },
+    async title() {
+      const challenged = (currentUrl.includes('labor-day') && laborChallengeActive)
+        || currentUrl.includes('fall-2026');
+      return challenged ? 'Just a moment...' : 'Columbia Dining';
+    },
     async waitForFunction() {},
+    async waitForTimeout(value) {
+      if (value === 12_000) {
+        challengeWaits.push(currentUrl);
+        if (currentUrl.includes('labor-day')) laborChallengeActive = false;
+      }
+    },
     async evaluate() { return JSON.stringify(completeDataset()); },
     locator(selector) {
       return {
-        async innerText() { return currentUrl.includes('labor-day') ? 'Performing security verification' : ''; },
+        async innerText() {
+          const challenged = (currentUrl.includes('labor-day') && laborChallengeActive)
+            || currentUrl.includes('fall-2026');
+          return challenged ? 'Performing security verification' : '';
+        },
         async count() { return selector === '#main-article' ? 1 : 0; },
         async innerHTML() {
-          if (currentUrl.includes('labor-day')) challengedArticleRead = true;
+          if (currentUrl.includes('labor-day')) laborArticleRead = true;
+          if (currentUrl.includes('fall-2026')) fallArticleRead = true;
           return articleByPath.get(new URL(currentUrl).pathname);
         },
       };
@@ -284,10 +305,13 @@ test('reports a 403 challenge immediately and continues with the remaining Dinin
   });
 
   assert.equal(batch.attempts[2].sourceId, 'labor-day-2026');
-  assert.equal(batch.attempts[2].result, 'failure');
-  assert.equal(batch.attempts[2].failureCode, 'challenge');
-  assert.equal(batch.attempts[3].result, 'success');
-  assert.equal(challengedArticleRead, false);
+  assert.equal(batch.attempts[2].result, 'success');
+  assert.equal(batch.attempts[3].sourceId, 'fall-2026');
+  assert.equal(batch.attempts[3].result, 'failure');
+  assert.equal(batch.attempts[3].failureCode, 'challenge');
+  assert.equal(laborArticleRead, true);
+  assert.equal(fallArticleRead, false);
+  assert.equal(challengeWaits.length, 2);
 });
 
 test('records source acquisition failures and closes Chromium', async () => {

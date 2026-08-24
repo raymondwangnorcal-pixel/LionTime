@@ -25,6 +25,9 @@ test('workflow installs Chromium, tests, scrapes, and publishes behind configura
   assert.match(workflow, /vars\.DINING_HOURS_API_URL/);
   assert.match(workflow, /secrets\.LIBRARY_HOURS_UPDATE_SECRET/);
   assert.match(workflow, /--retry-all-errors/);
+  assert.match(workflow, /Verify live Barnard Dining publication/);
+  assert.match(workflow, /node scripts\/verify-live-barnard-dining\.mjs/);
+  assert.match(workflow, /DINING_HOURS_API_URL/);
 });
 
 test('Vercel exposes a bounded dining API backed by the dining service', () => {
