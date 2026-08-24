@@ -274,9 +274,127 @@
     };
   }
 
+  function validateIndependentBarnardSnapshot(snapshot) {
+    if (!exactKeys(snapshot, [
+      'schemaVersion', 'generated', 'source', 'windowStart', 'windowEnd', 'venues',
+    ]) || snapshot.schemaVersion !== 1 || snapshot.source !== SOURCE_CONTRACT['barnard-hours']
+      || typeof snapshot.generated !== 'string' || Number.isNaN(Date.parse(snapshot.generated))
+      || !/(?:Z|[+-]\d{2}:\d{2})$/.test(snapshot.generated)
+      || !ISO_DATE.test(snapshot.windowStart || '')
+      || ![addDays(snapshot.windowStart, 13), addDays(snapshot.windowStart, 20)].includes(snapshot.windowEnd)
+      || new Date(`${snapshot.windowStart}T12:00:00Z`).getUTCDay() !== 0
+      || !Array.isArray(snapshot.venues) || snapshot.venues.length !== BARNARD_IDS.length) return null;
+    const dayCount = snapshot.windowEnd === addDays(snapshot.windowStart, 13) ? 14 : 21;
+    const byId = new Map();
+    for (let venueIndex = 0; venueIndex < BARNARD_IDS.length; venueIndex += 1) {
+      const venue = snapshot.venues[venueIndex];
+      const id = BARNARD_IDS[venueIndex];
+      const contract = CONTRACT[id];
+      if (!exactKeys(venue, ['id', 'name', 'category', 'days']) || venue.id !== id
+        || venue.category !== contract.category || !validText(venue.name, 120)
+        || !Array.isArray(venue.days) || venue.days.length !== dayCount) return null;
+      for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+        const day = venue.days[dayIndex];
+        if (!exactKeys(day, ['date', 'intervals', 'status'])
+          || day.date !== addDays(snapshot.windowStart, dayIndex)
+          || !validIntervals(day.intervals) || ![null, 'Closed'].includes(day.status)
+          || (day.status === 'Closed' && day.intervals.length)
+          || (day.status === null && !day.intervals.length)) return null;
+      }
+      byId.set(id, venue);
+    }
+    return byId;
+  }
+
+  function buildIndependentBarnardUpdates(snapshot, venues, today, now = new Date()) {
+    const byId = validateIndependentBarnardSnapshot(snapshot);
+    if (!byId || !ISO_DATE.test(today || '')) return { ok: false };
+    const firstIndex = Math.round((
+      new Date(`${today}T12:00:00Z`) - new Date(`${snapshot.windowStart}T12:00:00Z`)
+    ) / 86400000);
+    if (firstIndex < 0 || firstIndex + 7 > byId.get(BARNARD_IDS[0]).days.length) return { ok: false };
+
+    const age = now.getTime() - Date.parse(snapshot.generated);
+    const expired = age > 24 * 60 * 60 * 1000;
+    const stale = age > 8 * 60 * 60 * 1000;
+    const entries = [];
+    for (const id of BARNARD_IDS) {
+      const venue = venues.find(item => item.id === id);
+      if (!venue) continue;
+      const days = byId.get(id).days.slice(firstIndex, firstIndex + 7);
+      const hours = {};
+      const sourceStatuses = {};
+      const sourceIds = {};
+      for (const day of days) {
+        const dow = new Date(`${day.date}T12:00:00Z`).getUTCDay();
+        hours[dow] = day.intervals.map(interval => [interval[0], interval[1]]);
+        sourceStatuses[dow] = day.status;
+        sourceIds[dow] = 'barnard-hours';
+      }
+      const allWeekClosed = days.every(day => day.status === 'Closed' && !day.intervals.length);
+      const sourceNote = expired
+        ? `Barnard hours may be outdated · Last confirmed ${formatEastern(snapshot.generated)}`
+        : stale
+          ? `Barnard hours last confirmed ${formatEastern(snapshot.generated)} · Verify before visiting`
+          : allWeekClosed ? 'Closed throughout the published week' : null;
+      entries.push([venue, {
+        hours,
+        sourceStatuses,
+        sourceIds,
+        sourceNote,
+        diningLive: !expired,
+        diningFreshness: expired ? 'expired' : stale ? 'stale' : 'live',
+      }]);
+    }
+    return {
+      ok: true,
+      entries,
+      fetchedAt: snapshot.generated,
+      stale,
+      expired,
+    };
+  }
+
+  function mergeIndependentBarnard(updates, barnard) {
+    if (!barnard.ok) return updates;
+    const entries = [
+      ...updates.entries.filter(([venue]) => !BARNARD_IDS.includes(venue.id)),
+      ...barnard.entries,
+    ];
+    const staticFallbackIds = updates.staticFallbackIds.filter(id => !BARNARD_IDS.includes(id));
+    if (barnard.expired) staticFallbackIds.push(...BARNARD_IDS);
+    return {
+      ...updates,
+      entries,
+      staticFallbackIds,
+      updatedCount: entries.filter(([, next]) => next.diningLive).length,
+      totalCount: new Set([...entries.map(([venue]) => venue.id), ...staticFallbackIds]).size,
+      barnardFetchedAt: barnard.fetchedAt,
+      barnardStale: barnard.stale,
+    };
+  }
+
+  function embeddedDiningUpdates(venues) {
+    const knownIds = new Set([...Object.keys(CONTRACT), ...STATIC_FALLBACK_IDS]);
+    const staticFallbackIds = venues
+      .map(({ id }) => id)
+      .filter(id => knownIds.has(id) && !BARNARD_IDS.includes(id));
+    return {
+      ok: true,
+      entries: [],
+      staticFallbackIds,
+      specialServices: [],
+      updatedCount: 0,
+      totalCount: staticFallbackIds.length + BARNARD_IDS.length,
+      barnardFetchedAt: null,
+      barnardStale: false,
+    };
+  }
+
   async function hydrate({
     venues,
     fetchImpl = global.fetch,
+    barnardFetchImpl = fetchImpl,
     render,
     setStatus = () => {},
     setSpecialServices = () => {},
@@ -284,19 +402,45 @@
     now = new Date(),
   }) {
     try {
-      const response = await fetchImpl('/api/dining-hours', { headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error(`http-${response.status}`);
-      const snapshot = await response.json();
-      const updates = buildUpdates(snapshot, venues, today, now);
-      if (!updates.ok) throw new Error('invalid-data');
+      let snapshot = null;
+      let updates = null;
+      let combinedError = null;
+      try {
+        const response = await fetchImpl('/api/dining-hours', { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`http-${response.status}`);
+        snapshot = await response.json();
+        updates = buildUpdates(snapshot, venues, today, now);
+        if (!updates.ok) throw new Error('invalid-data');
+      } catch (error) {
+        combinedError = error;
+        snapshot = null;
+        updates = embeddedDiningUpdates(venues);
+      }
+      if (!updates.barnardFetchedAt) {
+        try {
+          const barnardResponse = await barnardFetchImpl('/api/barnard-dining-hours', {
+            headers: { Accept: 'application/json' },
+          });
+          if (barnardResponse.ok) {
+            const barnard = buildIndependentBarnardUpdates(
+              await barnardResponse.json(), venues, today, now,
+            );
+            updates = mergeIndependentBarnard(updates, barnard);
+          }
+        } catch {}
+      }
+      if (!snapshot && !updates.barnardFetchedAt) throw combinedError || new Error('network-error');
       setSpecialServices(updates.specialServices);
       for (const [venue, next] of updates.entries) Object.assign(venue, next);
       render();
-      const stale = now.getTime() - Date.parse(snapshot.generated) > 8 * 60 * 60 * 1000
+      const generated = snapshot?.generated || updates.barnardFetchedAt;
+      const stale = (snapshot
+        ? now.getTime() - Date.parse(snapshot.generated) > 8 * 60 * 60 * 1000
+        : false)
         || updates.barnardStale;
       const status = {
         kind: stale ? 'stale' : 'partial',
-        generated: snapshot.generated,
+        generated,
         updatedCount: updates.updatedCount,
         totalCount: updates.totalCount,
         staticFallbackIds: updates.staticFallbackIds,
@@ -310,5 +454,5 @@
     }
   }
 
-  global.LionHourDiningHours = { buildUpdates, hydrate };
+  global.LionHourDiningHours = { buildUpdates, buildIndependentBarnardUpdates, hydrate };
 })(globalThis);

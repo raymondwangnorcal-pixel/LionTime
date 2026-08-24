@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-import { validateDiningHoursSnapshot } from '../lib/dining-hours-schema.js';
+import { validateBarnardDiningHoursSnapshot } from '../lib/barnard-dining-hours-schema.js';
 
 export const REQUIRED_BARNARD_DINING_IDS = Object.freeze([
   'hewitt',
@@ -10,15 +10,12 @@ export const REQUIRED_BARNARD_DINING_IDS = Object.freeze([
 ]);
 
 export function verifyBarnardDiningSnapshot(snapshot) {
-  const validation = validateDiningHoursSnapshot(snapshot);
+  const validation = validateBarnardDiningHoursSnapshot(snapshot);
   if (!validation.ok) {
-    throw new Error(`invalid Dining snapshot: ${validation.errors.join('; ')}`);
+    throw new Error(`invalid Barnard Dining snapshot: ${validation.errors.join('; ')}`);
   }
-  if (snapshot.schemaVersion !== 4) {
-    throw new Error(`expected Dining schema version 4; received ${snapshot.schemaVersion}`);
-  }
-  const locationIds = new Set(snapshot.locations.map(({ id }) => id));
-  const missing = REQUIRED_BARNARD_DINING_IDS.filter(id => !locationIds.has(id));
+  const venueIds = new Set(snapshot.venues.map(({ id }) => id));
+  const missing = REQUIRED_BARNARD_DINING_IDS.filter(id => !venueIds.has(id));
   if (missing.length) throw new Error(`missing live Barnard Dining locations: ${missing.join(', ')}`);
   return snapshot;
 }
@@ -37,6 +34,8 @@ export async function fetchVerifiedBarnardDining(apiUrl, {
   }
   const endpoint = new URL(apiUrl);
   if (endpoint.protocol !== 'https:') throw new Error('Dining verification URL must use HTTPS');
+  endpoint.pathname = '/api/barnard-dining-hours';
+  endpoint.search = '';
 
   let lastError = new Error('Dining verification did not run');
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -61,7 +60,7 @@ async function main() {
   if (!apiUrl) throw new Error('DINING_HOURS_API_URL is required');
   const snapshot = await fetchVerifiedBarnardDining(apiUrl);
   process.stdout.write(
-    `Verified ${REQUIRED_BARNARD_DINING_IDS.length} live Barnard Dining locations in schema v${snapshot.schemaVersion}.\n`,
+    `Verified ${REQUIRED_BARNARD_DINING_IDS.length} live Barnard Dining locations in independent schema v${snapshot.schemaVersion}.\n`,
   );
 }
 

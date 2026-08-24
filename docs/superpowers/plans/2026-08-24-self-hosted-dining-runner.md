@@ -65,9 +65,25 @@ gh api repos/raymondwangnorcal-pixel/LionTime/actions/runners
 
 Expected: the keep-awake process is running and `lionhour-dining-mac` is online with `self-hosted`, `macOS`, `ARM64`, and `lionhour-dining` labels.
 
-### Step 5 — Publish and prove production Barnard hours
+### Step 5 — Publish from the trusted runner
 
-Commit as `fix(ci): run Dining on trusted Mac`, push the branch, merge it to `main`, and dispatch `Update dining hours` on `main`. Wait for the job and inspect the live API.
+Commit as `fix(ci): run Dining on trusted Mac`, push the branch, merge it to `main`, and dispatch `Update dining hours` on `main`.
+
+**Verify:** the source collection log reports `barnard-hours: success`, the PUT step succeeds, and the retained Dining source state contains the new Barnard success even if the legacy combined snapshot cannot yet migrate.
+
+### Step 6 — Expose retained Barnard evidence independently
+
+**Files:**
+
+- `/Users/raymondwang/PersonalProjects/LionTime/lib/barnard-dining-hours-schema.js`
+- `/Users/raymondwang/PersonalProjects/LionTime/lib/barnard-dining-hours-service.js`
+- `/Users/raymondwang/PersonalProjects/LionTime/api/barnard-dining-hours.js`
+- `/Users/raymondwang/PersonalProjects/LionTime/assets/dining-hours.js`
+- `/Users/raymondwang/PersonalProjects/LionTime/scripts/verify-live-barnard-dining.mjs`
+- `/Users/raymondwang/PersonalProjects/LionTime/vercel.json`
+- Focused schema, service, client, verifier, and Vercel configuration tests
+
+The existing combined Dining API intentionally retains its legacy public snapshot until every enhancement source has initialized. Add a read-only `/api/barnard-dining-hours` projection over the already validated retained `barnard-hours` source. Return only schema version 1, the official source URL, true retained-success timestamp, exact source coverage, and the four approved venues. Hydrate that endpoint independently after the ordinary Dining snapshot, so a valid Barnard response replaces only the four embedded Barnard cards and does not claim that challenged Columbia article or Café East sources are live.
 
 **Verify:**
 
@@ -76,7 +92,7 @@ gh workflow run update-dining-hours.yml --ref main
 node scripts/verify-live-barnard-dining.mjs
 ```
 
-Expected: the workflow succeeds, the public response is Dining schema version 4, and it includes Hewitt Dining, Diana Center Cafe, Bubble Tea & Sushi, and Liz's Place.
+Expected: the workflow succeeds, `/api/barnard-dining-hours` validates with current retained evidence, and it includes Hewitt Dining, Diana Center Cafe, Bubble Tea & Sushi, and Liz's Place.
 
 ## Rollback
 
