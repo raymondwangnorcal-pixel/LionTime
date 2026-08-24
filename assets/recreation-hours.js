@@ -615,7 +615,7 @@
       };
       if (current.conflict === true || UNAVAILABLE_STATUSES.has(current.status)) verificationIds.push(id);
       if (id === 'dodge') {
-        next.recreationSpaces = facility.spaces.map(space => {
+        next.recreationSpaces = facility.spaces.filter(space => space.id !== 'squash-courts').map(space => {
           const day = space.days[firstIndex];
           if (day.conflict === true || UNAVAILABLE_STATUSES.has(day.status)) verificationIds.push(space.id);
           return {
