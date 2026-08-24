@@ -835,3 +835,25 @@
 - Superseded by: none
 - Note: The client continues strict validation of the five-space Recreation snapshot and filters only Squash Courts before building the visible Dodge activity-space list and verification state.
 - Privacy waivers: none
+
+## DEC-0043 — Nest Uris Pool under Dodge in LionHour
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will render Uris Pool as a Dodge `View spaces` subsection instead of a separate Fitness card while retaining its independent facility identity, hours, validation, parsing, storage, and API data.
+- Rationale: Uris Pool is physically part of Dodge and is more useful beside the other Dodge spaces, while preserving its independent data contract keeps its split swim schedule, maintenance state, and parent-closure rules intact.
+- Scope: Fitness card hierarchy, sidebar and section counts, embedded fallback presentation, Recreation client projection, tests, and operations guidance; Recreation acquisition, schema, and API identity remain unchanged.
+- Implementation: pending
+- Recorded against HEAD: `b4f90eac52e06476a293fe50747cc3748b9543ee`
+- Supersedes: none
+- Evidence: The user-approved bounded design in the 2026-08-24 Uris Pool hierarchy implementation conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0043
+
+- Type: implementation
+- Implementation commit: `376314aa928a7ac544e475c062825969871ee660` — feat(recreation): nest Uris Pool under Dodge
+- Superseded by: none
+- Note: The client projects the independently validated Uris day into Dodge's five-row visible space list, retains embedded pool fallback hours, removes the duplicate top-level card from counts and rendering, and preserves nested search discovery.
+- Privacy waivers: none
