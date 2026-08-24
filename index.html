@@ -717,16 +717,14 @@ const VENUES = [
 
   /* ── FITNESS ────────────────────────────────────── */
   { id:'dodge', name:'Dodge Fitness Center', cat:'fitness', loc:'3030 Broadway',
-    hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]),
-    note:'All members must be out of the building at the posted closing time.' },
+    hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]) },
 
   { id:'uris-pool', name:'Uris Pool', cat:'fitness', loc:'Dodge Fitness Center, lower level',
     hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
-                    [['13:00','17:00']], [['13:00','17:00']]),
-    note:'Pool areas must be vacated at posted closing times.' },
+                    [['13:00','17:00']], [['13:00','17:00']]) },
 
   { id:'barnard-fitness', name:'Barnard Fitness Center', cat:'fitness', loc:'LeFrak Center, Barnard College',
-    hours: ALL(null), note:"Current hours load from Barnard's official schedule." },
+    hours: ALL(null) },
 
   /* ── STUDENT LIFE & SERVICES ────────────────────── */
   { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
