@@ -1,70 +1,62 @@
-# LionTime Dining source-retention handoff
+# LionTime Recreation live-hours handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-23T23:25:19-04:00
-Current-Origin: origin-df50e2edc3110f731012482a
+Last-Updated: 2026-08-24T17:11:46-04:00
+Current-Origin: origin-39ad638491073981246a7c49
 
 ## Origins
 
 | Origin-ID | Branch | Created-At |
 |---|---|---|
-| origin-df50e2edc3110f731012482a | main | 2026-08-23T23:25:19-04:00 |
+| origin-39ad638491073981246a7c49 | main | 2026-08-24T17:11:46-04:00 |
 
 ## Current Goal
 
-Origin-ID: origin-df50e2edc3110f731012482a
-Text: Verify the committed Dining source-retention workflow in production and restore the remaining regression suite.
+Origin-ID: origin-39ad638491073981246a7c49
+Text: Use the official embedded Blue Gym calendar as bounded fallback evidence for Dodge Fitness Center and publish the result autonomously.
 
 ## Accomplished in Latest Material Session
 
-Origin-ID: origin-df50e2edc3110f731012482a
-Text: Implemented and pushed the four-source Dining attempt pipeline with immediate managed-challenge detection, independent last-successful evidence retention, legacy public-snapshot compatibility, strict schemas, workflow reporting, operations guidance, and 35 passing focused tests; the broader Student Life implementation and Lerner UI follow-up are also present on main.
+Origin-ID: origin-39ad638491073981246a7c49
+Text: Implemented stabilized three-week Blue Gym calendar acquisition, date-specific Blue Gym parsing, direct Columbia semester-transition bounds, and resolver precedence that keeps dated Dodge tables and explicit closures stronger than the calendar fallback. Pushed main, ran workflow 32777975282 successfully, and verified the public Recreation API has live Dodge and Blue Gym hours for all fourteen dates.
 
 ## Outstanding Tasks
 
 | Task-ID | Origin-ID | Priority | Description |
 |---|---|---|---|
-| task-0a1a4f83acd7cfa7268d9065 | origin-df50e2edc3110f731012482a | P1 | Review and commit the uncommitted DEC-0031 implementation lifecycle update in docs/decisions.md; do not rewrite earlier ledger entries. |
-| task-2e9bfcb004e0858e29276d82 | origin-df50e2edc3110f731012482a | P1 | Run the Update dining hours GitHub workflow at current main and verify that each source logs success or a bounded failure, a managed challenge no longer causes a selector timeout, publication succeeds, and GET /api/dining-hours remains a valid public snapshot. |
-| task-294ad7188632e391533aba39 | origin-df50e2edc3110f731012482a | P2 | Reconcile the five current full-suite failures: one header Dining hydration assertion and four Recreation-space renderer assertions, while preserving the current intended UI behavior. |
 
 ## Recommended Next Task
 
-Origin-ID: origin-df50e2edc3110f731012482a
-Task-ID: task-2e9bfcb004e0858e29276d82
-Reason: The source-retention implementation is committed and focused tests pass, so a production workflow run is the fastest way to confirm the original failure is resolved end to end.
+Origin-ID: origin-39ad638491073981246a7c49
+Task-ID: none
+Reason: The requested Recreation implementation and production verification are complete.
 
 ## Files Touched
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| .github/workflows/update-dining-hours.yml | origin-df50e2edc3110f731012482a | present | committed | Publishes validated source-attempt batches and labels the collection and publication steps explicitly. |
-| api/student-services-hours.js | origin-df50e2edc3110f731012482a | present | committed | Student Life source-isolated API from the completed earlier implementation. |
-| assets/student-services-hours.js | origin-df50e2edc3110f731012482a | present | committed | Hydrates ten Student Life cards with source freshness and retained-source semantics. |
-| docs/decisions.md | origin-df50e2edc3110f731012482a | present | committed-and-uncommitted | Committed decisions include DEC-0031; the verified implementation event for commit 442869a is appended locally and still needs its own normal project commit. |
-| docs/dining-hours-operations.md | origin-df50e2edc3110f731012482a | present | committed | Documents no-bypass behavior, per-source retention, migration, verification, and failure codes. |
-| docs/superpowers/plans/2026-08-23-dining-source-retention.md | origin-df50e2edc3110f731012482a | present | committed | Records the implemented reliability contract and completed verification checklist. |
-| handoff.md | origin-df50e2edc3110f731012482a | present | committed | Legacy root continuation note committed in 442869a; the handoff skill's canonical record is docs/handoff.md. |
-| index.html | origin-df50e2edc3110f731012482a | present | committed | Contains the latest Student Life, Dining, Recreation, Lerner, and responsive status UI at commit 2a4b3cb. |
-| lib/dining-hours-service.js | origin-df50e2edc3110f731012482a | present | committed | Merges each source independently, retains prior success, resolves complete state, and unwraps the compatible public snapshot. |
-| lib/dining-hours-source-schema.js | origin-df50e2edc3110f731012482a | present | committed | Strictly validates attempt batches, bounded failure codes, retained source payloads, and internal source state. |
-| scripts/dining-hours-scraper.mjs | origin-df50e2edc3110f731012482a | present | committed | Classifies 403, 429, and recognized challenge pages before article selectors and continues later sources. |
-| scripts/student-services-hours-scraper.mjs | origin-df50e2edc3110f731012482a | present | committed | Builds the validated four-source Student Life attempt batch. |
-| tests/dining-hours-scraper.test.mjs | origin-df50e2edc3110f731012482a | present | committed | Covers four independent attempts, immediate 403 handling, continuation, and browser cleanup. |
-| tests/dining-hours-service.test.mjs | origin-df50e2edc3110f731012482a | present | committed | Covers legacy migration, staggered source initialization, and total-outage retention. |
-| tests/dining-hours-source-schema.test.mjs | origin-df50e2edc3110f731012482a | present | committed | Covers valid mixed attempts and rejection of mismatched or malformed evidence. |
+| docs/decisions.md | origin-39ad638491073981246a7c49 | present | committed | DEC-0039 and its implementation event record the accepted Blue Gym-to-Dodge fallback policy. |
+| lib/recreation-hours-resolver.js | origin-39ad638491073981246a7c49 | present | committed | Compares date-specific replacement priority with bounded weekly baseline priority before selection. |
+| lib/recreation-source-parser.js | origin-39ad638491073981246a7c49 | present | committed | Parses exact seasonal transition bounds and official Blue Gym calendar event evidence. |
+| scripts/recreation-hours-acquire.mjs | origin-39ad638491073981246a7c49 | present | committed | Captures three calendar weeks and waits for each displayed week to stabilize. |
+| scripts/recreation-hours-scraper.mjs | origin-39ad638491073981246a7c49 | present | committed | Integrates optional calendar evidence without making the required official page acquisition brittle. |
+| tests/fixtures/recreation-blue-gym-calendar.txt | origin-39ad638491073981246a7c49 | present | committed | Sanitized date-specific Blue Gym event fixture. |
+| tests/recreation-hours-acquire.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers successful optional calendar acquisition and isolated calendar failure. |
+| tests/recreation-hours-resolver.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers direct table, calendar fallback, unavailable evidence, and closure precedence. |
+| tests/recreation-hours-scraper.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers end-to-end calendar evidence integration into the snapshot. |
+| tests/recreation-source-parser.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers exact transition validation and split Blue Gym schedule parsing. |
 
 ## Git / Remote State
 
-Origin-ID: origin-df50e2edc3110f731012482a
+Origin-ID: origin-39ad638491073981246a7c49
 Branch: main
-Head: 2a4b3cbe9bc01cd9ac47b2d183a517627e9c341d
+Head: 00879305bc3b08527860df6fb2501e27e43cc608
 Upstream: origin/main
 Ahead: 0
 Behind: 0
 Remote-Freshness: verified
 Remote-Freshness-Reason: none
-Project-Working-Tree: dirty
+Project-Working-Tree: clean
 Handoff-Path-State-Before-Write: clean
 Handoff-Commit-Exception: none
 
@@ -77,21 +69,22 @@ Handoff-Commit-Exception: none
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-287eeedde80322f4b8699d0a | origin-df50e2edc3110f731012482a | node --test tests/dining-hours-*.test.mjs | passed | 35 tests passed and 0 failed at HEAD 2a4b3cb. |
-| validation-a598df7ad2aa0942c5c2b2cb | origin-df50e2edc3110f731012482a | validate_ledger.py validate-ledger --repo /Users/raymondwang/PersonalProjects/LionTime --input docs/decisions.md; git diff --check | passed | Decision ledger schema, lifecycle, privacy, and reachable-commit checks passed; diff check emitted no errors. |
-| validation-fcbbc88f960b954ad7df363a | origin-df50e2edc3110f731012482a | node --test --test-reporter=dot tests/*.test.mjs | failed | 199 of 204 tests passed; one header Dining callback assertion and four Recreation-space renderer assertions failed. |
+| validation-34e3c1cb213bcc20f9c248f9 | origin-39ad638491073981246a7c49 | node scripts/recreation-hours-scraper.mjs --json-out /private/tmp/liontime-recreation-live.json | passed | Live headed-Chromium scrape validated three facilities through 2026-09-06 and populated all fourteen Dodge and Blue Gym dates. |
+| validation-4ebc2c5ccee36c3c66b4d241 | origin-39ad638491073981246a7c49 | node --test tests/recreation-hours-acquire.test.mjs tests/recreation-source-parser.test.mjs tests/recreation-hours-resolver.test.mjs tests/recreation-hours-schema.test.mjs tests/recreation-hours-service.test.mjs tests/recreation-hours-scraper.test.mjs tests/recreation-hours-workflow.test.mjs | passed | 76 tests passed and 0 failed. |
+| validation-6148035a0e274440fb37f8ae | origin-39ad638491073981246a7c49 | GET https://www.lionhour.com/api/recreation-hours | passed | Public snapshot generated at 2026-08-24T21:10:40.023Z reports Dodge 06:00-22:00 today and verified calendar-backed fallback dates after the direct table expires. |
+| validation-c97bf4c199b5a5750ef576a3 | origin-39ad638491073981246a7c49 | gh run watch 32777975282 --exit-status | passed | Update recreation hours workflow completed successfully in 52 seconds, including scrape and publish. |
+| validation-f60b38212d98744e1a81f574 | origin-39ad638491073981246a7c49 | npm test | partial | 244 of 248 tests passed; four pre-existing Recreation UI expectation assertions failed outside the scraper pipeline. |
 
 ## Risks / Decisions
 
 | Item-ID | Origin-ID | Kind | Status | Description |
 |---|---|---|---|---|
-| decision-becf32e6810c61db1906afa2 | origin-df50e2edc3110f731012482a | decision | accepted | Managed Dining challenges are bounded source failures, never bypass targets; other sources continue and retained last-successful evidence preserves service. |
-| risk-0893e5edc2780b54f4834934 | origin-df50e2edc3110f731012482a | risk | open | The full suite has five UI assertion failures outside the focused Dining pipeline, so repository-wide regression validation is not yet green. |
-| risk-e31fecda8cdd283f38321fe1 | origin-df50e2edc3110f731012482a | risk | open | During first retained-state initialization, a challenged article has no reconstructable raw payload from the legacy resolved snapshot; the legacy snapshot remains public until each source succeeds at least once across one or more runs. |
+| decision-cc34c13c37a63ef19d12fe8d | origin-39ad638491073981246a7c49 | decision | accepted | Blue Gym open events prove Dodge is open; direct dated Dodge hours and explicit closures remain stronger, while missing or ambiguous evidence fails to verification. |
+| risk-32ac51564ddd0754c38bda5b | origin-39ad638491073981246a7c49 | risk | open | The repository-wide suite retains four Recreation-space renderer expectation failures that predate and do not gate the green scheduled Recreation pipeline. |
 
 ## Archive Decision
 
-Origin-ID: origin-df50e2edc3110f731012482a
-Safe-to-Archive: no
-Reason: The Dining fix is committed and focused tests pass, but production workflow verification, the ledger lifecycle commit, and five regression failures remain outstanding.
-Next-Action: task-2e9bfcb004e0858e29276d82
+Origin-ID: origin-39ad638491073981246a7c49
+Safe-to-Archive: yes
+Reason: The requested Recreation fallback is implemented, tested, pushed, published, and verified through the public API; the unrelated renderer-test debt is recorded as a risk.
+Next-Action: none
