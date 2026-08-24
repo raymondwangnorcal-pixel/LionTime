@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const viewSource = await readFile(new URL('../assets/student-services-hours-view.js', import.meta.url), 'utf8');
 
 test('renders exactly the ten approved static-first Student Life cards', () => {
   const section = html.slice(html.indexOf('/* ── STUDENT LIFE & SERVICES'), html.indexOf('/* ══', html.indexOf('/* ── STUDENT LIFE & SERVICES')));
@@ -13,6 +14,12 @@ test('renders exactly the ten approved static-first Student Life cards', () => {
   ]);
   assert.doesNotMatch(section, /id:'package'/);
   assert.ok(ids.every(id => section.includes(`id:'${id}'`) && section.includes("cat:'student'")));
+});
+
+test('hides the access badge on Lerner without changing its live-hours type', () => {
+  const lerner = html.slice(html.indexOf("{ id:'lerner'"), html.indexOf("{ id:'bookstore'"));
+  assert.match(lerner, /hideAccessBadge:true/);
+  assert.match(viewSource, /if \(venue\?\.hideAccessBadge\) return null/);
 });
 
 test('places access context to the left of the temporal badge on both responsive layouts', () => {
