@@ -112,7 +112,7 @@ test('rejects missing official locations and malformed time values', () => {
   assert.throws(() => buildDiningSnapshot(malformed, new Date('2026-08-21T12:00:00Z')), /invalid dining time/);
 });
 
-test('acquires dining_nodes through a browser and always closes Chromium', async () => {
+test('publishes four independent Dining source attempts and always closes Chromium', async () => {
   const calls = [];
   let currentUrl = '';
   const articleByPath = new Map([
@@ -121,13 +121,20 @@ test('acquires dining_nodes through a browser and always closes Chromium', async
     ['/news/fall-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-2026.html', import.meta.url), 'utf8')],
   ]);
   const page = {
-    async goto(url, options) { currentUrl = url; calls.push(['goto', url, options]); },
+    async goto(url, options) {
+      currentUrl = url;
+      calls.push(['goto', url, options]);
+      return { status: () => 200 };
+    },
     url() { return currentUrl; },
+    async title() { return 'Columbia Dining'; },
     async waitForFunction(_fn, argument, options) { calls.push(['waitForFunction', argument, options]); },
     async evaluate() { calls.push(['evaluate']); return JSON.stringify(completeDataset()); },
     locator(selector) {
       calls.push(['locator', selector]);
       return {
+        async innerText() { return ''; },
+        async count() { return selector === '#main-article' ? 1 : 0; },
         async innerHTML() {
           calls.push(['innerHTML', currentUrl]);
           return articleByPath.get(new URL(currentUrl).pathname);
@@ -145,16 +152,17 @@ test('acquires dining_nodes through a browser and always closes Chromium', async
   const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-'));
   const outputPath = join(directory, 'snapshot.json');
 
-  const snapshot = await scrapeDiningHours({
+  const batch = await scrapeDiningHours({
     outputPath,
     now: new Date('2026-08-21T12:00:00Z'),
     chromiumImpl,
   });
 
-  assert.equal(snapshot.schemaVersion, 2);
-  assert.equal(snapshot.locations.length, 16);
-  assert.equal(snapshot.sources.length, 4);
-  assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), snapshot);
+  assert.equal(batch.schemaVersion, 1);
+  assert.equal(batch.attempts.length, 4);
+  assert.ok(batch.attempts.every(attempt => attempt.result === 'success'));
+  assert.equal(batch.attempts[0].payload.locations.length, 16);
+  assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), batch);
   assert.equal(calls[0][0], 'launch');
   assert.deepEqual(calls[0][1], { headless: false });
   assert.equal(calls.at(-1)[0], 'close');
@@ -166,7 +174,56 @@ test('acquires dining_nodes through a browser and always closes Chromium', async
   assert.equal(calls.filter(([name]) => name === 'innerHTML').length, 3);
 });
 
-test('closes Chromium when page acquisition fails', async () => {
+test('reports a 403 challenge immediately and continues with the remaining Dining sources', async () => {
+  let currentUrl = '';
+  let challengedArticleRead = false;
+  const articleByPath = new Map([
+    ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
+    ['/news/fall-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-2026.html', import.meta.url), 'utf8')],
+  ]);
+  const page = {
+    async goto(url) {
+      currentUrl = url;
+      return { status: () => new URL(url).pathname.includes('labor-day') ? 403 : 200 };
+    },
+    url() { return currentUrl; },
+    async title() { return currentUrl.includes('labor-day') ? 'Just a moment...' : 'Columbia Dining'; },
+    async waitForFunction() {},
+    async evaluate() { return JSON.stringify(completeDataset()); },
+    locator(selector) {
+      return {
+        async innerText() { return currentUrl.includes('labor-day') ? 'Performing security verification' : ''; },
+        async count() { return selector === '#main-article' ? 1 : 0; },
+        async innerHTML() {
+          if (currentUrl.includes('labor-day')) challengedArticleRead = true;
+          return articleByPath.get(new URL(currentUrl).pathname);
+        },
+      };
+    },
+  };
+  const chromiumImpl = {
+    async launch() {
+      return {
+        async newPage() { return page; },
+        async close() {},
+      };
+    },
+  };
+  const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-challenge-'));
+  const batch = await scrapeDiningHours({
+    outputPath: join(directory, 'attempts.json'),
+    now: new Date('2026-08-21T12:00:00Z'),
+    chromiumImpl,
+  });
+
+  assert.equal(batch.attempts[2].sourceId, 'labor-day-2026');
+  assert.equal(batch.attempts[2].result, 'failure');
+  assert.equal(batch.attempts[2].failureCode, 'challenge');
+  assert.equal(batch.attempts[3].result, 'success');
+  assert.equal(challengedArticleRead, false);
+});
+
+test('records source acquisition failures and closes Chromium', async () => {
   let closed = false;
   const chromiumImpl = {
     async launch() {
@@ -180,9 +237,9 @@ test('closes Chromium when page acquisition fails', async () => {
       };
     },
   };
-  await assert.rejects(
-    scrapeDiningHours({ outputPath: '/tmp/unused-dining.json', chromiumImpl }),
-    /challenge did not complete/,
-  );
+  const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-failed-'));
+  const batch = await scrapeDiningHours({ outputPath: join(directory, 'attempts.json'), chromiumImpl });
+  assert.ok(batch.attempts.every(attempt => attempt.result === 'failure'));
+  assert.ok(batch.attempts.every(attempt => attempt.failureCode === 'navigation'));
   assert.equal(closed, true);
 });
