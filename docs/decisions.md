@@ -513,3 +513,91 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/plans/2026-08-23-dining-source-retention.md` and the user-approved recommended behavior after the 2026-08-23 workflow failure diagnosis.
 - Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0017
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Replaces the Lerner Package Center card with the Student Mail Center fallback and live venue mapping.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0018
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Adds access-mode availability records and separate access-context rendering.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0019
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Stores and hydrates the four source records independently with retained last-successful data.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0020
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Adds Alice! Health Promotion and Student Health Insurance as live source venues.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0021
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Uses the official Lerner homepage baseline and directly embedded calendar exceptions.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0022
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Limits Bookstore parsing to verified publisher-controlled rendered hours.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0023
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Adds the dedicated API, Redis namespace, workflow, scraper, and browser client.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0024
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Implements the four-hour refresh, fourteen-day schedule horizon, and freshness states.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0025
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Preserves embedded fallbacks while source freshness and footer counts control live status.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0029
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Renders access context next to the temporal status and counts active published availability.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0030
+
+- Type: implementation
+- Implementation commit: `9e8c31e770a65b886a9e0fd16241b102b67e48cc` — Live scraper for Student services
+- Superseded by: none
+- Note: Uses the directly embedded Lerner calendar and the visible official Bookstore hours block.
+- Privacy waivers: none
