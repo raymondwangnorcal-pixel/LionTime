@@ -761,3 +761,17 @@
 - Superseded by: none
 - Note: The Recreation scraper now captures three stabilized weeks from the publisher-embedded Blue Gym calendar, publishes Blue Gym open-recreation intervals, uses the daily calendar envelope as a lower-priority Dodge fallback, and preserves dated building schedules and explicit closures as stronger evidence.
 - Privacy waivers: none
+
+## DEC-0040 — Scrape every official Dodge activity-space calendar
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will independently scrape the official embedded calendars for Blue Gym, Levien Gymnasium, Aerobics Room 4, and Functional Fitness Studio, while Squash Courts remains booking-only and only Blue Gym supplies fallback evidence for Dodge building hours.
+- Rationale: The publisher provides room-specific schedules and closures in four separate Google Calendar embeds, so treating three of those rooms as unpublished loses available official evidence and mislabels their current state.
+- Scope: Recreation calendar discovery, acquisition isolation, event identity validation, open and closure parsing, resolver evidence, tests, scheduled publishing, and the four Dodge activity-space rows.
+- Implementation: pending
+- Recorded against HEAD: `bf90fbe61cffc1804627acd1e9af1cef212f0a73`
+- Supersedes: none
+- Evidence: The official Columbia Recreation Hours of Operation page and the user's 2026-08-24 request to scrape the other activity-space calendars.
+- Privacy waivers: none

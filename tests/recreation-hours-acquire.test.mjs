@@ -32,20 +32,19 @@ test('loads every official source in headed Chromium and closes the browser', as
   const result = await acquireRecreationSources({
     chromiumImpl,
     timeoutMs: 1000,
-    calendarImpl: async () => ({
-      result: 'success',
-      calendarUrl: 'https://calendar.google.com/calendar/embed?title=Blue%20Gym&src=cuperec%40gmail.com',
-      weeks: ['week one'],
-    }),
+    calendarsImpl: async () => activityCalendarResults(),
   });
 
   assert.deepEqual(Object.values(result.pages).map((page) => page.url), [...pages.keys()]);
-  assert.equal(result.pages.columbiaHours.blueGymCalendar.result, 'success');
+  assert.deepEqual(Object.keys(result.pages.columbiaHours.activityCalendars), [
+    'blue-gym', 'levien-gymnasium', 'aerobics-room-4', 'functional-fitness-studio',
+  ]);
+  assert.ok(Object.values(result.pages.columbiaHours.activityCalendars).every(calendar => calendar.result === 'success'));
   assert.equal(calls[0].headless, false);
   assert.ok(calls.includes('browser.close'));
 });
 
-test('isolates an embedded Blue Gym calendar failure from required page acquisition', async () => {
+test('preserves successful activity calendars when one embedded calendar fails', async () => {
   const calls = [];
   const pages = new Map([
     ['https://perec.columbia.edu/hours-operation', '<main><h1>Hours of Operation</h1></main>'],
@@ -56,14 +55,31 @@ test('isolates an embedded Blue Gym calendar failure from required page acquisit
   const result = await acquireRecreationSources({
     chromiumImpl: fakeChromium({ pages, calls }),
     timeoutMs: 1000,
-    calendarImpl: async () => { throw new Error('calendar unavailable'); },
+    calendarsImpl: async () => ({
+      ...activityCalendarResults(),
+      'levien-gymnasium': { result: 'failure', failureCode: 'missing-content' },
+    }),
   });
 
-  assert.equal(result.pages.columbiaHours.blueGymCalendar.result, 'failure');
-  assert.equal(result.pages.columbiaHours.blueGymCalendar.failureCode, 'missing-content');
+  assert.equal(result.pages.columbiaHours.activityCalendars['blue-gym'].result, 'success');
+  assert.equal(result.pages.columbiaHours.activityCalendars['levien-gymnasium'].result, 'failure');
   assert.equal(result.pages.columbiaHours.html, pages.get('https://perec.columbia.edu/hours-operation'));
   assert.ok(calls.includes('browser.close'));
 });
+
+function activityCalendarResults() {
+  return Object.fromEntries([
+    ['blue-gym', 'Blue Gym'],
+    ['levien-gymnasium', null],
+    ['aerobics-room-4', 'Aerobics Room 4 Open Recreation'],
+    ['functional-fitness-studio', 'Functional Fitness Studio Open Recreation'],
+  ].map(([targetId, title]) => [targetId, {
+    result: 'success',
+    targetId,
+    calendarUrl: `https://calendar.google.com/calendar/embed?ctz=America%2FNew_York${title ? `&title=${encodeURIComponent(title)}` : ''}&src=official-calendar-id`,
+    weeks: ['week one'],
+  }]));
+}
 
 test('closes Chromium and rejects when a managed challenge remains', async () => {
   const calls = [];
