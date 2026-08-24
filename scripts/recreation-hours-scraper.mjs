@@ -5,7 +5,7 @@ import { validateRecreationHoursSnapshot } from '../lib/recreation-hours-schema.
 import { resolveRecreationSnapshot } from '../lib/recreation-hours-resolver.js';
 import {
   parseBarnardHours,
-  parseBlueGymCalendar,
+  parseActivityCalendar,
   parseColumbiaHours,
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
@@ -22,7 +22,7 @@ const MAX_ERROR_LENGTH = 400;
 
 export async function runRecreationScraper({
   acquire = acquireRecreationSources,
-  parsers = { parseColumbiaHours, parseColumbiaModifications, parseBarnardHours, parseBlueGymCalendar },
+  parsers = { parseColumbiaHours, parseColumbiaModifications, parseBarnardHours, parseActivityCalendar },
   resolve = resolveRecreationSnapshot,
   validate = validateRecreationHoursSnapshot,
   writeJson = writeFormattedJson,
@@ -64,14 +64,17 @@ function parseAllSources(acquired, parsers) {
     return parsed;
   });
 
-  const calendar = acquired.pages.columbiaHours?.blueGymCalendar;
-  const calendarParser = parsers?.parseBlueGymCalendar;
-  if (calendar?.result === 'success' && typeof calendarParser === 'function') {
-    try {
-      const parsedCalendar = calendarParser(calendar, { generated: acquired.generated });
-      if (Array.isArray(parsedCalendar)) evidence.push(...parsedCalendar);
-    } catch {
-      // Embedded calendar evidence is an optional fallback; required source pages remain authoritative.
+  const calendars = acquired.pages.columbiaHours?.activityCalendars;
+  const calendarParser = parsers?.parseActivityCalendar;
+  if (calendars && typeof calendars === 'object' && typeof calendarParser === 'function') {
+    for (const calendar of Object.values(calendars)) {
+      if (calendar?.result !== 'success') continue;
+      try {
+        const parsedCalendar = calendarParser(calendar, { generated: acquired.generated });
+        if (Array.isArray(parsedCalendar)) evidence.push(...parsedCalendar);
+      } catch {
+        // Each embedded activity calendar is optional and fails independently.
+      }
     }
   }
   return evidence;

@@ -42,11 +42,17 @@ test('turns sanitized current acquired pages into a conservative valid snapshot'
     url: `https://official.example/${sourceId}`,
     html: await readFile(new URL(`./fixtures/${fixture}`, import.meta.url), 'utf8'),
   }])));
-  pages.columbiaHours.blueGymCalendar = {
+  pages.columbiaHours.activityCalendars = Object.fromEntries(await Promise.all([
+    ['blue-gym', 'Blue Gym', 'recreation-blue-gym-calendar.txt'],
+    ['levien-gymnasium', null, 'recreation-levien-calendar.txt'],
+    ['aerobics-room-4', 'Aerobics Room 4 Open Recreation', 'recreation-aerobics-calendar.txt'],
+    ['functional-fitness-studio', 'Functional Fitness Studio Open Recreation', 'recreation-functional-fitness-calendar.txt'],
+  ].map(async ([targetId, title, fixture]) => [targetId, {
     result: 'success',
-    calendarUrl: 'https://calendar.google.com/calendar/embed?ctz=America%2FNew_York&title=Blue%20Gym&src=cuperec%40gmail.com',
-    weeks: [await readFile(new URL('./fixtures/recreation-blue-gym-calendar.txt', import.meta.url), 'utf8')],
-  };
+    targetId,
+    calendarUrl: `https://calendar.google.com/calendar/embed?ctz=America%2FNew_York${title ? `&title=${encodeURIComponent(title)}` : ''}&src=official-calendar-id`,
+    weeks: [await readFile(new URL(`./fixtures/${fixture}`, import.meta.url), 'utf8')],
+  }])));
 
   const snapshot = await runRecreationScraper({
     acquire: async () => ({ generated: new Date('2026-08-21T16:00:00-04:00'), pages }),
@@ -64,10 +70,19 @@ test('turns sanitized current acquired pages into a conservative valid snapshot'
   const reopeningDay = dodge.days.find(day => day.date === '2026-08-24');
   const blueReopeningDay = dodge.spaces.find(space => space.id === 'blue-gym').days
     .find(day => day.date === '2026-08-24');
+  const levienReopeningDay = dodge.spaces.find(space => space.id === 'levien-gymnasium').days
+    .find(day => day.date === '2026-08-24');
+  const aerobicsReopeningDay = dodge.spaces.find(space => space.id === 'aerobics-room-4').days
+    .find(day => day.date === '2026-08-24');
+  const functionalReopeningDay = dodge.spaces.find(space => space.id === 'functional-fitness-studio').days
+    .find(day => day.date === '2026-08-24');
   assert.deepEqual(reopeningDay.restrictions, []);
   assert.deepEqual(blueReopeningDay.restrictions, []);
   assert.deepEqual(reopeningDay.intervals, [['06:00', '22:00']]);
   assert.deepEqual(blueReopeningDay.intervals, [['06:00', '09:30'], ['10:00', '16:00']]);
+  assert.deepEqual(levienReopeningDay.intervals, [['17:30', '21:45']]);
+  assert.equal(aerobicsReopeningDay.status, 'Closed for maintenance');
+  assert.deepEqual(functionalReopeningDay.intervals, [['06:00', '10:00'], ['12:00', '15:00'], ['16:30', '21:45']]);
   assert.equal(barnard.days[0].status, 'Hours need verification');
   assert.deepEqual(barnard.days[0].intervals, []);
   assert.deepEqual(writes, [['/tmp/current-recreation.json', snapshot]]);

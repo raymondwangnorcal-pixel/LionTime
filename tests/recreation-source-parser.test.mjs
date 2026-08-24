@@ -4,7 +4,7 @@ import test from 'node:test';
 
 import {
   parseBarnardHours,
-  parseBlueGymCalendar,
+  parseActivityCalendar,
   parseColumbiaHours,
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
@@ -40,6 +40,10 @@ test('bounds the current Columbia schedule from an exact adjacent semester trans
     assert.equal(item.priority, 3);
     assert.deepEqual(item.weeklyIntervals['1'], [['06:00', '22:00']]);
   }
+  for (const targetId of ['blue-gym', 'levien-gymnasium', 'aerobics-room-4', 'functional-fitness-studio']) {
+    assert.equal(find(evidence, targetId).unavailableStatus, 'Hours need verification');
+  }
+  assert.equal(find(evidence, 'squash-courts').unavailableStatus, 'Separate hours not published');
 });
 
 test('rejects a malformed Columbia semester transition instead of inferring bounds', () => {
@@ -54,7 +58,8 @@ test('rejects a malformed Columbia semester transition instead of inferring boun
 
 test('derives Blue Gym openings and a bounded Dodge envelope from the official calendar', async () => {
   const calendarText = await readFixture('recreation-blue-gym-calendar.txt');
-  const evidence = parseBlueGymCalendar({
+  const evidence = parseActivityCalendar({
+    targetId: 'blue-gym',
     calendarUrl: blueGymCalendarUrl(),
     weeks: [calendarText],
   }, { generated: new Date('2026-08-24T13:00:00-04:00') });
@@ -74,11 +79,63 @@ test('derives Blue Gym openings and a bounded Dodge envelope from the official c
   assert.ok(evidence.filter(item => item.targetId === 'dodge').every(item => item.priority === 4));
 });
 
-test('rejects calendar evidence that is not the official Blue Gym embed', async () => {
+test('parses open recreation and explicit closures from each official activity calendar', async () => {
+  const generated = new Date('2026-08-24T13:00:00-04:00');
+  const cases = [
+    {
+      targetId: 'levien-gymnasium',
+      fixture: 'recreation-levien-calendar.txt',
+      calendarUrl: activityCalendarUrl(),
+      openDate: '2026-08-24',
+      intervals: [['17:30', '21:45']],
+      closedDate: '2026-08-27',
+      closedStatus: 'Closed for maintenance',
+    },
+    {
+      targetId: 'aerobics-room-4',
+      fixture: 'recreation-aerobics-calendar.txt',
+      calendarUrl: activityCalendarUrl('Aerobics Room 4 Open Recreation'),
+      closedDate: '2026-08-24',
+      closedStatus: 'Closed for maintenance',
+    },
+    {
+      targetId: 'functional-fitness-studio',
+      fixture: 'recreation-functional-fitness-calendar.txt',
+      calendarUrl: activityCalendarUrl('Functional Fitness Studio Open Recreation'),
+      openDate: '2026-08-24',
+      intervals: [['06:00', '10:00'], ['12:00', '15:00'], ['16:30', '21:45']],
+    },
+  ];
+
+  for (const item of cases) {
+    const evidence = parseActivityCalendar({
+      targetId: item.targetId,
+      calendarUrl: item.calendarUrl,
+      weeks: [await readFixture(item.fixture)],
+    }, { generated });
+    if (item.openDate) {
+      assert.deepEqual(find(evidence, item.targetId, candidate => candidate.effectiveStart === item.openDate).dateIntervals, item.intervals);
+    }
+    if (item.closedDate) {
+      const closure = find(evidence, item.targetId, candidate => candidate.effectiveStart === item.closedDate);
+      assert.deepEqual(closure.dateIntervals, []);
+      assert.equal(closure.status, item.closedStatus);
+    }
+    assert.equal(evidence.some(candidate => candidate.targetId === 'dodge'), false);
+  }
+});
+
+test('rejects mismatched calendar URLs and event identities', async () => {
   const calendarText = await readFixture('recreation-blue-gym-calendar.txt');
 
-  assert.deepEqual(parseBlueGymCalendar({
+  assert.deepEqual(parseActivityCalendar({
+    targetId: 'blue-gym',
     calendarUrl: 'https://calendar.google.com/calendar/embed?ctz=America%2FNew_York&title=Uris%20Pool&src=cuperec%40gmail.com',
+    weeks: [calendarText],
+  }, { generated: new Date('2026-08-24T13:00:00-04:00') }), []);
+  assert.deepEqual(parseActivityCalendar({
+    targetId: 'levien-gymnasium',
+    calendarUrl: activityCalendarUrl(),
     weeks: [calendarText],
   }, { generated: new Date('2026-08-24T13:00:00-04:00') }), []);
 });
@@ -295,12 +352,24 @@ function columbiaTransitionHtml() {
       <div class="paragraph paragraph--type--table"><h3>Uris Pool</h3>
         <table><tbody><tr><td>Monday</td><td>6 AM - 10 PM</td></tr></tbody></table>
       </div>
+      <section class="paragraph"><h2>Open Recreation and Activity Spaces</h2>
+        <section class="paragraph--type--cu-tabbed-content-tab"><h3>Blue Gym</h3><iframe src="https://calendar.google.com/calendar/embed"></iframe></section>
+        <section class="paragraph--type--cu-tabbed-content-tab"><h3>Levien Gymnasium</h3><iframe src="https://calendar.google.com/calendar/embed"></iframe></section>
+        <section class="paragraph--type--cu-tabbed-content-tab"><h3>Aerobics Room 4</h3><iframe src="https://calendar.google.com/calendar/embed"></iframe></section>
+        <section class="paragraph--type--cu-tabbed-content-tab"><h3>Functional Fitness Studio</h3><iframe src="https://calendar.google.com/calendar/embed"></iframe></section>
+        <section class="paragraph--type--cu-tabbed-content-tab"><h3>Squash Courts</h3><a href="https://perec.columbia.edu/squash">Reservations</a></section>
+      </section>
     </div></div>
   </article></main>`;
 }
 
 function blueGymCalendarUrl() {
   return 'https://calendar.google.com/calendar/embed?ctz=America%2FNew_York&title=Blue%20Gym&src=cuperec%40gmail.com';
+}
+
+function activityCalendarUrl(title) {
+  const titleQuery = title ? `&title=${encodeURIComponent(title)}` : '';
+  return `https://calendar.google.com/calendar/embed?ctz=America%2FNew_York${titleQuery}&src=official-calendar-id`;
 }
 
 function columbiaModificationHtml(notice) {

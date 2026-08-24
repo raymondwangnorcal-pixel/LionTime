@@ -2,10 +2,17 @@ import { chromium } from 'playwright';
 
 import { RECREATION_SOURCE_URLS } from '../lib/recreation-hours-catalog.js';
 
+const ACTIVITY_CALENDAR_HEADINGS = Object.freeze({
+  'blue-gym': 'Blue Gym',
+  'levien-gymnasium': 'Levien Gymnasium',
+  'aerobics-room-4': 'Aerobics Room 4',
+  'functional-fitness-studio': 'Functional Fitness Studio',
+});
+
 export async function acquireRecreationSources({
   chromiumImpl = chromium,
   timeoutMs = 60_000,
-  calendarImpl = acquireBlueGymCalendar,
+  calendarsImpl = acquireActivityCalendars,
 } = {}) {
   const browser = await chromiumImpl.launch({ headless: false });
   try {
@@ -23,12 +30,9 @@ export async function acquireRecreationSources({
         pages[sourceId] = { url, html };
         if (sourceId === 'columbiaHours') {
           try {
-            pages[sourceId].blueGymCalendar = await calendarImpl({ page, timeoutMs });
+            pages[sourceId].activityCalendars = await calendarsImpl({ page, timeoutMs });
           } catch {
-            pages[sourceId].blueGymCalendar = {
-              result: 'failure',
-              failureCode: 'missing-content',
-            };
+            pages[sourceId].activityCalendars = failedActivityCalendars();
           }
         }
       } finally {
@@ -41,40 +45,63 @@ export async function acquireRecreationSources({
   }
 }
 
-export async function acquireBlueGymCalendar({ page, timeoutMs = 60_000 } = {}) {
-  const frames = page.locator('iframe[src*="calendar.google.com/calendar/embed"]');
-  const candidates = [];
-  for (let index = 0; index < await frames.count(); index += 1) {
-    const frame = frames.nth(index);
-    const calendarUrl = await frame.getAttribute('src');
-    if (isOfficialBlueGymEmbed(calendarUrl)) candidates.push({ frame, calendarUrl });
+export async function acquireActivityCalendars({ page, timeoutMs = 60_000 } = {}) {
+  const calendars = {};
+  for (const [targetId, heading] of Object.entries(ACTIVITY_CALENDAR_HEADINGS)) {
+    try {
+      calendars[targetId] = await acquireActivityCalendar({ page, targetId, heading, timeoutMs });
+    } catch {
+      calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
+    }
   }
-  if (candidates.length !== 1) throw new Error('missing unique official Blue Gym calendar');
+  return calendars;
+}
 
-  const { frame, calendarUrl } = candidates[0];
+export const acquireBlueGymCalendar = async options => (
+  acquireActivityCalendar({ ...options, targetId: 'blue-gym', heading: ACTIVITY_CALENDAR_HEADINGS['blue-gym'] })
+);
+
+async function acquireActivityCalendar({ page, targetId, heading, timeoutMs }) {
+  const sections = page.locator('.paragraph--type--cu-tabbed-content-tab');
+  const candidates = [];
+  for (let index = 0; index < await sections.count(); index += 1) {
+    const section = sections.nth(index);
+    const sectionHeading = await section.locator('h2, h3').first().innerText().catch(() => '');
+    if (sectionHeading.trim() === heading) candidates.push(section);
+  }
+  if (candidates.length !== 1) throw new Error(`missing unique official ${heading} calendar section`);
+
+  const section = candidates[0];
+  const tabId = await section.getAttribute('id');
+  if (!/^tab-\d+$/.test(tabId || '')) throw new Error(`invalid ${heading} calendar section`);
+  const frame = section.locator('iframe[src*="calendar.google.com/calendar/embed"]');
+  if (await frame.count() !== 1) throw new Error(`missing unique official ${heading} calendar`);
+  const calendarUrl = await frame.getAttribute('src');
+  if (!isOfficialActivityEmbed(calendarUrl)) throw new Error(`invalid official ${heading} calendar`);
+  const tabLink = page.locator(`a[href="#${tabId}"]`);
+  if (await tabLink.count() !== 1) throw new Error(`missing ${heading} calendar tab`);
+  await tabLink.click({ timeout: timeoutMs });
+
   const calendar = frame.contentFrame();
   const body = calendar.locator('body');
   await body.waitFor({ state: 'visible', timeout: timeoutMs });
   const weeks = [];
+  let text = await waitForCalendarStable({ page, body, timeoutMs });
   for (let index = 0; index < 3; index += 1) {
-    const text = await body.innerText({ timeout: timeoutMs });
-    if (!text.trim()) throw new Error('empty Blue Gym calendar');
     weeks.push(text);
     if (index === 2) break;
     await calendar.getByRole('button', { name: 'Next week', exact: true }).click({ timeout: timeoutMs });
-    await waitForCalendarAdvance({ page, body, previousText: text, timeoutMs });
+    text = await waitForCalendarStable({ page, body, previousWeekStart: calendarWeekStart(text), timeoutMs });
   }
-  return { result: 'success', calendarUrl, weeks };
+  return { result: 'success', targetId, calendarUrl, weeks };
 }
 
-function isOfficialBlueGymEmbed(value) {
+function isOfficialActivityEmbed(value) {
   try {
     const url = new URL(value);
     return url.protocol === 'https:'
       && url.hostname === 'calendar.google.com'
       && url.pathname === '/calendar/embed'
-      && url.searchParams.getAll('title').length === 1
-      && url.searchParams.get('title') === 'Blue Gym'
       && url.searchParams.getAll('src').length === 1
       && Boolean(url.searchParams.get('src'))
       && url.searchParams.getAll('ctz').length === 1
@@ -84,21 +111,19 @@ function isOfficialBlueGymEmbed(value) {
   }
 }
 
-async function waitForCalendarAdvance({ page, body, previousText, timeoutMs }) {
-  const previousWeekStart = calendarWeekStart(previousText);
-  if (!previousWeekStart) throw new Error('missing Blue Gym calendar week label');
+async function waitForCalendarStable({ page, body, previousWeekStart = null, timeoutMs }) {
   const deadline = Date.now() + timeoutMs;
   let stableText = null;
   let stableSince = 0;
   while (Date.now() < deadline) {
     const currentText = await body.innerText().catch(() => '');
     const currentWeekStart = calendarWeekStart(currentText);
-    if (currentWeekStart && currentWeekStart !== previousWeekStart) {
+    if (currentWeekStart && (!previousWeekStart || currentWeekStart !== previousWeekStart)) {
       if (currentText !== stableText) {
         stableText = currentText;
         stableSince = Date.now();
       } else if (Date.now() - stableSince >= 3_000) {
-        return;
+        return currentText;
       }
     } else {
       stableText = null;
@@ -106,9 +131,16 @@ async function waitForCalendarAdvance({ page, body, previousText, timeoutMs }) {
     }
     await page.waitForTimeout(250);
   }
-  throw new Error('Blue Gym calendar did not advance');
+  throw new Error('activity calendar did not stabilize');
 }
 
 function calendarWeekStart(text) {
   return String(text || '').match(/^(?:No|\d+)\s+(?:all day )?events?, Sunday, ([^\n]+)/mi)?.[1] || null;
+}
+
+function failedActivityCalendars() {
+  return Object.fromEntries(Object.keys(ACTIVITY_CALENDAR_HEADINGS).map(targetId => [
+    targetId,
+    { result: 'failure', failureCode: 'missing-content' },
+  ]));
 }
