@@ -1125,7 +1125,7 @@ function rowHTML(v, now) {
   const st = getStatus(v, now);
   const isOpen = expanded.has(v.id);
   const recreationSpaces = dodgeSpacesFor(v, now);
-  const accessLabel = v.cat === 'student' && window.LionHourStudentServicesView
+  const accessLabel = v.cat === 'student' && st.status !== 'closed' && window.LionHourStudentServicesView
     ? LionHourStudentServicesView.accessLabelFor(v, now) : null;
   const serviceDetails = v.studentServicesLive && window.LionHourStudentServicesView
     ? LionHourStudentServicesView.renderDay(v.studentServicesDays?.[now.dow], fmtRange) : '';
