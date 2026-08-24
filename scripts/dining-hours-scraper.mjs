@@ -272,6 +272,8 @@ class SourceAcquisitionError extends Error {
   }
 }
 
+const MANAGED_CHALLENGE_GRACE_MS = 12_000;
+
 async function managedChallenge(page, response) {
   const status = typeof response?.status === 'function' ? response.status() : null;
   if (status === 403 || status === 429) return true;
@@ -279,6 +281,16 @@ async function managedChallenge(page, response) {
   const body = await page.locator('body').innerText({ timeout: 1_000 }).catch(() => '');
   return /just a moment|performing security verification|verify you are human|attention required|access denied/i
     .test(`${title} ${body}`);
+}
+
+async function challengeRemainsAfterGrace(page, response) {
+  if (!await managedChallenge(page, response)) return false;
+  try {
+    await page.waitForTimeout(MANAGED_CHALLENGE_GRACE_MS);
+  } catch {
+    return true;
+  }
+  return managedChallenge(page, null);
 }
 
 async function navigateToSource(page, sourceUrl, timeout = 90_000) {
@@ -294,10 +306,13 @@ async function navigateToSource(page, sourceUrl, timeout = 90_000) {
   } catch {
     throw new SourceAcquisitionError('navigation', `${sourceUrl} redirected away from its official page`);
   }
-  if (await managedChallenge(page, response)) {
+  const initialStatus = typeof response?.status === 'function' ? response.status() : null;
+  const initialChallenge = initialStatus === 403 || initialStatus === 429
+    || await managedChallenge(page, response);
+  if (initialChallenge && await challengeRemainsAfterGrace(page, response)) {
     throw new SourceAcquisitionError('challenge', `${sourceUrl} returned a managed security challenge`);
   }
-  const status = typeof response?.status === 'function' ? response.status() : null;
+  const status = initialChallenge ? null : initialStatus;
   if (status !== null && status >= 400) {
     throw new SourceAcquisitionError('navigation', `${sourceUrl} returned HTTP ${status}`);
   }

@@ -27,7 +27,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Test dining pipeline
-        run: node --test tests/dining-hours-*.test.mjs
+        run: node --test tests/dining-hours-*.test.mjs tests/verify-live-barnard-dining.test.mjs
       - name: Collect Dining source attempts
         run: xvfb-run --auto-servernum node scripts/dining-hours-scraper.mjs --json-out "$RUNNER_TEMP/dining-hours.json"
       - name: Publish validated source attempts
@@ -42,3 +42,8 @@ jobs:
           -H "Authorization: Bearer $UPDATE_SECRET"
           -H "Content-Type: application/json"
           --data-binary "@$RUNNER_TEMP/dining-hours.json"
+      - name: Verify live Barnard Dining publication
+        if: vars.DINING_HOURS_PUBLISH_ENABLED == 'true'
+        env:
+          DINING_HOURS_API_URL: ${{ vars.DINING_HOURS_API_URL }}
+        run: node scripts/verify-live-barnard-dining.mjs

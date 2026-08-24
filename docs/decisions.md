@@ -665,3 +665,25 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/plans/2026-08-24-live-barnard-dining-hours.md` revised after the 2026-08-24 adversarial review and user approval.
 - Privacy waivers: none
+
+## DEC-0036 — Allow passive Dining challenge completion and verify live Barnard publication
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will give each recognized Dining managed challenge one twelve-second passive grace period in ordinary headed Chromium before recording an isolated source failure, retain last-successful source evidence without bypassing security controls, and fail a configured publish workflow unless the public API validates as schema version 4 with all four approved Barnard Dining venues.
+- Rationale: The deployed scraper was classifying Dine On Campus as challenged in roughly one tenth of a second, before ordinary browser verification could finish, while the green workflow status did not prove that users received Barnard hours.
+- Scope: Dining browser navigation, challenge failure policy, workflow success criteria, production snapshot verification, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `b86d533cbcbe8016778b463bce7a788a8ee9261f`
+- Supersedes: DEC-0031
+- Evidence: `docs/superpowers/plans/2026-08-24-dining-challenge-grace-and-live-verification.md` and the user-approved implementation request on 2026-08-24.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0031
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0036
+- Note: Immediate challenge failure is replaced by one bounded passive grace period and public Barnard verification while source isolation, retained evidence, and the no-bypass policy remain active.
+- Privacy waivers: none
