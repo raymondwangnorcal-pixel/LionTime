@@ -764,7 +764,7 @@ const VENUES = [
   { id:'dodge', name:'Dodge Fitness Center', cat:'fitness', loc:'3030 Broadway',
     hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]) },
 
-  { id:'uris-pool', name:'Uris Pool', cat:'fitness', loc:'Dodge Fitness Center, lower level',
+  { id:'uris-pool', name:'Uris Pool', cat:'fitness', parentId:'dodge', loc:'Dodge Fitness Center, lower level',
     hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
                     [['13:00','17:00']], [['13:00','17:00']]) },
 
@@ -1047,10 +1047,39 @@ const DODGE_SPACES_CONTROL = 'View spaces';
 
 function matchesFilters(v, now, ignoreStatus) {
   if (activeCat !== 'all' && v.cat !== activeCat) return false;
-  const term = searchTerm.trim().toLowerCase();
-  if (term && !`${v.name} ${v.loc} ${CAT_MAP[v.cat].label}`.toLowerCase().includes(term)) return false;
+  if (!venueMatchesSearch(v, searchTerm)) return false;
   if (!ignoreStatus && activeStatus !== 'all' && getStatus(v, now).status !== activeStatus) return false;
   return true;
+}
+
+function venueMatchesSearch(venue, term) {
+  const normalized = term.trim().toLowerCase();
+  if (!normalized) return true;
+  const children = VENUES.filter(candidate => candidate.parentId === venue.id)
+    .flatMap(candidate => [candidate.name, candidate.loc]);
+  return [venue.name, venue.loc, CAT_MAP[venue.cat].label, ...children]
+    .join(' ').toLowerCase().includes(normalized);
+}
+
+function topLevelVenues(venues = VENUES) {
+  return venues.filter(venue => !venue.parentId);
+}
+
+function dodgeSpacesFor(venue, now) {
+  if (venue.id !== 'dodge') return [];
+  if (venue.recreationLive) return Array.isArray(venue.recreationSpaces) ? venue.recreationSpaces : [];
+  const pool = VENUES.find(candidate => candidate.id === 'uris-pool');
+  if (!pool) return [];
+  return [{
+    id: pool.id,
+    name: pool.name,
+    intervals: dayHours(pool, now.dow),
+    status: sourceStatus(pool, now.dow),
+    reason: null,
+    availabilityType: 'lap-swim',
+    accessRestrictions: Array.isArray(pool.accessRestrictions) ? pool.accessRestrictions : [],
+    restrictions: Array.isArray(pool.sourceRestrictions?.[now.dow]) ? pool.sourceRestrictions[now.dow] : [],
+  }];
 }
 
 /* ══════════════════════════════════════════════════
@@ -1095,7 +1124,8 @@ function weekHTMLDesktop(v, now) {
 function rowHTML(v, now) {
   const st = getStatus(v, now);
   const isOpen = expanded.has(v.id);
-  const accessLabel = v.cat === 'student' && window.LionHourStudentServicesView
+  const recreationSpaces = dodgeSpacesFor(v, now);
+  const accessLabel = v.cat === 'student' && st.status !== 'closed' && window.LionHourStudentServicesView
     ? LionHourStudentServicesView.accessLabelFor(v, now) : null;
   const serviceDetails = v.studentServicesLive && window.LionHourStudentServicesView
     ? LionHourStudentServicesView.renderDay(v.studentServicesDays?.[now.dow], fmtRange) : '';
@@ -1116,8 +1146,8 @@ function rowHTML(v, now) {
       ${v.note ? `<div class="note">${escapeHTML(v.note)}</div>` : ''}
       ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
       ${v.recreationLive ? `<div data-recreation-metadata="${v.id}"></div>` : ''}
-      ${v.id === 'dodge' && v.recreationLive && window.LionHourRecreationView
-        ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(v.recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
+      ${recreationSpaces.length && window.LionHourRecreationView
+        ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
     </div>
   </div>`;
 }
@@ -1149,17 +1179,18 @@ function healthDropdownHTML(now) {
 
 function render() {
   const now = nowET();
+  const venues = topLevelVenues();
   renderChrome(now);
   renderSidebarNav();
 
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
-    const all = VENUES.filter(v => v.cat === c.id && matchesFilters(v, now, true));
+    const all = venues.filter(v => v.cat === c.id && matchesFilters(v, now, true));
     const shown = all.filter(v => activeStatus === 'all' || getStatus(v, now).status === activeStatus);
 
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
-    const hasHealthVenues = isStudent && VENUES.some(v => HEALTH_SERVICE_IDS.has(v.id));
+    const hasHealthVenues = isStudent && venues.some(v => HEALTH_SERVICE_IDS.has(v.id));
     if (!regularShown.length && !hasHealthVenues) return '';
 
     const isCafe = c.id === 'cafe';
@@ -1291,8 +1322,9 @@ sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 
 function renderSidebarNav() {
   const nav = document.getElementById('sidebar-nav');
+  const venues = topLevelVenues();
   const items = CATEGORIES.map(c => {
-    const count = c.id === 'all' ? VENUES.length : VENUES.filter(v => v.cat === c.id).length;
+    const count = c.id === 'all' ? venues.length : venues.filter(v => v.cat === c.id).length;
     const label = c.id === 'all' ? 'Home' : c.label;
     const icon = c.id === 'all' ? '🏠' : c.icon;
     return `<button class="sidebar-nav-item${c.id === activeCat ? ' active' : ''}" data-cat="${c.id}">

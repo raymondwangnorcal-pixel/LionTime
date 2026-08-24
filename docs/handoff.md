@@ -1,24 +1,24 @@
-# LionTime Squash visibility handoff
+# LionTime Uris Pool hierarchy handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-24T17:52:58-04:00
-Current-Origin: origin-b98e2275d9c96dbea45e5f1b
+Last-Updated: 2026-08-24T18:33:46-04:00
+Current-Origin: origin-b22132f6aa5678840b05cd1a
 
 ## Origins
 
 | Origin-ID | Branch | Created-At |
 |---|---|---|
-| origin-b98e2275d9c96dbea45e5f1b | frontend/appearance-polish | 2026-08-24T17:52:58-04:00 |
+| origin-b22132f6aa5678840b05cd1a | frontend/appearance-polish | 2026-08-24T18:33:46-04:00 |
 
 ## Current Goal
 
-Origin-ID: origin-b98e2275d9c96dbea45e5f1b
-Text: Hide Squash Courts from the LionHour Dodge space list without removing its parsing, validation, or API data path.
+Origin-ID: origin-b22132f6aa5678840b05cd1a
+Text: Render Uris Pool as a Dodge View spaces subsection without changing its independent live-data path.
 
 ## Accomplished in Latest Material Session
 
-Origin-ID: origin-b98e2275d9c96dbea45e5f1b
-Text: Added presentation-only filtering before Recreation spaces reach the renderer and verification state, retained the five-space strict snapshot and booking-only Squash evidence, pushed the change to main, verified the deployed client asset, confirmed the public API still contains Squash Courts, and confirmed the expanded live LionHour view shows only four calendar-backed spaces.
+Origin-ID: origin-b22132f6aa5678840b05cd1a
+Text: Nested Uris Pool as the fifth visible Dodge space, removed its duplicate top-level Fitness card and counts, retained embedded fallback hours and independent live hydration, preserved Uris search discovery, documented the product policy, and committed the implementation and decision lifecycle update.
 
 ## Outstanding Tasks
 
@@ -27,27 +27,28 @@ Text: Added presentation-only filtering before Recreation spaces reach the rende
 
 ## Recommended Next Task
 
-Origin-ID: origin-b98e2275d9c96dbea45e5f1b
+Origin-ID: origin-b22132f6aa5678840b05cd1a
 Task-ID: none
-Reason: The requested presentation-only change is implemented, deployed, and verified without altering underlying Squash data logic.
+Reason: The requested hierarchy change is implemented, committed, and verified; deployment or branch integration can be handled separately if desired.
 
 ## Files Touched
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| assets/recreation-hours.js | origin-b98e2275d9c96dbea45e5f1b | present | committed | Filters squash-courts after strict snapshot validation and before visible space rendering or verification counting. |
-| docs/decisions.md | origin-b98e2275d9c96dbea45e5f1b | present | committed | DEC-0042 supersedes the broader catalog-removal interpretation and records presentation-only filtering. |
-| docs/recreation-hours-operations.md | origin-b98e2275d9c96dbea45e5f1b | present | committed | Documents five underlying data spaces and four visible calendar-backed rows. |
-| index.html | origin-b98e2275d9c96dbea45e5f1b | present | uncommitted | Unrelated pre-existing or concurrent user edit preserved without modification. |
-| tests/recreation-hours-client.test.mjs | origin-b98e2275d9c96dbea45e5f1b | present | committed | Proves a valid five-space snapshot yields exactly the four approved visible space IDs. |
+| assets/recreation-hours.js | origin-b22132f6aa5678840b05cd1a | present | committed | Projects the independently validated Uris current day into Dodge's visible recreationSpaces after the four calendar-backed activity rooms. |
+| docs/decisions.md | origin-b22132f6aa5678840b05cd1a | present | committed | DEC-0043 records the Uris hierarchy policy and implementation commit. |
+| docs/recreation-hours-operations.md | origin-b22132f6aa5678840b05cd1a | present | committed | Distinguishes three published API facilities from two top-level Fitness cards and the five visible Dodge rows. |
+| index.html | origin-b22132f6aa5678840b05cd1a | present | committed-and-uncommitted | Committed hierarchy helpers hide Uris from top-level rendering, preserve embedded fallback under Dodge, adjust counts, and include child names in search; a separate concurrent uncommitted access-badge condition was preserved. |
+| tests/recreation-hours-client.test.mjs | origin-b22132f6aa5678840b05cd1a | present | committed | Proves the live Dodge overlay contains Uris as the fifth visible space with its independent intervals, access, and swim mode. |
+| tests/venue-hierarchy.test.mjs | origin-b22132f6aa5678840b05cd1a | present | committed | Proves two visible Fitness cards, embedded Uris fallback under Dodge, and nested Uris search discovery. |
 
 ## Git / Remote State
 
-Origin-ID: origin-b98e2275d9c96dbea45e5f1b
+Origin-ID: origin-b22132f6aa5678840b05cd1a
 Branch: frontend/appearance-polish
-Head: 1fab4e38e7a6e4ebc0f7d1f4456d5dcb78afabbc
+Head: f00f6e74654f2b22e553f2fd793a7f7b74b46697
 Upstream: origin/frontend/appearance-polish
-Ahead: 3
+Ahead: 2
 Behind: 0
 Remote-Freshness: verified
 Remote-Freshness-Reason: none
@@ -59,29 +60,28 @@ Handoff-Commit-Exception: none
 
 | Commit | Subject |
 |---|---|
-| 1fab4e38e7a6e4ebc0f7d1f4456d5dcb78afabbc | docs(decisions): record Squash visibility policy |
-| 749eef5067dac64852045b8b21483d1ed929c357 | fix(recreation): hide Squash Courts row |
-| 5d53f387aee594f27027c5af9a69fca7a2b7d0c2 | docs: update handoff (2026-08-24) |
+| f00f6e74654f2b22e553f2fd793a7f7b74b46697 | docs(decisions): record Uris hierarchy implementation |
+| 376314aa928a7ac544e475c062825969871ee660 | feat(recreation): nest Uris Pool under Dodge |
 
 ## Validation
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-2a39612c3288c67787244b7f | origin-b98e2275d9c96dbea45e5f1b | Inspect expanded Dodge spaces on https://www.lionhour.com | passed | The live button reports View spaces (4), lists the four calendar-backed spaces, and does not render Squash Courts. |
-| validation-5ec3b24b4d42537151544515 | origin-b98e2275d9c96dbea45e5f1b | GET https://www.lionhour.com/api/recreation-hours | passed | The public API retained all five Dodge data IDs and booking-only Squash evidence. |
-| validation-823c5ea40154b2920f3b3fa4 | origin-b98e2275d9c96dbea45e5f1b | node --test tests/recreation-hours-acquire.test.mjs tests/recreation-hours-client.test.mjs tests/recreation-source-parser.test.mjs tests/recreation-hours-resolver.test.mjs tests/recreation-hours-schema.test.mjs tests/recreation-hours-service.test.mjs tests/recreation-hours-scraper.test.mjs tests/recreation-hours-workflow.test.mjs | passed | 98 tests passed and 0 failed, including strict five-space validation and four-space presentation filtering. |
-| validation-dda4e5e9f08f86aaa34751f5 | origin-b98e2275d9c96dbea45e5f1b | GET https://www.lionhour.com/assets/recreation-hours.js | passed | The deployed asset SHA-256 exactly matched the committed local asset and contains the squash-courts presentation filter. |
-| validation-e057796aac6d174269386935 | origin-b98e2275d9c96dbea45e5f1b | npm test | partial | 245 of 249 tests passed; the four previously recorded Recreation renderer expectation assertions remain the only failures. |
+| validation-2122d8f62faf0bebb2adaecd | origin-b22132f6aa5678840b05cd1a | node --test tests/recreation-hours-client.test.mjs tests/header-controls.test.mjs tests/venue-hierarchy.test.mjs | passed | 32 tests passed and 0 failed after preserving the concurrent index edit. |
+| validation-8b3388a002e8f6a7e2c0de06 | origin-b22132f6aa5678840b05cd1a | Local browser verification against a valid Recreation snapshot | passed | The page rendered two Fitness cards, no top-level Uris card, View spaces (5) with Uris last, searchable Uris discovery through Dodge, no error overlay, and no console errors. |
+| validation-96e53d36e19533154b848d2c | origin-b22132f6aa5678840b05cd1a | validate_ledger.py validate-ledger --input docs/decisions.md | passed | Ledger schema, lifecycle, and privacy checks passed. |
+| validation-e0b409b1bbaf8977694dcb38 | origin-b22132f6aa5678840b05cd1a | npm test | partial | 247 of 252 tests passed in the sandbox; four previously recorded Recreation view expectation assertions failed, and one sandbox-blocked Chromium test passed 6 of 6 when rerun with browser permissions. |
 
 ## Risks / Decisions
 
 | Item-ID | Origin-ID | Kind | Status | Description |
 |---|---|---|---|---|
-| decision-5a95a3c8c69b0e52b4df1b0c | origin-b98e2275d9c96dbea45e5f1b | decision | accepted | Keep Squash Courts in acquisition, parsing, validation, storage, and API data while filtering it only from visible Recreation spaces and their verification count. |
+| decision-3254e0e540e5c41dcb3b38e8 | origin-b22132f6aa5678840b05cd1a | decision | accepted | Keep Uris Pool as an independently validated Recreation facility while presenting it only as the fifth Dodge View spaces row. |
+| risk-4cefa7fe5f7f892d652e8f4a | origin-b22132f6aa5678840b05cd1a | risk | open | The full suite retains four pre-existing Recreation view expectation failures; the strict repository-backed decision audit also reports an older commit unreachable from this branch, while the history-independent ledger audit passes. |
 
 ## Archive Decision
 
-Origin-ID: origin-b98e2275d9c96dbea45e5f1b
+Origin-ID: origin-b22132f6aa5678840b05cd1a
 Safe-to-Archive: yes
-Reason: The visibility-only change is tested, pushed to main, deployed, and verified; the unrelated index.html edit remains explicitly preserved.
+Reason: The requested change is committed and verified, and the remaining concurrent index edit and pre-existing test failures are explicitly documented.
 Next-Action: none
