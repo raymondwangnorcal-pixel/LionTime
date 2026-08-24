@@ -1,25 +1,24 @@
-# LionTime Recreation activity-calendar handoff
+# LionTime Squash visibility handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-24T17:40:21-04:00
-Current-Origin: origin-5889afe7faf06090be849e0e
+Last-Updated: 2026-08-24T17:52:58-04:00
+Current-Origin: origin-b98e2275d9c96dbea45e5f1b
 
 ## Origins
 
 | Origin-ID | Branch | Created-At |
 |---|---|---|
-| origin-39ad638491073981246a7c49 | main | 2026-08-24T17:11:46-04:00 |
-| origin-5889afe7faf06090be849e0e | frontend/appearance-polish | 2026-08-24T17:40:21-04:00 |
+| origin-b98e2275d9c96dbea45e5f1b | frontend/appearance-polish | 2026-08-24T17:52:58-04:00 |
 
 ## Current Goal
 
-Origin-ID: origin-5889afe7faf06090be849e0e
-Text: Scrape every official Dodge activity-space calendar and publish the room-specific hours to LionHour.
+Origin-ID: origin-b98e2275d9c96dbea45e5f1b
+Text: Hide Squash Courts from the LionHour Dodge space list without removing its parsing, validation, or API data path.
 
 ## Accomplished in Latest Material Session
 
-Origin-ID: origin-5889afe7faf06090be849e0e
-Text: Implemented independent three-week acquisition and exact event-identity validation for Blue Gym, Levien Gymnasium, Aerobics Room 4, and Functional Fitness Studio; kept Squash Courts booking-only and Blue Gym as the sole Dodge fallback; pushed the implementation to main; successfully published workflow run 32780139101 after one transient Columbia challenge retry; and verified the production API and expanded live LionHour room rows.
+Origin-ID: origin-b98e2275d9c96dbea45e5f1b
+Text: Added presentation-only filtering before Recreation spaces reach the renderer and verification state, retained the five-space strict snapshot and booking-only Squash evidence, pushed the change to main, verified the deployed client asset, confirmed the public API still contains Squash Courts, and confirmed the expanded live LionHour view shows only four calendar-backed spaces.
 
 ## Outstanding Tasks
 
@@ -28,43 +27,27 @@ Text: Implemented independent three-week acquisition and exact event-identity va
 
 ## Recommended Next Task
 
-Origin-ID: origin-5889afe7faf06090be849e0e
+Origin-ID: origin-b98e2275d9c96dbea45e5f1b
 Task-ID: none
-Reason: The requested activity-calendar scraping is implemented, published, and verified; no follow-up is required for this request.
+Reason: The requested presentation-only change is implemented, deployed, and verified without altering underlying Squash data logic.
 
 ## Files Touched
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| docs/decisions.md | origin-39ad638491073981246a7c49 | present | committed | DEC-0039 and its implementation event record the accepted Blue Gym-to-Dodge fallback policy. |
-| docs/decisions.md | origin-5889afe7faf06090be849e0e | present | committed | DEC-0040 and its implementation update record the four-calendar source policy. |
-| index.html | origin-5889afe7faf06090be849e0e | present | uncommitted | Unrelated pre-existing or concurrent user edit preserved without modification. |
-| lib/recreation-hours-resolver.js | origin-39ad638491073981246a7c49 | present | committed | Compares date-specific replacement priority with bounded weekly baseline priority before selection. |
-| lib/recreation-source-parser.js | origin-39ad638491073981246a7c49 | present | committed | Parses exact seasonal transition bounds and official Blue Gym calendar event evidence. |
-| lib/recreation-source-parser.js | origin-5889afe7faf06090be849e0e | present | committed | Parses room-specific open events and explicit closures with exact calendar identity checks. |
-| scripts/recreation-hours-acquire.mjs | origin-39ad638491073981246a7c49 | present | committed | Captures three calendar weeks and waits for each displayed week to stabilize. |
-| scripts/recreation-hours-acquire.mjs | origin-5889afe7faf06090be849e0e | present | committed | Discovers each official tab and captures three stabilized weeks while isolating per-calendar failures. |
-| scripts/recreation-hours-scraper.mjs | origin-39ad638491073981246a7c49 | present | committed | Integrates optional calendar evidence without making the required official page acquisition brittle. |
-| scripts/recreation-hours-scraper.mjs | origin-5889afe7faf06090be849e0e | present | committed | Integrates successful activity calendars independently. |
-| tests/fixtures/recreation-aerobics-calendar.txt | origin-5889afe7faf06090be849e0e | present | committed | Sanitized Aerobics maintenance events. |
-| tests/fixtures/recreation-blue-gym-calendar.txt | origin-39ad638491073981246a7c49 | present | committed | Sanitized date-specific Blue Gym event fixture. |
-| tests/fixtures/recreation-functional-fitness-calendar.txt | origin-5889afe7faf06090be849e0e | present | committed | Sanitized Functional Fitness split-session events. |
-| tests/fixtures/recreation-levien-calendar.txt | origin-5889afe7faf06090be849e0e | present | committed | Sanitized Levien open and maintenance events. |
-| tests/recreation-hours-acquire.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers successful optional calendar acquisition and isolated calendar failure. |
-| tests/recreation-hours-acquire.test.mjs | origin-5889afe7faf06090be849e0e | present | committed | Covers four-calendar acquisition results and isolated failure. |
-| tests/recreation-hours-resolver.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers direct table, calendar fallback, unavailable evidence, and closure precedence. |
-| tests/recreation-hours-scraper.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers end-to-end calendar evidence integration into the snapshot. |
-| tests/recreation-hours-scraper.test.mjs | origin-5889afe7faf06090be849e0e | present | committed | Covers end-to-end room hours and maintenance closure publication. |
-| tests/recreation-source-parser.test.mjs | origin-39ad638491073981246a7c49 | present | committed | Covers exact transition validation and split Blue Gym schedule parsing. |
-| tests/recreation-source-parser.test.mjs | origin-5889afe7faf06090be849e0e | present | committed | Covers all four event identities, openings, closures, and Blue-only Dodge fallback. |
+| assets/recreation-hours.js | origin-b98e2275d9c96dbea45e5f1b | present | committed | Filters squash-courts after strict snapshot validation and before visible space rendering or verification counting. |
+| docs/decisions.md | origin-b98e2275d9c96dbea45e5f1b | present | committed | DEC-0042 supersedes the broader catalog-removal interpretation and records presentation-only filtering. |
+| docs/recreation-hours-operations.md | origin-b98e2275d9c96dbea45e5f1b | present | committed | Documents five underlying data spaces and four visible calendar-backed rows. |
+| index.html | origin-b98e2275d9c96dbea45e5f1b | present | uncommitted | Unrelated pre-existing or concurrent user edit preserved without modification. |
+| tests/recreation-hours-client.test.mjs | origin-b98e2275d9c96dbea45e5f1b | present | committed | Proves a valid five-space snapshot yields exactly the four approved visible space IDs. |
 
 ## Git / Remote State
 
-Origin-ID: origin-5889afe7faf06090be849e0e
+Origin-ID: origin-b98e2275d9c96dbea45e5f1b
 Branch: frontend/appearance-polish
-Head: 78ad7c2e20ca0ccbea9a52a307ceb839ace75150
+Head: 1fab4e38e7a6e4ebc0f7d1f4456d5dcb78afabbc
 Upstream: origin/frontend/appearance-polish
-Ahead: 0
+Ahead: 3
 Behind: 0
 Remote-Freshness: verified
 Remote-Freshness-Reason: none
@@ -76,34 +59,29 @@ Handoff-Commit-Exception: none
 
 | Commit | Subject |
 |---|---|
+| 1fab4e38e7a6e4ebc0f7d1f4456d5dcb78afabbc | docs(decisions): record Squash visibility policy |
+| 749eef5067dac64852045b8b21483d1ed929c357 | fix(recreation): hide Squash Courts row |
+| 5d53f387aee594f27027c5af9a69fca7a2b7d0c2 | docs: update handoff (2026-08-24) |
 
 ## Validation
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-1130cf22d6ac09941db800f1 | origin-5889afe7faf06090be849e0e | node --test tests/recreation-hours-acquire.test.mjs tests/recreation-source-parser.test.mjs tests/recreation-hours-resolver.test.mjs tests/recreation-hours-schema.test.mjs tests/recreation-hours-service.test.mjs tests/recreation-hours-scraper.test.mjs tests/recreation-hours-workflow.test.mjs | passed | 77 tests passed and 0 failed. |
-| validation-34e3c1cb213bcc20f9c248f9 | origin-39ad638491073981246a7c49 | node scripts/recreation-hours-scraper.mjs --json-out /private/tmp/liontime-recreation-live.json | passed | Live headed-Chromium scrape validated three facilities through 2026-09-06 and populated all fourteen Dodge and Blue Gym dates. |
-| validation-4ebc2c5ccee36c3c66b4d241 | origin-39ad638491073981246a7c49 | node --test tests/recreation-hours-acquire.test.mjs tests/recreation-source-parser.test.mjs tests/recreation-hours-resolver.test.mjs tests/recreation-hours-schema.test.mjs tests/recreation-hours-service.test.mjs tests/recreation-hours-scraper.test.mjs tests/recreation-hours-workflow.test.mjs | passed | 76 tests passed and 0 failed. |
-| validation-6148035a0e274440fb37f8ae | origin-39ad638491073981246a7c49 | GET https://www.lionhour.com/api/recreation-hours | passed | Public snapshot generated at 2026-08-24T21:10:40.023Z reports Dodge 06:00-22:00 today and verified calendar-backed fallback dates after the direct table expires. |
-| validation-7c0a3e539307d0d2592fa4c6 | origin-5889afe7faf06090be849e0e | npm test | partial | 245 of 249 tests passed; the four previously recorded Recreation renderer expectation assertions still fail outside the scheduled pipeline. |
-| validation-9681f6082499e8808d24cbd4 | origin-5889afe7faf06090be849e0e | gh run watch 32780139101 --exit-status | passed | Retry completed in 1 minute 22 seconds, including tests, live scrape, and production publish; the initial attempt encountered a transient managed challenge on Columbia Modifications. |
-| validation-b378374ad2e878e03eb85246 | origin-5889afe7faf06090be849e0e | GET https://www.lionhour.com/api/recreation-hours and inspect expanded LionHour Dodge spaces | passed | Production generated at 2026-08-24T21:37:46.384Z shows live Blue, Levien, and Functional Fitness hours, the Aerobics maintenance closure, and Squash as booking-only. |
-| validation-b549e11933a6ba763cabcd50 | origin-5889afe7faf06090be849e0e | node scripts/recreation-hours-scraper.mjs --json-out /private/tmp/liontime-recreation-live.json | passed | Live headed scrape validated three facilities through 2026-09-06 and populated all four calendar-backed activity spaces. |
-| validation-c97bf4c199b5a5750ef576a3 | origin-39ad638491073981246a7c49 | gh run watch 32777975282 --exit-status | passed | Update recreation hours workflow completed successfully in 52 seconds, including scrape and publish. |
-| validation-f60b38212d98744e1a81f574 | origin-39ad638491073981246a7c49 | npm test | partial | 244 of 248 tests passed; four pre-existing Recreation UI expectation assertions failed outside the scraper pipeline. |
+| validation-2a39612c3288c67787244b7f | origin-b98e2275d9c96dbea45e5f1b | Inspect expanded Dodge spaces on https://www.lionhour.com | passed | The live button reports View spaces (4), lists the four calendar-backed spaces, and does not render Squash Courts. |
+| validation-5ec3b24b4d42537151544515 | origin-b98e2275d9c96dbea45e5f1b | GET https://www.lionhour.com/api/recreation-hours | passed | The public API retained all five Dodge data IDs and booking-only Squash evidence. |
+| validation-823c5ea40154b2920f3b3fa4 | origin-b98e2275d9c96dbea45e5f1b | node --test tests/recreation-hours-acquire.test.mjs tests/recreation-hours-client.test.mjs tests/recreation-source-parser.test.mjs tests/recreation-hours-resolver.test.mjs tests/recreation-hours-schema.test.mjs tests/recreation-hours-service.test.mjs tests/recreation-hours-scraper.test.mjs tests/recreation-hours-workflow.test.mjs | passed | 98 tests passed and 0 failed, including strict five-space validation and four-space presentation filtering. |
+| validation-dda4e5e9f08f86aaa34751f5 | origin-b98e2275d9c96dbea45e5f1b | GET https://www.lionhour.com/assets/recreation-hours.js | passed | The deployed asset SHA-256 exactly matched the committed local asset and contains the squash-courts presentation filter. |
+| validation-e057796aac6d174269386935 | origin-b98e2275d9c96dbea45e5f1b | npm test | partial | 245 of 249 tests passed; the four previously recorded Recreation renderer expectation assertions remain the only failures. |
 
 ## Risks / Decisions
 
 | Item-ID | Origin-ID | Kind | Status | Description |
 |---|---|---|---|---|
-| decision-cc34c13c37a63ef19d12fe8d | origin-39ad638491073981246a7c49 | decision | accepted | Blue Gym open events prove Dodge is open; direct dated Dodge hours and explicit closures remain stronger, while missing or ambiguous evidence fails to verification. |
-| decision-f607ce2c67ce2e365d2ef8ab | origin-5889afe7faf06090be849e0e | decision | accepted | Scrape the four official activity calendars independently; only Blue Gym may supply Dodge fallback evidence, and Squash remains booking-only. |
-| risk-32ac51564ddd0754c38bda5b | origin-39ad638491073981246a7c49 | risk | open | The repository-wide suite retains four Recreation-space renderer expectation failures that predate and do not gate the green scheduled Recreation pipeline. |
-| risk-e248f24a552d008f3b856c35 | origin-5889afe7faf06090be849e0e | risk | open | Columbia's Modified Hours page can transiently return a managed challenge on hosted runners; the successful retry confirms no persistent blocker. |
+| decision-5a95a3c8c69b0e52b4df1b0c | origin-b98e2275d9c96dbea45e5f1b | decision | accepted | Keep Squash Courts in acquisition, parsing, validation, storage, and API data while filtering it only from visible Recreation spaces and their verification count. |
 
 ## Archive Decision
 
-Origin-ID: origin-5889afe7faf06090be849e0e
+Origin-ID: origin-b98e2275d9c96dbea45e5f1b
 Safe-to-Archive: yes
-Reason: The activity-calendar implementation is committed, pushed to main, published, and verified in production; the unrelated index.html edit remains explicitly preserved.
+Reason: The visibility-only change is tested, pushed to main, deployed, and verified; the unrelated index.html edit remains explicitly preserved.
 Next-Action: none
