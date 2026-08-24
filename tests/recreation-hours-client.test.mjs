@@ -107,14 +107,14 @@ function resolverBaselineEvidence() {
   ];
 }
 
-test('atomically overlays Dodge, Uris Pool, and Barnard', () => {
+test('nests Uris Pool in the Dodge spaces overlay', () => {
   const venues = venueFixture();
   const result = api.buildUpdates(validSnapshot(), venues, '2026-08-21');
   assert.equal(result.ok, true);
   assert.deepEqual(Array.from(result.entries.map(([venue]) => venue.id)), ['dodge', 'uris-pool', 'barnard-fitness']);
   assert.deepEqual(
     Array.from(result.entries.find(([venue]) => venue.id === 'dodge')[1].recreationSpaces, space => space.id),
-    ['blue-gym', 'levien-gymnasium', 'functional-fitness-studio', 'aerobics-room-4'],
+    ['blue-gym', 'levien-gymnasium', 'functional-fitness-studio', 'aerobics-room-4', 'uris-pool'],
   );
   assert.equal(result.entries.find(([venue]) => venue.id === 'dodge')[1].recreationLive, true);
 });
@@ -213,6 +213,12 @@ test('preserves split intervals, closures, reservations, verification, and acces
   assert.deepEqual(Array.from(pool.hours[5], interval => Array.from(interval)), [['12:00', '14:00'], ['19:00', '21:30']]);
   assert.deepEqual(Array.from(pool.accessRestrictions), ['Columbia ID required']);
   assert.equal(pool.sourceStatuses[5], null);
+  const nestedPool = updates.entries.find(([venue]) => venue.id === 'dodge')[1]
+    .recreationSpaces.find(space => space.id === 'uris-pool');
+  assert.ok(nestedPool);
+  assert.deepEqual(Array.from(nestedPool.intervals, interval => Array.from(interval)), [['12:00', '14:00'], ['19:00', '21:30']]);
+  assert.deepEqual(Array.from(nestedPool.accessRestrictions), ['Columbia ID required']);
+  assert.equal(nestedPool.availabilityType, 'lap-swim');
   const barnard = updates.entries.find(([venue]) => venue.id === 'barnard-fitness')[1];
   assert.equal(barnard.sourceStatuses[5], 'Closed for maintenance');
   const blueGym = updates.entries.find(([venue]) => venue.id === 'dodge')[1]

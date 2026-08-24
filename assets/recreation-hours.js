@@ -550,6 +550,22 @@
     }));
   }
 
+  function spacePresentation(entity, day) {
+    return {
+      id: entity.id,
+      name: entity.name,
+      intervals: cloneIntervals(day.intervals),
+      status: day.status,
+      reason: day.reason,
+      availabilityType: day.availabilityType,
+      accessRestrictions: [...day.accessRestrictions],
+      sourceRefs: [...day.sourceRefs],
+      evidenceRefs: [...day.evidenceRefs],
+      restrictions: cloneRestrictions(day.restrictions),
+      conflict: day.conflict,
+    };
+  }
+
   function buildUpdates(snapshot, venues, today) {
     const errors = validateSnapshot(snapshot);
     if (errors.length || !Array.isArray(venues)) return { ok: false, errors };
@@ -618,20 +634,10 @@
         next.recreationSpaces = facility.spaces.filter(space => space.id !== 'squash-courts').map(space => {
           const day = space.days[firstIndex];
           if (day.conflict === true || UNAVAILABLE_STATUSES.has(day.status)) verificationIds.push(space.id);
-          return {
-            id: space.id,
-            name: space.name,
-            intervals: cloneIntervals(day.intervals),
-            status: day.status,
-            reason: day.reason,
-            availabilityType: day.availabilityType,
-            accessRestrictions: [...day.accessRestrictions],
-            sourceRefs: [...day.sourceRefs],
-            evidenceRefs: [...day.evidenceRefs],
-            restrictions: cloneRestrictions(day.restrictions),
-            conflict: day.conflict,
-          };
+          return spacePresentation(space, day);
         });
+        const pool = facilities.get('uris-pool');
+        next.recreationSpaces.push(spacePresentation(pool, pool.days[firstIndex]));
       }
       entries.push([venue, next]);
     }
