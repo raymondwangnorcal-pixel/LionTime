@@ -687,3 +687,55 @@
 - Superseded by: DEC-0036
 - Note: Immediate challenge failure is replaced by one bounded passive grace period and public Barnard verification while source isolation, retained evidence, and the no-bypass policy remain active.
 - Privacy waivers: none
+
+## DEC-0037 — Reject automated Dining challenge bypass
+
+- Date: 2026-08-24
+- Owner: agent
+- Status at record: active
+- Decision: LionHour will not integrate CAPTCHA-solving or managed-challenge-bypass services for Dining; autonomous acquisition must use publisher-authorized machine access or an ordinary browser on a trusted network that Dine On Campus accepts.
+- Rationale: Fresh hosted GitHub runners on Linux, macOS, and Windows and a Vercel serverless request were challenged or denied, while a solver would deliberately defeat the publisher's access control and add recurring cost, credential exposure, and brittle third-party dependency risk.
+- Scope: Barnard and Columbia Dining acquisition architecture, runner selection, source policy, operating cost, credentials, and deployment guidance.
+- Implementation: pending
+- Recorded against HEAD: `6dfc94877ec9a5920ec8393624fec1100570584a`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-24-hosted-macos-dining-runner.md`, `docs/superpowers/plans/2026-08-24-hosted-windows-dining-runner.md`, and the fixed Vercel egress probe completed on 2026-08-24.
+- Privacy waivers: none
+
+## DEC-0038 — Publish Barnard Dining from a trusted self-hosted runner
+
+- Date: 2026-08-24
+- Owner: shared
+- Status at record: active
+- Decision: LionHour will acquire Barnard Dining in ordinary headed Chromium on a repository-scoped, labeled macOS self-hosted runner kept awake on AC power, and will hydrate the four Barnard cards from a read-only projection of independently retained Barnard evidence instead of waiting for every combined Dining source to initialize.
+- Rationale: The trusted-network runner loaded the official Barnard page without interaction while hosted runners were challenged, and the independent projection prevents unrelated challenged Columbia sources from blocking valid Barnard hours or being misrepresented as live.
+- Scope: Dining workflow runner selection, local LaunchAgents, power behavior, public API contracts, retained-source projection, browser hydration, production verification, security boundaries, tests, and operations guidance.
+- Implementation: recorded in update event below
+- Recorded against HEAD: `058e4b945645f31b0505fa5b8fb5db083b2ab553`
+- Supersedes: DEC-0036
+- Evidence: `docs/superpowers/plans/2026-08-24-self-hosted-dining-runner.md` and successful production workflow run `32756463733` on 2026-08-24.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0036
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0038
+- Note: The passive challenge grace and retained-source isolation remain, but the hosted schema-version-4 publication gate is replaced by trusted-network acquisition and an independently validated Barnard projection.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0037
+
+- Type: implementation
+- Implementation commit: `5b8be351384a5cfa637198dff76343a8c96dfa2e` — fix(ci): run Dining on trusted Mac
+- Superseded by: none
+- Note: The repository-scoped labeled runner and AC-only keep-awake service implement autonomous ordinary-browser acquisition without a solver or managed-challenge bypass.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0038
+
+- Type: implementation
+- Implementation commit: `058e4b945645f31b0505fa5b8fb5db083b2ab553` — feat(dining): publish Barnard hours independently
+- Superseded by: none
+- Note: The completion commit adds the validated read-only Barnard projection, independent client overlay, deployment contract, verifier, tests, and operating documentation on top of the trusted runner.
+- Privacy waivers: none
