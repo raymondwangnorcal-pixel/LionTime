@@ -775,3 +775,11 @@
 - Supersedes: none
 - Evidence: The official Columbia Recreation Hours of Operation page and the user's 2026-08-24 request to scrape the other activity-space calendars.
 - Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0040
+
+- Type: implementation
+- Implementation commit: `b828b482fbe91485a9705c8be238c5548b405161` — fix(recreation): scrape all activity calendars
+- Superseded by: none
+- Note: The Recreation scraper now acquires and validates the four official activity-space calendars independently, publishes each room's open or explicit closure state, and reserves Dodge fallback evidence for Blue Gym alone.
+- Privacy waivers: none
