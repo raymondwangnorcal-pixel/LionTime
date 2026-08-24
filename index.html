@@ -453,6 +453,7 @@
   /* ── Health services dropdown (sub-accordion) ──── */
   .health-hours-dropdown {
     border-top: 1.5px solid var(--columbia-blue);
+    border-bottom: 1.5px solid var(--columbia-blue);
   }
   .health-hours-toggle {
     display: flex; align-items: center; gap: 0.45rem;
@@ -470,28 +471,10 @@
   .health-hours-toggle[aria-expanded="true"]::after { transform: rotate(45deg); }
   .health-hours-toggle:hover { background: #e2e9f1; }
   .health-hours-list {
-    list-style: none; margin: 0; padding: 0;
-    background: #f8fafc; overflow: hidden;
+    overflow: hidden;
     border-top: 1px solid var(--hairline);
   }
-  .health-hour-item {
-    padding: 0.55rem 1.1rem;
-    border-bottom: 1px solid #ebeef2;
-  }
-  .health-hour-item:last-child { border-bottom: none; }
-  .health-hour-heading {
-    display: flex; align-items: center; gap: 0.45rem;
-  }
-  .health-hour-heading .dot { flex-shrink: 0; }
-  .health-hour-name { font-weight: 600; font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }
-  .health-hour-hours {
-    font-size: 0.75rem; color: var(--text-secondary);
-    font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  .health-hour-note {
-    font-size: 0.7rem; color: var(--muted); line-height: 1.4;
-    margin-top: 0.15rem; padding-left: calc(9px + 0.45rem);
-  }
+  .health-hours-list .entry:last-child .row { border-bottom: none; }
 
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 0.9rem; }
 
@@ -533,7 +516,6 @@
     .recreation-spaces-toggle { padding-left: 1.2rem; padding-right: 0.85rem; }
     .recreation-space { padding-left: 1.2rem; padding-right: calc(1.45rem + 14px); }
     .health-hours-toggle { padding: 0.7rem 0.85rem; }
-    .health-hour-item { padding: 0.55rem 0.85rem; }
     .summary { gap: 0.9rem; }
     .stat { font-size: 0.8rem; }
     .search-input { flex: 1 1 100%; }
@@ -1127,18 +1109,10 @@ function escapeHTML(value) {
 
 function healthDropdownHTML(now) {
   const healthVenues = VENUES.filter(v => HEALTH_SERVICE_IDS.has(v.id));
-  const items = healthVenues.map(v => {
-    const st = getStatus(v, now);
-    const hours = todayHoursText(v, now);
-    const note = v.note ? `<div class="health-hour-note">${escapeHTML(v.note)}</div>` : '';
-    return `<li class="health-hour-item">
-      <div class="health-hour-heading">
-        <span class="dot ${st.status}"></span>
-        <span class="health-hour-name">${escapeHTML(v.name)}</span>
-        <span class="health-hour-hours">${escapeHTML(hours)}</span>
-      </div>${note}
-    </li>`;
-  }).join('');
+  healthVenues.sort((a, b) => {
+    const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
+    return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
+  });
   const openCount = healthVenues.filter(v => getStatus(v, now).status !== 'closed').length;
   return `<div class="health-hours-dropdown">
     <button class="health-hours-toggle" type="button"
@@ -1146,9 +1120,9 @@ function healthDropdownHTML(now) {
             aria-controls="health-hours-list">
       Columbia Health Hours · ${openCount} of ${healthVenues.length} open
     </button>
-    <ul class="health-hours-list" id="health-hours-list"${healthDropdownExpanded ? '' : ' hidden'}>
-      ${items}
-    </ul>
+    <div class="health-hours-list" id="health-hours-list"${healthDropdownExpanded ? '' : ' hidden'}>
+      ${healthVenues.map(v => rowHTML(v, now)).join('')}
+    </div>
   </div>`;
 }
 
