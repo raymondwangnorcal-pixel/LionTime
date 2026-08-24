@@ -2,11 +2,13 @@
 
 ## Architecture
 
-The `Update dining hours` GitHub Actions workflow runs at minute 47 every four hours. Playwright launches headed Chromium inside `xvfb` and checks six official sources independently: the structured Columbia Locations & Hours feed; the NSOP, Labor Day, and Fall 2026 articles; Lerner Hall's Café East page; and Barnard's Dine On Campus Hours of Operation page. It uploads a validated source-attempt batch to `/api/dining-hours`. Vercel retains each source's last successful normalized evidence and the last valid public snapshot together under `lionhour:dining-hours:v1`.
+The `Update dining hours` GitHub Actions workflow runs at minute 47 every four hours on the repository-scoped `lionhour-dining-mac` self-hosted runner. Playwright launches ordinary headed Chromium in the logged-in macOS Aqua session and checks six official sources independently: the structured Columbia Locations & Hours feed; the NSOP, Labor Day, and Fall 2026 articles; Lerner Hall's Café East page; and Barnard's Dine On Campus Hours of Operation page. It uploads a validated source-attempt batch to `/api/dining-hours`. Vercel retains each source's last successful normalized evidence and the last valid public snapshot together under `lionhour:dining-hours:v1`.
 
 `lionhour:dining-hours:v1` is the Redis storage namespace version, not the public payload version. Public GET responses accept snapshot schema versions 1 through 4 during migration. Version 4 adds the Barnard source, four Barnard venues, and the true retained-success timestamp for each source. Attempt batches and retained envelopes use their own versions: batch/envelope version 3 represents all six sources.
 
-Headed mode is intentional: Columbia's managed challenge did not complete in headless mode during live verification. When an official page initially returns a recognized managed challenge, headed Chromium remains on that page for one 12-second passive grace period so the publisher's ordinary browser verification can finish. The scraper never solves a CAPTCHA, copies cookies, disguises automation, or bypasses a security control.
+Headed mode and the trusted-network runner are intentional: Dine On Campus rejected GitHub-hosted Linux, macOS, and Windows runners and Vercel serverless egress, while ordinary headed Chromium on this network loaded the published page without interaction. When an official page initially returns a recognized managed challenge, headed Chromium remains on that page for one 12-second passive grace period so the publisher's ordinary browser verification can finish. The scraper never solves a CAPTCHA, copies cookies, disguises automation, or bypasses a security control.
+
+The workflow is guarded to the exact `raymondwangnorcal-pixel/LionTime` repository on `refs/heads/main` and selects all four labels `self-hosted`, `macOS`, `ARM64`, and `lionhour-dining`. It has no pull-request trigger. These constraints prevent a fork or untrusted branch from scheduling arbitrary code on the Mac. The runner stores its GitHub credentials and work directory under the ignored `.github-runner/` directory.
 
 Library and dining jobs are independent. A failed Dining source records a bounded attempt result while preserving that source's prior successful evidence. A malformed batch or invalid merged snapshot is rejected atomically and never interrupts library updates. The Dining job has a 15-minute ceiling; Barnard acquisition is separately capped at 75 seconds. Its shared deadline includes the 45-second navigation limit, any 12-second challenge grace, the 15-second initial-render limit, and up to 7.5 seconds for each week transition.
 
@@ -30,6 +32,42 @@ Add these Actions variables under **Settings → Secrets and variables → Actio
 - `DINING_HOURS_API_URL` = `https://lionhour.com/api/dining-hours`
 
 Do not place the update secret in a repository variable or source file.
+
+## Self-hosted Mac runner
+
+Install or repair the runner from the repository root:
+
+```bash
+./scripts/install-dining-runner-macos.sh
+```
+
+The installer downloads GitHub Actions runner `2.336.0` for macOS arm64, verifies its pinned SHA-256 checksum, writes a nested CommonJS package boundary so LionHour's ESM setting does not affect GitHub's service shim, obtains a short-lived registration token from the authenticated GitHub CLI, registers `lionhour-dining-mac`, and installs its user LaunchAgent. It also installs `~/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist`, which keeps `/usr/bin/caffeinate -s` running. The `-s` assertion prevents idle system sleep only while AC power is connected; display sleep remains enabled.
+
+The runner requires all of the following at execution time:
+
+- The Mac is connected to this trusted network.
+- The Mac is plugged into AC power.
+- The user remains logged into the Aqua session so headed Chromium can launch.
+- The lid remains open unless the Mac is attached to an external display and macOS is already operating in supported closed-display mode.
+
+Inspect the local services and GitHub registration:
+
+```bash
+launchctl print gui/501/actions.runner.raymondwangnorcal-pixel-LionTime.lionhour-dining-mac
+launchctl print gui/501/com.lionhour.dining-keep-awake
+gh api repos/raymondwangnorcal-pixel/LionTime/actions/runners
+```
+
+If the runner is offline after a login, repair both services by rerunning the installer. The script is idempotent for an already configured runner and does not replace or reveal its stored service credential.
+
+To remove the runner, first stop and uninstall its service from `.github-runner/`. Obtain a short-lived removal token through `gh api --method POST repos/raymondwangnorcal-pixel/LionTime/actions/runners/remove-token --jq .token`, pass it directly to `./config.sh remove --token`, and do not print or save it. Then run:
+
+```bash
+launchctl bootout gui/501 /Users/raymondwang/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist
+rm /Users/raymondwang/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist
+```
+
+Delete `.github-runner/` only after GitHub no longer lists the runner.
 
 ## First deployment and seed
 

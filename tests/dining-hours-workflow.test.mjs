@@ -9,17 +9,22 @@ const api = fs.readFileSync(new URL('../api/dining-hours.js', import.meta.url), 
 test('dining publisher runs independently every four hours with least privilege', () => {
   assert.match(workflow, /cron: ['"]47 \*\/4 \* \* \*['"]/);
   assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /pull_request(?:_target)?:/);
   assert.match(workflow, /contents: read/);
   assert.doesNotMatch(workflow, /contents: write/);
   assert.match(workflow, /concurrency:\s*[\s\S]*group: update-dining-hours/);
   assert.match(workflow, /timeout-minutes: 15/);
+  assert.match(workflow, /if: github\.repository == 'raymondwangnorcal-pixel\/LionTime' && github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /runs-on: \[self-hosted, macOS, ARM64, lionhour-dining\]/);
 });
 
 test('workflow installs Chromium, tests, scrapes, and publishes behind configuration', () => {
   assert.match(workflow, /npm ci/);
-  assert.match(workflow, /npx playwright install --with-deps chromium/);
+  assert.match(workflow, /npx playwright install chromium/);
+  assert.doesNotMatch(workflow, /playwright install --with-deps/);
   assert.match(workflow, /node --test tests\/dining-hours-/);
-  assert.match(workflow, /xvfb-run --auto-servernum node scripts\/dining-hours-scraper\.mjs --json-out/);
+  assert.match(workflow, /run: node scripts\/dining-hours-scraper\.mjs --json-out/);
+  assert.doesNotMatch(workflow, /xvfb-run/);
   assert.match(workflow, /Publish validated source attempts/);
   assert.match(workflow, /vars\.DINING_HOURS_PUBLISH_ENABLED == 'true'/);
   assert.match(workflow, /vars\.DINING_HOURS_API_URL/);
