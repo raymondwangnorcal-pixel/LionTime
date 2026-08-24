@@ -601,3 +601,11 @@
 - Superseded by: none
 - Note: Uses the directly embedded Lerner calendar and the visible official Bookstore hours block.
 - Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0031
+
+- Type: implementation
+- Implementation commit: `442869a7255aeb5d9f0e9a15dd91c3546c8ee7d4` — Dining scraper fix
+- Superseded by: none
+- Note: Publishes bounded per-source attempts, detects managed challenges before article selectors, and retains last-successful Dining evidence behind the compatible public snapshot.
+- Privacy waivers: none
