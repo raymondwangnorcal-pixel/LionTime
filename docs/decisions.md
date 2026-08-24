@@ -783,3 +783,47 @@
 - Superseded by: none
 - Note: The Recreation scraper now acquires and validates the four official activity-space calendars independently, publishes each room's open or explicit closure state, and reserves Dodge fallback evidence for Blue Gym alone.
 - Privacy waivers: none
+
+## DEC-0041 — Exclude Squash Courts from LionHour
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will omit Squash Courts from the Recreation catalog and Dodge activity-space interface while continuing to publish the four official calendar-backed activity spaces and using only Blue Gym for Dodge fallback evidence.
+- Rationale: Squash Courts currently has only a reservation portal rather than published hours, so displaying it as an item adds an unhelpful permanent unavailable state.
+- Scope: Recreation catalog identity, snapshot schema, source parsing, embedded fallback data, client hydration, UI counts, tests, operations documentation, scheduled publishing, and the live Dodge space list.
+- Implementation: pending
+- Recorded against HEAD: `5d53f387aee594f27027c5af9a69fca7a2b7d0c2`
+- Supersedes: DEC-0040
+- Evidence: The user's 2026-08-24 request to remove Squash Courts as an item for now.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0040
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0041
+- Note: The four calendar-backed activity spaces remain live, but the booking-only Squash Courts row is removed from the product catalog and interface.
+- Privacy waivers: none
+
+## DEC-0042 — Hide Squash Courts without removing its data path
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will continue parsing, validating, storing, and hydrating Squash Courts as a booking-only Dodge space but will filter it out of the visible Dodge activity-space list for now.
+- Rationale: Preserving the underlying identity and parsing path keeps future published-hours support available, while hiding the permanent booking-only state removes an unhelpful row from the current interface.
+- Scope: Recreation client presentation filtering, visible space counts, tests, operations documentation, and the live Dodge activity-space list; backend acquisition, parsing, schema, and API data remain unchanged.
+- Implementation: pending
+- Recorded against HEAD: `5d53f387aee594f27027c5af9a69fca7a2b7d0c2`
+- Supersedes: DEC-0041
+- Evidence: The user's 2026-08-24 clarification to retain Squash Courts parsing and remove only its visible row.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0041
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0042
+- Note: Removing Squash Courts from the catalog and data contract is replaced by presentation-only filtering that preserves all underlying logic.
+- Privacy waivers: none

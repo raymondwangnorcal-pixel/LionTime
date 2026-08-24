@@ -112,7 +112,10 @@ test('atomically overlays Dodge, Uris Pool, and Barnard', () => {
   const result = api.buildUpdates(validSnapshot(), venues, '2026-08-21');
   assert.equal(result.ok, true);
   assert.deepEqual(Array.from(result.entries.map(([venue]) => venue.id)), ['dodge', 'uris-pool', 'barnard-fitness']);
-  assert.equal(result.entries.find(([venue]) => venue.id === 'dodge')[1].recreationSpaces.length, 5);
+  assert.deepEqual(
+    Array.from(result.entries.find(([venue]) => venue.id === 'dodge')[1].recreationSpaces, space => space.id),
+    ['blue-gym', 'levien-gymnasium', 'functional-fitness-studio', 'aerobics-room-4'],
+  );
   assert.equal(result.entries.find(([venue]) => venue.id === 'dodge')[1].recreationLive, true);
 });
 
