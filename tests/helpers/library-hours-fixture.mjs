@@ -2,6 +2,7 @@ const identities = {
   avery: 'avery',
   business: 'business',
   butler_24: 'butler-24',
+  barnard: 'barnard',
   lehman: 'lehman',
   math: 'math',
   science_engineering: 'science-engineering',
@@ -32,6 +33,7 @@ export function makeValidSnapshot() {
           6: { open: '11:00', close: '18:00' },
         },
       }],
+      ...(id === 'barnard' ? { holidayUrl: 'https://library.barnard.edu/visit/hours' } : {}),
     })),
   };
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scrape the six LionHour library cards from Columbia's hours site."""
+"""Scrape the seven LionHour library cards from their official hours sources."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://hours.library.columbia.edu/locations"
+BARNARD_HOLIDAY_URL = "https://library.barnard.edu/visit/hours"
 EASTERN = ZoneInfo("America/New_York")
 HEADERS = {"User-Agent": "LionHour/1.0 (Columbia University student project)"}
 
@@ -35,6 +36,14 @@ DISPLAYED_LIBRARIES = [
         "note": "Service desk closes 15 min before the library",
     },
     {"id": "math", "slug": "math", "venue_id": "math", "name": "Mathematics Library"},
+    {
+        "id": "barnard",
+        "slug": "barnard",
+        "venue_id": "milstein",
+        "name": "Milstein Library",
+        "holiday_url": BARNARD_HOLIDAY_URL,
+        "note": "CU/BC ID swipe required; holiday closures come from Barnard Library",
+    },
 ]
 DISPLAYED_LIBRARY_IDS = {library["id"] for library in DISPLAYED_LIBRARIES}
 EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman"}
@@ -93,6 +102,16 @@ def fetch_library_page(slug: str, date_value: Optional[str] = None) -> Optional[
     return BeautifulSoup(response.text, "html.parser")
 
 
+def fetch_barnard_holiday_page() -> Optional[BeautifulSoup]:
+    try:
+        response = requests.get(BARNARD_HOLIDAY_URL, headers=HEADERS, timeout=20)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[ERROR] Failed to fetch Barnard holiday hours: {exc}", file=sys.stderr)
+        return None
+    return BeautifulSoup(response.text, "html.parser")
+
+
 def extract_schedule_from_page(soup: BeautifulSoup) -> dict[str, Optional[dict[str, str]]]:
     """Extract ISO-dated calendar cells from Columbia's location page."""
     schedule: dict[str, Optional[dict[str, str]]] = {}
@@ -108,6 +127,75 @@ def extract_schedule_from_page(soup: BeautifulSoup) -> dict[str, Optional[dict[s
     if not schedule:
         raise ScheduleParseError("no dated calendar cells found")
     return schedule
+
+
+def extract_barnard_holiday_closures(
+    soup: BeautifulSoup,
+    reference_date: datetime,
+) -> set[str]:
+    """Return exact ISO closure dates from Barnard's year-bounded holiday table."""
+    holiday_heading = next(
+        (
+            heading
+            for heading in soup.find_all(["h2", "h3"])
+            if re.search(
+                r"\bUpcoming\s+Holidays\s+and\s+Library\s+Closures\b",
+                heading.get_text(" ", strip=True),
+                re.IGNORECASE,
+            )
+        ),
+        None,
+    )
+    if holiday_heading is None:
+        raise ScheduleParseError("Barnard holiday closure heading is missing")
+
+    schedule_heading = holiday_heading.find_previous(["h2", "h3"])
+    years = {
+        int(value)
+        for value in re.findall(r"\b20\d{2}\b", schedule_heading.get_text(" ", strip=True) if schedule_heading else "")
+    }
+    reference_year = reference_date.astimezone(EASTERN).year
+    if not years or not any(abs(year - reference_year) <= 1 for year in years):
+        raise ScheduleParseError("Barnard holiday closures are not bounded to the current schedule year")
+
+    table = holiday_heading.find_next("table")
+    if table is None:
+        raise ScheduleParseError("Barnard holiday closure table is missing")
+    headers = [cell.get_text(" ", strip=True).casefold() for cell in table.find_all("th")]
+    if "library closed" not in headers:
+        raise ScheduleParseError("Barnard holiday closure table identity is missing")
+
+    closures: set[str] = set()
+    for row in table.find_all("tr"):
+        cells = row.find_all("td")
+        if not cells:
+            continue
+        label = " ".join(cells[0].get_text(" ", strip=True).split())
+        match = re.fullmatch(
+            r"(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+"
+            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+"
+            r"(\d{1,2})",
+            label,
+            re.IGNORECASE,
+        )
+        if not match:
+            raise ScheduleParseError(f"unrecognized Barnard holiday date: {label!r}")
+        weekday, month, day_value = match.groups()
+        candidates = []
+        for year in years:
+            try:
+                candidate = datetime.strptime(
+                    f"{month} {day_value} {year}",
+                    "%B %d %Y",
+                ).date()
+            except ValueError as exc:
+                raise ScheduleParseError(f"invalid Barnard holiday date: {label!r}") from exc
+            if candidate.strftime("%A").casefold() == weekday.casefold():
+                candidates.append(candidate)
+        if len(candidates) != 1:
+            raise ScheduleParseError(f"Barnard holiday weekday is ambiguous or incorrect: {label!r}")
+        closures.add(candidates[0].isoformat())
+    return closures
 
 
 def _sunday_on_or_before(value: date) -> date:
@@ -158,7 +246,7 @@ def _normalize_known_source_anomalies(
 
 def _fallback_entry(definition: dict, reference_date: datetime) -> dict:
     start = _sunday_on_or_before(reference_date.date())
-    return {
+    entry = {
         "id": definition["id"],
         "name": definition["name"],
         "url": f"{BASE_URL}/{definition['slug']}",
@@ -167,6 +255,9 @@ def _fallback_entry(definition: dict, reference_date: datetime) -> dict:
         "schedules": [_week_block({}, start, "Unknown")],
         "scrapeFailed": True,
     }
+    if definition.get("holiday_url"):
+        entry["holidayUrl"] = definition["holiday_url"]
+    return entry
 
 
 def _embedded_fallback_entry(definition: dict) -> dict:
@@ -197,6 +288,7 @@ def scrape_library(
     definition: dict,
     reference_date: datetime,
     fetcher: Callable = fetch_library_page,
+    holiday_fetcher: Callable = fetch_barnard_holiday_page,
 ) -> dict:
     """Fetch and parse one configured library without publishing guessed hours."""
     soup = fetcher(definition["slug"], reference_date.date().isoformat())
@@ -215,6 +307,19 @@ def scrape_library(
             return _fallback_entry(definition, reference_date)
         date_hours = {}
     date_hours = _normalize_known_source_anomalies(definition["id"], date_hours)
+    if definition.get("holiday_url"):
+        holiday_soup = holiday_fetcher()
+        if holiday_soup is None:
+            return _fallback_entry(definition, reference_date)
+        try:
+            holiday_closures = extract_barnard_holiday_closures(holiday_soup, reference_date)
+        except ScheduleParseError as exc:
+            print(f"[ERROR] Failed to parse Barnard holiday hours: {exc}", file=sys.stderr)
+            return _fallback_entry(definition, reference_date)
+        date_hours = {
+            date_value: None if date_value in holiday_closures else interval
+            for date_value, interval in date_hours.items()
+        }
     start = _sunday_on_or_before(reference_date.date())
     schedules = (
         [_week_block({}, start, "Temporarily Closed")]
@@ -228,7 +333,7 @@ def scrape_library(
         and _has_unapproved_overnight(definition["id"], schedules)
     ):
         return _embedded_fallback_entry(definition)
-    return {
+    entry = {
         "id": definition["id"],
         "name": definition["name"],
         "url": f"{BASE_URL}/{definition['slug']}",
@@ -236,9 +341,16 @@ def scrape_library(
         "temporarilyClosed": temporarily_closed,
         "schedules": schedules,
     }
+    if definition.get("holiday_url"):
+        entry["holidayUrl"] = definition["holiday_url"]
+    return entry
 
 
-def build_payload(reference_date: datetime, fetcher: Callable = fetch_library_page) -> dict:
+def build_payload(
+    reference_date: datetime,
+    fetcher: Callable = fetch_library_page,
+    holiday_fetcher: Callable = fetch_barnard_holiday_page,
+) -> dict:
     if reference_date.tzinfo is None:
         reference_date = reference_date.replace(tzinfo=EASTERN)
     reference_date = reference_date.astimezone(EASTERN)
@@ -246,7 +358,10 @@ def build_payload(reference_date: datetime, fetcher: Callable = fetch_library_pa
         "schemaVersion": 1,
         "generated": reference_date.isoformat(timespec="seconds"),
         "generatedDisplay": reference_date.strftime("%B %-d, %Y at %-I:%M %p"),
-        "libraries": [scrape_library(item, reference_date, fetcher) for item in DISPLAYED_LIBRARIES],
+        "libraries": [
+            scrape_library(item, reference_date, fetcher, holiday_fetcher)
+            for item in DISPLAYED_LIBRARIES
+        ],
     }
 
 
@@ -288,6 +403,14 @@ def validate_publishable_payload(payload: object, required_ids: set[str]) -> lis
         url = library.get("url", "")
         if not isinstance(url, str) or not url.startswith(f"{BASE_URL}/"):
             errors.append(f"{library_id}: invalid Columbia hours URL")
+        holiday_url = library.get("holidayUrl")
+        if library_id == "barnard":
+            if url != f"{BASE_URL}/barnard":
+                errors.append("barnard: invalid primary hours URL")
+            if holiday_url != BARNARD_HOLIDAY_URL:
+                errors.append("barnard: invalid holiday hours URL")
+        elif "holidayUrl" in library:
+            errors.append(f"{library_id}: only barnard may use holidayUrl")
         use_embedded_fallback = library.get("useEmbeddedFallback", False)
         if not isinstance(use_embedded_fallback, bool):
             errors.append(f"{library_id}: useEmbeddedFallback must be boolean")

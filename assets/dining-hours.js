@@ -18,11 +18,26 @@
     'smith-dining': { sourceId: '7452', category: 'dining' },
     facshack: { sourceId: '7487', category: 'dining' },
   });
-  const CONTRACT = Object.freeze({
+  const V3_CONTRACT = Object.freeze({
     ...LEGACY_CONTRACT,
     'cafe-east': { sourceId: 'cafe-east', category: 'cafe' },
   });
-  const LEGACY_STATIC_FALLBACK_IDS = Object.freeze(['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge']);
+  const BARNARD_IDS = Object.freeze([
+    'hewitt', 'diana-center-cafe', 'barnard-bubble-tea-sushi', 'lizs-place',
+  ]);
+  const CONTRACT = Object.freeze({
+    ...V3_CONTRACT,
+    hewitt: { sourceId: 'barnard-hours', category: 'dining' },
+    'diana-center-cafe': { sourceId: 'barnard-hours', category: 'dining' },
+    'barnard-bubble-tea-sushi': { sourceId: 'barnard-hours', category: 'dining' },
+    'lizs-place': { sourceId: 'barnard-hours', category: 'cafe' },
+  });
+  const LEGACY_STATIC_FALLBACK_IDS = Object.freeze([
+    'joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge', ...BARNARD_IDS,
+  ]);
+  const V3_STATIC_FALLBACK_IDS = Object.freeze([
+    'joe-noco', 'joe-journalism', 'joe-dodge', ...BARNARD_IDS,
+  ]);
   const STATIC_FALLBACK_IDS = Object.freeze(['joe-noco', 'joe-journalism', 'joe-dodge']);
   const LEGACY_SOURCE_CONTRACT = Object.freeze({
     'locations-feed': 'https://dining.columbia.edu/content/locations-hours',
@@ -30,9 +45,13 @@
     'labor-day-2026': 'https://dining.columbia.edu/news/labor-day-2026-operating-hours',
     'fall-2026': 'https://dining.columbia.edu/news/fall-2026-operating-hours',
   });
-  const SOURCE_CONTRACT = Object.freeze({
+  const V3_SOURCE_CONTRACT = Object.freeze({
     ...LEGACY_SOURCE_CONTRACT,
     'cafe-east': 'https://lernerhall.columbia.edu/content/cafe-east',
+  });
+  const SOURCE_CONTRACT = Object.freeze({
+    ...V3_SOURCE_CONTRACT,
+    'barnard-hours': 'https://dineoncampus.com/barnard/hours-of-operation',
   });
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
@@ -81,9 +100,11 @@
   function validateSnapshot(snapshot) {
     const versionTwo = snapshot?.schemaVersion === 2;
     const versionThree = snapshot?.schemaVersion === 3;
-    const hasProvenance = versionTwo || versionThree;
-    const contract = versionThree ? CONTRACT : LEGACY_CONTRACT;
-    const sourceContract = versionThree ? SOURCE_CONTRACT : LEGACY_SOURCE_CONTRACT;
+    const versionFour = snapshot?.schemaVersion === 4;
+    const hasProvenance = versionTwo || versionThree || versionFour;
+    const contract = versionFour ? CONTRACT : versionThree ? V3_CONTRACT : LEGACY_CONTRACT;
+    const sourceContract = versionFour ? SOURCE_CONTRACT
+      : versionThree ? V3_SOURCE_CONTRACT : LEGACY_SOURCE_CONTRACT;
     if (!snapshot || (snapshot.schemaVersion !== 1 && !hasProvenance) || snapshot.source !== SOURCE
       || typeof snapshot.generated !== 'string' || Number.isNaN(Date.parse(snapshot.generated))
       || !/(?:Z|[+-]\d{2}:\d{2})$/.test(snapshot.generated)
@@ -111,6 +132,8 @@
           if (!exactKeys(day, ['date', 'intervals', 'status', 'sourceId'])) return null;
           const sourceIds = [...Object.keys(sourceContract), 'unpublished'];
           if (!sourceIds.includes(day.sourceId) || day.sourceId === 'nsop-2026') return null;
+          if (locationContract.sourceId === 'barnard-hours'
+            && !['barnard-hours', 'unpublished'].includes(day.sourceId)) return null;
           if (day.sourceId === 'unpublished'
             && (day.status !== 'Hours not published' || day.intervals.length)) return null;
         }
@@ -122,11 +145,16 @@
     const sourceIds = Object.keys(sourceContract);
     if (!Array.isArray(snapshot.sources) || snapshot.sources.length !== sourceIds.length) return null;
     const seenSources = new Set();
+    const sourceFetchedAt = {};
     for (const source of snapshot.sources) {
       if (!exactKeys(source, ['id', 'url', 'fetchedAt'])
         || !(source.id in sourceContract) || seenSources.has(source.id)
-        || source.url !== sourceContract[source.id] || source.fetchedAt !== snapshot.generated) return null;
+        || source.url !== sourceContract[source.id]
+        || typeof source.fetchedAt !== 'string' || Number.isNaN(Date.parse(source.fetchedAt))
+        || !/(?:Z|[+-]\d{2}:\d{2})$/.test(source.fetchedAt)
+        || (!versionFour && source.fetchedAt !== snapshot.generated)) return null;
       seenSources.add(source.id);
+      sourceFetchedAt[source.id] = source.fetchedAt;
     }
     if (seenSources.size !== sourceIds.length || !Array.isArray(snapshot.specialServices)
       || snapshot.specialServices.length > 1) return null;
@@ -163,18 +191,26 @@
         days,
       });
     }
-    return { byId, locationIds: Object.keys(contract), specialServices };
+    return { byId, locationIds: Object.keys(contract), specialServices, sourceFetchedAt };
   }
 
-  function buildUpdates(snapshot, venues, today) {
+  function formatEastern(timestamp) {
+    return `${new Date(timestamp).toLocaleString('en-US', {
+      timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
+    })} ET`;
+  }
+
+  function buildUpdates(snapshot, venues, today, now = new Date()) {
     if (!ISO_DATE.test(today || '')) return { ok: false };
     const validated = validateSnapshot(snapshot);
     if (!validated) return { ok: false };
-    const { byId, locationIds, specialServices } = validated;
+    const { byId, locationIds, specialServices, sourceFetchedAt = {} } = validated;
     const firstIndex = Math.round((new Date(`${today}T12:00:00Z`) - new Date(`${snapshot.windowStart}T12:00:00Z`)) / 86400000);
     if (firstIndex < 0 || firstIndex + 7 > 14) return { ok: false };
 
     const entries = [];
+    const dynamicFallbackIds = [];
+    let barnardStale = false;
     for (const id of locationIds) {
       const venue = venues.find((item) => item.id === id);
       if (!venue) continue;
@@ -189,18 +225,53 @@
         sourceIds[dow] = day.sourceId || 'locations-feed';
       }
       const todayStatus = days[0].status;
+      const isBarnard = BARNARD_IDS.includes(id);
+      const barnardFetchedAt = sourceFetchedAt['barnard-hours'];
+      const barnardAge = isBarnard ? now.getTime() - Date.parse(barnardFetchedAt) : 0;
+      const isPartial = isBarnard && days.some(day => day.sourceId !== 'barnard-hours');
+      const isExpired = isBarnard && barnardAge > 24 * 60 * 60 * 1000;
+      const isBarnardStale = isBarnard && barnardAge > 8 * 60 * 60 * 1000;
+      const isAllWeekClosed = isBarnard && !isPartial && days.every(day => (
+        day.status === 'Closed' && day.intervals.length === 0
+      ));
+      const diningLive = !isBarnard || (!isPartial && !isExpired);
+      if (isBarnardStale) barnardStale = true;
+      if (!diningLive) dynamicFallbackIds.push(id);
+      let sourceNote = todayStatus && !/^closed\b/i.test(todayStatus) ? todayStatus : null;
+      if (isExpired) {
+        sourceNote = `Barnard hours may be outdated · Last confirmed ${formatEastern(barnardFetchedAt)}`;
+      } else if (isPartial) {
+        sourceNote = 'Some Barnard hours are not yet published';
+      } else if (isBarnardStale) {
+        sourceNote = `Barnard hours last confirmed ${formatEastern(barnardFetchedAt)} · Verify before visiting`;
+      } else if (isAllWeekClosed) {
+        sourceNote = 'Closed throughout the published week';
+      }
       entries.push([venue, {
         hours,
         sourceStatuses,
         sourceIds,
-        sourceNote: todayStatus && !/^closed\b/i.test(todayStatus) ? todayStatus : null,
-        diningLive: true,
+        sourceNote,
+        diningLive,
+        diningFreshness: isExpired ? 'expired'
+          : isPartial ? 'partial' : isBarnardStale ? 'stale' : 'live',
       }]);
     }
-    const staticFallbackIds = snapshot.schemaVersion === 3
-      ? STATIC_FALLBACK_IDS
-      : LEGACY_STATIC_FALLBACK_IDS;
-    return { ok: true, entries, staticFallbackIds, specialServices };
+    const baseFallbackIds = snapshot.schemaVersion === 4 ? STATIC_FALLBACK_IDS
+      : snapshot.schemaVersion === 3 ? V3_STATIC_FALLBACK_IDS : LEGACY_STATIC_FALLBACK_IDS;
+    const staticFallbackIds = [...baseFallbackIds, ...dynamicFallbackIds];
+    const updatedCount = entries.filter(([, next]) => next.diningLive).length;
+    const totalCount = new Set([...entries.map(([venue]) => venue.id), ...staticFallbackIds]).size;
+    return {
+      ok: true,
+      entries,
+      staticFallbackIds,
+      specialServices,
+      updatedCount,
+      totalCount,
+      barnardFetchedAt: sourceFetchedAt['barnard-hours'] || null,
+      barnardStale,
+    };
   }
 
   async function hydrate({
@@ -216,18 +287,20 @@
       const response = await fetchImpl('/api/dining-hours', { headers: { Accept: 'application/json' } });
       if (!response.ok) throw new Error(`http-${response.status}`);
       const snapshot = await response.json();
-      const updates = buildUpdates(snapshot, venues, today);
+      const updates = buildUpdates(snapshot, venues, today, now);
       if (!updates.ok) throw new Error('invalid-data');
       setSpecialServices(updates.specialServices);
       for (const [venue, next] of updates.entries) Object.assign(venue, next);
       render();
-      const stale = now.getTime() - Date.parse(snapshot.generated) > 8 * 60 * 60 * 1000;
+      const stale = now.getTime() - Date.parse(snapshot.generated) > 8 * 60 * 60 * 1000
+        || updates.barnardStale;
       const status = {
         kind: stale ? 'stale' : 'partial',
         generated: snapshot.generated,
-        updatedCount: updates.entries.length,
-        totalCount: updates.entries.length + updates.staticFallbackIds.length,
+        updatedCount: updates.updatedCount,
+        totalCount: updates.totalCount,
         staticFallbackIds: updates.staticFallbackIds,
+        barnardFetchedAt: updates.barnardFetchedAt,
       };
       setStatus(status);
       return { applied: true, stale, ...status };

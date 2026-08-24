@@ -12,7 +12,7 @@ test('dining publisher runs independently every four hours with least privilege'
   assert.match(workflow, /contents: read/);
   assert.doesNotMatch(workflow, /contents: write/);
   assert.match(workflow, /concurrency:\s*[\s\S]*group: update-dining-hours/);
-  assert.match(workflow, /timeout-minutes: 10/);
+  assert.match(workflow, /timeout-minutes: 15/);
 });
 
 test('workflow installs Chromium, tests, scrapes, and publishes behind configuration', () => {

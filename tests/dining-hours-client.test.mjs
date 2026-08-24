@@ -7,6 +7,7 @@ import {
   makeValidDiningSnapshot,
   makeValidDiningSnapshotV2,
   makeValidDiningSnapshotV3,
+  makeValidDiningSnapshotV4,
 } from './helpers/dining-hours-fixture.mjs';
 
 const source = fs.readFileSync(new URL('../assets/dining-hours.js', import.meta.url), 'utf8');
@@ -20,13 +21,17 @@ const LIVE_IDS = [
   'johnnys', 'lenfest-cafe', 'facshack',
 ];
 const STATIC_IDS = ['joe-noco', 'joe-journalism', 'joe-dodge'];
-const LEGACY_STATIC_IDS = ['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge'];
+const BARNARD_IDS = ['hewitt', 'diana-center-cafe', 'barnard-bubble-tea-sushi', 'lizs-place'];
+const LEGACY_STATIC_IDS = ['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge', ...BARNARD_IDS];
 
 function venues() {
   return [
     ...LIVE_IDS.map((id) => ({ id, hours: { 5: [['01:00', '02:00']] }, note: `embedded-${id}` })),
     { id: 'cafe-east', hours: { 5: [['10:30', '19:30']] }, note: 'embedded-cafe-east' },
     ...STATIC_IDS.map((id) => ({ id, hours: { 5: [['07:00', '19:00']] }, note: `static-${id}` })),
+    ...BARNARD_IDS.map((id) => ({
+      id, hours: { 5: [] }, sourceStatuses: { 5: 'Hours load from official schedule' }, note: `pending-${id}`,
+    })),
     { id: 'dodge', hours: { 5: [['06:00', '22:00']] } },
   ];
 }
@@ -50,7 +55,7 @@ test('atomically overlays legacy live locations and preserves four static cafés
   assert.equal(result.updatedCount, 15);
   assert.equal(renders, 1);
   assert.equal(status.kind, 'partial');
-  assert.equal(status.totalCount, 19);
+  assert.equal(status.totalCount, 23);
   assert.deepEqual(Array.from(status.staticFallbackIds), LEGACY_STATIC_IDS);
   assert.deepEqual(list.filter(({ id }) => LEGACY_STATIC_IDS.includes(id)), staticBefore);
   assert.deepEqual(list.at(-1), dodgeBefore);
@@ -73,8 +78,8 @@ test('overlays Café East from schema version 3 and preserves three Joe cafés',
 
   assert.equal(result.applied, true);
   assert.equal(result.updatedCount, 16);
-  assert.equal(result.totalCount, 19);
-  assert.deepEqual(Array.from(result.staticFallbackIds), STATIC_IDS);
+  assert.equal(result.totalCount, 23);
+  assert.deepEqual(Array.from(result.staticFallbackIds), [...STATIC_IDS, ...BARNARD_IDS]);
   assert.deepEqual(list.filter(({ id }) => STATIC_IDS.includes(id)), joeBefore);
   assert.deepEqual(
     Array.from(list.find(({ id }) => id === 'cafe-east').hours[5], interval => Array.from(interval)),
@@ -102,6 +107,55 @@ test('preserves split intervals and exact per-day closure status', () => {
   ]);
   const jjsNext = updates.entries.find(([venue]) => venue.id === 'jjs')[1];
   assert.equal(jjsNext.sourceStatuses[5], 'Closed for Summer');
+});
+
+test('hydrates fresh Barnard venues and reports twenty of twenty-three live', async () => {
+  const list = venues();
+  const snapshot = makeValidDiningSnapshotV4({ barnardFetchedAt: '2026-08-21T12:00:00.000Z' });
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => ({ ok: true, json: async () => snapshot }),
+    render() {},
+    today: '2026-08-21',
+    now: new Date('2026-08-21T17:00:00Z'),
+  });
+  assert.equal(result.applied, true);
+  assert.equal(result.updatedCount, 20);
+  assert.equal(result.totalCount, 23);
+  assert.deepEqual(Array.from(result.staticFallbackIds), STATIC_IDS);
+  assert.equal(list.find(({ id }) => id === 'lizs-place').diningFreshness, 'live');
+});
+
+test('hydrates Barnard days partially and stops counting expired evidence as live', () => {
+  const snapshot = makeValidDiningSnapshotV4({ barnardFetchedAt: '2026-08-20T12:00:00.000Z' });
+  const hewitt = snapshot.locations.find(({ id }) => id === 'hewitt');
+  hewitt.days[2] = {
+    date: hewitt.days[2].date,
+    intervals: [],
+    status: 'Hours not published',
+    sourceId: 'unpublished',
+  };
+  const updates = api.buildUpdates(snapshot, venues(), '2026-08-21', new Date('2026-08-21T17:00:01Z'));
+  assert.equal(updates.ok, true);
+  assert.equal(updates.updatedCount, 16);
+  assert.equal(updates.totalCount, 23);
+  assert.deepEqual(Array.from(updates.staticFallbackIds), [...STATIC_IDS, ...BARNARD_IDS]);
+  const hewittNext = updates.entries.find(([venue]) => venue.id === 'hewitt')[1];
+  assert.equal(hewittNext.diningFreshness, 'expired');
+  assert.equal(hewittNext.sourceStatuses[0], 'Hours not published');
+  assert.match(hewittNext.sourceNote, /may be outdated/);
+});
+
+test('uses exact eight-hour and twenty-four-hour Barnard freshness boundaries', () => {
+  const snapshot = makeValidDiningSnapshotV4({ barnardFetchedAt: '2026-08-21T12:00:00.000Z' });
+  const atEight = api.buildUpdates(snapshot, venues(), '2026-08-21', new Date('2026-08-21T20:00:00Z'));
+  assert.equal(atEight.entries.find(([venue]) => venue.id === 'hewitt')[1].diningFreshness, 'live');
+  const afterEight = api.buildUpdates(snapshot, venues(), '2026-08-21', new Date('2026-08-21T20:00:01Z'));
+  assert.equal(afterEight.entries.find(([venue]) => venue.id === 'hewitt')[1].diningFreshness, 'stale');
+  const atTwentyFour = api.buildUpdates(snapshot, venues(), '2026-08-21', new Date('2026-08-22T12:00:00Z'));
+  assert.equal(atTwentyFour.entries.find(([venue]) => venue.id === 'hewitt')[1].diningFreshness, 'stale');
+  const afterTwentyFour = api.buildUpdates(snapshot, venues(), '2026-08-21', new Date('2026-08-22T12:00:01Z'));
+  assert.equal(afterTwentyFour.entries.find(([venue]) => venue.id === 'hewitt')[1].diningFreshness, 'expired');
 });
 
 test('keeps every embedded schedule when request or validation fails', async () => {

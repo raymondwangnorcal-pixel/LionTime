@@ -9,6 +9,27 @@ test('accepts successful and challenged Dining source attempts independently', (
   assert.equal(validateDiningAttemptBatch(batch).ok, true);
 });
 
+test('accepts a six-source batch with either fourteen or twenty-one Barnard days', () => {
+  const full = makeValidDiningAttemptBatch({ schemaVersion: 3, generated: '2026-08-24T12:00:00.000Z' });
+  assert.equal(validateDiningAttemptBatch(full).ok, true);
+
+  const twoWeeks = structuredClone(full);
+  const barnard = twoWeeks.attempts.at(-1).payload;
+  barnard.windowEnd = '2026-09-05';
+  for (const venue of barnard.venues) venue.days = venue.days.slice(0, 14);
+  assert.equal(validateDiningAttemptBatch(twoWeeks).ok, true);
+});
+
+test('rejects malformed Barnard coverage and venue identity', () => {
+  const coverage = makeValidDiningAttemptBatch({ schemaVersion: 3, generated: '2026-08-24T12:00:00.000Z' });
+  coverage.attempts.at(-1).payload.venues[0].days.pop();
+  assert.match(validateDiningAttemptBatch(coverage).errors.join('\n'), /days must match Barnard coverage/);
+
+  const identity = makeValidDiningAttemptBatch({ schemaVersion: 3, generated: '2026-08-24T12:00:00.000Z' });
+  identity.attempts.at(-1).payload.venues[0].id = 'lefrak-byte-kiosk';
+  assert.match(validateDiningAttemptBatch(identity).errors.join('\n'), /invalid Barnard identity/);
+});
+
 test('rejects mismatched sources, unbounded failures, and malformed retained evidence', () => {
   const source = makeValidDiningAttemptBatch();
   source.attempts[0].sourceUrl = 'https://example.com/hours';

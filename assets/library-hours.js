@@ -6,10 +6,13 @@
     business: 'uris',
     avery: 'avery',
     math: 'math',
+    barnard: 'milstein',
   });
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const FALLBACK_REASON = 'unapproved-overnight-hours';
+  const BARNARD_PRIMARY_URL = 'https://hours.library.columbia.edu/locations/barnard';
+  const BARNARD_HOLIDAY_URL = 'https://library.barnard.edu/visit/hours';
 
   function buildUpdates(snapshot, venues, today) {
     if (!snapshot || snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.libraries)
@@ -32,6 +35,11 @@
       if (library.scrapeFailed || typeof library.temporarilyClosed !== 'boolean'
         || !Array.isArray(library.schedules)
         || !/^https:\/\/hours\.library\.columbia\.edu\/locations\/[^/?#]+(?:\?.*)?$/.test(library.url || '')) {
+        return { ok: false };
+      }
+      if (scraperId === 'barnard') {
+        if (library.url !== BARNARD_PRIMARY_URL || library.holidayUrl !== BARNARD_HOLIDAY_URL) return { ok: false };
+      } else if (library.holidayUrl !== undefined) {
         return { ok: false };
       }
       const venue = venues.find((item) => item.id === ID_MAP[scraperId]);
@@ -65,7 +73,7 @@
         }
       }
       if (library.temporarilyClosed && Object.values(hours).some(Boolean)) return { ok: false };
-      const next = { hours };
+      const next = { hours, sourceStatuses: null };
       if (typeof library.note === 'string' && library.note.trim()) next.note = library.note.trim();
       entries.push([venue, next]);
     }

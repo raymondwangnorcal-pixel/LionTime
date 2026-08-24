@@ -17,6 +17,7 @@ function venues() {
     { id: 'uris', hours: {} },
     { id: 'avery', hours: {} },
     { id: 'math', hours: {} },
+    { id: 'milstein', hours: {}, sourceStatuses: { 4: 'Hours load from official schedule' }, note: 'embedded' },
     { id: 'dodge', hours: { 4: [['06:00', '22:00']] } },
   ];
 }
@@ -39,6 +40,8 @@ test('valid hydration atomically updates only mapped venues and reports freshnes
   assert.equal(status.kind, 'live');
   assert.deepEqual(list.at(-1), dodgeBefore);
   assert.equal(list[0].hours[4][0][0], '09:00');
+  assert.equal(list.find((venue) => venue.id === 'milstein').hours[4][0][0], '09:00');
+  assert.equal(list.find((venue) => venue.id === 'milstein').sourceStatuses, null);
 });
 
 test('keeps embedded schedules and marks fallback when request or data fails', async () => {
@@ -82,7 +85,7 @@ test('does not apply an unapproved overnight interval', () => {
   assert.equal(api.buildUpdates(snapshot, venues(), '2026-08-20').ok, false);
 });
 
-test('updates five libraries while preserving embedded Lehman hours', async () => {
+test('updates six libraries while preserving embedded Lehman hours', async () => {
   const snapshot = makeValidSnapshot();
   const lehman = snapshot.libraries.find((library) => library.id === 'lehman');
   Object.assign(lehman, {
@@ -102,10 +105,23 @@ test('updates five libraries while preserving embedded Lehman hours', async () =
     now: new Date('2026-08-20T17:00:00Z'),
   });
   assert.equal(result.applied, true);
-  assert.equal(result.updatedCount, 5);
+  assert.equal(result.updatedCount, 6);
   assert.deepEqual(Array.from(result.fallbackIds), ['lehman']);
   assert.deepEqual(list.find((venue) => venue.id === 'lehman'), embeddedLehman);
   assert.equal(status.kind, 'partial');
-  assert.equal(status.updatedCount, 5);
+  assert.equal(status.updatedCount, 6);
   assert.deepEqual(Array.from(status.fallbackIds), ['lehman']);
+});
+
+test('rejects missing or untrusted Milstein holiday provenance atomically', () => {
+  for (const holidayUrl of [undefined, 'https://example.com/visit/hours']) {
+    const snapshot = makeValidSnapshot();
+    const milstein = snapshot.libraries.find((library) => library.id === 'barnard');
+    if (holidayUrl === undefined) delete milstein.holidayUrl;
+    else milstein.holidayUrl = holidayUrl;
+    const list = venues();
+    const before = structuredClone(list);
+    assert.equal(api.buildUpdates(snapshot, list, '2026-08-20').ok, false);
+    assert.deepEqual(list, before);
+  }
 });

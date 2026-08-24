@@ -6,6 +6,10 @@ import {
   parseNsopArticle,
 } from '../../lib/dining-article-parser.js';
 import { parseCafeEastPage } from '../../lib/cafe-east-parser.js';
+import {
+  combineBarnardDiningWeeks,
+  parseBarnardRenderedWeek,
+} from '../../lib/barnard-dining-hours-parser.js';
 import { DINING_LOCATION_MAP } from '../../scripts/dining-hours-scraper.mjs';
 
 function addDays(date, count) {
@@ -95,9 +99,41 @@ export function makeValidDiningSnapshotV3() {
   return snapshot;
 }
 
+export function makeValidDiningSnapshotV4({ barnardFetchedAt = '2026-08-21T12:00:00.000Z' } = {}) {
+  const snapshot = makeValidDiningSnapshotV3();
+  snapshot.schemaVersion = 4;
+  snapshot.sources.push({
+    id: 'barnard-hours',
+    url: 'https://dineoncampus.com/barnard/hours-of-operation',
+    fetchedAt: barnardFetchedAt,
+  });
+  const barnard = [
+    ['hewitt', 'Hewitt Dining', 'dining'],
+    ['diana-center-cafe', 'Diana Center Cafe', 'dining'],
+    ['barnard-bubble-tea-sushi', 'Bubble Tea & Sushi', 'dining'],
+    ['lizs-place', "Liz's Place", 'cafe'],
+  ];
+  for (const [id, name, category] of barnard) {
+    snapshot.locations.push({
+      id,
+      sourceId: 'barnard-hours',
+      name,
+      category,
+      days: Array.from({ length: 14 }, (_unused, index) => ({
+        date: addDays(snapshot.windowStart, index),
+        intervals: index % 7 < 5 ? [['08:00', '14:00']] : [],
+        status: index % 7 < 5 ? null : 'Closed',
+        sourceId: 'barnard-hours',
+      })),
+    });
+  }
+  return snapshot;
+}
+
 export function makeValidDiningAttemptBatch({
   generated = '2026-08-21T12:00:00.000Z',
   failures = [],
+  schemaVersion = 2,
 } = {}) {
   const base = makeValidDiningSnapshot();
   base.generated = generated;
@@ -128,8 +164,17 @@ export function makeValidDiningAttemptBatch({
     ['cafe-east', 'https://lernerhall.columbia.edu/content/cafe-east',
       parseCafeEastPage(fixture('cafe-east-live.txt'))],
   ];
+  if (schemaVersion === 3) {
+    const barnardWeeks = ['2026-08-23', '2026-08-30', '2026-09-06']
+      .map(date => parseBarnardRenderedWeek(fixture(`barnard-dining-hours-week-${date}.html`)));
+    sources.push([
+      'barnard-hours',
+      'https://dineoncampus.com/barnard/hours-of-operation',
+      combineBarnardDiningWeeks(barnardWeeks),
+    ]);
+  }
   return {
-    schemaVersion: 2,
+    schemaVersion,
     generated,
     windowStart: base.windowStart,
     windowEnd: base.windowEnd,
