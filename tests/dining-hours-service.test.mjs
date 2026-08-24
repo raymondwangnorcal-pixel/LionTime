@@ -78,6 +78,21 @@ test('retains each source independently and keeps the legacy snapshot until all 
     ['labor-day-2026', 'success', second.generated],
     ['fall-2026', 'success', second.generated],
   ]);
+
+  const outage = makeValidDiningAttemptBatch({
+    generated: '2026-08-21T20:00:00.000Z',
+    failures: ['locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026'],
+  });
+  assert.equal((await service.handle({
+    method: 'PUT', authorization: 'Bearer test-secret', body: outage,
+  })).status, 204);
+  assert.deepEqual((await service.handle({ method: 'GET' })).body, resolved);
+  const retained = await store.getSnapshot();
+  assert.ok(retained.sources.every(source => source.lastAttemptResult === 'failure'));
+  assert.deepEqual(
+    retained.sources.map(source => source.lastSuccessAt),
+    [first.generated, first.generated, second.generated, second.generated],
+  );
 });
 
 test('protects writes and handles empty, unsupported, and failed storage', async () => {

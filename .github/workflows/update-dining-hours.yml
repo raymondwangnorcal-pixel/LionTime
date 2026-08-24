@@ -28,9 +28,9 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Test dining pipeline
         run: node --test tests/dining-hours-*.test.mjs
-      - name: Scrape current dining hours
+      - name: Collect Dining source attempts
         run: xvfb-run --auto-servernum node scripts/dining-hours-scraper.mjs --json-out "$RUNNER_TEMP/dining-hours.json"
-      - name: Publish validated snapshot
+      - name: Publish validated source attempts
         if: vars.DINING_HOURS_PUBLISH_ENABLED == 'true'
         env:
           UPDATE_SECRET: ${{ secrets.LIBRARY_HOURS_UPDATE_SECRET }}

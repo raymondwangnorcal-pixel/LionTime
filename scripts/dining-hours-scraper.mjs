@@ -8,7 +8,11 @@ import {
   parseNsopArticle,
 } from '../lib/dining-article-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
-import { validateDiningHoursSnapshot } from '../lib/dining-hours-schema.js';
+import { DINING_SOURCE_CONTRACT } from '../lib/dining-hours-schema.js';
+import {
+  DINING_SOURCE_IDS,
+  validateDiningAttemptBatch,
+} from '../lib/dining-hours-source-schema.js';
 
 const SOURCE_URL = 'https://dining.columbia.edu/content/locations-hours';
 
@@ -249,6 +253,127 @@ function assertOfficialPage(page, expectedUrl) {
   }
 }
 
+class SourceAcquisitionError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = 'SourceAcquisitionError';
+    this.code = code;
+  }
+}
+
+async function managedChallenge(page, response) {
+  const status = typeof response?.status === 'function' ? response.status() : null;
+  if (status === 403 || status === 429) return true;
+  const title = typeof page.title === 'function' ? await page.title().catch(() => '') : '';
+  const body = await page.locator('body').innerText({ timeout: 1_000 }).catch(() => '');
+  return /just a moment|performing security verification|verify you are human|attention required|access denied/i
+    .test(`${title} ${body}`);
+}
+
+async function navigateToSource(page, sourceUrl) {
+  let response;
+  try {
+    response = await page.goto(sourceUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  } catch (error) {
+    const code = /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'navigation';
+    throw new SourceAcquisitionError(code, `${sourceUrl} navigation failed`);
+  }
+  try {
+    assertOfficialPage(page, sourceUrl);
+  } catch {
+    throw new SourceAcquisitionError('navigation', `${sourceUrl} redirected away from its official page`);
+  }
+  if (await managedChallenge(page, response)) {
+    throw new SourceAcquisitionError('challenge', `${sourceUrl} returned a managed security challenge`);
+  }
+  const status = typeof response?.status === 'function' ? response.status() : null;
+  if (status !== null && status >= 400) {
+    throw new SourceAcquisitionError('navigation', `${sourceUrl} returned HTTP ${status}`);
+  }
+}
+
+function failureAttempt(sourceId, attemptedAt, failureCode) {
+  return {
+    sourceId,
+    sourceUrl: DINING_SOURCE_CONTRACT[sourceId],
+    attemptedAt,
+    result: 'failure',
+    failureCode,
+    payload: null,
+  };
+}
+
+function successAttempt(sourceId, attemptedAt, payload) {
+  return {
+    sourceId,
+    sourceUrl: DINING_SOURCE_CONTRACT[sourceId],
+    attemptedAt,
+    result: 'success',
+    failureCode: null,
+    payload,
+  };
+}
+
+function failureCode(error, fallback = 'unexpected') {
+  if (error instanceof SourceAcquisitionError) return error.code;
+  return /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : fallback;
+}
+
+async function acquireLocationsAttempt(page, now) {
+  const sourceId = 'locations-feed';
+  const attemptedAt = now.toISOString();
+  try {
+    await navigateToSource(page, SOURCE_URL);
+    try {
+      await page.waitForFunction(
+        () => typeof globalThis.dining_nodes === 'string',
+        null,
+        { timeout: 90_000 },
+      );
+    } catch (error) {
+      throw new SourceAcquisitionError(
+        /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'missing-content',
+        'Dining locations payload is missing',
+      );
+    }
+    const raw = await page.evaluate(() => globalThis.dining_nodes);
+    return successAttempt(sourceId, attemptedAt, buildDiningSnapshot(parseDiningNodes(raw), now));
+  } catch (error) {
+    return failureAttempt(sourceId, attemptedAt, failureCode(error, 'parse'));
+  }
+}
+
+const ARTICLE_PARSERS = Object.freeze({
+  'nsop-2026': parseNsopArticle,
+  'labor-day-2026': parseLaborDayArticle,
+  'fall-2026': parseFallArticle,
+});
+
+async function acquireArticleAttempt(page, sourceId, now) {
+  const attemptedAt = now.toISOString();
+  const sourceUrl = DINING_SOURCE_CONTRACT[sourceId];
+  try {
+    await navigateToSource(page, sourceUrl);
+    const article = page.locator('#main-article');
+    if (typeof article.count === 'function' && await article.count() !== 1) {
+      throw new SourceAcquisitionError('missing-content', `${sourceId} article content is missing`);
+    }
+    const html = await article.innerHTML({ timeout: 5_000 });
+    if (typeof html !== 'string' || !html.trim()) {
+      throw new SourceAcquisitionError('missing-content', `${sourceId} article content is empty`);
+    }
+    let payload;
+    try {
+      payload = ARTICLE_PARSERS[sourceId](html);
+    } catch {
+      throw new SourceAcquisitionError('parse', `${sourceId} article could not be parsed`);
+    }
+    return successAttempt(sourceId, attemptedAt, payload);
+  } catch (error) {
+    return failureAttempt(sourceId, attemptedAt, failureCode(error));
+  }
+}
+
 export async function scrapeDiningHours({ outputPath, now = new Date(), chromiumImpl } = {}) {
   if (typeof outputPath !== 'string' || !outputPath.trim()) {
     throw new Error('--json-out requires a path');
@@ -257,25 +382,22 @@ export async function scrapeDiningHours({ outputPath, now = new Date(), chromium
   const browser = await chromium.launch({ headless: false });
   try {
     const page = await browser.newPage({ timezoneId: 'America/New_York' });
-    await page.goto(SOURCE_URL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
-    await page.waitForFunction(
-      () => typeof globalThis.dining_nodes === 'string',
-      null,
-      { timeout: 90_000 },
-    );
-    const raw = await page.evaluate(() => globalThis.dining_nodes);
-    assertOfficialPage(page, SOURCE_URL);
-    const articleHtml = {};
-    for (const [key, source] of Object.entries(DINING_ARTICLE_SOURCES)) {
-      await page.goto(source.url, { waitUntil: 'domcontentloaded', timeout: 90_000 });
-      assertOfficialPage(page, source.url);
-      articleHtml[key] = await page.locator('#main-article').innerHTML();
+    const attempts = [await acquireLocationsAttempt(page, now)];
+    for (const sourceId of DINING_SOURCE_IDS.slice(1)) {
+      attempts.push(await acquireArticleAttempt(page, sourceId, now));
     }
-    const snapshot = buildResolvedDiningSnapshot(parseDiningNodes(raw), articleHtml, now);
-    const validation = validateDiningHoursSnapshot(snapshot);
-    if (!validation.ok) throw new Error(`invalid Dining snapshot: ${validation.errors.join('; ')}`);
-    await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
-    return snapshot;
+    const windowStart = easternDate(now);
+    const batch = {
+      schemaVersion: 1,
+      generated: now.toISOString(),
+      windowStart,
+      windowEnd: addDays(windowStart, 13),
+      attempts,
+    };
+    const validation = validateDiningAttemptBatch(batch);
+    if (!validation.ok) throw new Error(`invalid Dining attempt batch: ${validation.errors.join('; ')}`);
+    await writeFile(outputPath, `${JSON.stringify(validation.value, null, 2)}\n`, 'utf8');
+    return validation.value;
   } finally {
     await browser.close();
   }
@@ -292,8 +414,13 @@ function outputPathFromArgs(args) {
 const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (invokedPath === import.meta.url) {
   scrapeDiningHours({ outputPath: outputPathFromArgs(process.argv.slice(2)) })
-    .then((snapshot) => {
-      process.stdout.write(`Published ${snapshot.locations.length} dining locations through ${snapshot.windowEnd}\n`);
+    .then((batch) => {
+      const successes = batch.attempts.filter(attempt => attempt.result === 'success').length;
+      for (const attempt of batch.attempts) {
+        const detail = attempt.result === 'success' ? 'success' : `failure (${attempt.failureCode})`;
+        process.stdout.write(`- ${attempt.sourceId}: ${detail}\n`);
+      }
+      process.stdout.write(`Dining sources: ${successes}/${batch.attempts.length} succeeded\n`);
     })
     .catch((error) => {
       process.stderr.write(`Dining scrape failed: ${error?.message || 'unknown error'}\n`);

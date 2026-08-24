@@ -499,3 +499,17 @@
 - Supersedes: none
 - Evidence: Official source pages, the successful four-source live scrape on 2026-08-23, and the user's requirement to retain Bookstore tracking only when official live hours are available.
 - Privacy waivers: none
+
+## DEC-0031 — Retain Dining evidence independently without bypassing challenges
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: LionHour will publish a bounded attempt result for each official Dining source, treat managed security challenges as immediate source failures without bypassing them, retain each source's last successful normalized evidence independently, and preserve the existing public snapshot during first-run state initialization.
+- Rationale: One challenged article should not block fresh data from the other official sources or erase previously validated hours, while Columbia's security controls and the browser-facing snapshot contract must remain intact.
+- Scope: Dining browser acquisition, attempt-batch and retained-state schemas, Redis value migration, API resolution and compatibility, workflow logs, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `2eef5c6e3c3a3d8fc3edabf2ee6d4086eb9c6db1`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-23-dining-source-retention.md` and the user-approved recommended behavior after the 2026-08-23 workflow failure diagnosis.
+- Privacy waivers: none
