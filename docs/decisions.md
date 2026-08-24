@@ -849,3 +849,11 @@
 - Supersedes: none
 - Evidence: The user-approved bounded design in the 2026-08-24 Uris Pool hierarchy implementation conversation.
 - Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0043
+
+- Type: implementation
+- Implementation commit: `376314aa928a7ac544e475c062825969871ee660` — feat(recreation): nest Uris Pool under Dodge
+- Superseded by: none
+- Note: The client projects the independently validated Uris day into Dodge's five-row visible space list, retains embedded pool fallback hours, removes the duplicate top-level card from counts and rendering, and preserves nested search discovery.
+- Privacy waivers: none
