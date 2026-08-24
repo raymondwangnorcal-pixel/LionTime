@@ -2,71 +2,76 @@
 
 ## 1. Current task goal
 
-Finish and review the local implementation of the independent live Student Life and Services hours pipeline, including ten cards, four official live source adapters, source-isolated storage, scheduled publication, access-context badges, and responsive browser hydration.
+Finish delivery of the Dining workflow reliability fix: report each official source attempt independently, fail fast on managed challenges without bypassing them, retain each source's last successful normalized evidence, and keep the public Dining API backward-compatible.
 
 ## 2. User requirements and constraints
 
-- Track Alfred Lerner Hall, Columbia Bookstore, Student Mail Center, Alice! Health Promotion, CAPS, Disability Services, Medical Services, Sexual Violence Response, Student Health Insurance, and Immunization Compliance.
-- Keep a secondary access-context badge to the left of the temporal badge. Active availability, including Office Hours, Appointment Only, Virtual Only, Drop-In, and Phone Support, counts as Open because the access limitation remains visible.
-- Retain the Bookstore only if its official page supplies live hours. Its official page currently renders a live STORE HOURS block, so the card remains tracked.
-- Use official publisher-controlled sources only; do not bypass managed challenges or substitute crowd-sourced hours.
-- Preserve mobile and desktop layouts without horizontal overflow.
-- Do not commit, push, deploy, or configure GitHub publication variables without separate authorization.
+- Do not bypass Columbia's managed security controls, solve CAPTCHAs, copy cookies, disguise automation, or weaken official-source validation.
+- A challenged Dining article must not block successful Locations, NSOP, Labor Day, or Fall source attempts.
+- Retain last-known-good evidence per source rather than replacing or discarding the whole Dining snapshot.
+- Continue serving the existing browser snapshot contract and preserve the legacy stored snapshot during first-run migration.
+- Keep the existing four-hour workflow cadence and official-source precedence from DEC-0028.
+- Do not commit, push, deploy, or change GitHub/Vercel configuration without separate authorization.
 
 ## 3. Files inspected
 
-- `index.html`, `package.json`, `vercel.json`
-- Existing Library, Dining, and Recreation assets, APIs, workflows, schemas, services, and tests
-- `docs/superpowers/plans/2026-08-23-live-student-services-hours.md`
-- `docs/decisions.md`
-- Official Lerner, Columbia Mail, Columbia Health, and Columbia Bookstore pages
+- `scripts/dining-hours-scraper.mjs`
+- `lib/dining-article-parser.js`, `lib/dining-hours-resolver.js`, `lib/dining-hours-schema.js`
+- `lib/dining-hours-service.js`, `lib/dining-hours-store.js`, `api/dining-hours.js`
+- `.github/workflows/update-dining-hours.yml`, `assets/dining-hours.js`
+- All `tests/dining-hours-*.test.mjs` files and Dining fixtures/helpers
+- `docs/dining-hours-operations.md`, `docs/decisions.md`
+- GitHub Actions run `32682295158` logs and the four official Dining pages
 
 ## 4. Files modified
 
-- Modified: `index.html`, `vercel.json`, `docs/decisions.md`
-- Added runtime/API: `api/student-services-hours.js`, `lib/student-services-hours-{catalog,resolver,schema,service,store}.js`, `lib/student-services-source-parser.js`
-- Added acquisition/publication: `scripts/student-services-hours-acquire.mjs`, `scripts/student-services-hours-scraper.mjs`, `.github/workflows/update-student-services-hours.yml`
-- Added client/UI: `assets/student-services-hours.js`, `assets/student-services-hours-view.js`
-- Added runbook: `docs/student-services-hours-operations.md`
-- Added Student Life fixtures, helper, and focused test files under `tests/`
+Local uncommitted changes at handoff:
+
+- Modified: `.github/workflows/update-dining-hours.yml`
+- Modified: `docs/decisions.md`, `docs/dining-hours-operations.md`
+- Modified: `lib/dining-hours-service.js`
+- Modified: `scripts/dining-hours-scraper.mjs`
+- Modified: `tests/dining-hours-service.test.mjs`, `tests/dining-hours-workflow.test.mjs`
+- Added: `lib/dining-hours-source-schema.js`
+- Added: `docs/superpowers/plans/2026-08-23-dining-source-retention.md`
+
+While this task was running, `main` and `origin/main` advanced to `2eef5c6e3c3a3d8fc3edabf2ee6d4086eb9c6db1` (`View Spaces alteration 2`). That pushed commit includes the new Dining scraper tests, source-schema tests, and helper fixtures created during this task, but does not include the implementation module/service/scraper changes listed above.
 
 ## 5. Important implementation decisions
 
-- Four source records merge independently into Redis key `lionhour:student-services-hours:v1`; a failed refresh preserves only that source's last successful venues.
-- Snapshots cover fourteen Eastern dates. Freshness is live through eight hours, stale through twenty-four hours, then Needs verification.
-- Mail seasonal periods and exact Labor Day closure are parsed separately. Health access modes remain separate sibling availabilities.
-- Lerner uses the recurring homepage baseline plus exact daily events from the titled Google Calendar iframe directly embedded by Lerner; overnight calendar events are split into schema-safe same-day intervals.
-- Bookstore uses the identified visible STORE HOURS footer on the official Columbia B&N storefront.
-- DEC-0029 supersedes DEC-0026 for access-aware Open-now behavior. DEC-0030 records the rendered official source policy.
+- The scraper publishes an ordered four-attempt batch with bounded failure codes instead of an all-or-nothing resolved snapshot.
+- HTTP 403/429 or recognized challenge text becomes `challenge` before `#main-article` is queried; remaining official sources continue.
+- Redis keeps an internal `dining-source-state` envelope under the existing `lionhour:dining-hours:v1` key. Each source stores current attempt metadata plus its last successful normalized payload.
+- Public GET still unwraps and returns only the existing schema-version-1-or-2 snapshot, so no frontend migration is required.
+- A legacy snapshot remains public until all four source payloads have initialized. Thereafter every batch resolves from current successes plus retained evidence.
+- DEC-0031 records the user-approved retention and no-bypass policy; implementation remains pending because the implementation is not fully committed.
 
 ## 6. Current state of the code
 
-- Local working tree is intentionally dirty and uncommitted. `main` is exactly even with freshly fetched `origin/main` at `ae7253f46593dca17bc3304683c8965ac9d9a89f` before these changes.
-- A one-time headed live scrape succeeded for all four sources and produced a valid four-attempt batch in `/private/tmp/student-services-hours-live.json`.
-- Browser verification with that live batch rendered ten cards, 4 of 4 current sources, and zero horizontal overflow at 390 and 1440 pixels. Sunday evening correctly showed Phone Support + Open for the three 24/7 Health channels.
-- GitHub has `LIBRARY_HOURS_UPDATE_SECRET`. It does not yet have `STUDENT_SERVICES_HOURS_PUBLISH_ENABLED` or `STUDENT_SERVICES_HOURS_API_URL`.
+- Local implementation is complete and `git diff --check` passes.
+- `HEAD`, `main`, and `origin/main` are all `2eef5c6e3c3a3d8fc3edabf2ee6d4086eb9c6db1`.
+- The remote branch currently contains tests that import `lib/dining-hours-source-schema.js`, but that module is only local/untracked. The remote Dining workflow can therefore fail until the remaining local changes are committed and pushed.
+- No commit, push, deploy, workflow dispatch, or configuration mutation was performed by Codex in this task.
 
 ## 7. Tests run and results
 
-- Focused Student Life plus header suite: 43 passed, 0 failed.
-- Live headed scraper: 4 of 4 sources succeeded.
-- Python library scraper: 15 passed, 0 failed.
-- Full `npm test`: all tests outside four Recreation renderer assertion mismatches passed. Those same four failures were present at baseline; Student Life and Dining introduced no failures.
+- Focused Dining suite: 35 passed, 0 failed.
+- Coverage includes immediate 403 challenge detection, no challenged selector read, later-source continuation, staggered initialization, total-outage retention, strict payload validation, service migration, workflow policy, resolver, client, and schema behavior.
+- Full `npm test`: 196 passed, 8 failed. All eight failures are outside the Dining pipeline: one header integration assertion, four Recreation renderer assertions, and three Student Life UI assertions already present in the current pushed tree.
+- Decision ledger history-independent and full Git audits: passed.
 - `git diff --check`: passed.
-- Decision ledger schema/lifecycle/privacy validation: passed.
-- Manual browser checks: ten cards and all access badges rendered on desktop/mobile with zero overflow.
 
 ## 8. Known bugs, gaps, or risks
 
-- Production publication is not active because this change is uncommitted/undeployed and the two Student Life GitHub variables are absent.
-- Four unrelated Recreation UI tests remain red: source reason rendering/escaping expectations and class-selector expectations in `tests/recreation-hours-ui.test.mjs`.
-- Official page DOM changes will intentionally isolate and degrade only the affected source; investigate rather than widening provenance checks.
-- The full feature should not be called production-live until a deployed API has four non-null `lastSuccessAt` values.
+- The fix is not active remotely because the implementation files remain uncommitted/unpushed.
+- During first rollout, challenged article sources that have never initialized in the new retained-state envelope cannot be reconstructed from the legacy resolved snapshot. The legacy snapshot remains public until each article succeeds at least once; successful sources accumulate across separate runs.
+- Source-attempt results are visible in workflow logs and retained internally, while the public GET intentionally stays snapshot-compatible.
+- The eight unrelated full-suite failures should be repaired separately or reconciled with the UI changes that introduced them.
 
 ## 9. Exact next steps
 
-1. Review the complete diff, especially the official visible Bookstore adapter and directly embedded Lerner calendar policy.
-2. If approved, commit the implementation and push it; then deploy the API/client together.
-3. Set `STUDENT_SERVICES_HOURS_API_URL=https://www.lionhour.com/api/student-services-hours` and `STUDENT_SERVICES_HOURS_PUBLISH_ENABLED=true` only after deployment, then manually run the workflow.
-4. Confirm the production API returns four initialized source records and the footer says 4 of 4 sources live.
-5. Optionally repair the four unrelated Recreation renderer tests in a separate change.
+1. Review the local Dining diff and the concurrent `2eef5c6` commit boundary.
+2. If approved, commit the remaining local files together so the already-pushed tests and their implementation reach the same revision, then push.
+3. Run or re-run `Update dining hours`; verify the log reports all four source results and a challenged source no longer causes a selector timeout.
+4. Confirm `GET /api/dining-hours` still returns a valid public snapshot. If Labor/Fall remain challenged, retry later so the retained envelope can initialize them independently while the legacy snapshot remains served.
+5. Address the eight unrelated UI-test failures in a separate change.
