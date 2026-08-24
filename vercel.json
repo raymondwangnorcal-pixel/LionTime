@@ -13,6 +13,9 @@
     },
     "api/recreation-hours.js": {
       "maxDuration": 10
+    },
+    "api/student-services-hours.js": {
+      "maxDuration": 10
     }
   }
 }
