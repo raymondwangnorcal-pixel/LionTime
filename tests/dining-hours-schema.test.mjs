@@ -5,6 +5,7 @@ import { validateDiningHoursSnapshot } from '../lib/dining-hours-schema.js';
 import {
   makeValidDiningSnapshot,
   makeValidDiningSnapshotV2,
+  makeValidDiningSnapshotV3,
 } from './helpers/dining-hours-fixture.mjs';
 
 test('accepts the complete fourteen-day dining snapshot', () => {
@@ -73,6 +74,10 @@ test('accepts split and overnight dining intervals', () => {
 
 test('accepts provenance and restricted services in schema version 2', () => {
   assert.equal(validateDiningHoursSnapshot(makeValidDiningSnapshotV2()).ok, true);
+});
+
+test('accepts Café East provenance in schema version 3', () => {
+  assert.equal(validateDiningHoursSnapshot(makeValidDiningSnapshotV3()).ok, true);
 });
 
 test('rejects unsafe version 2 source and NSOP open-count claims', () => {

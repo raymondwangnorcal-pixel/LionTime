@@ -1,6 +1,6 @@
 (function exposeDiningHours(global) {
   const SOURCE = 'https://dining.columbia.edu/content/locations-hours';
-  const CONTRACT = Object.freeze({
+  const LEGACY_CONTRACT = Object.freeze({
     'bj-everett': { sourceId: '7482', category: 'cafe' },
     'bj-butler': { sourceId: '56', category: 'cafe' },
     'bj-uris': { sourceId: '60', category: 'cafe' },
@@ -18,12 +18,21 @@
     'smith-dining': { sourceId: '7452', category: 'dining' },
     facshack: { sourceId: '7487', category: 'dining' },
   });
-  const STATIC_FALLBACK_IDS = Object.freeze(['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge']);
-  const SOURCE_CONTRACT = Object.freeze({
+  const CONTRACT = Object.freeze({
+    ...LEGACY_CONTRACT,
+    'cafe-east': { sourceId: 'cafe-east', category: 'cafe' },
+  });
+  const LEGACY_STATIC_FALLBACK_IDS = Object.freeze(['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge']);
+  const STATIC_FALLBACK_IDS = Object.freeze(['joe-noco', 'joe-journalism', 'joe-dodge']);
+  const LEGACY_SOURCE_CONTRACT = Object.freeze({
     'locations-feed': 'https://dining.columbia.edu/content/locations-hours',
     'nsop-2026': 'https://dining.columbia.edu/news/new-student-orientation-program-nsop-2026-dining-service',
     'labor-day-2026': 'https://dining.columbia.edu/news/labor-day-2026-operating-hours',
     'fall-2026': 'https://dining.columbia.edu/news/fall-2026-operating-hours',
+  });
+  const SOURCE_CONTRACT = Object.freeze({
+    ...LEGACY_SOURCE_CONTRACT,
+    'cafe-east': 'https://lernerhall.columbia.edu/content/cafe-east',
   });
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
@@ -71,31 +80,36 @@
 
   function validateSnapshot(snapshot) {
     const versionTwo = snapshot?.schemaVersion === 2;
-    if (!snapshot || (snapshot.schemaVersion !== 1 && !versionTwo) || snapshot.source !== SOURCE
+    const versionThree = snapshot?.schemaVersion === 3;
+    const hasProvenance = versionTwo || versionThree;
+    const contract = versionThree ? CONTRACT : LEGACY_CONTRACT;
+    const sourceContract = versionThree ? SOURCE_CONTRACT : LEGACY_SOURCE_CONTRACT;
+    if (!snapshot || (snapshot.schemaVersion !== 1 && !hasProvenance) || snapshot.source !== SOURCE
       || typeof snapshot.generated !== 'string' || Number.isNaN(Date.parse(snapshot.generated))
       || !/(?:Z|[+-]\d{2}:\d{2})$/.test(snapshot.generated)
       || !ISO_DATE.test(snapshot.windowStart || '') || snapshot.windowEnd !== addDays(snapshot.windowStart, 13)
-      || !Array.isArray(snapshot.locations) || snapshot.locations.length !== Object.keys(CONTRACT).length) {
+      || !Array.isArray(snapshot.locations) || snapshot.locations.length !== Object.keys(contract).length) {
       return null;
     }
-    if (versionTwo && !exactKeys(snapshot, [
+    if (hasProvenance && !exactKeys(snapshot, [
       'schemaVersion', 'generated', 'source', 'windowStart', 'windowEnd', 'sources', 'locations', 'specialServices',
     ])) return null;
     const byId = new Map();
     for (const location of snapshot.locations) {
       if (!location || typeof location.id !== 'string' || byId.has(location.id)) return null;
-      const contract = CONTRACT[location.id];
-      if (!contract || location.sourceId !== contract.sourceId || location.category !== contract.category
+      const locationContract = contract[location.id];
+      if (!locationContract || location.sourceId !== locationContract.sourceId
+        || location.category !== locationContract.category
         || typeof location.name !== 'string' || !location.name.trim()
         || !Array.isArray(location.days) || location.days.length !== 14) return null;
-      if (versionTwo && !exactKeys(location, ['id', 'sourceId', 'category', 'name', 'days'])) return null;
+      if (hasProvenance && !exactKeys(location, ['id', 'sourceId', 'category', 'name', 'days'])) return null;
       for (let index = 0; index < 14; index += 1) {
         const day = location.days[index];
         if (!day || day.date !== addDays(snapshot.windowStart, index)
           || !validIntervals(day.intervals) || !validStatus(day.status)) return null;
-        if (versionTwo) {
+        if (hasProvenance) {
           if (!exactKeys(day, ['date', 'intervals', 'status', 'sourceId'])) return null;
-          const sourceIds = [...Object.keys(SOURCE_CONTRACT), 'unpublished'];
+          const sourceIds = [...Object.keys(sourceContract), 'unpublished'];
           if (!sourceIds.includes(day.sourceId) || day.sourceId === 'nsop-2026') return null;
           if (day.sourceId === 'unpublished'
             && (day.status !== 'Hours not published' || day.intervals.length)) return null;
@@ -103,17 +117,18 @@
       }
       byId.set(location.id, location);
     }
-    if (!Object.keys(CONTRACT).every((id) => byId.has(id))) return null;
-    if (!versionTwo) return { byId, specialServices: [] };
-    if (!Array.isArray(snapshot.sources) || snapshot.sources.length !== 4) return null;
+    if (!Object.keys(contract).every((id) => byId.has(id))) return null;
+    if (!hasProvenance) return { byId, locationIds: Object.keys(contract), specialServices: [] };
+    const sourceIds = Object.keys(sourceContract);
+    if (!Array.isArray(snapshot.sources) || snapshot.sources.length !== sourceIds.length) return null;
     const seenSources = new Set();
     for (const source of snapshot.sources) {
       if (!exactKeys(source, ['id', 'url', 'fetchedAt'])
-        || !(source.id in SOURCE_CONTRACT) || seenSources.has(source.id)
-        || source.url !== SOURCE_CONTRACT[source.id] || source.fetchedAt !== snapshot.generated) return null;
+        || !(source.id in sourceContract) || seenSources.has(source.id)
+        || source.url !== sourceContract[source.id] || source.fetchedAt !== snapshot.generated) return null;
       seenSources.add(source.id);
     }
-    if (seenSources.size !== 4 || !Array.isArray(snapshot.specialServices)
+    if (seenSources.size !== sourceIds.length || !Array.isArray(snapshot.specialServices)
       || snapshot.specialServices.length > 1) return null;
     const specialServices = [];
     for (const service of snapshot.specialServices) {
@@ -148,21 +163,21 @@
         days,
       });
     }
-    return { byId, specialServices };
+    return { byId, locationIds: Object.keys(contract), specialServices };
   }
 
   function buildUpdates(snapshot, venues, today) {
     if (!ISO_DATE.test(today || '')) return { ok: false };
     const validated = validateSnapshot(snapshot);
     if (!validated) return { ok: false };
-    const { byId, specialServices } = validated;
+    const { byId, locationIds, specialServices } = validated;
     const firstIndex = Math.round((new Date(`${today}T12:00:00Z`) - new Date(`${snapshot.windowStart}T12:00:00Z`)) / 86400000);
     if (firstIndex < 0 || firstIndex + 7 > 14) return { ok: false };
 
     const entries = [];
-    for (const id of Object.keys(CONTRACT)) {
+    for (const id of locationIds) {
       const venue = venues.find((item) => item.id === id);
-      if (!venue) return { ok: false };
+      if (!venue) continue;
       const days = byId.get(id).days.slice(firstIndex, firstIndex + 7);
       const hours = {};
       const sourceStatuses = {};
@@ -182,7 +197,10 @@
         diningLive: true,
       }]);
     }
-    return { ok: true, entries, staticFallbackIds: STATIC_FALLBACK_IDS, specialServices };
+    const staticFallbackIds = snapshot.schemaVersion === 3
+      ? STATIC_FALLBACK_IDS
+      : LEGACY_STATIC_FALLBACK_IDS;
+    return { ok: true, entries, staticFallbackIds, specialServices };
   }
 
   async function hydrate({

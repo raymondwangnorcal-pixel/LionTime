@@ -112,9 +112,10 @@ test('rejects missing official locations and malformed time values', () => {
   assert.throws(() => buildDiningSnapshot(malformed, new Date('2026-08-21T12:00:00Z')), /invalid dining time/);
 });
 
-test('publishes four independent Dining source attempts and always closes Chromium', async () => {
+test('publishes five independent Dining source attempts and always closes Chromium', async () => {
   const calls = [];
   let currentUrl = '';
+  const cafeEast = readFileSync(new URL('./fixtures/cafe-east-live.txt', import.meta.url), 'utf8');
   const articleByPath = new Map([
     ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
     ['/news/labor-day-2026-operating-hours', readFileSync(new URL('./fixtures/dining-labor-day-2026.html', import.meta.url), 'utf8')],
@@ -133,8 +134,8 @@ test('publishes four independent Dining source attempts and always closes Chromi
     locator(selector) {
       calls.push(['locator', selector]);
       return {
-        async innerText() { return ''; },
-        async count() { return selector === '#main-article' ? 1 : 0; },
+        async innerText() { return selector === 'main' ? cafeEast : ''; },
+        async count() { return ['#main-article', 'main'].includes(selector) ? 1 : 0; },
         async innerHTML() {
           calls.push(['innerHTML', currentUrl]);
           return articleByPath.get(new URL(currentUrl).pathname);
@@ -158,16 +159,19 @@ test('publishes four independent Dining source attempts and always closes Chromi
     chromiumImpl,
   });
 
-  assert.equal(batch.schemaVersion, 1);
-  assert.equal(batch.attempts.length, 4);
+  assert.equal(batch.schemaVersion, 2);
+  assert.equal(batch.attempts.length, 5);
   assert.ok(batch.attempts.every(attempt => attempt.result === 'success'));
   assert.equal(batch.attempts[0].payload.locations.length, 16);
   assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), batch);
   assert.equal(calls[0][0], 'launch');
   assert.deepEqual(calls[0][1], { headless: false });
   assert.equal(calls.at(-1)[0], 'close');
-  assert.equal(calls.filter(([name]) => name === 'goto').length, 4);
-  assert.ok(calls.filter(([name]) => name === 'goto').every((call) => /^https:\/\/dining\.columbia\.edu\//.test(call[1])));
+  assert.equal(calls.filter(([name]) => name === 'goto').length, 5);
+  assert.deepEqual(calls.filter(([name]) => name === 'goto').map((call) => new URL(call[1]).hostname), [
+    'dining.columbia.edu', 'dining.columbia.edu', 'dining.columbia.edu', 'dining.columbia.edu',
+    'lernerhall.columbia.edu',
+  ]);
   assert.ok(calls.some(([name]) => name === 'waitForFunction'));
   assert.deepEqual(calls.find(([name]) => name === 'waitForFunction').slice(1), [null, { timeout: 90_000 }]);
   assert.ok(calls.some(([name]) => name === 'evaluate'));
