@@ -130,6 +130,21 @@ export function makeValidDiningSnapshotV4({ barnardFetchedAt = '2026-08-21T12:00
   return snapshot;
 }
 
+export function makeValidBarnardDiningSnapshot({
+  generated = '2026-08-21T12:00:00.000Z',
+} = {}) {
+  const batch = makeValidDiningAttemptBatch({ generated, schemaVersion: 3 });
+  const source = batch.attempts.find(({ sourceId }) => sourceId === 'barnard-hours');
+  return {
+    schemaVersion: 1,
+    generated,
+    source: source.sourceUrl,
+    windowStart: source.payload.windowStart,
+    windowEnd: source.payload.windowEnd,
+    venues: structuredClone(source.payload.venues),
+  };
+}
+
 export function makeValidDiningAttemptBatch({
   generated = '2026-08-21T12:00:00.000Z',
   failures = [],

@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 import {
+  makeValidBarnardDiningSnapshot,
   makeValidDiningSnapshot,
   makeValidDiningSnapshotV2,
   makeValidDiningSnapshotV3,
@@ -123,6 +124,49 @@ test('hydrates fresh Barnard venues and reports twenty of twenty-three live', as
   assert.equal(result.updatedCount, 20);
   assert.equal(result.totalCount, 23);
   assert.deepEqual(Array.from(result.staticFallbackIds), STATIC_IDS);
+  assert.equal(list.find(({ id }) => id === 'lizs-place').diningFreshness, 'live');
+});
+
+test('hydrates retained Barnard hours independently over a legacy Dining snapshot', async () => {
+  const list = venues();
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => ({ ok: true, json: async () => makeValidDiningSnapshot() }),
+    barnardFetchImpl: async () => ({
+      ok: true,
+      json: async () => makeValidBarnardDiningSnapshot({ generated: '2026-08-24T12:00:00.000Z' }),
+    }),
+    render() {},
+    today: '2026-08-24',
+    now: new Date('2026-08-24T17:00:00Z'),
+  });
+
+  assert.equal(result.applied, true);
+  assert.equal(result.updatedCount, 19);
+  assert.equal(result.totalCount, 23);
+  assert.deepEqual(Array.from(result.staticFallbackIds), ['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge']);
+  assert.equal(result.barnardFetchedAt, '2026-08-24T12:00:00.000Z');
+  assert.equal(list.find(({ id }) => id === 'hewitt').diningFreshness, 'live');
+});
+
+test('hydrates Barnard even when the combined Dining snapshot is unavailable', async () => {
+  const list = venues();
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => { throw new Error('combined unavailable'); },
+    barnardFetchImpl: async () => ({
+      ok: true,
+      json: async () => makeValidBarnardDiningSnapshot({ generated: '2026-08-24T12:00:00.000Z' }),
+    }),
+    render() {},
+    today: '2026-08-24',
+    now: new Date('2026-08-24T17:00:00Z'),
+  });
+
+  assert.equal(result.applied, true);
+  assert.equal(result.updatedCount, 4);
+  assert.equal(result.totalCount, 23);
+  assert.equal(result.staticFallbackIds.length, 19);
   assert.equal(list.find(({ id }) => id === 'lizs-place').diningFreshness, 'live');
 });
 
