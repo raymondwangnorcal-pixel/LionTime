@@ -1014,7 +1014,7 @@ function todayHoursText(venue, now) {
       ? `${fmt12(iv.end)} ${DAY_SHORT[(now.dow + Math.floor(iv.end / 1440)) % 7]}`
       : fmt12(iv.end);
     return `${from} – ${to}`;
-  }).join(', ');
+  }).join('<br>');
 }
 
 
@@ -1066,7 +1066,7 @@ function weekHTML(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
+    const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
     const unpub = /not published/i.test(hoursText);
     return `<div class="wk-row${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
@@ -1080,7 +1080,7 @@ function weekHTMLDesktop(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
+    const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
     const unpub = /not published/i.test(hoursText);
     const d = new Date(todayET);
     d.setDate(d.getDate() + i);
@@ -1104,7 +1104,7 @@ function rowHTML(v, now) {
             aria-expanded="${isOpen}" aria-label="${v.name} — ${st.label}">
       <span class="dot ${st.status}"></span>
       <span class="name">${v.name}</span>
-      <span class="hours">${escapeHTML(todayHoursText(v, now))}</span>
+      <span class="hours">${todayHoursText(v, now)}</span>
       <span class="status-badges">${accessLabel ? `<span class="access-badge">${escapeHTML(accessLabel)}</span>` : ''}<span class="badge ${st.status}">${escapeHTML(st.label)}</span></span>
       ${CHEV}
     </button>
