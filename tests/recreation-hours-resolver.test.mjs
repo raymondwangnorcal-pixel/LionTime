@@ -183,6 +183,32 @@ test('lets a higher-priority ambiguous recurring closure suppress a normal basel
   assert.deepEqual(dodge.sourceRefs, ['ambiguous-recurring-closure']);
 });
 
+test('uses a Blue Gym-derived Dodge fallback only when stronger Dodge evidence is unavailable', () => {
+  const unavailable = evidence({
+    sourceId: 'columbiaHours',
+    evidenceRef: 'columbiaHours:dodge',
+    priority: 5,
+    effectiveStart: null,
+    effectiveEnd: null,
+    weeklyIntervals: null,
+    dateIntervals: null,
+    unavailableStatus: 'Hours need verification',
+  });
+  const calendarFallback = evidence({
+    sourceId: 'columbiaHours',
+    evidenceRef: 'columbiaHours:dodge',
+    priority: 4,
+    effectiveStart: '2026-08-21',
+    effectiveEnd: '2026-08-21',
+    weeklyIntervals: null,
+    dateIntervals: [['06:00', '22:00']],
+  });
+
+  assert.deepEqual(day(resolveWith([unavailable, calendarFallback]), 'dodge').intervals, [['06:00', '22:00']]);
+  assert.deepEqual(day(resolveWith([unavailable, calendarFallback, openDodge]), 'dodge').intervals, [['06:00', '23:00']]);
+  assert.equal(day(resolveWith([unavailable, calendarFallback, dodgeMaintenance]), 'dodge').status, 'Closed for maintenance');
+});
+
 test('surfaces equal-priority unresolved conflicts instead of guessing', () => {
   const result = resolveWith([conflictingBlueGymA, conflictingBlueGymB]);
 
