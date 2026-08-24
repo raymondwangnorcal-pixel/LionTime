@@ -450,6 +450,49 @@
     font-size: 0.7rem; color: var(--muted); line-height: 1.4;
   }
 
+  /* ── Health services dropdown (sub-accordion) ──── */
+  .health-hours-dropdown {
+    border-top: 1.5px solid var(--columbia-blue);
+  }
+  .health-hours-toggle {
+    display: flex; align-items: center; gap: 0.45rem;
+    width: 100%; border: none; border-radius: 0;
+    background: #edf2f7; color: var(--columbia-blue);
+    cursor: pointer; font: inherit; font-size: 0.8rem;
+    font-weight: 700; padding: 0.7rem 1.1rem;
+    transition: background 0.15s;
+  }
+  .health-hours-toggle::after {
+    content: ''; display: inline-block; width: 8px; height: 8px;
+    border-right: 2.5px solid var(--columbia-blue); border-bottom: 2.5px solid var(--columbia-blue);
+    transform: rotate(-45deg); transition: transform 0.2s; margin-left: auto;
+  }
+  .health-hours-toggle[aria-expanded="true"]::after { transform: rotate(45deg); }
+  .health-hours-toggle:hover { background: #e2e9f1; }
+  .health-hours-list {
+    list-style: none; margin: 0; padding: 0;
+    background: #f8fafc; overflow: hidden;
+    border-top: 1px solid var(--hairline);
+  }
+  .health-hour-item {
+    padding: 0.55rem 1.1rem;
+    border-bottom: 1px solid #ebeef2;
+  }
+  .health-hour-item:last-child { border-bottom: none; }
+  .health-hour-heading {
+    display: flex; align-items: center; gap: 0.45rem;
+  }
+  .health-hour-heading .dot { flex-shrink: 0; }
+  .health-hour-name { font-weight: 600; font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }
+  .health-hour-hours {
+    font-size: 0.75rem; color: var(--text-secondary);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .health-hour-note {
+    font-size: 0.7rem; color: var(--muted); line-height: 1.4;
+    margin-top: 0.15rem; padding-left: calc(9px + 0.45rem);
+  }
+
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 0.9rem; }
 
   .footer {
@@ -489,6 +532,8 @@
     .recreation-spaces { margin: 0.75rem -0.6rem 0 -1.2rem; }
     .recreation-spaces-toggle { padding-left: 1.2rem; padding-right: 0.85rem; }
     .recreation-space { padding-left: 1.2rem; padding-right: calc(1.45rem + 14px); }
+    .health-hours-toggle { padding: 0.7rem 0.85rem; }
+    .health-hour-item { padding: 0.55rem 0.85rem; }
     .summary { gap: 0.9rem; }
     .stat { font-size: 0.8rem; }
     .search-input { flex: 1 1 100%; }
@@ -770,6 +815,10 @@ const VENUES = [
     studentAccessType:'virtual-only', note:'Virtual appointments only.' },
 ];
 
+const HEALTH_SERVICE_IDS = new Set([
+  'alice-health', 'medical', 'caps', 'disability', 'svr', 'student-insurance', 'immunization',
+]);
+
 /* ══════════════════════════════════════════════════
    TIME HELPERS (Eastern Time)
    ══════════════════════════════════════════════════ */
@@ -980,6 +1029,7 @@ let activeStatus = 'all';
 let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
+let healthDropdownExpanded = false;
 
 const STATUS_FILTERS = [
   { id:'all',          label:'All Buildings' },
@@ -1075,6 +1125,33 @@ function escapeHTML(value) {
   })[character]);
 }
 
+function healthDropdownHTML(now) {
+  const healthVenues = VENUES.filter(v => HEALTH_SERVICE_IDS.has(v.id));
+  const items = healthVenues.map(v => {
+    const st = getStatus(v, now);
+    const hours = todayHoursText(v, now);
+    const note = v.note ? `<div class="health-hour-note">${escapeHTML(v.note)}</div>` : '';
+    return `<li class="health-hour-item">
+      <div class="health-hour-heading">
+        <span class="dot ${st.status}"></span>
+        <span class="health-hour-name">${escapeHTML(v.name)}</span>
+        <span class="health-hour-hours">${escapeHTML(hours)}</span>
+      </div>${note}
+    </li>`;
+  }).join('');
+  const openCount = healthVenues.filter(v => getStatus(v, now).status !== 'closed').length;
+  return `<div class="health-hours-dropdown">
+    <button class="health-hours-toggle" type="button"
+            aria-expanded="${healthDropdownExpanded}"
+            aria-controls="health-hours-list">
+      Columbia Health Hours · ${openCount} of ${healthVenues.length} open
+    </button>
+    <ul class="health-hours-list" id="health-hours-list"${healthDropdownExpanded ? '' : ' hidden'}>
+      ${items}
+    </ul>
+  </div>`;
+}
+
 function render() {
   const now = nowET();
   renderChrome(now);
@@ -1082,25 +1159,31 @@ function render() {
 
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
+    const isStudent = c.id === 'student';
     const all = VENUES.filter(v => v.cat === c.id && matchesFilters(v, now, true));
     const shown = all.filter(v => activeStatus === 'all' || getStatus(v, now).status === activeStatus);
-    if (!shown.length) return '';
-    shown.sort((a, b) => {
+    // For student section: separate health venues into their own dropdown
+    const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
+    const hasHealthVenues = isStudent && VENUES.some(v => HEALTH_SERVICE_IDS.has(v.id));
+    if (!regularShown.length && !hasHealthVenues) return '';
+    regularShown.sort((a, b) => {
       const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
-    const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
+    const regularAll = isStudent ? all.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : all;
+    const openN = regularAll.filter(v => getStatus(v, now).status !== 'closed').length;
     return `<div class="sec">
         <span class="sec-title">${c.icon} ${c.label}</span>
         <span class="sec-rule"></span>
-        <span class="sec-meta">${openN} of ${all.length} open</span>
+        <span class="sec-meta">${openN} of ${regularAll.length} open</span>
       </div>
       <div class="list">
         <div class="cols">
           <span></span><span>Place</span><span>Today</span>
           <span class="r">Status</span><span></span>
         </div>
-        ${shown.map(v => rowHTML(v, now)).join('')}
+        ${regularShown.map(v => rowHTML(v, now)).join('')}
+        ${hasHealthVenues ? healthDropdownHTML(now) : ''}
       </div>`;
   }).join('');
 
@@ -1160,6 +1243,14 @@ document.getElementById('chips').addEventListener('click', e => {
 });
 document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
 document.getElementById('stage').addEventListener('click', e => {
+  const healthToggle = e.target.closest('.health-hours-toggle');
+  if (healthToggle) {
+    const list = document.getElementById(healthToggle.getAttribute('aria-controls'));
+    healthDropdownExpanded = !healthDropdownExpanded;
+    healthToggle.setAttribute('aria-expanded', String(healthDropdownExpanded));
+    list.hidden = !healthDropdownExpanded;
+    return;
+  }
   const spacesToggle = e.target.closest('.recreation-spaces-toggle');
   if (spacesToggle) {
     const list = document.getElementById(spacesToggle.getAttribute('aria-controls'));
