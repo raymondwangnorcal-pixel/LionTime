@@ -255,11 +255,6 @@
   .row:focus-visible { outline: 2px solid var(--columbia-light); outline-offset: -2px; }
   .entry:last-child .row { border-bottom: none; }
   .entry.expanded .row { background: #f8fafc; border-bottom-color: transparent; }
-  .entry.estimated { background: #f3f4f6; }
-  .entry.estimated .row { background: #f3f4f6; }
-  .entry.estimated .row:hover { background: #ebedf0; }
-  .entry.estimated.expanded .row { background: #f3f4f6; }
-  .entry.estimated .detail { background: #f3f4f6; }
 
   .dot { width: 9px; height: 9px; border-radius: 50%; }
   .dot.open { background: var(--open); }
@@ -321,6 +316,7 @@
     color: var(--columbia-blue); font-weight: 600;
     background: #eef4fb;
   }
+  .wk-row.unpublished { background: #f3f4f6; color: var(--muted); }
   .wk-row span:first-child { min-width: 6.5rem; }
   .wk-row span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
 
@@ -367,6 +363,10 @@
       font-weight: 600; line-height: 1.2; white-space: nowrap;
       overflow: hidden; text-overflow: ellipsis;
     }
+    .wk-col.unpublished { background: #f3f4f6; }
+    .wk-col.unpublished .wk-col-hours { color: var(--muted); font-weight: 500; }
+    .wk-col.unpublished .wk-col-day,
+    .wk-col.unpublished .wk-col-date { color: var(--muted); }
   }
   .note {
     font-size: 0.76rem; color: var(--muted); font-style: italic;
@@ -983,9 +983,11 @@ function weekHTML(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    return `<div class="wk-row${i === 0 ? ' today' : ''}">
+    const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
+    const unpub = /not published/i.test(hoursText);
+    return `<div class="wk-row${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
-      <span>${h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed'}</span>
+      <span>${hoursText}</span>
     </div>`;
   }).join('');
 }
@@ -996,10 +998,11 @@ function weekHTMLDesktop(v, now) {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
     const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
+    const unpub = /not published/i.test(hoursText);
     const d = new Date(todayET);
     d.setDate(d.getDate() + i);
     const dateLabel = i === 0 ? 'Today' : `${d.getMonth() + 1}/${d.getDate()}`;
-    return `<div class="wk-col${i === 0 ? ' today' : ''}">
+    return `<div class="wk-col${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span class="wk-col-heading"><span class="wk-col-day">${DAY_SHORT[dow]}</span><span class="wk-col-date">· ${dateLabel}</span></span>
       <span class="wk-col-hours">${hoursText}</span>
     </div>`;
@@ -1009,7 +1012,7 @@ function weekHTMLDesktop(v, now) {
 function rowHTML(v, now) {
   const st = getStatus(v, now);
   const isOpen = expanded.has(v.id);
-  return `<div class="entry${isOpen ? ' expanded' : ''}${v.estimated ? ' estimated' : ''}" data-id="${v.id}">
+  return `<div class="entry${isOpen ? ' expanded' : ''}" data-id="${v.id}">
     <button class="row ${st.status === 'closed' ? 'is-closed' : ''}" type="button"
             aria-expanded="${isOpen}" aria-label="${v.name} — ${st.label}">
       <span class="dot ${st.status}"></span>
