@@ -39,7 +39,7 @@
       if (start === 0 && end === 1440) return 'Open 24 hours';
       return `${formatTime(start)} – ${formatTime(end)}`;
     });
-    return formatted.every(Boolean) ? formatted.join(', ') : null;
+    return formatted.every(Boolean) ? formatted : null;
   }
 
   function activeInterval(intervals, minutes) {
@@ -124,16 +124,26 @@
     const dot = dotClass(state.label);
     const restrictions = Array.isArray(state.accessRestrictions) ? state.accessRestrictions : [];
     const restrictionsText = restrictions.filter(Boolean).join(' · ');
+    const hourLines = Array.isArray(state.hours) ? state.hours : [];
 
-    /* Collect non-empty meta pieces into a compact secondary line */
-    const metaParts = [];
-    if (state.hours) metaParts.push(text(state.hours));
+    /* Availability label + restrictions collapse onto one trailing line */
+    const otherParts = [];
     const avail = availabilityLabel(state.availabilityType);
-    if (avail) metaParts.push(text(avail));
-    if (restrictionsText) metaParts.push(text(restrictionsText));
-    const metaLine = metaParts.length
-      ? `<div class="recreation-space-meta">${metaParts.join(' · ')}</div>`
-      : '';
+    if (avail) otherParts.push(text(avail));
+    if (restrictionsText) otherParts.push(text(restrictionsText));
+
+    let metaLine = '';
+    if (hourLines.length > 1) {
+      /* Multiple time slots: each gets its own line instead of comma-joining onto one row */
+      const lines = hourLines.map(line => `<div class="recreation-space-hours">${text(line)}</div>`);
+      if (otherParts.length) lines.push(`<div class="recreation-space-extra">${otherParts.join(' · ')}</div>`);
+      metaLine = `<div class="recreation-space-meta">${lines.join('')}</div>`;
+    } else {
+      const metaParts = hourLines.length ? [text(hourLines[0]), ...otherParts] : [...otherParts];
+      metaLine = metaParts.length
+        ? `<div class="recreation-space-meta">${metaParts.join(' · ')}</div>`
+        : '';
+    }
 
     return `<li class="recreation-space">
       <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${text(space?.name)}</span><span class="recreation-space-status ${dot}">${text(state.label)}</span></div>
