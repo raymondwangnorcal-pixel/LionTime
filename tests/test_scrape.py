@@ -12,6 +12,7 @@ from scrape import (
     ScheduleParseError,
     build_payload,
     dates_to_weekly_schedule,
+    extract_barnard_holiday_closures,
     extract_schedule_from_page,
     main,
     parse_hours_text,
@@ -51,6 +52,8 @@ def make_complete_payload():
             "temporarilyClosed": False,
             "schedules": [current_schedule()],
         })
+        if definition["id"] == "barnard":
+            libraries[-1]["holidayUrl"] = "https://library.barnard.edu/visit/hours"
     return {
         "schemaVersion": 1,
         "generated": "2026-08-20T12:00:00-04:00",
@@ -88,8 +91,52 @@ class ScraperContractTests(unittest.TestCase):
                 ("business", "business", "uris"),
                 ("avery", "avery", "avery"),
                 ("math", "math", "math"),
+                ("barnard", "barnard", "milstein"),
             ],
         )
+
+    def test_extracts_only_year_bounded_barnard_holiday_closures(self):
+        soup = BeautifulSoup(
+            (FIXTURES / "barnard-library-holidays.html").read_text(),
+            "html.parser",
+        )
+        closures = extract_barnard_holiday_closures(
+            soup,
+            datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+        )
+        self.assertEqual(
+            closures,
+            {"2026-05-25", "2026-06-19", "2026-09-07"},
+        )
+
+    def test_rejects_barnard_holiday_rows_without_a_valid_year_and_weekday(self):
+        missing_year = BeautifulSoup(
+            """
+            <h2>Summer Hours</h2>
+            <h2>Upcoming Holidays and Library Closures</h2>
+            <table><tr><th>Library Closed</th></tr><tr><td>Monday, September 7</td></tr></table>
+            """,
+            "html.parser",
+        )
+        with self.assertRaises(ScheduleParseError):
+            extract_barnard_holiday_closures(
+                missing_year,
+                datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+            )
+
+        wrong_weekday = BeautifulSoup(
+            """
+            <h2>Summer 2026 Hours</h2>
+            <h2>Upcoming Holidays and Library Closures</h2>
+            <table><tr><th>Library Closed</th></tr><tr><td>Tuesday, September 7</td></tr></table>
+            """,
+            "html.parser",
+        )
+        with self.assertRaises(ScheduleParseError):
+            extract_barnard_holiday_closures(
+                wrong_weekday,
+                datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+            )
 
     def test_builds_exact_current_and_upcoming_week_ranges(self):
         date_hours = {
@@ -188,14 +235,62 @@ class ScraperContractTests(unittest.TestCase):
 
     def test_build_payload_publishes_only_displayed_libraries(self):
         html = (FIXTURES / "butler-august-2026-full.html").read_text()
+        holiday_html = (FIXTURES / "barnard-library-holidays.html").read_text()
 
         def fetcher(slug, date=None):
             self.assertIn(slug, {item["slug"] for item in DISPLAYED_LIBRARIES})
             return BeautifulSoup(html, "html.parser")
 
-        payload = build_payload(datetime.fromisoformat("2026-08-20T12:00:00-04:00"), fetcher=fetcher)
+        payload = build_payload(
+            datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+            fetcher=fetcher,
+            holiday_fetcher=lambda: BeautifulSoup(holiday_html, "html.parser"),
+        )
         self.assertEqual({item["id"] for item in payload["libraries"]}, DISPLAYED_LIBRARY_IDS)
-        self.assertEqual(len(payload["libraries"]), 6)
+        self.assertEqual(len(payload["libraries"]), 7)
+
+    def test_barnard_holiday_closure_overrides_primary_open_hours(self):
+        primary = BeautifulSoup(
+            """
+            <table><tr><td>
+              <div class="fulldate">2026-09-07</div>
+              <div class="day-hours">9:00AM-9:00PM</div>
+            </td></tr></table>
+            """,
+            "html.parser",
+        )
+        holiday = BeautifulSoup(
+            (FIXTURES / "barnard-library-holidays.html").read_text(),
+            "html.parser",
+        )
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "barnard")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-09-07T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: primary,
+            holiday_fetcher=lambda: holiday,
+        )
+        self.assertIsNone(entry["schedules"][0]["hours"]["1"])
+        self.assertEqual(entry["holidayUrl"], "https://library.barnard.edu/visit/hours")
+
+    def test_barnard_holiday_source_failure_fails_closed(self):
+        primary = BeautifulSoup(
+            """
+            <table><tr><td>
+              <div class="fulldate">2026-09-07</div>
+              <div class="day-hours">9:00AM-9:00PM</div>
+            </td></tr></table>
+            """,
+            "html.parser",
+        )
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "barnard")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-09-07T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: primary,
+            holiday_fetcher=lambda: None,
+        )
+        self.assertTrue(entry["scrapeFailed"])
 
     def test_invalid_payload_is_not_written(self):
         with tempfile.TemporaryDirectory() as directory:

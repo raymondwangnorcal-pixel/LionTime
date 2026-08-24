@@ -623,3 +623,45 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/plans/2026-08-24-live-cafe-east-hours.md` and the official Lerner Hall and Joe Coffee source review completed on 2026-08-24.
 - Privacy waivers: none
+
+## DEC-0033 — Use Columbia primary hours and Barnard holiday closures for Milstein Library
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will display Barnard College Library as Milstein Library, use Columbia Libraries' Barnard location calendar for primary daily hours, and apply exact holiday closures from Barnard Library's official hours page.
+- Rationale: The Columbia calendar supplies machine-readable date-specific operating hours, while Barnard's page is the first-party source for named holiday changes and access context.
+- Scope: Library venue identity, source acquisition, holiday precedence, snapshot validation, browser hydration, fallback behavior, tests, and library-hours documentation.
+- Implementation: pending
+- Recorded against HEAD: `143fe219036d527f8f4af8b45e296018062cda76`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-24-live-milstein-library-hours.md` and the user-approved source links from the 2026-08-24 implementation conversation.
+- Privacy waivers: none
+
+## DEC-0034 — Add four Barnard dining venues from Dine On Campus
+
+- Date: 2026-08-24
+- Owner: shared
+- Status at record: active
+- Decision: LionHour will use Barnard's official Dine On Campus Hours of Operation page for date-specific hours and expose Hewitt Dining, Diana Center Cafe, and Bubble Tea & Sushi as Dining venues and Liz's Place as a Cafe. LeFrak Center or LeFrak Byte Kiosk will be excluded, and Barnard Kosher at Hewitt will remain part of Hewitt rather than a separate LionHour venue.
+- Rationale: The source publishes first-party, date-specific schedules with closures and split service periods, while the four-card mapping follows the user's product taxonomy and Barnard's own four-location dining list.
+- Scope: Barnard Dining source acquisition, venue identity and categories, retained evidence, public snapshot versioning, browser hydration, fallback behavior, tests, and Dining operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `143fe219036d527f8f4af8b45e296018062cda76`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-24-live-barnard-dining-hours.md`, Barnard's official Dine On Campus Hours of Operation page, and Barnard's Meal Plan FAQ reviewed on 2026-08-24.
+- Privacy waivers: none
+
+## DEC-0035 — Degrade Barnard Dining by source freshness and date coverage
+
+- Date: 2026-08-24
+- Owner: shared
+- Status at record: active
+- Decision: LionHour will preserve Barnard's true retained-success timestamp, warn after eight hours, stop counting the source as live after twenty-four hours, hydrate covered dates individually, accept either two or three complete source weeks, discover target venues independently of table count, and cap Barnard acquisition at seventy-five seconds inside a fifteen-minute workflow.
+- Rationale: These rules address the adversarial review's stale-data, structural-fragility, partial-coverage, navigation-race, fixture, and runtime findings without weakening strict target validation or blocking other Dining sources.
+- Scope: Barnard Dining source provenance, rendered-page parsing, week navigation, retained coverage, browser hydration, freshness UX, tests, workflow limits, rollout, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `143fe219036d527f8f4af8b45e296018062cda76`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-24-live-barnard-dining-hours.md` revised after the 2026-08-24 adversarial review and user approval.
+- Privacy waivers: none

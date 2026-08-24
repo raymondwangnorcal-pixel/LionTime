@@ -57,3 +57,17 @@ test('accepts only the explicit Lehman embedded-fallback shape', () => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join('\n'), /embedded fallback is not allowed/);
 });
+
+test('requires exact Barnard holiday provenance only on Milstein', () => {
+  const snapshot = makeValidSnapshot();
+  const milstein = snapshot.libraries.find((library) => library.id === 'barnard');
+  delete milstein.holidayUrl;
+  assert.match(validateLibraryHoursSnapshot(snapshot).errors.join('\n'), /holidayUrl/);
+
+  milstein.holidayUrl = 'https://example.com/visit/hours';
+  assert.match(validateLibraryHoursSnapshot(snapshot).errors.join('\n'), /holidayUrl/);
+
+  milstein.holidayUrl = 'https://library.barnard.edu/visit/hours';
+  snapshot.libraries.find((library) => library.id === 'avery').holidayUrl = milstein.holidayUrl;
+  assert.match(validateLibraryHoursSnapshot(snapshot).errors.join('\n'), /only barnard may use holidayUrl/);
+});

@@ -450,12 +450,11 @@
     font-size: 0.7rem; color: var(--muted); line-height: 1.4;
   }
 
-  /* ── Health services dropdown (sub-accordion) ──── */
+  /* ── Columbia Health dropdown ───────────────────── */
   .health-hours-dropdown {
     border: 1.5px solid var(--columbia-blue);
-    border-radius: 8px;
+    border-radius: 0 0 var(--radius) var(--radius);
     overflow: hidden;
-    margin: 0.5rem 0;
   }
   .health-hours-toggle {
     display: flex; align-items: center; gap: 0.45rem;
@@ -516,8 +515,8 @@
     .detail { padding: 0.5rem 0.6rem 0.9rem 1.2rem; }
     .recreation-spaces { margin: 0.75rem -0.6rem 0 -1.2rem; }
     .recreation-spaces-toggle { padding-left: 1.2rem; padding-right: 0.85rem; }
-    .recreation-space { padding-left: 1.2rem; padding-right: calc(1.45rem + 14px); }
     .health-hours-toggle { padding: 0.7rem 0.85rem; }
+    .recreation-space { padding-left: 1.2rem; padding-right: calc(1.45rem + 14px); }
     .summary { gap: 0.9rem; }
     .stat { font-size: 0.8rem; }
     .search-input { flex: 1 1 100%; }
@@ -707,6 +706,17 @@ const VENUES = [
              [['11:00','15:00'],['19:00','23:00']],[['11:00','15:00'],['19:00','23:00']],
              [['19:00','23:00']],[['18:00','22:00']]) },
 
+  { id:'hewitt', name:'Hewitt Dining', cat:'dining', loc:'Barnard Hall, lower level',
+    hours: ALL(null), sourceStatuses: ALL('Hours pending first live update'),
+    note:'Live Barnard Dining schedule loads when available.' },
+
+  { id:'diana-center-cafe', name:'Diana Center Cafe', cat:'dining', loc:'Diana Center, 2nd floor',
+    hours: ALL(null), sourceStatuses: ALL('Hours pending first live update'),
+    note:'Live Barnard Dining schedule loads when available.' },
+
+  { id:'barnard-bubble-tea-sushi', name:'Bubble Tea & Sushi', cat:'dining', loc:'Milstein Center, 1st floor',
+    hours: ALL(null), sourceStatuses: ALL('Hours pending first live update'),
+    note:'Live Barnard Dining schedule loads when available.' },
 
   /* ── CAFES ──────────────────────────────────────── */
   { id:'bj-butler', name:'Butler Cafe', cat:'cafe', loc:'Butler Library, 1st fl',
@@ -719,6 +729,10 @@ const VENUES = [
 
   { id:'cafe-east', name:'Cafe East', cat:'cafe', loc:'Lerner Hall, Room 2E',
     hours: WEEKDAYS([['10:30','19:30']], [['11:00','19:30']], [['11:00','19:30']]) },
+
+  { id:'lizs-place', name:"Liz's Place", cat:'cafe', loc:'Diana Center, 1st floor',
+    hours: ALL(null), sourceStatuses: ALL('Hours pending first live update'),
+    note:'Live Barnard Dining schedule loads when available.' },
 
   { id:'bj-uris', name:'Uris Cafe', cat:'cafe', loc:'Uris Hall, lower level',
     hours: WEEKDAYS([['08:00','21:00']], [['08:00','18:00']]) },
@@ -756,7 +770,7 @@ const VENUES = [
   /* ── STUDENT LIFE & SERVICES ────────────────────── */
   { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
     hours: WEEKDAYS([['07:30','20:00']], [['09:00','17:00']], [['09:00','17:00']]),
-    studentAccessType:'open-access', note:'Times are subject to change throughout the academic year.' },
+    note:'Times are subject to change throughout the academic year.' },
 
   { id:'bookstore', name:'Columbia University Bookstore', cat:'student', loc:'Lerner Hall, lower level',
     hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
@@ -796,12 +810,6 @@ const VENUES = [
     hours: WEEKDAYS([['09:00','17:00']]),
     studentAccessType:'virtual-only', note:'Virtual appointments only.' },
 ];
-
-const HEALTH_SERVICE_IDS = new Set([
-  'alice-health', 'medical', 'caps', 'disability', 'svr', 'student-insurance', 'immunization',
-]);
-
-const JOE_IDS = new Set(['joe-noco', 'joe-journalism', 'joe-dodge']);
 
 /* ══════════════════════════════════════════════════
    TIME HELPERS (Eastern Time)
@@ -1015,6 +1023,12 @@ const expanded = new Set();
 const expandedRecreationSpaces = new Set();
 let healthDropdownExpanded = false;
 
+const HEALTH_SERVICE_IDS = new Set([
+  'alice-health', 'medical', 'caps', 'disability', 'svr', 'student-insurance', 'immunization',
+]);
+
+const JOE_IDS = new Set(['joe-noco', 'joe-journalism', 'joe-dodge']);
+
 const STATUS_FILTERS = [
   { id:'all',          label:'All Buildings' },
   { id:'open',         label:'Open now' },
@@ -1135,14 +1149,14 @@ function render() {
 
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
-    const isStudent = c.id === 'student';
     const all = VENUES.filter(v => v.cat === c.id && matchesFilters(v, now, true));
     const shown = all.filter(v => activeStatus === 'all' || getStatus(v, now).status === activeStatus);
-    // For student section: separate health venues into their own dropdown
+
+    const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
     const hasHealthVenues = isStudent && VENUES.some(v => HEALTH_SERVICE_IDS.has(v.id));
     if (!regularShown.length && !hasHealthVenues) return '';
-    // When all Joe's Coffee locations are closed, group them at the bottom
+
     const isCafe = c.id === 'cafe';
     const allJoesClosed = isCafe && regularShown.filter(v => JOE_IDS.has(v.id))
       .every(v => getStatus(v, now).status === 'closed');
@@ -1334,7 +1348,16 @@ function setDiningHoursStatus(status) {
     timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
   });
   const prefix = status.kind === 'stale' ? 'Dining hours may be stale' : 'Dining hours updated';
-  element.textContent = `${prefix}: ${generated} ET · 16 of 20 live; 4 cafés using embedded schedules`;
+  const fallbackCount = status.staticFallbackIds?.length || 0;
+  const fallback = fallbackCount === 3
+    ? '; 3 cafés using embedded schedules'
+    : fallbackCount ? `; ${fallbackCount} using embedded or verification fallback` : '';
+  const barnard = status.kind === 'stale' && status.barnardFetchedAt
+    ? ` · Barnard last confirmed ${new Date(status.barnardFetchedAt).toLocaleString('en-US', {
+        timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
+      })} ET`
+    : '';
+  element.textContent = `${prefix}: ${generated} ET · ${status.updatedCount} of ${status.totalCount} live${fallback}${barnard}`;
 }
 
 function setRecreationHoursStatus(status) {

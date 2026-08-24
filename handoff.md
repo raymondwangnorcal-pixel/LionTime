@@ -2,76 +2,86 @@
 
 ## 1. Current task goal
 
-Finish delivery of the Dining workflow reliability fix: report each official source attempt independently, fail fast on managed challenges without bypassing them, retain each source's last successful normalized evidence, and keep the public Dining API backward-compatible.
+Finish the local implementation of live Barnard Dining hours in LionHour, using DineOnCampus as the official source and publishing Hewitt, Diana Center Cafe, Bubble Tea & Sushi, and Liz's Place with resilient retained-source behavior.
 
 ## 2. User requirements and constraints
 
-- Do not bypass Columbia's managed security controls, solve CAPTCHAs, copy cookies, disguise automation, or weaken official-source validation.
-- A challenged Dining article must not block successful Locations, NSOP, Labor Day, or Fall source attempts.
-- Retain last-known-good evidence per source rather than replacing or discarding the whole Dining snapshot.
-- Continue serving the existing browser snapshot contract and preserve the legacy stored snapshot during first-run migration.
-- Keep the existing four-hour workflow cadence and official-source precedence from DEC-0028.
-- Do not commit, push, deploy, or change GitHub/Vercel configuration without separate authorization.
+- Use `https://dineoncampus.com/barnard/hours-of-operation` as the Barnard Dining reference/source.
+- Treat Liz's Place as a cafe.
+- Treat Diana Center Cafe and Bubble Tea & Sushi as dining halls.
+- Do not include LeFrak Byte Kiosk.
+- Preserve the existing Dining retained-source architecture and backward-compatible public snapshots.
+- Do not commit, push, deploy, or dispatch workflows without separate authorization.
+- Preserve unrelated local Milstein Library and other user changes in the dirty worktree.
 
 ## 3. Files inspected
 
+- `docs/BarnardPlus.md`
+- `docs/superpowers/plans/2026-08-24-live-barnard-dining-hours.md`
 - `scripts/dining-hours-scraper.mjs`
-- `lib/dining-article-parser.js`, `lib/dining-hours-resolver.js`, `lib/dining-hours-schema.js`
-- `lib/dining-hours-service.js`, `lib/dining-hours-store.js`, `api/dining-hours.js`
-- `.github/workflows/update-dining-hours.yml`, `assets/dining-hours.js`
-- All `tests/dining-hours-*.test.mjs` files and Dining fixtures/helpers
+- `lib/dining-hours-schema.js`, `lib/dining-hours-source-schema.js`
+- `lib/dining-hours-resolver.js`, `lib/dining-hours-service.js`
+- `assets/dining-hours.js`, `index.html`
+- Dining parser, schema, service, resolver, scraper, client, workflow, and header tests
+- `.github/workflows/update-dining-hours.yml`
 - `docs/dining-hours-operations.md`, `docs/decisions.md`
-- GitHub Actions run `32682295158` logs and the four official Dining pages
 
 ## 4. Files modified
 
-Local uncommitted changes at handoff:
+Barnard implementation files currently added or modified:
 
-- Modified: `.github/workflows/update-dining-hours.yml`
-- Modified: `docs/decisions.md`, `docs/dining-hours-operations.md`
-- Modified: `lib/dining-hours-service.js`
+- Added: `lib/barnard-dining-hours-parser.js`
+- Added: `tests/barnard-dining-hours-parser.test.mjs`
+- Added: three sanitized Barnard rendered-week fixtures under `tests/fixtures/`
+- Modified: `lib/dining-hours-schema.js`, `lib/dining-hours-source-schema.js`
+- Modified: `lib/dining-hours-resolver.js`, `lib/dining-hours-service.js`
 - Modified: `scripts/dining-hours-scraper.mjs`
-- Modified: `tests/dining-hours-service.test.mjs`, `tests/dining-hours-workflow.test.mjs`
-- Added: `lib/dining-hours-source-schema.js`
-- Added: `docs/superpowers/plans/2026-08-23-dining-source-retention.md`
+- Modified: `assets/dining-hours.js`, `index.html`
+- Modified: Dining helper/schema/source/service/resolver/scraper/client tests and `tests/header-controls.test.mjs`
+- Modified earlier: `docs/superpowers/plans/2026-08-24-live-barnard-dining-hours.md`, `docs/decisions.md`
 
-While this task was running, `main` and `origin/main` advanced to `2eef5c6e3c3a3d8fc3edabf2ee6d4086eb9c6db1` (`View Spaces alteration 2`). That pushed commit includes the new Dining scraper tests, source-schema tests, and helper fixtures created during this task, but does not include the implementation module/service/scraper changes listed above.
+Other pre-existing user changes, especially the Milstein Library work, remain in the same dirty worktree and must not be overwritten.
 
 ## 5. Important implementation decisions
 
-- The scraper publishes an ordered four-attempt batch with bounded failure codes instead of an all-or-nothing resolved snapshot.
-- HTTP 403/429 or recognized challenge text becomes `challenge` before `#main-article` is queried; remaining official sources continue.
-- Redis keeps an internal `dining-source-state` envelope under the existing `lionhour:dining-hours:v1` key. Each source stores current attempt metadata plus its last successful normalized payload.
-- Public GET still unwraps and returns only the existing schema-version-1-or-2 snapshot, so no frontend migration is required.
-- A legacy snapshot remains public until all four source payloads have initialized. Thereafter every batch resolves from current successes plus retained evidence.
-- DEC-0031 records the user-approved retention and no-bypass policy; implementation remains pending because the implementation is not fully committed.
+- One official Barnard source attempt owns four exact venues: Hewitt, Diana Center Cafe, Bubble Tea & Sushi, and Liz's Place.
+- The source parser consumes sanitized rendered DineOnCampus HTML and validates both visible table text and accessible labels.
+- A Barnard scrape must provide two complete Sunday-starting weeks (14 days); a third week is opportunistic, producing 21 days when available.
+- LeFrak Byte Kiosk and untargeted rows are excluded.
+- Public snapshot schema v4 permits source-specific `fetchedAt` timestamps and adds the four Barnard locations while preserving v1-v3 readers.
+- Barnard coverage older than eight hours is marked stale; missing days are partial; retained coverage older than 24 hours is expired. Covered dates can still display retained hours with explicit status.
+- DEC-0034 and DEC-0035 record the source and product-contract choices; their implementation status remains pending until a commit exists.
 
 ## 6. Current state of the code
 
-- Local implementation is complete and `git diff --check` passes.
-- `HEAD`, `main`, and `origin/main` are all `2eef5c6e3c3a3d8fc3edabf2ee6d4086eb9c6db1`.
-- The remote branch currently contains tests that import `lib/dining-hours-source-schema.js`, but that module is only local/untracked. The remote Dining workflow can therefore fail until the remaining local changes are committed and pushed.
-- No commit, push, deploy, workflow dispatch, or configuration mutation was performed by Codex in this task.
+- Parser, source acquisition, retained-state merge, resolver, browser hydration, dynamic status counts, and four UI cards are implemented locally.
+- The scraper performs one Barnard navigation, waits for stable rendered evidence, captures two required weeks, and attempts a third within a bounded budget.
+- Parser, browser integration, scraper, schema, source-schema, service, resolver, client, workflow, and Barnard page-card tests are green.
+- The workflow ceiling is fifteen minutes and Dining operations documentation covers the six-source/v4 contract and Barnard failure policy.
+- A live non-publishing scrape succeeded for Barnard and produced a valid fourteen-day, four-venue payload in 2.16 seconds.
+- Local implementation and verification are complete; `git diff --check` and decision-ledger validation pass.
+- No commit, push, deploy, workflow dispatch, or external configuration mutation has been performed.
 
 ## 7. Tests run and results
 
-- Focused Dining suite: 35 passed, 0 failed.
-- Coverage includes immediate 403 challenge detection, no challenged selector read, later-source continuation, staggered initialization, total-outage retention, strict payload validation, service migration, workflow policy, resolver, client, and schema behavior.
-- Full `npm test`: 196 passed, 8 failed. All eight failures are outside the Dining pipeline: one header integration assertion, four Recreation renderer assertions, and three Student Life UI assertions already present in the current pushed tree.
-- Decision ledger history-independent and full Git audits: passed.
-- `git diff --check`: passed.
+- Baseline full `npm test`: 208 passed, 5 failed before Barnard work; failures were one stale Dining header assertion and four unrelated Recreation assertions.
+- Barnard parser: 6 passed, including a real Chromium DOM serialization test.
+- Dining scraper: 10 passed, including optional-third-week degradation to fourteen days.
+- Dining schema/source-schema/service/resolver: 26 passed.
+- Dining client: 10 passed.
+- Full `npm test` after implementation: 225 passed, 5 failed across 230 tests. The failure count matches baseline: the one header failure is now the separate unfinished Milstein page-card assertion, and the same four Recreation renderer failures remain. Every Barnard/Dining test passed.
+- Live smoke batch validation: passed. `barnard-hours` succeeded with 14 days for all four exact venues; `locations-feed` also succeeded; four managed-challenge sources failed independently and were retained as bounded failures.
 
 ## 8. Known bugs, gaps, or risks
 
-- The fix is not active remotely because the implementation files remain uncommitted/unpushed.
-- During first rollout, challenged article sources that have never initialized in the new retained-state envelope cannot be reconstructed from the legacy resolved snapshot. The legacy snapshot remains public until each article succeeds at least once; successful sources accumulate across separate runs.
-- Source-attempt results are visible in workflow logs and retained internally, while the public GET intentionally stays snapshot-compatible.
-- The eight unrelated full-suite failures should be repaired separately or reconciled with the UI changes that introduced them.
+- The implementation remains local and will not affect production until an authorized commit, push, Vercel deployment, and manually dispatched Dining workflow occur.
+- The live source currently exposed only two weeks, so the smoke test correctly exercised the valid fourteen-day path rather than the opportunistic twenty-one-day path.
+- Four Columbia/Lerner article-style sources returned managed challenges during the live smoke run; retained-source isolation handled them as designed and no bypass was attempted.
+- The full suite still has one unrelated Milstein page-card failure and four unrelated Recreation renderer failures.
 
 ## 9. Exact next steps
 
-1. Review the local Dining diff and the concurrent `2eef5c6` commit boundary.
-2. If approved, commit the remaining local files together so the already-pushed tests and their implementation reach the same revision, then push.
-3. Run or re-run `Update dining hours`; verify the log reports all four source results and a challenged source no longer causes a selector timeout.
-4. Confirm `GET /api/dining-hours` still returns a valid public snapshot. If Labor/Fall remain challenged, retry later so the retained envelope can initialize them independently while the legacy snapshot remains served.
-5. Address the eight unrelated UI-test failures in a separate change.
+1. Review the combined dirty-worktree diff carefully because it also contains separate Milstein and UI work.
+2. If approved, commit the intended Barnard Dining files together and push; then wait for Vercel deployment.
+3. Manually dispatch `Update dining hours` with publishing enabled and verify public schema v4, six retained source states, four Barnard cards, and 20-of-23 live when all required evidence is current.
+4. Reconcile DEC-0034/DEC-0035 with the implementation commit; until then, leave both implementation fields pending.

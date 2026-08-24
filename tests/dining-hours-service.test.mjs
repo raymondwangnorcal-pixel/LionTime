@@ -6,6 +6,7 @@ import {
   makeValidDiningAttemptBatch,
   makeValidDiningSnapshot,
   makeValidDiningSnapshotV2,
+  makeValidDiningSnapshotV3,
 } from './helpers/dining-hours-fixture.mjs';
 
 function memoryStore(initial = null) {
@@ -139,6 +140,45 @@ test('migrates retained four-source state after Café East initializes', async (
   assert.equal(migrated.sources.length, 5);
   assert.equal(migrated.snapshot.schemaVersion, 3);
   assert.ok(migrated.snapshot.locations.some((location) => location.id === 'cafe-east'));
+});
+
+test('initializes Barnard independently and prevents an older batch contract from downgrading v4', async () => {
+  const previous = makeValidDiningSnapshotV3();
+  const store = memoryStore(previous);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+
+  const first = makeValidDiningAttemptBatch({
+    schemaVersion: 3,
+    generated: '2026-08-24T12:00:00.000Z',
+    failures: ['barnard-hours'],
+  });
+  assert.equal((await service.handle({
+    method: 'PUT', authorization: 'Bearer test-secret', body: first,
+  })).status, 204);
+  assert.deepEqual((await service.handle({ method: 'GET' })).body, previous);
+
+  const second = makeValidDiningAttemptBatch({
+    schemaVersion: 3,
+    generated: '2026-08-24T16:00:00.000Z',
+    failures: ['locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026', 'cafe-east'],
+  });
+  assert.equal((await service.handle({
+    method: 'PUT', authorization: 'Bearer test-secret', body: second,
+  })).status, 204);
+  const initialized = await store.getSnapshot();
+  assert.equal(initialized.schemaVersion, 3);
+  assert.equal(initialized.snapshot.schemaVersion, 4);
+  assert.equal(initialized.snapshot.sources.at(-1).fetchedAt, second.generated);
+  assert.equal(initialized.snapshot.locations.length, 21);
+
+  const olderContract = makeValidDiningAttemptBatch({ generated: '2026-08-24T20:00:00.000Z' });
+  assert.equal((await service.handle({
+    method: 'PUT', authorization: 'Bearer test-secret', body: olderContract,
+  })).status, 204);
+  const retained = await store.getSnapshot();
+  assert.equal(retained.schemaVersion, 3);
+  assert.equal(retained.snapshot.schemaVersion, 4);
+  assert.equal(retained.snapshot.sources.at(-1).fetchedAt, second.generated);
 });
 
 test('protects writes and handles empty, unsupported, and failed storage', async () => {

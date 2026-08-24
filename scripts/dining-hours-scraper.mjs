@@ -8,6 +8,11 @@ import {
   parseNsopArticle,
 } from '../lib/dining-article-parser.js';
 import { parseCafeEastPage } from '../lib/cafe-east-parser.js';
+import {
+  BARNARD_DINING_VENUES,
+  combineBarnardDiningWeeks,
+  parseBarnardRenderedWeek,
+} from '../lib/barnard-dining-hours-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
 import { DINING_SOURCE_CONTRACT } from '../lib/dining-hours-schema.js';
 import {
@@ -16,6 +21,10 @@ import {
 } from '../lib/dining-hours-source-schema.js';
 
 const SOURCE_URL = 'https://dining.columbia.edu/content/locations-hours';
+const BARNARD_ACQUISITION_TIMEOUT_MS = 75_000;
+const BARNARD_NAVIGATION_TIMEOUT_MS = 45_000;
+const BARNARD_RENDER_TIMEOUT_MS = 15_000;
+const BARNARD_TRANSITION_TIMEOUT_MS = 7_500;
 
 export const DINING_LOCATION_MAP = Object.freeze({
   7482: Object.freeze({ id: 'bj-everett', name: 'Blue Java at Everett Library Café', category: 'cafe' }),
@@ -272,10 +281,10 @@ async function managedChallenge(page, response) {
     .test(`${title} ${body}`);
 }
 
-async function navigateToSource(page, sourceUrl) {
+async function navigateToSource(page, sourceUrl, timeout = 90_000) {
   let response;
   try {
-    response = await page.goto(sourceUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+    response = await page.goto(sourceUrl, { waitUntil: 'domcontentloaded', timeout });
   } catch (error) {
     const code = /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'navigation';
     throw new SourceAcquisitionError(code, `${sourceUrl} navigation failed`);
@@ -400,7 +409,126 @@ async function acquireCafeEastAttempt(page, now) {
   }
 }
 
-export async function scrapeDiningHours({ outputPath, now = new Date(), chromiumImpl } = {}) {
+function barnardCaptionNeedle(weekStart) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric',
+  }).format(new Date(`${weekStart}T12:00:00Z`));
+}
+
+function remainingTimeout(deadline, maximum) {
+  return Math.max(1, Math.min(maximum, deadline - Date.now()));
+}
+
+async function waitForBarnardTargets(page, expectedWeekStart, deadline, maximum) {
+  const sourceNames = Object.keys(BARNARD_DINING_VENUES);
+  const expectedCaption = expectedWeekStart ? barnardCaptionNeedle(expectedWeekStart) : null;
+  const timeout = remainingTimeout(deadline, maximum);
+  try {
+    await page.waitForFunction(({ names, caption }) => {
+      const normalize = value => String(value || '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+      const targets = new Set();
+      for (const table of document.querySelectorAll('table.unified-hours-table')) {
+        const rows = [...table.querySelectorAll('tr.hours-row')].filter((row) => {
+          const name = normalize(row.querySelector('th[scope="row"]')?.textContent);
+          return names.includes(name);
+        });
+        if (!rows.length) continue;
+        if (caption && !normalize(table.querySelector('caption')?.textContent).includes(caption)) return false;
+        for (const row of rows) {
+          if (row.querySelectorAll('td').length !== 7) return false;
+          targets.add(normalize(row.querySelector('th[scope="row"]')?.textContent));
+        }
+      }
+      return targets.size === names.length && names.every(name => targets.has(name));
+    }, { names: sourceNames, caption: expectedCaption }, { timeout, polling: 100 });
+  } catch (error) {
+    throw new SourceAcquisitionError(
+      /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'missing-content',
+      'Barnard target tables did not finish rendering',
+    );
+  }
+}
+
+async function barnardTargetSignature(page) {
+  const sourceNames = Object.keys(BARNARD_DINING_VENUES);
+  return page.evaluate((names) => {
+    const normalize = value => String(value || '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+    const parts = [];
+    for (const table of document.querySelectorAll('table.unified-hours-table')) {
+      const caption = normalize(table.querySelector('caption')?.textContent);
+      for (const row of table.querySelectorAll('tr.hours-row')) {
+        const name = normalize(row.querySelector('th[scope="row"]')?.textContent);
+        if (names.includes(name)) parts.push(`${caption}\n${name}\n${row.innerHTML}`);
+      }
+    }
+    return parts.sort().join('\n---\n');
+  }, sourceNames);
+}
+
+async function waitForStableBarnardWeek(page, expectedWeekStart, deadline, maximum) {
+  while (Date.now() < deadline) {
+    await waitForBarnardTargets(page, expectedWeekStart, deadline, maximum);
+    const before = await barnardTargetSignature(page);
+    if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(100);
+    const after = await barnardTargetSignature(page);
+    if (before && before === after) return;
+  }
+  throw new SourceAcquisitionError('timeout', 'Barnard target tables did not stabilize');
+}
+
+async function nextBarnardWeek(page, weekStart, deadline, { optional = false } = {}) {
+  const button = page.getByRole('button', { name: 'Go to next week' }).first();
+  if (typeof button.count === 'function' && await button.count() === 0) {
+    if (optional) return false;
+    throw new SourceAcquisitionError('missing-content', 'Barnard next-week control is missing');
+  }
+  if (typeof button.isEnabled === 'function' && !await button.isEnabled()) {
+    if (optional) return false;
+    throw new SourceAcquisitionError('missing-content', 'Barnard next week is unavailable');
+  }
+  await button.click({ timeout: remainingTimeout(deadline, BARNARD_TRANSITION_TIMEOUT_MS) });
+  await waitForStableBarnardWeek(
+    page,
+    addDays(weekStart, 7),
+    deadline,
+    BARNARD_TRANSITION_TIMEOUT_MS,
+  );
+  return true;
+}
+
+async function acquireBarnardHoursAttempt(page, now) {
+  const sourceId = 'barnard-hours';
+  const attemptedAt = now.toISOString();
+  const sourceUrl = DINING_SOURCE_CONTRACT[sourceId];
+  const deadline = Date.now() + BARNARD_ACQUISITION_TIMEOUT_MS;
+  try {
+    await navigateToSource(page, sourceUrl, BARNARD_NAVIGATION_TIMEOUT_MS);
+    await waitForStableBarnardWeek(page, null, deadline, BARNARD_RENDER_TIMEOUT_MS);
+    const first = parseBarnardRenderedWeek(await page.content());
+
+    await nextBarnardWeek(page, first.weekStart, deadline);
+    const second = parseBarnardRenderedWeek(await page.content(), {
+      expectedWeekStart: addDays(first.weekStart, 7),
+    });
+    const weeks = [first, second];
+
+    try {
+      if (await nextBarnardWeek(page, second.weekStart, deadline, { optional: true })) {
+        weeks.push(parseBarnardRenderedWeek(await page.content(), {
+          expectedWeekStart: addDays(second.weekStart, 7),
+        }));
+      }
+    } catch {}
+
+    return successAttempt(sourceId, attemptedAt, combineBarnardDiningWeeks(weeks));
+  } catch (error) {
+    return failureAttempt(sourceId, attemptedAt, failureCode(error, 'parse'));
+  }
+}
+
+export async function scrapeDiningHours({
+  outputPath, now = new Date(), chromiumImpl, onSourceResult = () => {},
+} = {}) {
   if (typeof outputPath !== 'string' || !outputPath.trim()) {
     throw new Error('--json-out requires a path');
   }
@@ -410,13 +538,20 @@ export async function scrapeDiningHours({ outputPath, now = new Date(), chromium
     const page = await browser.newPage({ timezoneId: 'America/New_York' });
     const attempts = [await acquireLocationsAttempt(page, now)];
     for (const sourceId of DINING_SOURCE_IDS.slice(1)) {
-      attempts.push(sourceId === 'cafe-east'
-        ? await acquireCafeEastAttempt(page, now)
-        : await acquireArticleAttempt(page, sourceId, now));
+      if (sourceId === 'barnard-hours') {
+        const startedAt = Date.now();
+        const attempt = await acquireBarnardHoursAttempt(page, now);
+        attempts.push(attempt);
+        onSourceResult({ sourceId, result: attempt.result, durationMs: Date.now() - startedAt });
+      } else {
+        attempts.push(sourceId === 'cafe-east'
+          ? await acquireCafeEastAttempt(page, now)
+          : await acquireArticleAttempt(page, sourceId, now));
+      }
     }
     const windowStart = easternDate(now);
     const batch = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       generated: now.toISOString(),
       windowStart,
       windowEnd: addDays(windowStart, 13),
@@ -441,7 +576,12 @@ function outputPathFromArgs(args) {
 
 const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (invokedPath === import.meta.url) {
-  scrapeDiningHours({ outputPath: outputPathFromArgs(process.argv.slice(2)) })
+  scrapeDiningHours({
+    outputPath: outputPathFromArgs(process.argv.slice(2)),
+    onSourceResult: ({ sourceId, result, durationMs }) => {
+      process.stdout.write(`- ${sourceId}: ${result} in ${durationMs}ms\n`);
+    },
+  })
     .then((batch) => {
       const successes = batch.attempts.filter(attempt => attempt.result === 'success').length;
       for (const attempt of batch.attempts) {
@@ -456,4 +596,4 @@ if (invokedPath === import.meta.url) {
     });
 }
 
-export { SOURCE_URL };
+export { SOURCE_URL, acquireBarnardHoursAttempt };

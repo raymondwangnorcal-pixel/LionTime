@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { parseFallArticle, parseLaborDayArticle, parseNsopArticle } from '../lib/dining-article-parser.js';
 import { parseCafeEastPage } from '../lib/cafe-east-parser.js';
+import { combineBarnardDiningWeeks, parseBarnardRenderedWeek } from '../lib/barnard-dining-hours-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
 import { makeValidDiningSnapshot } from './helpers/dining-hours-fixture.mjs';
 
@@ -14,6 +15,11 @@ const evidence = () => ({
   fall: parseFallArticle(html('dining-fall-2026.html')),
   cafeEast: parseCafeEastPage(html('cafe-east-live.txt')),
 });
+
+function barnardEvidence() {
+  return combineBarnardDiningWeeks(['2026-08-23', '2026-08-30', '2026-09-06']
+    .map(date => parseBarnardRenderedWeek(html(`barnard-dining-hours-week-${date}.html`))));
+}
 
 function snapshotStarting(date) {
   const snapshot = makeValidDiningSnapshot();
@@ -87,4 +93,46 @@ test('does not apply Fall baselines after the bounded term', () => {
     .find((location) => location.id === 'cafe-east')
     .days.every((day) => day.sourceId === 'cafe-east'));
   assert.deepEqual(result.specialServices, []);
+});
+
+test('resolves four Barnard venues by date and preserves true source freshness', () => {
+  const sourceFetchedAt = Object.fromEntries([
+    'locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026', 'cafe-east',
+  ].map(id => [id, '2026-08-24T12:00:00.000Z']));
+  sourceFetchedAt['barnard-hours'] = '2026-08-24T08:00:00.000Z';
+  const result = resolveDiningSnapshot({
+    baseSnapshot: snapshotStarting('2026-08-24'),
+    ...evidence(),
+    barnardHours: barnardEvidence(),
+    sourceFetchedAt,
+  });
+  assert.equal(result.schemaVersion, 4);
+  assert.equal(result.locations.length, 21);
+  assert.equal(result.sources.at(-1).fetchedAt, '2026-08-24T08:00:00.000Z');
+  const liz = result.locations.find(({ id }) => id === 'lizs-place');
+  assert.equal(liz.category, 'cafe');
+  assert.deepEqual(liz.days.find(({ date }) => date === '2026-09-03').intervals, [
+    ['08:00', '14:00'], ['16:00', '19:00'],
+  ]);
+  assert.ok(!result.locations.some(({ id }) => /lefrak|kosher/i.test(id)));
+});
+
+test('marks only Barnard dates outside retained coverage as unpublished', () => {
+  const twoWeeks = combineBarnardDiningWeeks(['2026-08-23', '2026-08-30']
+    .map(date => parseBarnardRenderedWeek(html(`barnard-dining-hours-week-${date}.html`))));
+  const sourceFetchedAt = Object.fromEntries([
+    'locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026', 'cafe-east', 'barnard-hours',
+  ].map(id => [id, '2026-08-24T12:00:00.000Z']));
+  const result = resolveDiningSnapshot({
+    baseSnapshot: snapshotStarting('2026-08-24'),
+    ...evidence(),
+    barnardHours: twoWeeks,
+    sourceFetchedAt,
+  });
+  const hewitt = result.locations.find(({ id }) => id === 'hewitt');
+  assert.equal(hewitt.days.at(-1).date, '2026-09-06');
+  assert.deepEqual(hewitt.days.at(-1), {
+    date: '2026-09-06', intervals: [], status: 'Hours not published', sourceId: 'unpublished',
+  });
+  assert.ok(hewitt.days.slice(0, -1).every(day => day.sourceId === 'barnard-hours'));
 });

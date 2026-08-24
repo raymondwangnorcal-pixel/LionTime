@@ -73,23 +73,27 @@ test('renders embedded hours before guarded live hydration and exposes data stat
   const hydration = indexHtml.lastIndexOf('LionHourLibraryHours.hydrate');
   assert.ok(initialRender >= 0 && hydration > initialRender);
   assert.match(indexHtml, /if \(window\.LionHourLibraryHours\)/);
-  assert.match(indexHtml, /5 of 6 live/);
+  assert.match(indexHtml, /status\.updatedCount.*status\.totalCount.*live/s);
+  assert.match(indexHtml, /id:'milstein'.*name:'Milstein Library'.*cat:'library'/s);
+  assert.match(indexHtml, /id:'milstein'.*hours: ALL\(null\).*sourceStatuses: ALL\('Hours load from official schedule'\)/s);
 });
 
-test('loads dining live data after static cards and identifies Joe café fallbacks', () => {
+test('loads dining live data after static cards and identifies Barnard and Joe fallbacks', () => {
+  const venueData = indexHtml.match(/const VENUES = \[([\s\S]*?)\n\];/)?.[1] || '';
   assert.match(indexHtml, /id="dining-hours-status"[^>]*data-kind="fallback"/);
   assert.match(indexHtml, /assets\/dining-hours\.js/);
   assert.match(indexHtml, /id:'facultyhouse-4'/);
   assert.match(indexHtml, /LionHourDiningHours\.hydrate/);
   assert.match(indexHtml, /status\.updatedCount.*status\.totalCount.*live/s);
-  assert.match(indexHtml, /staticFallbackIds\.includes\('cafe-east'\)/);
-  assert.match(indexHtml, /Joe’s cafés using embedded schedules/);
-  assert.match(indexHtml, /setSpecialServices: setDiningSpecialServices/);
-  assert.match(indexHtml, /Restricted NSOP dining service/);
-  assert.match(indexHtml, /Official NSOP dining schedule/);
-  assert.match(indexHtml, /Official Columbia Dining schedule/);
-  assert.match(indexHtml, /day\.status !== 'Restricted NSOP service'/);
-  assert.match(indexHtml, /escapeHTML\(hoursText\)/);
+  assert.match(indexHtml, /id:'hewitt'.*name:'Hewitt Dining'.*cat:'dining'/s);
+  assert.match(indexHtml, /id:'diana-center-cafe'.*cat:'dining'/s);
+  assert.match(indexHtml, /id:'barnard-bubble-tea-sushi'.*cat:'dining'/s);
+  assert.match(indexHtml, /id:'lizs-place'.*cat:'cafe'/s);
+  assert.equal([...venueData.matchAll(/cat:'(?:dining|cafe)'/g)].length, 23);
+  assert.doesNotMatch(venueData, /smith-dining|LeFrak Byte Kiosk|Barnard Kosher/);
+  assert.match(indexHtml, /const fallbackCount = status\.staticFallbackIds/);
+  assert.match(indexHtml, /3 cafés using embedded schedules/);
+  assert.match(indexHtml, /status\.updatedCount.*status\.totalCount.*live/s);
 });
 
 test('loads Recreation hydration after embedded Fitness cards', () => {

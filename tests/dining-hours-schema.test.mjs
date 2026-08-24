@@ -6,6 +6,7 @@ import {
   makeValidDiningSnapshot,
   makeValidDiningSnapshotV2,
   makeValidDiningSnapshotV3,
+  makeValidDiningSnapshotV4,
 } from './helpers/dining-hours-fixture.mjs';
 
 test('accepts the complete fourteen-day dining snapshot', () => {
@@ -78,6 +79,28 @@ test('accepts provenance and restricted services in schema version 2', () => {
 
 test('accepts Café East provenance in schema version 3', () => {
   assert.equal(validateDiningHoursSnapshot(makeValidDiningSnapshotV3()).ok, true);
+});
+
+test('accepts Barnard provenance with independent source freshness in schema version 4', () => {
+  const snapshot = makeValidDiningSnapshotV4({ barnardFetchedAt: '2026-08-20T16:00:00.000Z' });
+  assert.equal(validateDiningHoursSnapshot(snapshot).ok, true);
+});
+
+test('rejects unapproved Barnard locations, categories, and source overrides', () => {
+  const category = makeValidDiningSnapshotV4();
+  category.locations.find(({ id }) => id === 'lizs-place').category = 'dining';
+  assert.match(validateDiningHoursSnapshot(category).errors.join('\n'), /category does not match/);
+
+  const source = makeValidDiningSnapshotV4();
+  source.locations.find(({ id }) => id === 'hewitt').days[0].sourceId = 'locations-feed';
+  assert.match(validateDiningHoursSnapshot(source).errors.join('\n'), /cannot override Barnard evidence/);
+
+  const extra = makeValidDiningSnapshotV4();
+  extra.locations.push({
+    ...structuredClone(extra.locations.find(({ id }) => id === 'hewitt')),
+    id: 'lefrak-byte-kiosk',
+  });
+  assert.match(validateDiningHoursSnapshot(extra).errors.join('\n'), /unexpected location/);
 });
 
 test('rejects unsafe version 2 source and NSOP open-count claims', () => {
