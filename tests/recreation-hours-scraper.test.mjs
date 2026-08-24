@@ -42,6 +42,11 @@ test('turns sanitized current acquired pages into a conservative valid snapshot'
     url: `https://official.example/${sourceId}`,
     html: await readFile(new URL(`./fixtures/${fixture}`, import.meta.url), 'utf8'),
   }])));
+  pages.columbiaHours.blueGymCalendar = {
+    result: 'success',
+    calendarUrl: 'https://calendar.google.com/calendar/embed?ctz=America%2FNew_York&title=Blue%20Gym&src=cuperec%40gmail.com',
+    weeks: [await readFile(new URL('./fixtures/recreation-blue-gym-calendar.txt', import.meta.url), 'utf8')],
+  };
 
   const snapshot = await runRecreationScraper({
     acquire: async () => ({ generated: new Date('2026-08-21T16:00:00-04:00'), pages }),
@@ -59,9 +64,10 @@ test('turns sanitized current acquired pages into a conservative valid snapshot'
   const reopeningDay = dodge.days.find(day => day.date === '2026-08-24');
   const blueReopeningDay = dodge.spaces.find(space => space.id === 'blue-gym').days
     .find(day => day.date === '2026-08-24');
-  assert.deepEqual(reopeningDay.restrictions[0].intervals, [['00:00', '06:00']]);
-  assert.deepEqual(blueReopeningDay.restrictions[0].intervals, [['00:00', '06:00']]);
-  assert.deepEqual(blueReopeningDay.intervals, []);
+  assert.deepEqual(reopeningDay.restrictions, []);
+  assert.deepEqual(blueReopeningDay.restrictions, []);
+  assert.deepEqual(reopeningDay.intervals, [['06:00', '22:00']]);
+  assert.deepEqual(blueReopeningDay.intervals, [['06:00', '09:30'], ['10:00', '16:00']]);
   assert.equal(barnard.days[0].status, 'Hours need verification');
   assert.deepEqual(barnard.days[0].intervals, []);
   assert.deepEqual(writes, [['/tmp/current-recreation.json', snapshot]]);

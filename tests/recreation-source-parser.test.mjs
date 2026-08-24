@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   parseBarnardHours,
+  parseBlueGymCalendar,
   parseColumbiaHours,
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
@@ -26,6 +27,60 @@ test('current Columbia DOM preserves maintenance and rejects unbounded seasonal 
   assert.deepEqual(find(maintenance, 'dodge', item => item.effectiveStart === '2026-08-21').dateIntervals, []);
   assert.deepEqual(find(maintenance, 'dodge', item => item.effectiveStart === '2026-08-24').dateIntervals, [['00:00', '06:00']]);
   assert.equal(maintenance[0].reason, 'Annual maintenance week');
+});
+
+test('bounds the current Columbia schedule from an exact adjacent semester transition', () => {
+  const generated = new Date('2026-08-24T13:00:00-04:00');
+  const evidence = parseColumbiaHours(columbiaTransitionHtml(), { generated });
+
+  for (const targetId of ['dodge', 'uris-pool']) {
+    const item = find(evidence, targetId);
+    assert.equal(item.effectiveStart, '2026-08-24');
+    assert.equal(item.effectiveEnd, '2026-09-04');
+    assert.equal(item.priority, 3);
+    assert.deepEqual(item.weeklyIntervals['1'], [['06:00', '22:00']]);
+  }
+});
+
+test('rejects a malformed Columbia semester transition instead of inferring bounds', () => {
+  const generated = new Date('2026-08-24T13:00:00-04:00');
+  const malformed = columbiaTransitionHtml().replace(
+    'Saturday, September 5th',
+    'Sunday, September 6th',
+  );
+
+  assert.equal(find(parseColumbiaHours(malformed, { generated }), 'dodge').unavailableStatus, 'Hours need verification');
+});
+
+test('derives Blue Gym openings and a bounded Dodge envelope from the official calendar', async () => {
+  const calendarText = await readFixture('recreation-blue-gym-calendar.txt');
+  const evidence = parseBlueGymCalendar({
+    calendarUrl: blueGymCalendarUrl(),
+    weeks: [calendarText],
+  }, { generated: new Date('2026-08-24T13:00:00-04:00') });
+
+  assert.deepEqual(find(evidence, 'blue-gym', item => item.effectiveStart === '2026-08-24').dateIntervals, [
+    ['06:00', '09:30'],
+    ['10:00', '16:00'],
+  ]);
+  assert.deepEqual(find(evidence, 'dodge', item => item.effectiveStart === '2026-08-24').dateIntervals, [['06:00', '22:00']]);
+  assert.deepEqual(find(evidence, 'blue-gym', item => item.effectiveStart === '2026-09-05').dateIntervals, [
+    ['08:00', '12:30'],
+    ['19:00', '21:45'],
+  ]);
+  assert.deepEqual(find(evidence, 'dodge', item => item.effectiveStart === '2026-09-05').dateIntervals, [['08:00', '22:00']]);
+  assert.equal(evidence.some(item => item.effectiveStart === '2026-08-23'), false);
+  assert.ok(evidence.filter(item => item.targetId === 'blue-gym').every(item => item.priority === 2));
+  assert.ok(evidence.filter(item => item.targetId === 'dodge').every(item => item.priority === 4));
+});
+
+test('rejects calendar evidence that is not the official Blue Gym embed', async () => {
+  const calendarText = await readFixture('recreation-blue-gym-calendar.txt');
+
+  assert.deepEqual(parseBlueGymCalendar({
+    calendarUrl: 'https://calendar.google.com/calendar/embed?ctz=America%2FNew_York&title=Uris%20Pool&src=cuperec%40gmail.com',
+    weeks: [calendarText],
+  }, { generated: new Date('2026-08-24T13:00:00-04:00') }), []);
 });
 
 test('parses specific closures, reasons, and maintenance without guessing', async () => {
@@ -226,6 +281,26 @@ function columbiaSeasonalHtml(range, rows = '<tr><td>Monday</td><td>6 AM - 11 PM
       <table><tbody>${rows}</tbody></table>
     </div>
   </div></div></main>`;
+}
+
+function columbiaTransitionHtml() {
+  return `<main><article>
+    <p>Dodge Fitness Center will be operating on its Summer session schedule through Friday, September 4th.</p>
+    <p>On Saturday, September 5th, we will resume Fall Semester operating hours.</p>
+    <div class="paragraph paragraph--type--cu-page-slice"><div class="container">
+      <h2>Summer 2026 Facility Hours</h2>
+      <div class="paragraph paragraph--type--table"><h3>Summer Session Building Hours</h3>
+        <table><tbody><tr><td>Monday</td><td>6 AM - 10 PM</td></tr></tbody></table>
+      </div>
+      <div class="paragraph paragraph--type--table"><h3>Uris Pool</h3>
+        <table><tbody><tr><td>Monday</td><td>6 AM - 10 PM</td></tr></tbody></table>
+      </div>
+    </div></div>
+  </article></main>`;
+}
+
+function blueGymCalendarUrl() {
+  return 'https://calendar.google.com/calendar/embed?ctz=America%2FNew_York&title=Blue%20Gym&src=cuperec%40gmail.com';
 }
 
 function columbiaModificationHtml(notice) {

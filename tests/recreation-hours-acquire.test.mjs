@@ -29,10 +29,39 @@ test('loads every official source in headed Chromium and closes the browser', as
   ]);
   const chromiumImpl = fakeChromium({ pages, calls });
 
-  const result = await acquireRecreationSources({ chromiumImpl, timeoutMs: 1000 });
+  const result = await acquireRecreationSources({
+    chromiumImpl,
+    timeoutMs: 1000,
+    calendarImpl: async () => ({
+      result: 'success',
+      calendarUrl: 'https://calendar.google.com/calendar/embed?title=Blue%20Gym&src=cuperec%40gmail.com',
+      weeks: ['week one'],
+    }),
+  });
 
   assert.deepEqual(Object.values(result.pages).map((page) => page.url), [...pages.keys()]);
+  assert.equal(result.pages.columbiaHours.blueGymCalendar.result, 'success');
   assert.equal(calls[0].headless, false);
+  assert.ok(calls.includes('browser.close'));
+});
+
+test('isolates an embedded Blue Gym calendar failure from required page acquisition', async () => {
+  const calls = [];
+  const pages = new Map([
+    ['https://perec.columbia.edu/hours-operation', '<main><h1>Hours of Operation</h1></main>'],
+    ['https://perec.columbia.edu/content/modified-hours-closures', '<main><h1>Modified Hours & Closures</h1></main>'],
+    ['https://barnard.edu/lefrak-center/physical-well-being', '<main><h1>Physical Well-Being</h1></main>'],
+  ]);
+
+  const result = await acquireRecreationSources({
+    chromiumImpl: fakeChromium({ pages, calls }),
+    timeoutMs: 1000,
+    calendarImpl: async () => { throw new Error('calendar unavailable'); },
+  });
+
+  assert.equal(result.pages.columbiaHours.blueGymCalendar.result, 'failure');
+  assert.equal(result.pages.columbiaHours.blueGymCalendar.failureCode, 'missing-content');
+  assert.equal(result.pages.columbiaHours.html, pages.get('https://perec.columbia.edu/hours-operation'));
   assert.ok(calls.includes('browser.close'));
 });
 

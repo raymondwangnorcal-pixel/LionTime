@@ -5,6 +5,7 @@ import { validateRecreationHoursSnapshot } from '../lib/recreation-hours-schema.
 import { resolveRecreationSnapshot } from '../lib/recreation-hours-resolver.js';
 import {
   parseBarnardHours,
+  parseBlueGymCalendar,
   parseColumbiaHours,
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
@@ -21,7 +22,7 @@ const MAX_ERROR_LENGTH = 400;
 
 export async function runRecreationScraper({
   acquire = acquireRecreationSources,
-  parsers = { parseColumbiaHours, parseColumbiaModifications, parseBarnardHours },
+  parsers = { parseColumbiaHours, parseColumbiaModifications, parseBarnardHours, parseBlueGymCalendar },
   resolve = resolveRecreationSnapshot,
   validate = validateRecreationHoursSnapshot,
   writeJson = writeFormattedJson,
@@ -46,13 +47,13 @@ function parseAllSources(acquired, parsers) {
     throw invalidSnapshotError('acquisition returned incomplete data');
   }
 
-  return PARSER_SOURCES.flatMap(([sourceId, parserName]) => {
+  const evidence = PARSER_SOURCES.flatMap(([sourceId, parserName]) => {
     const html = acquired.pages[sourceId]?.html;
     const parser = parsers?.[parserName];
     if (typeof html !== 'string' || typeof parser !== 'function') {
       throw invalidSnapshotError(`missing ${sourceId} source or parser`);
     }
-    const parsed = parser(html);
+    const parsed = parser(html, { generated: acquired.generated });
     const recognizedEmptyModifications = sourceId === 'columbiaModifications'
       && Array.isArray(parsed)
       && parsed.length === 0
@@ -62,6 +63,18 @@ function parseAllSources(acquired, parsers) {
     }
     return parsed;
   });
+
+  const calendar = acquired.pages.columbiaHours?.blueGymCalendar;
+  const calendarParser = parsers?.parseBlueGymCalendar;
+  if (calendar?.result === 'success' && typeof calendarParser === 'function') {
+    try {
+      const parsedCalendar = calendarParser(calendar, { generated: acquired.generated });
+      if (Array.isArray(parsedCalendar)) evidence.push(...parsedCalendar);
+    } catch {
+      // Embedded calendar evidence is an optional fallback; required source pages remain authoritative.
+    }
+  }
+  return evidence;
 }
 
 function hasRequiredFacilities(evidence) {

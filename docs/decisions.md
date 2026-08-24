@@ -739,3 +739,17 @@
 - Superseded by: none
 - Note: The completion commit adds the validated read-only Barnard projection, independent client overlay, deployment contract, verifier, tests, and operating documentation on top of the trusted runner.
 - Privacy waivers: none
+
+## DEC-0039 — Use Blue Gym availability as bounded Dodge fallback evidence
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: When official embedded calendar evidence shows Blue Gym open, LionHour will treat Dodge Fitness Center as open for that interval; otherwise it will prefer dated Dodge building hours and use the calendar's bounded daily envelope only as a lower-priority fallback that fails to verification when ambiguous.
+- Rationale: Blue Gym cannot be open while its parent building is closed, and the publisher-embedded calendar supplies date-specific events that can prevent unnecessary verification without overriding direct building schedules or guessing through calendar gaps.
+- Scope: Recreation calendar acquisition, source parsing, resolver priority, provenance validation, tests, scheduled publishing, and Dodge and Blue Gym frontend hours.
+- Implementation: pending
+- Recorded against HEAD: `37e56830f4d0a14b44b1a9b625ee9306a551cdbf`
+- Supersedes: none
+- Evidence: The official Columbia Recreation Hours of Operation page and the user-approved source rule in the 2026-08-24 implementation conversation.
+- Privacy waivers: none
