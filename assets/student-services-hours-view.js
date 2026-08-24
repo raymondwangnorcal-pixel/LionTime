@@ -64,7 +64,7 @@
     const context = active[0];
     const interval = activeInterval(context, now.mins);
     const close = interval[1] === '24:00' ? 1440 : minutes(interval[1]);
-    const closingSoon = close - now.mins <= 60;
+    const closingSoon = interval[1] !== '24:00' && close - now.mins <= 60;
     return {
       status: closingSoon ? 'closing-soon' : 'open',
       label: closingSoon ? 'Closing soon' : 'Open',

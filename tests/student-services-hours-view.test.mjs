@@ -26,6 +26,13 @@ test('keeps the access badge while using the temporal closing-soon state', () =>
   assert.equal(state.accessLabel, 'Office Hours');
 });
 
+test('keeps 24/7 availability open near midnight', () => {
+  const state = view.stateFor(venue([{ type: 'phone-support', intervals: [['00:00', '24:00']], status: null, reason: null }]), { dow: 0, mins: 23 * 60 + 50 });
+  assert.equal(state.status, 'open');
+  assert.equal(state.label, 'Open');
+  assert.equal(state.accessLabel, 'Phone Support');
+});
+
 test('selects active access context and never labels appointment-only availability as public access', () => {
   const state = view.stateFor(venue([
     { type: 'phone-support', intervals: [['00:00', '24:00']], status: null, reason: null },
