@@ -26,6 +26,15 @@ test('keeps the access badge while using the temporal closing-soon state', () =>
   assert.equal(state.accessLabel, 'Office Hours');
 });
 
+test('suppresses the access badge when a venue opts out', () => {
+  const lerner = {
+    ...venue([{ type: 'open-access', intervals: [['07:30', '20:00']], status: null, reason: null }]),
+    hideAccessBadge: true,
+  };
+  assert.equal(view.accessLabelFor(lerner, { dow: 0, mins: 12 * 60 }), null);
+  assert.equal(view.stateFor(lerner, { dow: 0, mins: 12 * 60 }).accessLabel, null);
+});
+
 test('keeps 24/7 availability open near midnight', () => {
   const state = view.stateFor(venue([{ type: 'phone-support', intervals: [['00:00', '24:00']], status: null, reason: null }]), { dow: 0, mins: 23 * 60 + 50 });
   assert.equal(state.status, 'open');

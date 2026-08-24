@@ -69,11 +69,12 @@
       status: closingSoon ? 'closing-soon' : 'open',
       label: closingSoon ? 'Closing soon' : 'Open',
       detail: context.reason || ACCESS_LABELS[context.type],
-      accessLabel: ACCESS_LABELS[context.type],
+      accessLabel: venue?.hideAccessBadge ? null : ACCESS_LABELS[context.type],
     };
   }
 
   function accessLabelFor(venue, now) {
+    if (venue?.hideAccessBadge) return null;
     const day = dayFor(venue, now.dow);
     const availabilities = Array.isArray(day?.availabilities) ? day.availabilities : [];
     const active = ranked(availabilities.filter(availability => activeInterval(availability, now.mins)));
