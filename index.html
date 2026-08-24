@@ -452,8 +452,10 @@
 
   /* ── Health services dropdown (sub-accordion) ──── */
   .health-hours-dropdown {
-    border-top: 1.5px solid var(--columbia-blue);
-    border-bottom: 1.5px solid var(--columbia-blue);
+    border: 1.5px solid var(--columbia-blue);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0.5rem 0;
   }
   .health-hours-toggle {
     display: flex; align-items: center; gap: 0.45rem;
@@ -762,7 +764,7 @@ const VENUES = [
     hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
     studentAccessType:'office-hours', estimated: true },
 
-  { id:'mail-center', name:'Student Mail Center', cat:'student', loc:'Wien Hall, lower level',
+  { id:'mail-center', name:'Student Mail Center (Wein)', cat:'student', loc:'Wien Hall, lower level',
     hours: WEEKDAYS([['12:00','16:00']]), studentAccessType:'office-hours',
     note:'Live source includes check-in week, Fall Rush, holidays, and regular fall hours.' },
 
