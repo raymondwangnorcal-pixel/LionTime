@@ -16,10 +16,14 @@ test('dining publisher runs independently every four hours with least privilege'
 });
 
 test('workflow installs Chromium, tests, scrapes, and publishes behind configuration', () => {
+  assert.match(workflow, /runs-on: windows-2025/);
+  assert.match(workflow, /defaults:\s*[\s\S]*run:\s*[\s\S]*shell: bash/);
   assert.match(workflow, /npm ci/);
-  assert.match(workflow, /npx playwright install --with-deps chromium/);
+  assert.match(workflow, /npx playwright install chromium/);
+  assert.doesNotMatch(workflow, /--with-deps/);
   assert.match(workflow, /node --test tests\/dining-hours-/);
-  assert.match(workflow, /xvfb-run --auto-servernum node scripts\/dining-hours-scraper\.mjs --json-out/);
+  assert.match(workflow, /run: node scripts\/dining-hours-scraper\.mjs --json-out/);
+  assert.doesNotMatch(workflow, /xvfb-run/);
   assert.match(workflow, /Publish validated source attempts/);
   assert.match(workflow, /vars\.DINING_HOURS_PUBLISH_ENABLED == 'true'/);
   assert.match(workflow, /vars\.DINING_HOURS_API_URL/);
