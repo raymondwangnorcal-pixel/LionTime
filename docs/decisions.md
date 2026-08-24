@@ -827,3 +827,11 @@
 - Superseded by: DEC-0042
 - Note: Removing Squash Courts from the catalog and data contract is replaced by presentation-only filtering that preserves all underlying logic.
 - Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0042
+
+- Type: implementation
+- Implementation commit: `749eef5067dac64852045b8b21483d1ed929c357` — fix(recreation): hide Squash Courts row
+- Superseded by: none
+- Note: The client continues strict validation of the five-space Recreation snapshot and filters only Squash Courts before building the visible Dodge activity-space list and verification state.
+- Privacy waivers: none
