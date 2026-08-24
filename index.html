@@ -667,6 +667,10 @@ const VENUES = [
   { id:'math', name:'Mathematics Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
     hours: WEEKDAYS([['09:00','20:00']], null, [['13:00','20:00']]) },
 
+  { id:'milstein', name:'Milstein Library', cat:'library', loc:'Milstein Center, Barnard College',
+    hours: ALL(null), sourceStatuses: ALL('Hours load from official schedule'),
+    note:'Live Columbia Libraries hours load when available; Barnard holiday changes are applied separately.' },
+
   /* ── DINING ─────────────────────────────────────── */
   { id:'johnjay', name:'John Jay Dining', cat:'dining', loc:'John Jay Hall, 1st fl',
     hours: D([['09:30','21:00']],[['09:30','21:00']],[['09:30','21:00']],[['09:30','21:00']],
