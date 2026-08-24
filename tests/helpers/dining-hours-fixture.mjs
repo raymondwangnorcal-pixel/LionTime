@@ -5,6 +5,7 @@ import {
   parseLaborDayArticle,
   parseNsopArticle,
 } from '../../lib/dining-article-parser.js';
+import { parseCafeEastPage } from '../../lib/cafe-east-parser.js';
 import { DINING_LOCATION_MAP } from '../../scripts/dining-hours-scraper.mjs';
 
 function addDays(date, count) {
@@ -67,6 +68,33 @@ export function makeValidDiningSnapshotV2() {
   return snapshot;
 }
 
+export function makeValidDiningSnapshotV3() {
+  const snapshot = makeValidDiningSnapshotV2();
+  snapshot.schemaVersion = 3;
+  snapshot.sources.push({
+    id: 'cafe-east',
+    url: 'https://lernerhall.columbia.edu/content/cafe-east',
+    fetchedAt: snapshot.generated,
+  });
+  snapshot.locations.push({
+    id: 'cafe-east',
+    sourceId: 'cafe-east',
+    name: 'Café East',
+    category: 'cafe',
+    days: Array.from({ length: 14 }, (_unused, index) => {
+      const date = addDays(snapshot.windowStart, index);
+      const day = new Date(`${date}T12:00:00Z`).getUTCDay();
+      return {
+        date,
+        intervals: day === 0 || day === 6 ? [['11:00', '19:30']] : [['10:30', '19:30']],
+        status: null,
+        sourceId: 'cafe-east',
+      };
+    }),
+  });
+  return snapshot;
+}
+
 export function makeValidDiningAttemptBatch({
   generated = '2026-08-21T12:00:00.000Z',
   failures = [],
@@ -97,9 +125,11 @@ export function makeValidDiningAttemptBatch({
       parseLaborDayArticle(fixture('dining-labor-day-2026.html'))],
     ['fall-2026', 'https://dining.columbia.edu/news/fall-2026-operating-hours',
       parseFallArticle(fixture('dining-fall-2026.html'))],
+    ['cafe-east', 'https://lernerhall.columbia.edu/content/cafe-east',
+      parseCafeEastPage(fixture('cafe-east-live.txt'))],
   ];
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generated,
     windowStart: base.windowStart,
     windowEnd: base.windowEnd,

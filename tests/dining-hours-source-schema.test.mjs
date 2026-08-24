@@ -21,5 +21,8 @@ test('rejects mismatched sources, unbounded failures, and malformed retained evi
   const payload = makeValidDiningAttemptBatch();
   payload.attempts[3].payload.venues.ferris['2'] = [['not-a-time', '20:00']];
   assert.match(validateDiningAttemptBatch(payload).errors.join('\n'), /HH:MM/);
-});
 
+  const cafeEast = makeValidDiningAttemptBatch();
+  cafeEast.attempts[4].payload.weekdays['6'] = [['19:30', '11:00']];
+  assert.match(validateDiningAttemptBatch(cafeEast).errors.join('\n'), /must increase/);
+});

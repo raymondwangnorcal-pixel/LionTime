@@ -609,3 +609,17 @@
 - Superseded by: none
 - Note: Publishes bounded per-source attempts, detects managed challenges before article selectors, and retains last-successful Dining evidence behind the compatible public snapshot.
 - Privacy waivers: none
+
+## DEC-0032 — Track Café East live and require dated Joe holiday evidence
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will update Café East from Lerner Hall's official Café East page as an independently retained fifth Dining source, keep the three Joe Coffee campus schedules embedded while Joe's official location pages omit operating hours, and never apply Joe holiday exceptions automatically unless the official page identifies a machine-verifiable year or exact dates.
+- Rationale: Café East has a current first-party weekly schedule suitable for strict parsing, while Joe's regular-hours pages lack the required data and its undated holiday page could otherwise attach stale exceptions to the wrong year.
+- Scope: Dining source acquisition, retained evidence, schema-version-3 public snapshots, migration compatibility, Café East browser hydration, Joe fallback policy, footer counts, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `316db6929c5dde81b5ecc399fdac01c1c8077a5c`
+- Supersedes: none
+- Evidence: `docs/superpowers/plans/2026-08-24-live-cafe-east-hours.md` and the official Lerner Hall and Joe Coffee source review completed on 2026-08-24.
+- Privacy waivers: none

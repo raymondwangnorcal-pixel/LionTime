@@ -7,6 +7,7 @@ import {
   parseLaborDayArticle,
   parseNsopArticle,
 } from '../lib/dining-article-parser.js';
+import { parseCafeEastPage } from '../lib/cafe-east-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
 import { DINING_SOURCE_CONTRACT } from '../lib/dining-hours-schema.js';
 import {
@@ -240,6 +241,7 @@ export function buildResolvedDiningSnapshot(dataset, articleHtml, generated = ne
     nsop: parseNsopArticle(articleHtml.nsop),
     labor: parseLaborDayArticle(articleHtml.labor),
     fall: parseFallArticle(articleHtml.fall),
+    cafeEast: parseCafeEastPage(articleHtml.cafeEast),
   });
 }
 
@@ -374,6 +376,30 @@ async function acquireArticleAttempt(page, sourceId, now) {
   }
 }
 
+async function acquireCafeEastAttempt(page, now) {
+  const sourceId = 'cafe-east';
+  const attemptedAt = now.toISOString();
+  const sourceUrl = DINING_SOURCE_CONTRACT[sourceId];
+  try {
+    await navigateToSource(page, sourceUrl);
+    const main = page.locator('main');
+    if (typeof main.count === 'function' && await main.count() !== 1) {
+      throw new SourceAcquisitionError('missing-content', 'Café East main content is missing');
+    }
+    const text = await main.innerText({ timeout: 5_000 });
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new SourceAcquisitionError('missing-content', 'Café East main content is empty');
+    }
+    try {
+      return successAttempt(sourceId, attemptedAt, parseCafeEastPage(text));
+    } catch {
+      throw new SourceAcquisitionError('parse', 'Café East hours could not be parsed');
+    }
+  } catch (error) {
+    return failureAttempt(sourceId, attemptedAt, failureCode(error));
+  }
+}
+
 export async function scrapeDiningHours({ outputPath, now = new Date(), chromiumImpl } = {}) {
   if (typeof outputPath !== 'string' || !outputPath.trim()) {
     throw new Error('--json-out requires a path');
@@ -384,11 +410,13 @@ export async function scrapeDiningHours({ outputPath, now = new Date(), chromium
     const page = await browser.newPage({ timezoneId: 'America/New_York' });
     const attempts = [await acquireLocationsAttempt(page, now)];
     for (const sourceId of DINING_SOURCE_IDS.slice(1)) {
-      attempts.push(await acquireArticleAttempt(page, sourceId, now));
+      attempts.push(sourceId === 'cafe-east'
+        ? await acquireCafeEastAttempt(page, now)
+        : await acquireArticleAttempt(page, sourceId, now));
     }
     const windowStart = easternDate(now);
     const batch = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       generated: now.toISOString(),
       windowStart,
       windowEnd: addDays(windowStart, 13),

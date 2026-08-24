@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { parseFallArticle, parseLaborDayArticle, parseNsopArticle } from '../lib/dining-article-parser.js';
+import { parseCafeEastPage } from '../lib/cafe-east-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
 import { makeValidDiningSnapshot } from './helpers/dining-hours-fixture.mjs';
 
@@ -11,6 +12,7 @@ const evidence = () => ({
   nsop: parseNsopArticle(html('dining-nsop-2026.html')),
   labor: parseLaborDayArticle(html('dining-labor-day-2026.html')),
   fall: parseFallArticle(html('dining-fall-2026.html')),
+  cafeEast: parseCafeEastPage(html('cafe-east-live.txt')),
 });
 
 function snapshotStarting(date) {
@@ -42,6 +44,10 @@ test('keeps uncovered transition dates unpublished and NSOP separate from venues
   assert.equal(result.specialServices[0].countsAsOpen, false);
   assert.equal(result.specialServices[0].days.length, 6);
   assert.deepEqual(ferris.days[3].intervals, []);
+  const cafeEast = result.locations.find(({ id }) => id === 'cafe-east');
+  assert.equal(result.schemaVersion, 3);
+  assert.deepEqual(cafeEast.days[0].intervals, [['10:30', '19:30']]);
+  assert.equal(cafeEast.days[0].sourceId, 'cafe-east');
 });
 
 test('uses Labor Day exceptions before structured and Fall evidence', () => {
@@ -74,6 +80,11 @@ test('uses structured closures before Fall and fills only listed Fall venues', (
 
 test('does not apply Fall baselines after the bounded term', () => {
   const result = resolveDiningSnapshot({ baseSnapshot: snapshotStarting('2026-12-24'), ...evidence() });
-  assert.ok(result.locations.every((location) => location.days.every((day) => day.sourceId === 'unpublished')));
+  assert.ok(result.locations
+    .filter((location) => location.id !== 'cafe-east')
+    .every((location) => location.days.every((day) => day.sourceId === 'unpublished')));
+  assert.ok(result.locations
+    .find((location) => location.id === 'cafe-east')
+    .days.every((day) => day.sourceId === 'cafe-east'));
   assert.deepEqual(result.specialServices, []);
 });

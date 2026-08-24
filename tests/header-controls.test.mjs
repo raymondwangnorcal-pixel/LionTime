@@ -76,14 +76,14 @@ test('renders embedded hours before guarded live hydration and exposes data stat
   assert.match(indexHtml, /5 of 6 live/);
 });
 
-test('loads dining live data after static cards and identifies static café fallbacks', () => {
+test('loads dining live data after static cards and identifies Joe café fallbacks', () => {
   assert.match(indexHtml, /id="dining-hours-status"[^>]*data-kind="fallback"/);
   assert.match(indexHtml, /assets\/dining-hours\.js/);
   assert.match(indexHtml, /id:'facultyhouse-4'/);
-  assert.match(indexHtml, /id:'smith-dining'/);
   assert.match(indexHtml, /LionHourDiningHours\.hydrate/);
-  assert.match(indexHtml, /16 of 20 live/);
-  assert.match(indexHtml, /4 cafés using embedded schedules/);
+  assert.match(indexHtml, /status\.updatedCount.*status\.totalCount.*live/s);
+  assert.match(indexHtml, /staticFallbackIds\.includes\('cafe-east'\)/);
+  assert.match(indexHtml, /Joe’s cafés using embedded schedules/);
   assert.match(indexHtml, /setSpecialServices: setDiningSpecialServices/);
   assert.match(indexHtml, /Restricted NSOP dining service/);
   assert.match(indexHtml, /Official NSOP dining schedule/);

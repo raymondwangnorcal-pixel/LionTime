@@ -16,6 +16,25 @@ function memoryStore(initial = null) {
   };
 }
 
+function legacySourceState() {
+  const batch = makeValidDiningAttemptBatch();
+  return {
+    kind: 'dining-source-state',
+    schemaVersion: 1,
+    generated: batch.generated,
+    sources: batch.attempts.slice(0, 4).map((attempt) => ({
+      sourceId: attempt.sourceId,
+      sourceUrl: attempt.sourceUrl,
+      lastAttemptAt: attempt.attemptedAt,
+      lastAttemptResult: 'success',
+      failureCode: null,
+      lastSuccessAt: attempt.attemptedAt,
+      payload: structuredClone(attempt.payload),
+    })),
+    snapshot: makeValidDiningSnapshotV2(),
+  };
+}
+
 test('returns the current dining snapshot with public cache headers', async () => {
   const snapshot = makeValidDiningSnapshot();
   const service = createDiningHoursService({ store: memoryStore(snapshot), updateSecret: 'secret' });
@@ -41,9 +60,9 @@ test('valid uploads replace the snapshot and invalid uploads preserve it', async
     method: 'PUT', authorization: 'Bearer test-secret', body: batch,
   })).status, 204);
   const next = (await service.handle({ method: 'GET' })).body;
-  assert.equal(next.schemaVersion, 2);
+  assert.equal(next.schemaVersion, 3);
   assert.equal(next.generated, batch.generated);
-  assert.equal(next.sources.length, 4);
+  assert.equal(next.sources.length, 5);
 });
 
 test('retains each source independently and keeps the legacy snapshot until all payloads initialize', async () => {
@@ -66,7 +85,7 @@ test('retains each source independently and keeps the legacy snapshot until all 
   })).status, 204);
   const resolved = (await service.handle({ method: 'GET' })).body;
   assert.equal(resolved.generated, first.generated);
-  assert.equal(resolved.schemaVersion, 2);
+  assert.equal(resolved.schemaVersion, 3);
 
   const stored = await store.getSnapshot();
   assert.equal(stored.kind, 'dining-source-state');
@@ -77,11 +96,12 @@ test('retains each source independently and keeps the legacy snapshot until all 
     ['nsop-2026', 'failure', first.generated],
     ['labor-day-2026', 'success', second.generated],
     ['fall-2026', 'success', second.generated],
+    ['cafe-east', 'success', second.generated],
   ]);
 
   const outage = makeValidDiningAttemptBatch({
     generated: '2026-08-21T20:00:00.000Z',
-    failures: ['locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026'],
+    failures: ['locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026', 'cafe-east'],
   });
   assert.equal((await service.handle({
     method: 'PUT', authorization: 'Bearer test-secret', body: outage,
@@ -91,8 +111,34 @@ test('retains each source independently and keeps the legacy snapshot until all 
   assert.ok(retained.sources.every(source => source.lastAttemptResult === 'failure'));
   assert.deepEqual(
     retained.sources.map(source => source.lastSuccessAt),
-    [first.generated, first.generated, second.generated, second.generated],
+    [first.generated, first.generated, second.generated, second.generated, second.generated],
   );
+});
+
+test('migrates retained four-source state after Café East initializes', async () => {
+  const previous = legacySourceState();
+  const store = memoryStore(previous);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  assert.equal((await service.handle({ method: 'GET' })).status, 200);
+
+  const first = makeValidDiningAttemptBatch({ failures: ['cafe-east'] });
+  assert.equal((await service.handle({
+    method: 'PUT', authorization: 'Bearer test-secret', body: first,
+  })).status, 204);
+  assert.deepEqual((await service.handle({ method: 'GET' })).body, previous.snapshot);
+
+  const second = makeValidDiningAttemptBatch({
+    generated: '2026-08-21T16:00:00.000Z',
+    failures: ['locations-feed', 'nsop-2026', 'labor-day-2026', 'fall-2026'],
+  });
+  assert.equal((await service.handle({
+    method: 'PUT', authorization: 'Bearer test-secret', body: second,
+  })).status, 204);
+  const migrated = await store.getSnapshot();
+  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(migrated.sources.length, 5);
+  assert.equal(migrated.snapshot.schemaVersion, 3);
+  assert.ok(migrated.snapshot.locations.some((location) => location.id === 'cafe-east'));
 });
 
 test('protects writes and handles empty, unsupported, and failed storage', async () => {

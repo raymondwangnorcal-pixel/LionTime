@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import {
   makeValidDiningSnapshot,
   makeValidDiningSnapshotV2,
+  makeValidDiningSnapshotV3,
 } from './helpers/dining-hours-fixture.mjs';
 
 const source = fs.readFileSync(new URL('../assets/dining-hours.js', import.meta.url), 'utf8');
@@ -16,21 +17,23 @@ const api = sandbox.LionHourDiningHours;
 const LIVE_IDS = [
   'bj-everett', 'bj-butler', 'bj-uris', 'bj-mudd', 'chefdons', 'chefmikes',
   'facultyhouse', 'facultyhouse-4', 'ferris', 'gracedodge', 'jjs', 'johnjay',
-  'johnnys', 'lenfest-cafe', 'smith-dining', 'facshack',
+  'johnnys', 'lenfest-cafe', 'facshack',
 ];
-const STATIC_IDS = ['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge'];
+const STATIC_IDS = ['joe-noco', 'joe-journalism', 'joe-dodge'];
+const LEGACY_STATIC_IDS = ['joe-noco', 'cafe-east', 'joe-journalism', 'joe-dodge'];
 
 function venues() {
   return [
     ...LIVE_IDS.map((id) => ({ id, hours: { 5: [['01:00', '02:00']] }, note: `embedded-${id}` })),
+    { id: 'cafe-east', hours: { 5: [['10:30', '19:30']] }, note: 'embedded-cafe-east' },
     ...STATIC_IDS.map((id) => ({ id, hours: { 5: [['07:00', '19:00']] }, note: `static-${id}` })),
     { id: 'dodge', hours: { 5: [['06:00', '22:00']] } },
   ];
 }
 
-test('atomically overlays all sixteen live locations and preserves static cafés', async () => {
+test('atomically overlays legacy live locations and preserves four static cafés', async () => {
   const list = venues();
-  const staticBefore = structuredClone(list.filter(({ id }) => STATIC_IDS.includes(id)));
+  const staticBefore = structuredClone(list.filter(({ id }) => LEGACY_STATIC_IDS.includes(id)));
   const dodgeBefore = structuredClone(list.at(-1));
   let renders = 0;
   let status;
@@ -44,17 +47,40 @@ test('atomically overlays all sixteen live locations and preserves static cafés
   });
 
   assert.equal(result.applied, true);
-  assert.equal(result.updatedCount, 16);
+  assert.equal(result.updatedCount, 15);
   assert.equal(renders, 1);
   assert.equal(status.kind, 'partial');
-  assert.equal(status.totalCount, 20);
-  assert.deepEqual(Array.from(status.staticFallbackIds), STATIC_IDS);
-  assert.deepEqual(list.filter(({ id }) => STATIC_IDS.includes(id)), staticBefore);
+  assert.equal(status.totalCount, 19);
+  assert.deepEqual(Array.from(status.staticFallbackIds), LEGACY_STATIC_IDS);
+  assert.deepEqual(list.filter(({ id }) => LEGACY_STATIC_IDS.includes(id)), staticBefore);
   assert.deepEqual(list.at(-1), dodgeBefore);
   assert.deepEqual(
     Array.from(list.find(({ id }) => id === 'johnjay').hours[5], (interval) => Array.from(interval)),
     [['08:00', '20:00']],
   );
+});
+
+test('overlays Café East from schema version 3 and preserves three Joe cafés', async () => {
+  const list = venues();
+  const joeBefore = structuredClone(list.filter(({ id }) => STATIC_IDS.includes(id)));
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => ({ ok: true, json: async () => makeValidDiningSnapshotV3() }),
+    render() {},
+    today: '2026-08-21',
+    now: new Date('2026-08-21T17:00:00Z'),
+  });
+
+  assert.equal(result.applied, true);
+  assert.equal(result.updatedCount, 16);
+  assert.equal(result.totalCount, 19);
+  assert.deepEqual(Array.from(result.staticFallbackIds), STATIC_IDS);
+  assert.deepEqual(list.filter(({ id }) => STATIC_IDS.includes(id)), joeBefore);
+  assert.deepEqual(
+    Array.from(list.find(({ id }) => id === 'cafe-east').hours[5], interval => Array.from(interval)),
+    [['10:30', '19:30']],
+  );
+  assert.equal(list.find(({ id }) => id === 'cafe-east').sourceIds[5], 'cafe-east');
 });
 
 test('preserves split intervals and exact per-day closure status', () => {
