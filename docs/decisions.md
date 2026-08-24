@@ -463,3 +463,39 @@
 - Supersedes: none
 - Evidence: `docs/superpowers/plans/2026-08-23-dining-transition-and-fall-hours.md`, official Columbia Dining source pages, and the successful live four-source scrape on 2026-08-23.
 - Privacy waivers: none
+
+## DEC-0029 — Pair access context with temporal Student Life status
+
+- Date: 2026-08-23
+- Owner: user
+- Status at record: active
+- Decision: Student Life cards will show an access-context badge to the left of a temporal Open, Closing soon, Closed, or Needs verification badge, and any currently active published availability including generic office hours or restricted access will count in Open now because its access limitation remains visible beside the status.
+- Rationale: Separating access context from temporal state lets students see that an office, appointment channel, virtual service, drop-in, or phone service is currently available without presenting all availability as unrestricted walk-in access.
+- Scope: Student Life access types, status resolution, badges, section counts, Open now and Closing soon filters, expanded details, accessibility copy, tests, and implementation plan interpretation.
+- Implementation: pending
+- Recorded against HEAD: `ae7253f46593dca17bc3304683c8965ac9d9a89f`
+- Supersedes: DEC-0026
+- Evidence: User-approved recommendation during the 2026-08-23 Student Life live-hours implementation interview.
+- Privacy waivers: none
+
+## Update — 2026-08-23 — DEC-0026
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0029
+- Note: Restricted and generic availability may now count as active when an adjacent access-context badge makes the limitation explicit.
+- Privacy waivers: none
+
+## DEC-0030 — Parse publisher-controlled rendered Student Life hours
+
+- Date: 2026-08-23
+- Owner: shared
+- Status at record: active
+- Decision: The live Bookstore adapter will parse the identified STORE HOURS block visibly rendered by the official Columbia B&N storefront, and the Lerner adapter will parse the titled Google Calendar iframe directly embedded by Lerner Hall, without bypassing site controls or accepting independently discovered third-party pages.
+- Rationale: Live browser verification showed that these are the actual publisher-controlled hour surfaces, while the draft Bookstore JSON shape and same-origin Lerner calendar route are not the formats currently published.
+- Scope: Bookstore and Lerner acquisition, provenance validation, parsers, fixtures, live verification, failure isolation, source policy, and operations documentation.
+- Implementation: pending
+- Recorded against HEAD: `ae7253f46593dca17bc3304683c8965ac9d9a89f`
+- Supersedes: none
+- Evidence: Official source pages, the successful four-source live scrape on 2026-08-23, and the user's requirement to retain Bookstore tracking only when official live hours are available.
+- Privacy waivers: none

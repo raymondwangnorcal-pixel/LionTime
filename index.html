@@ -235,7 +235,7 @@
 
   .cols, .row {
     display: grid;
-    grid-template-columns: 12px minmax(0,2fr) minmax(0,1.9fr) 132px 14px;
+    grid-template-columns: 12px minmax(0,2fr) minmax(0,1.9fr) minmax(210px,auto) 14px;
     align-items: center; gap: 0.85rem;
   }
   .cols {
@@ -279,6 +279,16 @@
   .badge.open { background: var(--open-bg); color: var(--open-ink); }
   .badge.closing-soon { background: var(--soon-bg); color: var(--soon); }
   .badge.closed { background: var(--closed-bg); color: var(--closed-ink); }
+  .status-badges {
+    justify-self: end; display: flex; align-items: center; justify-content: flex-end;
+    gap: 0.38rem; min-width: 0;
+  }
+  .access-badge {
+    font-size: 0.61rem; font-weight: 700; padding: 0.23rem 0.48rem;
+    border: 1px solid #c9d8e8; border-radius: 20px; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: 0.35px;
+    background: #eef5fc; color: #315b83;
+  }
 
   .chev {
     width: 14px; height: 14px; color: var(--muted);
@@ -372,6 +382,12 @@
     font-size: 0.76rem; color: var(--muted); font-style: italic;
     margin-top: 0.55rem; line-height: 1.45;
   }
+  .service-availability {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.65rem;
+    margin-top: 0.45rem; font-size: 0.74rem; color: var(--text-secondary);
+  }
+  .service-access { font-weight: 700; color: var(--columbia-blue); }
+  .service-reason { color: var(--muted); font-style: italic; }
   .recreation-metadata {
     font-size: 0.74rem; color: var(--muted); line-height: 1.45;
     margin-top: 0.3rem;
@@ -451,11 +467,31 @@
   .library-hours-status[data-kind="live"] { color: #28753f; }
   .library-hours-status[data-kind="partial"],
   .library-hours-status[data-kind="stale"],
+  .library-hours-status[data-kind="verification"],
   .library-hours-status[data-kind="fallback"] { color: #8a5a00; }
+  .dining-special-service {
+    margin: 0 0 0.75rem; padding: 0.8rem 1rem;
+    border: 1px solid #b8d8f1; border-radius: 10px;
+    background: #f5faff; color: #24364b;
+  }
+  .dining-special-service-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+  .dining-special-service-title { font-weight: 750; color: #174f7d; }
+  .dining-special-service-badge {
+    flex: none; padding: 0.15rem 0.5rem; border-radius: 999px;
+    background: #fff0c7; color: #765000; font-size: 0.72rem; font-weight: 750;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .dining-special-service-audience { margin-bottom: 0.45rem; font-size: 0.84rem; }
+  .dining-special-service-day { font-size: 0.82rem; line-height: 1.45; }
+  .dining-special-service-day strong { color: #174f7d; }
+  .dining-special-service-source { color: #235f91; font-size: 0.78rem; }
 
   /* ── Responsive ────────────────────────────────── */
   @media (max-width: 860px) {
-    .cols, .row { grid-template-columns: 12px minmax(0,1.7fr) minmax(0,1.5fr) 116px 14px; }
+    .cols, .row { grid-template-columns: 12px minmax(0,1.7fr) minmax(0,1.5fr) minmax(180px,auto) 14px; }
   }
   /* Below 620px the row becomes two lines: name + status, hours beneath. */
   @media (max-width: 620px) {
@@ -468,7 +504,7 @@
     }
     .row .dot   { grid-area: 1 / 1 / 2 / 2; }
     .row .name  { grid-area: 1 / 2 / 2 / 3; }
-    .row .badge { grid-area: 1 / 3 / 2 / 4; }
+    .row .status-badges { grid-area: 1 / 3 / 2 / 4; }
     .row .chev  { grid-area: 1 / 4 / 2 / 5; }
     .row .hours { grid-area: 2 / 2 / 3 / 5; font-size: 0.78rem; }
     .detail { padding: 0.5rem 0.6rem 0.9rem 1.2rem; }
@@ -548,12 +584,18 @@
      href="https://perec.columbia.edu/hours-operation" target="_blank" rel="noopener noreferrer">
     Recreation hours: embedded fallback · Verify before you go
   </a>
+  <a class="library-hours-status" id="student-services-hours-status" data-kind="fallback" aria-live="polite" aria-atomic="true"
+     href="https://www.health.columbia.edu/content/hours-and-locations" target="_blank" rel="noopener noreferrer">
+    Student Life hours: embedded fallback · 0 of 4 sources live
+  </a>
 </footer>
 </div><!-- .page-wrap -->
 
 <script src="assets/library-hours.js"></script>
 <script src="assets/dining-hours.js"></script>
 <script src="assets/recreation-hours-view.js"></script>
+<script src="assets/student-services-hours-view.js"></script>
+<script src="assets/student-services-hours.js"></script>
 
 <script>
 /* ── iOS Safari horizontal-scroll lock ────────────
@@ -710,38 +752,46 @@ const VENUES = [
 
   /* ── STUDENT LIFE & SERVICES ────────────────────── */
   { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
-    hours: WEEKDAYS([['07:30','00:30']], [['08:30','00:30']], [['08:30','00:30']]),
-    note:'Times are subject to change throughout the academic year.' },
+    hours: WEEKDAYS([['07:30','20:00']], [['09:00','17:00']], [['09:00','17:00']]),
+    studentAccessType:'open-access', note:'Times are subject to change throughout the academic year.' },
 
   { id:'bookstore', name:'Columbia University Bookstore', cat:'student', loc:'Lerner Hall, lower level',
     hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
-    estimated: true },
+    studentAccessType:'office-hours', estimated: true },
 
-  { id:'package', name:'Lerner Package Center', cat:'student', loc:'Lerner Hall, lower level',
-    hours: WEEKDAYS([['09:00','20:00']], [['10:00','17:00']], null),
-    estimated: true },
+  { id:'mail-center', name:'Student Mail Center', cat:'student', loc:'Wien Hall, lower level',
+    hours: WEEKDAYS([['12:00','16:00']]), studentAccessType:'office-hours',
+    note:'Live source includes check-in week, Fall Rush, holidays, and regular fall hours.' },
+
+  { id:'alice-health', name:'Alice! Health Promotion', cat:'student', loc:'John Jay Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','17:00']]), studentAccessType:'office-hours',
+    note:'Virtual appointments and selected virtual drop-in services are also available.' },
 
   { id:'medical', name:'Medical Services', cat:'student', loc:'John Jay Hall, 4th fl',
     hours: D([['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],
              [['08:00','16:00']],null,null),
-    note:'Check-in closes 30 minutes before closing. After-hours nurse line available 24/7.' },
+    studentAccessType:'office-hours', note:'Check-in closes 30 minutes before closing. After-hours nurse line available 24/7.' },
 
   { id:'caps', name:'Counseling & Psychological Services', cat:'student', loc:'Lerner Hall, 8th fl',
     hours: D([['08:00','19:00']],[['08:00','19:00']],[['08:00','19:00']],[['08:00','19:00']],
              [['08:00','17:00']],null,null),
-    note:'24/7 phone support available outside office hours.' },
+    studentAccessType:'office-hours', note:'24/7 phone support available outside office hours.' },
 
   { id:'disability', name:'Disability Services', cat:'student', loc:'Wien Hall, Suite 108A',
     hours: WEEKDAYS([['09:00','17:00']]),
-    note:'By appointment; virtual drop-in hours select days.' },
+    studentAccessType:'appointment-only', note:'By appointment; virtual drop-in hours select days.' },
 
   { id:'svr', name:'Sexual Violence Response', cat:'student', loc:'Lerner Hall, Suite 700',
     hours: WEEKDAYS([['09:00','17:00']]),
-    note:'24/7 helpline available outside office hours.' },
+    studentAccessType:'appointment-only', note:'Drop-in hours and a 24/7 helpline are also available.' },
+
+  { id:'student-insurance', name:'Student Health Insurance Office', cat:'student', loc:'John Jay Hall, 3rd fl',
+    hours: WEEKDAYS([['09:00','17:00']]), studentAccessType:'appointment-only',
+    note:'Appointments and selected weekday drop-in hours are available.' },
 
   { id:'immunization', name:'Immunization Compliance Office', cat:'student', loc:'John Jay Hall, 3rd fl',
     hours: WEEKDAYS([['09:00','17:00']]),
-    note:'Virtual appointments only.' },
+    studentAccessType:'virtual-only', note:'Virtual appointments only.' },
 ];
 
 /* ══════════════════════════════════════════════════
@@ -868,6 +918,10 @@ function describeClose(endAbs, dow) {
    ══════════════════════════════════════════════════ */
 function getStatus(venue, now) {
   const CLOSING_SOON = 60; // minutes
+  if (venue.studentServicesLive && window.LionHourStudentServicesView) {
+    const studentState = LionHourStudentServicesView.stateFor(venue, now);
+    if (studentState) return studentState;
+  }
   const restriction = activeSourceRestriction(venue, now);
   if (restriction) {
     return {
@@ -948,6 +1002,7 @@ function todayHoursText(venue, now) {
 let activeCat = 'all';
 let activeStatus = 'all';
 let searchTerm = '';
+let diningSpecialServices = [];
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
 
@@ -961,6 +1016,10 @@ const ORDER = { 'open':0, 'closing-soon':1, 'closed':2 };
 
 const CHEV = `<svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const DODGE_SPACES_CONTROL = 'View spaces';
+
+function setDiningSpecialServices(value) {
+  diningSpecialServices = Array.isArray(value) ? value : [];
+}
 
 function matchesFilters(v, now, ignoreStatus) {
   if (activeCat !== 'all' && v.cat !== activeCat) return false;
@@ -987,7 +1046,7 @@ function weekHTML(v, now) {
     const unpub = /not published/i.test(hoursText);
     return `<div class="wk-row${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
-      <span>${hoursText}</span>
+      <span>${escapeHTML(hoursText)}</span>
     </div>`;
   }).join('');
 }
@@ -1004,7 +1063,7 @@ function weekHTMLDesktop(v, now) {
     const dateLabel = i === 0 ? 'Today' : `${d.getMonth() + 1}/${d.getDate()}`;
     return `<div class="wk-col${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span class="wk-col-heading"><span class="wk-col-day">${DAY_SHORT[dow]}</span><span class="wk-col-date">· ${dateLabel}</span></span>
-      <span class="wk-col-hours">${hoursText}</span>
+      <span class="wk-col-hours">${escapeHTML(hoursText)}</span>
     </div>`;
   }).join('');
 }
@@ -1012,19 +1071,27 @@ function weekHTMLDesktop(v, now) {
 function rowHTML(v, now) {
   const st = getStatus(v, now);
   const isOpen = expanded.has(v.id);
+  const usesOfficialSchedule = Object.values(v.sourceIds || {})
+    .some(sourceId => sourceId === 'labor-day-2026' || sourceId === 'fall-2026');
+  const accessLabel = v.cat === 'student' && window.LionHourStudentServicesView
+    ? LionHourStudentServicesView.accessLabelFor(v, now) : null;
+  const serviceDetails = v.studentServicesLive && window.LionHourStudentServicesView
+    ? LionHourStudentServicesView.renderDay(v.studentServicesDays?.[now.dow], fmtRange) : '';
   return `<div class="entry${isOpen ? ' expanded' : ''}" data-id="${v.id}">
     <button class="row ${st.status === 'closed' ? 'is-closed' : ''}" type="button"
             aria-expanded="${isOpen}" aria-label="${v.name} — ${st.label}">
       <span class="dot ${st.status}"></span>
       <span class="name">${v.name}</span>
-      <span class="hours">${todayHoursText(v, now)}</span>
-      <span class="badge ${st.status}">${st.label}</span>
+      <span class="hours">${escapeHTML(todayHoursText(v, now))}</span>
+      <span class="status-badges">${accessLabel ? `<span class="access-badge">${accessLabel}</span>` : ''}<span class="badge ${st.status}">${st.label}</span></span>
       ${CHEV}
     </button>
     <div class="detail">
       <div class="week week-mobile">${weekHTML(v, now)}</div>
       <div class="week week-desktop">${weekHTMLDesktop(v, now)}</div>
-      ${v.sourceNote ? `<div class="note">Columbia Dining: ${v.sourceNote}</div>` : ''}
+      ${serviceDetails}
+      ${usesOfficialSchedule ? '<div class="note">Official Columbia Dining schedule</div>' : ''}
+      ${v.sourceNote && !usesOfficialSchedule ? `<div class="note">Columbia Dining: ${escapeHTML(v.sourceNote)}</div>` : ''}
       ${v.note ? `<div class="note">${v.note}</div>` : ''}
       ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
       ${v.recreationLive ? `<div data-recreation-metadata="${v.id}"></div>` : ''}
@@ -1032,6 +1099,43 @@ function rowHTML(v, now) {
         ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(v.recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
     </div>
   </div>`;
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]);
+}
+
+function diningSpecialServicesHTML() {
+  const today = easternISODate();
+  const horizon = new Date(`${today}T12:00:00Z`);
+  horizon.setUTCDate(horizon.getUTCDate() + 6);
+  const through = horizon.toISOString().slice(0, 10);
+  return diningSpecialServices.map(service => {
+    const days = service.days.filter(day => today <= day.date && day.date <= through);
+    if (!days.length) return '';
+    const dayRows = days.map(day => {
+      const date = new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-US', {
+        timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric',
+      });
+      const sessions = day.sessions.length
+        ? day.sessions.map(session => `${escapeHTML(session.label)} ${fmtRange([session.open, session.close])}`).join(' · ')
+        : escapeHTML(day.status);
+      const access = day.sessions.length && day.status !== 'Restricted NSOP service'
+        ? ` · ${escapeHTML(day.status)}` : '';
+      return `<div class="dining-special-service-day"><strong>${date}</strong> — ${sessions}${access}</div>`;
+    }).join('');
+    return `<aside class="dining-special-service" aria-label="Restricted NSOP dining service">
+      <div class="dining-special-service-head">
+        <span class="dining-special-service-title">${escapeHTML(service.name)}</span>
+        <span class="dining-special-service-badge">Restricted service</span>
+      </div>
+      <div class="dining-special-service-audience">${escapeHTML(service.audience)}</div>
+      ${dayRows}
+      <a class="dining-special-service-source" href="https://dining.columbia.edu/news/new-student-orientation-program-nsop-2026-dining-service" target="_blank" rel="noopener noreferrer">Official NSOP dining schedule</a>
+    </aside>`;
+  }).join('');
 }
 
 function render() {
@@ -1049,12 +1153,13 @@ function render() {
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
     const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
+    const specialServices = c.id === 'dining' ? diningSpecialServicesHTML() : '';
     return `<div class="sec">
         <span class="sec-title">${c.icon} ${c.label}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </div>
-      <div class="list">
+      ${specialServices}<div class="list">
         <div class="cols">
           <span></span><span>Place</span><span>Today</span>
           <span class="r">Status</span><span></span>
@@ -1237,6 +1342,25 @@ function setRecreationHoursStatus(status) {
   element.textContent = `${prefix}: ${generated} ET · ${status.updatedCount} of ${status.totalCount} live`;
 }
 
+function setStudentServicesHoursStatus(status) {
+  const element = document.getElementById('student-services-hours-status');
+  element.dataset.kind = status.kind;
+  if (status.kind === 'fallback') {
+    element.textContent = 'Student Life hours: embedded fallback · 0 of 4 sources live';
+    return;
+  }
+  const generated = new Date(status.generated).toLocaleString('en-US', {
+    timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
+  });
+  const count = `${status.liveSourceCount} of ${status.totalSources} sources live`;
+  if (status.kind === 'verification') {
+    element.textContent = `Student Life hours need verification · ${count}`;
+    return;
+  }
+  const prefix = status.kind === 'stale' ? 'Student Life hours may be stale' : 'Student Life hours updated';
+  element.textContent = `${prefix}: ${generated} ET · ${count}`;
+}
+
 function easternISODate() {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -1260,6 +1384,16 @@ if (window.LionHourDiningHours) {
     venues: VENUES,
     render,
     setStatus: setDiningHoursStatus,
+    setSpecialServices: setDiningSpecialServices,
+    today: easternISODate(),
+  });
+}
+if (window.LionHourStudentServicesHours) {
+  LionHourStudentServicesHours.hydrate({
+    venues: VENUES,
+    render,
+    restore: render,
+    setStatus: setStudentServicesHoursStatus,
     today: easternISODate(),
   });
 }
