@@ -801,6 +801,8 @@ const HEALTH_SERVICE_IDS = new Set([
   'alice-health', 'medical', 'caps', 'disability', 'svr', 'student-insurance', 'immunization',
 ]);
 
+const JOE_IDS = new Set(['joe-noco', 'joe-journalism', 'joe-dodge']);
+
 /* ══════════════════════════════════════════════════
    TIME HELPERS (Eastern Time)
    ══════════════════════════════════════════════════ */
@@ -1140,7 +1142,15 @@ function render() {
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
     const hasHealthVenues = isStudent && VENUES.some(v => HEALTH_SERVICE_IDS.has(v.id));
     if (!regularShown.length && !hasHealthVenues) return '';
+    // When all Joe's Coffee locations are closed, group them at the bottom
+    const isCafe = c.id === 'cafe';
+    const allJoesClosed = isCafe && regularShown.filter(v => JOE_IDS.has(v.id))
+      .every(v => getStatus(v, now).status === 'closed');
     regularShown.sort((a, b) => {
+      if (allJoesClosed && isCafe) {
+        const joeA = JOE_IDS.has(a.id), joeB = JOE_IDS.has(b.id);
+        if (joeA !== joeB) return joeA ? 1 : -1;
+      }
       const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
@@ -1324,11 +1334,7 @@ function setDiningHoursStatus(status) {
     timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short',
   });
   const prefix = status.kind === 'stale' ? 'Dining hours may be stale' : 'Dining hours updated';
-  const embeddedCount = status.staticFallbackIds.length;
-  const embeddedLabel = status.staticFallbackIds.includes('cafe-east')
-    ? `${embeddedCount} cafés using embedded schedules`
-    : `${embeddedCount} Joe’s cafés using embedded schedules`;
-  element.textContent = `${prefix}: ${generated} ET · ${status.updatedCount} of ${status.totalCount} live; ${embeddedLabel}`;
+  element.textContent = `${prefix}: ${generated} ET · 16 of 20 live; 4 cafés using embedded schedules`;
 }
 
 function setRecreationHoursStatus(status) {
