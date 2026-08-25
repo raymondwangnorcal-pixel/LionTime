@@ -51,6 +51,13 @@ test('finds Dodge when searching for its nested Uris Pool', () => {
   assert.equal(api.venueMatchesSearch(dodge, 'uris pool'), true);
 });
 
+test('only renders Student Life health services in the Student Life category', () => {
+  assert.match(
+    appScript,
+    /const hasHealthVenues = isStudent && all\.some\(v => HEALTH_SERVICE_IDS\.has\(v\.id\)\);/,
+  );
+});
+
 test('labels the stale Barnard seasonal heading as a small note', () => {
   const entries = api.recreationMetadataEntries({
     reason: "Barnard's seasonal heading may be outdated.",
