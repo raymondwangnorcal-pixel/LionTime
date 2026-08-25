@@ -260,6 +260,7 @@
     text-transform: uppercase; color: var(--columbia-blue);
   }
   .cols .r { text-align: right; }
+  .cols .strong { font-weight: 900; }
 
   .row {
     width: 100%; padding: 0.6rem 1.1rem; border: none; background: none;
@@ -1295,7 +1296,7 @@ function render() {
       </button>
       <div class="list" id="${listId}"${catCollapsed ? ' hidden' : ''}>
         <div class="cols">
-          <span></span><span>Place</span><span>Today</span>
+          <span></span><span class="strong">Place</span><span class="strong">Today</span>
           <span class="r">Status</span><span></span>
         </div>
         ${regularShown.map(v => rowHTML(v, now)).join('')}
