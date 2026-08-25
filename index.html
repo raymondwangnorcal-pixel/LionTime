@@ -696,6 +696,7 @@ const CATEGORIES = [
 ];
 
 const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+const BARNARD_STALE_HEADING_NOTE = "Barnard's seasonal heading may be outdated.";
 
 /* ══════════════════════════════════════════════════
    VENUE DATA
@@ -1303,18 +1304,34 @@ function appendRecreationMetadata(stage, now) {
         ...(activeRestriction.accessRestrictions || []),
       ])],
     } : baseline;
-    const append = (label, value) => {
-      if (!value) return;
-      const line = document.createElement('div');
-      line.className = 'recreation-metadata';
-      const title = document.createElement('span');
-      title.textContent = label;
-      line.append(title, document.createTextNode(value));
-      target.append(line);
-    };
-    append('Reason: ', current.reason);
-    for (const restriction of current.accessRestrictions || []) append('Access: ', restriction);
+    appendRecreationMetadataEntries(target, current);
   }
+}
+
+function appendRecreationMetadataEntries(target, current, documentRef = document) {
+  for (const entry of recreationMetadataEntries(current)) {
+    if (!entry.value) continue;
+    const line = documentRef.createElement('div');
+    line.className = 'recreation-metadata';
+    const title = documentRef.createElement('span');
+    title.textContent = entry.label;
+    line.append(title, documentRef.createTextNode(entry.value));
+    target.append(line);
+  }
+}
+
+function recreationMetadataEntries(current = {}) {
+  const entries = [];
+  if (current.reason) {
+    entries.push({
+      label: current.reason === BARNARD_STALE_HEADING_NOTE ? 'Note: ' : 'Reason: ',
+      value: current.reason,
+    });
+  }
+  for (const restriction of current.accessRestrictions || []) {
+    entries.push({ label: 'Access: ', value: restriction });
+  }
+  return entries;
 }
 
 /* The control bar's height changes as chips wrap, so measure it rather
