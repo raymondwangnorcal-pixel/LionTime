@@ -119,6 +119,18 @@
     return 'closed';
   }
 
+  /* Desktop line-break hints for long space names */
+  const NAME_BREAKS = {
+    'Functional Fitness Studio': ['Functional', 'Fitness Studio'],
+    'Levien Gymnasium': ['Levien', 'Gymnasium'],
+  };
+
+  function spaceName(name) {
+    const parts = NAME_BREAKS[name];
+    if (parts) return parts.map(p => text(p)).join('<br class="desktop-br">');
+    return text(name);
+  }
+
   function intervalLines(intervals) {
     if (!Array.isArray(intervals) || !intervals.length) return [];
     return intervals.map(interval => {
@@ -168,7 +180,7 @@
       : `<span class="recreation-space-status ${dot}">${text(state.label)}</span>`;
 
     return `<li class="recreation-space">
-      <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${text(space?.name)}</span>${statusHTML}</div>
+      <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${spaceName(space?.name)}</span>${statusHTML}</div>
       ${timeSlotsHTML}
       ${activityHTML}
       ${metaLine}
