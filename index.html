@@ -1247,7 +1247,7 @@ function todayHoursText(venue, now) {
    STATE
    ══════════════════════════════════════════════════ */
 let activeCat = 'all';
-let activeStatus = 'all';
+let activeStatus = window.matchMedia('(max-width: 620px)').matches ? 'open' : 'all';
 let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
