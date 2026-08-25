@@ -449,67 +449,7 @@
     margin-top: 0.1rem; padding-left: 0.95rem;
     font-size: 0.7rem; color: var(--muted); line-height: 1.4;
   }
-
-  /* Desktop-only: new elements hidden by default on mobile */
-  .recreation-space-times { display: none; }
-  .recreation-space-activity { display: none; }
-
-  /* ── Desktop horizontal grid for recreation spaces ── */
-  @media (min-width: 768px) {
-    .recreation-spaces-list {
-      display: flex;
-    }
-    .recreation-spaces-list[hidden] { display: none; }
-    .recreation-space {
-      flex: 1;
-      padding: 0.75rem 0.8rem 0.85rem;
-      border-bottom: none;
-      border-right: 1px solid #ebeef2;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .recreation-space:last-child { border-right: none; }
-    .recreation-space-heading {
-      align-items: flex-start;
-      margin-bottom: 0.5rem;
-    }
-    .recreation-space-heading .dot {
-      margin-top: 0.25rem;
-    }
-    .recreation-space-name {
-      font-size: 0.74rem;
-      line-height: 1.3;
-    }
-    .recreation-space-status {
-      white-space: normal;
-      text-align: right;
-      flex-shrink: 1;
-    }
-
-    /* Show stacked time slots, hide legacy meta line */
-    .recreation-space-times {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      padding-left: 0.95rem;
-      margin-bottom: 0.4rem;
-    }
-    .recreation-space-time {
-      font-size: 0.74rem;
-      font-variant-numeric: tabular-nums;
-      color: var(--text);
-      line-height: 1.4;
-    }
-    .recreation-space-activity {
-      display: block;
-      font-size: 0.68rem;
-      color: var(--muted);
-      padding-left: 0.95rem;
-      margin-top: auto;
-    }
-    .recreation-space-meta { display: none; }
-  }
+  .recreation-space-meta > div + div { margin-top: 0.05rem; }
 
   /* ── Columbia Health dropdown ───────────────────── */
   .health-hours-dropdown {

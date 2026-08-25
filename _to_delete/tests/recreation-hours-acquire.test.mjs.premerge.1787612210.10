@@ -1,0 +1,104 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { acquireRecreationSources } from '../scripts/recreation-hours-acquire.mjs';
+
+/*
+ * Official-source inventory (2026-08-21):
+ * - https://perec.columbia.edu/hours-operation is the authoritative baseline for
+ *   Dodge Fitness Center and Uris Pool. Its official linked membership page,
+ *   https://perec.columbia.edu/membershipinfo, publishes student eligibility:
+ *   students paying the listed student/university fees receive a Dodge membership;
+ *   other students may purchase one. It is access policy, not a schedule URL.
+ * - https://perec.columbia.edu/content/modified-hours-closures is the authoritative
+ *   date-specific override source for those facilities and Dodge spaces.
+ * - https://barnard.edu/lefrak-center/physical-well-being publishes Barnard Fitness
+ *   Center hours and says it is open to current Barnard students, faculty, and staff.
+ * - The linked https://recreation.columbia.edu/ booking portal is reservation-only;
+ *   it publishes no general undergraduate-access rule or fixed schedule, so it is not
+ *   an acquisition source. Athletics-only, staff-only, and access-unclear candidates
+ *   are likewise excluded from the fixed catalog.
+ */
+
+test('loads every official source in headed Chromium and closes the browser', async () => {
+  const calls = [];
+  const pages = new Map([
+    ['https://perec.columbia.edu/hours-operation', '<main><h1>Hours of Operation</h1></main>'],
+    ['https://perec.columbia.edu/content/modified-hours-closures', '<main><h1>Modified Hours & Closures</h1></main>'],
+    ['https://barnard.edu/lefrak-center/physical-well-being', '<main><h1>Physical Well-Being</h1></main>'],
+  ]);
+  const chromiumImpl = fakeChromium({ pages, calls });
+
+  const result = await acquireRecreationSources({
+    chromiumImpl,
+    timeoutMs: 1000,
+    calendarImpl: async () => ({
+      result: 'success',
+      calendarUrl: 'https://calendar.google.com/calendar/embed?title=Blue%20Gym&src=cuperec%40gmail.com',
+      weeks: ['week one'],
+    }),
+  });
+
+  assert.deepEqual(Object.values(result.pages).map((page) => page.url), [...pages.keys()]);
+  assert.equal(result.pages.columbiaHours.blueGymCalendar.result, 'success');
+  assert.equal(calls[0].headless, false);
+  assert.ok(calls.includes('browser.close'));
+});
+
+test('isolates an embedded Blue Gym calendar failure from required page acquisition', async () => {
+  const calls = [];
+  const pages = new Map([
+    ['https://perec.columbia.edu/hours-operation', '<main><h1>Hours of Operation</h1></main>'],
+    ['https://perec.columbia.edu/content/modified-hours-closures', '<main><h1>Modified Hours & Closures</h1></main>'],
+    ['https://barnard.edu/lefrak-center/physical-well-being', '<main><h1>Physical Well-Being</h1></main>'],
+  ]);
+
+  const result = await acquireRecreationSources({
+    chromiumImpl: fakeChromium({ pages, calls }),
+    timeoutMs: 1000,
+    calendarImpl: async () => { throw new Error('calendar unavailable'); },
+  });
+
+  assert.equal(result.pages.columbiaHours.blueGymCalendar.result, 'failure');
+  assert.equal(result.pages.columbiaHours.blueGymCalendar.failureCode, 'missing-content');
+  assert.equal(result.pages.columbiaHours.html, pages.get('https://perec.columbia.edu/hours-operation'));
+  assert.ok(calls.includes('browser.close'));
+});
+
+test('closes Chromium and rejects when a managed challenge remains', async () => {
+  const calls = [];
+  const chromiumImpl = fakeChromium({
+    pages: new Map([['https://perec.columbia.edu/hours-operation', '<title>Just a moment...</title>']]),
+    calls,
+  });
+  await assert.rejects(
+    acquireRecreationSources({ chromiumImpl, timeoutMs: 1000 }),
+    /managed challenge|missing official content/i,
+  );
+  assert.ok(calls.includes('browser.close'));
+});
+
+function fakeChromium({ pages, calls }) {
+  return {
+    async launch(options) {
+      calls.push(options);
+      return {
+        async newPage() {
+          let currentUrl;
+          return {
+            async goto(url) { currentUrl = url; },
+            async waitForLoadState() {},
+            async title() {
+              return /<title>Just a moment<\/title>/i.test(pages.get(currentUrl) || '')
+                ? 'Just a moment...'
+                : 'Official hours';
+            },
+            async content() { return pages.get(currentUrl) || ''; },
+            async close() { calls.push('page.close'); },
+          };
+        },
+        async close() { calls.push('browser.close'); },
+      };
+    },
+  };
+}

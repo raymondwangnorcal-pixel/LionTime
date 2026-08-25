@@ -39,7 +39,7 @@
       if (start === 0 && end === 1440) return 'Open 24 hours';
       return `${formatTime(start)} – ${formatTime(end)}`;
     });
-    return formatted.every(Boolean) ? formatted.join(', ') : null;
+    return formatted.every(Boolean) ? formatted : null;
   }
 
   function activeInterval(intervals, minutes) {
@@ -119,52 +119,34 @@
     return 'closed';
   }
 
-  function intervalLines(intervals) {
-    if (!Array.isArray(intervals) || !intervals.length) return [];
-    return intervals.map(interval => {
-      if (!Array.isArray(interval) || interval.length !== 2) return null;
-      const start = toMinutes(interval[0]);
-      const end = toMinutes(interval[1]);
-      if (start === null || end === null) return null;
-      if (start === 0 && end === 1440) return 'Open 24 hours';
-      return `${formatTime(start)} – ${formatTime(end)}`;
-    }).filter(Boolean);
-  }
-
   function spaceHTML(space, now) {
     const state = stateFor(space, now);
     const dot = dotClass(state.label);
     const restrictions = Array.isArray(state.accessRestrictions) ? state.accessRestrictions : [];
     const restrictionsText = restrictions.filter(Boolean).join(' · ');
+    const hourLines = Array.isArray(state.hours) ? state.hours : [];
 
-    /* Time slots: each interval on its own line for desktop grid view */
-    const lines = intervalLines(space?.intervals);
-    const timeSlotsHTML = lines.length
-      ? `<div class="recreation-space-times">${lines.map(l => `<span class="recreation-space-time">${text(l)}</span>`).join('')}</div>`
-      : '';
-
-    /* Activity type + restrictions */
+    /* Availability label + restrictions collapse onto one trailing line */
+    const otherParts = [];
     const avail = availabilityLabel(state.availabilityType);
-    const activityParts = [];
-    if (avail) activityParts.push(text(avail));
-    if (restrictionsText) activityParts.push(text(restrictionsText));
-    const activityHTML = activityParts.length
-      ? `<div class="recreation-space-activity">${activityParts.join(' · ')}</div>`
-      : '';
+    if (avail) otherParts.push(text(avail));
+    if (restrictionsText) otherParts.push(text(restrictionsText));
 
-    /* Legacy meta line (used by mobile / non-grid fallback) */
-    const metaParts = [];
-    if (state.hours) metaParts.push(text(state.hours));
-    if (avail) metaParts.push(text(avail));
-    if (restrictionsText) metaParts.push(text(restrictionsText));
-    const metaLine = metaParts.length
-      ? `<div class="recreation-space-meta">${metaParts.join(' · ')}</div>`
-      : '';
+    let metaLine = '';
+    if (hourLines.length > 1) {
+      /* Multiple time slots: each gets its own line instead of comma-joining onto one row */
+      const lines = hourLines.map(line => `<div class="recreation-space-hours">${text(line)}</div>`);
+      if (otherParts.length) lines.push(`<div class="recreation-space-extra">${otherParts.join(' · ')}</div>`);
+      metaLine = `<div class="recreation-space-meta">${lines.join('')}</div>`;
+    } else {
+      const metaParts = hourLines.length ? [text(hourLines[0]), ...otherParts] : [...otherParts];
+      metaLine = metaParts.length
+        ? `<div class="recreation-space-meta">${metaParts.join(' · ')}</div>`
+        : '';
+    }
 
     return `<li class="recreation-space">
       <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${text(space?.name)}</span><span class="recreation-space-status ${dot}">${text(state.label)}</span></div>
-      ${timeSlotsHTML}
-      ${activityHTML}
       ${metaLine}
     </li>`;
   }
