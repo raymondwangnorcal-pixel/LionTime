@@ -1176,7 +1176,11 @@ function getStatus(venue, now) {
     };
   }
   const closureLabel = sourceDisplayStatus(venue, now.dow);
-  if (closureLabel) return { status: 'closed', label: closureLabel, detail: 'See details' };
+  if (closureLabel) return {
+    status: 'closed',
+    label: /^closed\b/i.test(closureLabel) ? 'Closed' : closureLabel,
+    detail: 'See details',
+  };
 
   // 1. Currently inside an open interval (including ones spanning midnight)
   for (const iv of activeIntervals(venue, now.dow)) {
