@@ -88,9 +88,62 @@ test('turns sanitized current acquired pages into a conservative valid snapshot'
   assert.deepEqual(writes, [['/tmp/current-recreation.json', snapshot]]);
 });
 
-function acquiredFixture() {
+test('applies the bounded Barnard Fitness manual override confirmed on August 24', async () => {
+  const snapshot = await runRecreationScraper({
+    acquire: async () => acquiredFixture(new Date('2026-08-24T20:00:00-04:00')),
+    parsers: parserFixture(),
+    writeJson: async () => {},
+    outputPath: '/tmp/barnard-manual-override.json',
+  });
+  const barnard = snapshot.facilities.find(item => item.id === 'barnard-fitness');
+  const day = date => barnard.days.find(item => item.date === date);
+
+  assert.deepEqual(day('2026-08-24').intervals, []);
+  assert.equal(day('2026-08-24').status, 'Closed');
+  assert.deepEqual(day('2026-08-25').intervals, [['09:00', '14:00']]);
+  assert.deepEqual(day('2026-08-26').intervals, [['09:00', '19:00']]);
+  assert.deepEqual(day('2026-08-27').intervals, [['09:00', '19:00']]);
+  assert.deepEqual(day('2026-08-28').intervals, []);
+  assert.equal(day('2026-08-28').status, 'Closed');
+  assert.deepEqual(day('2026-09-06').intervals, []);
+  assert.equal(day('2026-09-06').status, 'Closed');
+  assert.ok(day('2026-08-25').sourceRefs.includes('barnardManualOverride'));
+  assert.ok(day('2026-08-25').evidenceRefs.includes('barnardManualOverride:barnard-fitness'));
+});
+
+test('expires the Barnard Fitness override after September 7', async () => {
+  const parsers = {
+    ...parserFixture(),
+    parseBarnardHours: () => [evidence({
+      targetId: 'barnard-fitness',
+      sourceId: 'barnardFitness',
+      effectiveStart: null,
+      effectiveEnd: null,
+      weeklyIntervals: null,
+      dateIntervals: null,
+      unavailableStatus: 'Hours need verification',
+      availabilityType: 'facility-hours',
+      accessRestrictions: ['Barnard students, faculty, and staff'],
+    })],
+  };
+  const snapshot = await runRecreationScraper({
+    acquire: async () => acquiredFixture(new Date('2026-09-07T12:00:00-04:00')),
+    parsers,
+    writeJson: async () => {},
+    outputPath: '/tmp/barnard-manual-override-expiry.json',
+  });
+  const barnard = snapshot.facilities.find(item => item.id === 'barnard-fitness');
+  const day = date => barnard.days.find(item => item.date === date);
+
+  assert.equal(day('2026-09-07').status, 'Closed');
+  assert.equal(day('2026-09-08').status, 'Hours need verification');
+  assert.deepEqual(day('2026-09-08').intervals, []);
+  assert.deepEqual(day('2026-09-08').sourceRefs, ['barnardFitness']);
+});
+
+function acquiredFixture(generated = new Date('2026-08-21T16:00:00-04:00')) {
   return {
-    generated: new Date('2026-08-21T16:00:00-04:00'),
+    generated,
     pages: {
       columbiaHours: { url: 'https://perec.columbia.edu/hours-operation', html: '<main>hours</main>' },
       columbiaModifications: { url: 'https://perec.columbia.edu/content/modified-hours-closures', html: '<main>changes</main>' },

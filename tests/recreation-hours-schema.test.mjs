@@ -22,9 +22,9 @@ const SPACE_IDS = [
   'squash-courts',
 ];
 
-function resolverSnapshotWithOfficialSources(items = []) {
+function resolverSnapshotWithOfficialSources(items = [], snapshotGenerated = generated) {
   return resolveRecreationSnapshot({
-    generated,
+    generated: snapshotGenerated,
     evidence: [
       evidence({ sourceId: 'columbiaHours' }),
       evidence({ targetId: 'uris-pool', sourceId: 'columbiaHours', availabilityType: 'lap-swim' }),
@@ -39,6 +39,62 @@ function resolverSnapshotWithOfficialSources(items = []) {
 
 test('accepts the complete fourteen-day recreation snapshot', () => {
   assert.equal(validateRecreationHoursSnapshot(validSnapshot()).ok, true);
+});
+
+test('accepts the bounded Barnard manual-override provenance only for Barnard Fitness', () => {
+  const barnardOverride = resolverSnapshotWithOfficialSources([evidence({
+    targetId: 'barnard-fitness',
+    sourceId: 'barnardManualOverride',
+    priority: 0,
+    effectiveStart: '2026-08-24',
+    effectiveEnd: '2026-08-24',
+    weeklyIntervals: null,
+    dateIntervals: [],
+    status: 'Closed',
+    accessRestrictions: ['Barnard students, faculty, and staff'],
+  })], new Date('2026-08-24T12:00:00-04:00'));
+  assert.equal(validateRecreationHoursSnapshot(barnardOverride).ok, true);
+
+  const preStart = setDay(validSnapshot(), 'barnard-fitness', {
+    intervals: [],
+    status: 'Closed',
+    availabilityType: 'facility-hours',
+    accessRestrictions: ['Barnard students, faculty, and staff'],
+    sourceRefs: ['barnardManualOverride'],
+    evidenceRefs: ['barnardManualOverride:barnard-fitness'],
+  });
+  const preStartResult = validateRecreationHoursSnapshot(preStart);
+  assert.equal(preStartResult.ok, false);
+  assert.match(preStartResult.errors.join('\n'), /outside its approved schedule/i);
+
+  const afterExpiry = setDay(
+    resolverSnapshotWithOfficialSources([], new Date('2026-09-08T12:00:00-04:00')),
+    'barnard-fitness',
+    {
+      intervals: [['09:00', '19:00']],
+      status: null,
+      availabilityType: 'facility-hours',
+      accessRestrictions: ['Barnard students, faculty, and staff'],
+      sourceRefs: ['barnardManualOverride'],
+      evidenceRefs: ['barnardManualOverride:barnard-fitness'],
+    },
+  );
+  const afterExpiryResult = validateRecreationHoursSnapshot(afterExpiry);
+  assert.equal(afterExpiryResult.ok, false);
+  assert.match(afterExpiryResult.errors.join('\n'), /outside its approved schedule/i);
+
+  const wrongPayload = structuredClone(barnardOverride);
+  const manualDay = wrongPayload.facilities.find(facility => facility.id === 'barnard-fitness').days[0];
+  manualDay.accessRestrictions = [];
+  const wrongPayloadResult = validateRecreationHoursSnapshot(wrongPayload);
+  assert.equal(wrongPayloadResult.ok, false);
+  assert.match(wrongPayloadResult.errors.join('\n'), /outside its approved schedule/i);
+
+  const wrongTarget = setDay(validSnapshot(), 'dodge', {
+    sourceRefs: ['barnardManualOverride'],
+    evidenceRefs: ['barnardManualOverride:dodge'],
+  });
+  assert.match(validateRecreationHoursSnapshot(wrongTarget).errors.join('\n'), /not allowed for dodge/);
 });
 
 test('accepts explicit timed restrictions only when residual intervals exclude their windows', () => {

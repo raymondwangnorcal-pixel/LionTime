@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 
 import { validateRecreationHoursSnapshot } from '../lib/recreation-hours-schema.js';
 import { resolveRecreationSnapshot } from '../lib/recreation-hours-resolver.js';
+import { RECREATION_MANUAL_OVERRIDES } from '../lib/recreation-hours-manual-overrides.js';
 import {
   parseBarnardHours,
   parseActivityCalendar,
@@ -27,11 +28,12 @@ export async function runRecreationScraper({
   validate = validateRecreationHoursSnapshot,
   writeJson = writeFormattedJson,
   outputPath,
+  manualOverrides = RECREATION_MANUAL_OVERRIDES,
 } = {}) {
   if (typeof outputPath !== 'string' || !outputPath) throw new Error('missing --json-out path');
 
   const acquired = await acquire();
-  const evidence = parseAllSources(acquired, parsers);
+  const evidence = [...parseAllSources(acquired, parsers), ...manualOverrides];
   if (!hasRequiredFacilities(evidence)) throw invalidSnapshotError('missing required facility evidence');
 
   const snapshot = resolve({ evidence, generated: acquired.generated });
