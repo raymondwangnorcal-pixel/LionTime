@@ -1176,11 +1176,7 @@ function getStatus(venue, now) {
     };
   }
   const closureLabel = sourceDisplayStatus(venue, now.dow);
-  if (closureLabel) return {
-    status: 'closed',
-    label: /^closed\b/i.test(closureLabel) ? 'Closed' : closureLabel,
-    detail: 'See details',
-  };
+  if (closureLabel) return { status: 'closed', label: closureLabel, detail: 'See details' };
 
   // 1. Currently inside an open interval (including ones spanning midnight)
   for (const iv of activeIntervals(venue, now.dow)) {
@@ -1316,7 +1312,7 @@ function dodgeSpacesFor(venue, now) {
 function renderChrome(now) {
   const allActive = activeStatus === 'all';
   const activeDef = STATUS_FILTERS.find(f => f.id === activeStatus);
-  const btnLabel = allActive ? 'Status' : activeDef.label;
+  const btnLabel = allActive ? 'Open now' : activeDef.label;
   const chevSVG = '<svg class="dd-chev" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
   const menuItems = STATUS_FILTERS
     .filter(f => f.id !== 'all' && f.id !== activeStatus)
