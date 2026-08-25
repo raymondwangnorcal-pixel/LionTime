@@ -51,8 +51,18 @@ test('finds Dodge when searching for its nested Uris Pool', () => {
   assert.equal(api.venueMatchesSearch(dodge, 'uris pool'), true);
 });
 
-test('labels the Lehman venue as SIPA Library', () => {
-  assert.equal(api.VENUES.find(venue => venue.id === 'lehman').name, 'SIPA Library');
+test('uses the requested display labels for SIPA and Faculty House venues', () => {
+  assert.deepEqual(Array.from([
+    ['lehman', 'SIPA Library'],
+    ['facultyhouse', 'Fac House (2nd Floor)'],
+    ['facultyhouse-4', 'Fac House (4th Floor)'],
+    ['gracedodge', 'Grace Dodge Dining'],
+  ], ([id, name]) => [id, api.VENUES.find(venue => venue.id === id).name]), [
+    ['lehman', 'SIPA Library'],
+    ['facultyhouse', 'Fac House (2nd Floor)'],
+    ['facultyhouse-4', 'Fac House (4th Floor)'],
+    ['gracedodge', 'Grace Dodge Dining'],
+  ]);
 });
 
 test('only renders Student Life health services in the Student Life category', () => {
