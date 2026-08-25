@@ -901,3 +901,11 @@
 - Superseded by: DEC-0045
 - Note: The manual schedule still ends September 7, but its former verification-required successor is replaced by rolling live Barnard website hours.
 - Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0045
+
+- Type: implementation
+- Implementation commit: `f948f9de3f12a9cc444b9161636650ac8341757d` — feat(recreation): resume live Barnard gym hours
+- Superseded by: none
+- Note: The Recreation scraper now resumes complete Barnard weekly schedules on September 8, preserves access and provenance across bounded gaps, and renders the Summer 2026 warning as small metadata.
+- Privacy waivers: none
