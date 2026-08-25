@@ -1340,7 +1340,8 @@ function escapeHTML(value) {
 }
 
 function healthDropdownHTML(now) {
-  const healthVenues = VENUES.filter(v => HEALTH_SERVICE_IDS.has(v.id));
+  const healthVenues = VENUES.filter(v => HEALTH_SERVICE_IDS.has(v.id)
+    && (activeStatus === 'all' || getStatus(v, now).status === activeStatus));
   healthVenues.sort((a, b) => {
     const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
     return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
@@ -1371,7 +1372,7 @@ function render() {
 
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
-    const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id));
+    const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && (activeStatus === 'all' || getStatus(v, now).status === activeStatus));
     if (!regularShown.length && !hasHealthVenues) return '';
 
     const isCafe = c.id === 'cafe';
