@@ -1254,7 +1254,7 @@ function render() {
 
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
-    const hasHealthVenues = isStudent && venues.some(v => HEALTH_SERVICE_IDS.has(v.id));
+    const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id));
     if (!regularShown.length && !hasHealthVenues) return '';
 
     const isCafe = c.id === 'cafe';
