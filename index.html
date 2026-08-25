@@ -1321,11 +1321,11 @@ function renderChrome(now) {
     .map(f => `<button class="status-dropdown-item" data-status="${f.id}">${f.label}</button>`)
     .join('');
   document.getElementById('chips').innerHTML =
-    `<button class="chip stat-filter${allActive ? ' active' : ''}" data-status="all">All Buildings</button>` +
     `<div class="status-dropdown" id="status-dropdown">` +
       `<button class="status-dropdown-btn${allActive ? '' : ' active'}" type="button">${escapeHTML(btnLabel)} ${chevSVG}</button>` +
       `<div class="status-dropdown-menu" id="status-dropdown-menu" hidden>${menuItems}</div>` +
-    `</div>`;
+    `</div>` +
+    `<button class="chip stat-filter${allActive ? ' active' : ''}" data-status="all">All Buildings</button>`;
 }
 
 function weekHTML(v, now) {
