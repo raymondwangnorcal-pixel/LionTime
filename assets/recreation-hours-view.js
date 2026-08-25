@@ -161,8 +161,14 @@
       ? `<div class="recreation-space-meta">${metaParts.join(' · ')}</div>`
       : '';
 
+    /* Format status: "Closed for maintenance" → "Closed" + "(Maintenance)" on second line */
+    const maintenanceMatch = /^Closed\s+for\s+(.+)$/i.exec(state.label);
+    const statusHTML = maintenanceMatch
+      ? `<span class="recreation-space-status ${dot}">Closed<br><span class="recreation-space-status-reason">(${text(maintenanceMatch[1].charAt(0).toUpperCase() + maintenanceMatch[1].slice(1))})</span></span>`
+      : `<span class="recreation-space-status ${dot}">${text(state.label)}</span>`;
+
     return `<li class="recreation-space">
-      <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${text(space?.name)}</span><span class="recreation-space-status ${dot}">${text(state.label)}</span></div>
+      <div class="recreation-space-heading"><span class="dot ${dot}"></span><span class="recreation-space-name">${text(space?.name)}</span>${statusHTML}</div>
       ${timeSlotsHTML}
       ${activityHTML}
       ${metaLine}
