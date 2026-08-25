@@ -273,8 +273,9 @@
   .entry:last-child .row { border-bottom: none; }
   .entry.expanded .row { background: #f8fafc; border-bottom-color: transparent; }
   .entry.expanded {
-    border: 1.5px solid #4a90d9; border-radius: var(--radius);
-    overflow: hidden; margin: 4px 0;
+    border: 1.5px solid #4a90d9; border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
   }
   .entry.expanded .row { border-bottom: 1px solid var(--row-line); }
   .entry.expanded .detail { border-bottom: none; }
