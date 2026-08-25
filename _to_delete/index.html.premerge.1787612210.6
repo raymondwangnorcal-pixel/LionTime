@@ -222,11 +222,11 @@
     padding: 1.15rem 0 0.35rem; background: var(--bg);
   }
   .sec-title {
-    font-size: 0.92rem; font-weight: 700; letter-spacing: 1px;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
     text-transform: uppercase; color: var(--columbia-blue);
   }
   .sec-rule { flex: 1; height: 1px; background: var(--hairline); }
-  .sec-meta { font-size: 0.88rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .sec-meta { font-size: 0.74rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
   .list {
     background: var(--surface); border-radius: var(--radius);
@@ -448,67 +448,6 @@
   .recreation-space-meta {
     margin-top: 0.1rem; padding-left: 0.95rem;
     font-size: 0.7rem; color: var(--muted); line-height: 1.4;
-  }
-
-  /* Desktop-only: new elements hidden by default on mobile */
-  .recreation-space-times { display: none; }
-  .recreation-space-activity { display: none; }
-
-  /* ── Desktop horizontal grid for recreation spaces ── */
-  @media (min-width: 768px) {
-    .recreation-spaces-list {
-      display: flex;
-    }
-    .recreation-spaces-list[hidden] { display: none; }
-    .recreation-space {
-      flex: 1;
-      padding: 0.75rem 0.8rem 0.85rem;
-      border-bottom: none;
-      border-right: 1px solid #ebeef2;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .recreation-space:last-child { border-right: none; }
-    .recreation-space-heading {
-      align-items: flex-start;
-      margin-bottom: 0.5rem;
-    }
-    .recreation-space-heading .dot {
-      margin-top: 0.25rem;
-    }
-    .recreation-space-name {
-      font-size: 0.74rem;
-      line-height: 1.3;
-    }
-    .recreation-space-status {
-      white-space: normal;
-      text-align: right;
-      flex-shrink: 1;
-    }
-
-    /* Show stacked time slots, hide legacy meta line */
-    .recreation-space-times {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      padding-left: 0.95rem;
-      margin-bottom: 0.4rem;
-    }
-    .recreation-space-time {
-      font-size: 0.74rem;
-      font-variant-numeric: tabular-nums;
-      color: var(--text);
-      line-height: 1.4;
-    }
-    .recreation-space-activity {
-      display: block;
-      font-size: 0.68rem;
-      color: var(--muted);
-      padding-left: 0.95rem;
-      margin-top: auto;
-    }
-    .recreation-space-meta { display: none; }
   }
 
   /* ── Columbia Health dropdown ───────────────────── */
@@ -825,7 +764,7 @@ const VENUES = [
   { id:'dodge', name:'Dodge Fitness Center', cat:'fitness', loc:'3030 Broadway',
     hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]) },
 
-  { id:'uris-pool', name:'Uris Pool', cat:'fitness', parentId:'dodge', loc:'Dodge Fitness Center, lower level',
+  { id:'uris-pool', name:'Uris Pool', cat:'fitness', loc:'Dodge Fitness Center, lower level',
     hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
                     [['13:00','17:00']], [['13:00','17:00']]) },
 
@@ -840,7 +779,7 @@ const VENUES = [
 
   { id:'bookstore', name:'Columbia University Bookstore', cat:'student', loc:'Lerner Hall, lower level',
     hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
-    estimated: true },
+    studentAccessType:'office-hours', estimated: true },
 
   { id:'mail-center', name:'Student Mail Center', cat:'student', loc:'Wien Hall, lower level',
     hours: WEEKDAYS([['12:00','16:00']]), studentAccessType:'office-hours',
@@ -1075,7 +1014,7 @@ function todayHoursText(venue, now) {
       ? `${fmt12(iv.end)} ${DAY_SHORT[(now.dow + Math.floor(iv.end / 1440)) % 7]}`
       : fmt12(iv.end);
     return `${from} – ${to}`;
-  }).join('<br>');
+  }).join(', ');
 }
 
 
@@ -1108,39 +1047,10 @@ const DODGE_SPACES_CONTROL = 'View spaces';
 
 function matchesFilters(v, now, ignoreStatus) {
   if (activeCat !== 'all' && v.cat !== activeCat) return false;
-  if (!venueMatchesSearch(v, searchTerm)) return false;
+  const term = searchTerm.trim().toLowerCase();
+  if (term && !`${v.name} ${v.loc} ${CAT_MAP[v.cat].label}`.toLowerCase().includes(term)) return false;
   if (!ignoreStatus && activeStatus !== 'all' && getStatus(v, now).status !== activeStatus) return false;
   return true;
-}
-
-function venueMatchesSearch(venue, term) {
-  const normalized = term.trim().toLowerCase();
-  if (!normalized) return true;
-  const children = VENUES.filter(candidate => candidate.parentId === venue.id)
-    .flatMap(candidate => [candidate.name, candidate.loc]);
-  return [venue.name, venue.loc, CAT_MAP[venue.cat].label, ...children]
-    .join(' ').toLowerCase().includes(normalized);
-}
-
-function topLevelVenues(venues = VENUES) {
-  return venues.filter(venue => !venue.parentId);
-}
-
-function dodgeSpacesFor(venue, now) {
-  if (venue.id !== 'dodge') return [];
-  if (venue.recreationLive) return Array.isArray(venue.recreationSpaces) ? venue.recreationSpaces : [];
-  const pool = VENUES.find(candidate => candidate.id === 'uris-pool');
-  if (!pool) return [];
-  return [{
-    id: pool.id,
-    name: pool.name,
-    intervals: dayHours(pool, now.dow),
-    status: sourceStatus(pool, now.dow),
-    reason: null,
-    availabilityType: 'lap-swim',
-    accessRestrictions: Array.isArray(pool.accessRestrictions) ? pool.accessRestrictions : [],
-    restrictions: Array.isArray(pool.sourceRestrictions?.[now.dow]) ? pool.sourceRestrictions[now.dow] : [],
-  }];
 }
 
 /* ══════════════════════════════════════════════════
@@ -1156,7 +1066,7 @@ function weekHTML(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
+    const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
     const unpub = /not published/i.test(hoursText);
     return `<div class="wk-row${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
@@ -1170,7 +1080,7 @@ function weekHTMLDesktop(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
+    const hoursText = h.length ? h.map(fmtRange).join(', ') : sourceStatus(v, dow) || 'Closed';
     const unpub = /not published/i.test(hoursText);
     const d = new Date(todayET);
     d.setDate(d.getDate() + i);
@@ -1185,8 +1095,7 @@ function weekHTMLDesktop(v, now) {
 function rowHTML(v, now) {
   const st = getStatus(v, now);
   const isOpen = expanded.has(v.id);
-  const recreationSpaces = dodgeSpacesFor(v, now);
-  const accessLabel = v.cat === 'student' && st.status !== 'closed' && window.LionHourStudentServicesView
+  const accessLabel = v.cat === 'student' && window.LionHourStudentServicesView
     ? LionHourStudentServicesView.accessLabelFor(v, now) : null;
   const serviceDetails = v.studentServicesLive && window.LionHourStudentServicesView
     ? LionHourStudentServicesView.renderDay(v.studentServicesDays?.[now.dow], fmtRange) : '';
@@ -1195,7 +1104,7 @@ function rowHTML(v, now) {
             aria-expanded="${isOpen}" aria-label="${v.name} — ${st.label}">
       <span class="dot ${st.status}"></span>
       <span class="name">${v.name}</span>
-      <span class="hours">${todayHoursText(v, now)}</span>
+      <span class="hours">${escapeHTML(todayHoursText(v, now))}</span>
       <span class="status-badges">${accessLabel ? `<span class="access-badge">${escapeHTML(accessLabel)}</span>` : ''}<span class="badge ${st.status}">${escapeHTML(st.label)}</span></span>
       ${CHEV}
     </button>
@@ -1207,8 +1116,8 @@ function rowHTML(v, now) {
       ${v.note ? `<div class="note">${escapeHTML(v.note)}</div>` : ''}
       ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
       ${v.recreationLive ? `<div data-recreation-metadata="${v.id}"></div>` : ''}
-      ${recreationSpaces.length && window.LionHourRecreationView
-        ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
+      ${v.id === 'dodge' && v.recreationLive && window.LionHourRecreationView
+        ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(v.recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
     </div>
   </div>`;
 }
@@ -1240,18 +1149,17 @@ function healthDropdownHTML(now) {
 
 function render() {
   const now = nowET();
-  const venues = topLevelVenues();
   renderChrome(now);
   renderSidebarNav();
 
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
-    const all = venues.filter(v => v.cat === c.id && matchesFilters(v, now, true));
+    const all = VENUES.filter(v => v.cat === c.id && matchesFilters(v, now, true));
     const shown = all.filter(v => activeStatus === 'all' || getStatus(v, now).status === activeStatus);
 
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
-    const hasHealthVenues = isStudent && venues.some(v => HEALTH_SERVICE_IDS.has(v.id));
+    const hasHealthVenues = isStudent && VENUES.some(v => HEALTH_SERVICE_IDS.has(v.id));
     if (!regularShown.length && !hasHealthVenues) return '';
 
     const isCafe = c.id === 'cafe';
@@ -1383,9 +1291,8 @@ sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 
 function renderSidebarNav() {
   const nav = document.getElementById('sidebar-nav');
-  const venues = topLevelVenues();
   const items = CATEGORIES.map(c => {
-    const count = c.id === 'all' ? venues.length : venues.filter(v => v.cat === c.id).length;
+    const count = c.id === 'all' ? VENUES.length : VENUES.filter(v => v.cat === c.id).length;
     const label = c.id === 'all' ? 'Home' : c.label;
     const icon = c.id === 'all' ? '🏠' : c.icon;
     return `<button class="sidebar-nav-item${c.id === activeCat ? ' active' : ''}" data-cat="${c.id}">
