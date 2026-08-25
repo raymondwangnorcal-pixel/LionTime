@@ -212,6 +212,41 @@
   .chip-sep { width: 1px; height: 18px; background: var(--hairline); margin: 0 0.15rem; }
   .chip.stat-filter.active { background: var(--columbia-pale); color: #14406f; border-color: var(--columbia-light); }
 
+  /* ── Status dropdown ─────────────────────────── */
+  .status-dropdown { position: relative; display: inline-flex; }
+  .status-dropdown-btn {
+    padding: 0.3rem 0.55rem 0.3rem 0.7rem; border-radius: 16px;
+    border: 1px solid var(--hairline); background: #fbfcfd;
+    color: var(--text-secondary); font-size: 0.77rem; font-weight: 500;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    transition: all 0.15s;
+  }
+  .status-dropdown-btn:hover { border-color: var(--columbia-light); color: var(--columbia-blue); }
+  .status-dropdown-btn.active {
+    background: var(--columbia-pale); color: #14406f; border-color: var(--columbia-light);
+  }
+  .status-dropdown-btn .dd-chev {
+    width: 10px; height: 10px; transition: transform 0.2s;
+  }
+  .status-dropdown.open .dd-chev { transform: rotate(180deg); }
+  .status-dropdown-menu {
+    position: absolute; top: calc(100% + 5px); left: 0;
+    min-width: 100%; background: #fff;
+    border: 1px solid var(--hairline); border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 50;
+    padding: 0.3rem 0;
+  }
+  .status-dropdown-item {
+    display: block; width: 100%; padding: 0.5rem 0.9rem;
+    text-align: left; border: none; background: none;
+    font-size: 0.82rem; font-family: inherit; color: var(--text);
+    cursor: pointer; white-space: nowrap;
+  }
+  .status-dropdown-item:hover { background: #f5f7fa; }
+  .status-dropdown-item:first-child { border-radius: 8px 8px 0 0; }
+  .status-dropdown-item:last-child { border-radius: 0 0 8px 8px; }
+
   /* ── List ──────────────────────────────────────── */
   main { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem 3rem; }
 
@@ -1141,7 +1176,11 @@ function getStatus(venue, now) {
     };
   }
   const closureLabel = sourceDisplayStatus(venue, now.dow);
-  if (closureLabel) return { status: 'closed', label: closureLabel, detail: 'See details' };
+  if (closureLabel) return {
+    status: 'closed',
+    label: /^closed\b/i.test(closureLabel) ? 'Closed' : closureLabel,
+    detail: 'See details',
+  };
 
   // 1. Currently inside an open interval (including ones spanning midnight)
   for (const iv of activeIntervals(venue, now.dow)) {
@@ -1275,9 +1314,20 @@ function dodgeSpacesFor(venue, now) {
    RENDER
    ══════════════════════════════════════════════════ */
 function renderChrome(now) {
-  const statChips = STATUS_FILTERS.map(f =>
-    `<button class="chip stat-filter${f.id === activeStatus ? ' active' : ''}" data-status="${f.id}">${f.label}</button>`).join('');
-  document.getElementById('chips').innerHTML = statChips;
+  const allActive = activeStatus === 'all';
+  const activeDef = STATUS_FILTERS.find(f => f.id === activeStatus);
+  const btnLabel = allActive ? 'Status' : activeDef.label;
+  const chevSVG = '<svg class="dd-chev" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
+  const menuItems = STATUS_FILTERS
+    .filter(f => f.id !== 'all' && f.id !== activeStatus)
+    .map(f => `<button class="status-dropdown-item" data-status="${f.id}">${f.label}</button>`)
+    .join('');
+  document.getElementById('chips').innerHTML =
+    `<button class="chip stat-filter${allActive ? ' active' : ''}" data-status="all">All Buildings</button>` +
+    `<div class="status-dropdown" id="status-dropdown">` +
+      `<button class="status-dropdown-btn${allActive ? '' : ' active'}" type="button">${escapeHTML(btnLabel)} ${chevSVG}</button>` +
+      `<div class="status-dropdown-menu" id="status-dropdown-menu" hidden>${menuItems}</div>` +
+    `</div>`;
 }
 
 function weekHTML(v, now) {
@@ -1479,11 +1529,40 @@ function updateClock() {
 
 /* ── Events ─────────────────────────────────────── */
 document.getElementById('chips').addEventListener('click', e => {
-  const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.cat !== undefined) activeCat = b.dataset.cat;
-  else activeStatus = b.dataset.status;
-  render();
+  /* "All Buildings" chip */
+  const chip = e.target.closest('.chip.stat-filter');
+  if (chip) { activeStatus = 'all'; render(); return; }
+
+  /* Dropdown toggle button */
+  const toggle = e.target.closest('.status-dropdown-btn');
+  if (toggle) {
+    e.stopPropagation();
+    const dd = document.getElementById('status-dropdown');
+    const menu = document.getElementById('status-dropdown-menu');
+    const opening = menu.hidden;
+    menu.hidden = !opening;
+    dd.classList.toggle('open', opening);
+    return;
+  }
+
+  /* Dropdown menu item */
+  const item = e.target.closest('.status-dropdown-item');
+  if (item) { activeStatus = item.dataset.status; render(); return; }
 });
+
+/* Close status dropdown on outside click / scroll (like About) */
+document.addEventListener('pointerdown', e => {
+  const dd = document.getElementById('status-dropdown');
+  if (dd && !dd.contains(e.target)) {
+    const menu = document.getElementById('status-dropdown-menu');
+    if (menu && !menu.hidden) { menu.hidden = true; dd.classList.remove('open'); }
+  }
+});
+document.addEventListener('scroll', () => {
+  const menu = document.getElementById('status-dropdown-menu');
+  const dd = document.getElementById('status-dropdown');
+  if (menu && !menu.hidden) { menu.hidden = true; dd?.classList.remove('open'); }
+}, { passive: true });
 document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
 document.getElementById('stage').addEventListener('click', e => {
   const secToggle = e.target.closest('.sec');

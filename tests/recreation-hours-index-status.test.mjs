@@ -9,8 +9,8 @@ const end = html.indexOf('/* ═════════════════
 if (start < 0 || end < 0) throw new Error('could not isolate the index status engine');
 
 const sandbox = { Intl, Date };
-vm.runInNewContext(`${html.slice(start, end)}\nglobalThis.recreationStatusApi = { getStatus };`, sandbox);
-const { getStatus } = sandbox.recreationStatusApi;
+vm.runInNewContext(`${html.slice(start, end)}\nglobalThis.recreationStatusApi = { getStatus, todayHoursText };`, sandbox);
+const { getStatus, todayHoursText } = sandbox.recreationStatusApi;
 
 test('uses a timed Recreation restriction only during its Eastern-day window', () => {
   const venue = {
@@ -26,4 +26,15 @@ test('uses a timed Recreation restriction only during its Eastern-day window', (
   assert.equal(getStatus(venue, { dow: 5, mins: 630 }).label, 'Open');
   assert.equal(getStatus(venue, { dow: 5, mins: 780 }).label, 'Closed for maintenance');
   assert.equal(getStatus(venue, { dow: 5, mins: 900 }).label, 'Open');
+});
+
+test('uses a concise Closed badge when Today explains a seasonal dining closure', () => {
+  const venue = {
+    hours: { 5: [] },
+    sourceStatuses: { 5: 'Closed for Summer' },
+  };
+  const now = { dow: 5, mins: 720 };
+
+  assert.equal(todayHoursText(venue, now), 'Closed for Summer');
+  assert.equal(getStatus(venue, now).label, 'Closed');
 });
