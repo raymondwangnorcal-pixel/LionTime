@@ -879,3 +879,25 @@
 - Superseded by: none
 - Note: The Recreation scraper now injects the exact temporary Barnard schedule with dedicated manual provenance, and both validators enforce its dates, payload, target, and September 7 expiration.
 - Privacy waivers: none
+
+## DEC-0045 — Resume rolling Barnard Fitness live hours
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: Beginning September 8, 2026, LionHour will publish the weekly schedule displayed on Barnard's Fitness Center page as rolling live hours and show a small note while the page still carries its stale Summer 2026 heading.
+- Rationale: Barnard publishes usable weekly operating times without exact effective dates, and the user prefers continued live source authority after the temporary manual schedule expires.
+- Scope: Barnard Recreation parsing, rolling evidence coverage, source provenance, card metadata, tests, operations guidance, and scheduled Recreation publishing.
+- Implementation: pending
+- Recorded against HEAD: `39b141cdb9755fbbd181fc0c201055ba50de832c`
+- Supersedes: DEC-0044
+- Evidence: The user-approved bounded design and stale-heading note requirement in the 2026-08-24 Barnard Fitness follow-up conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0044
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0045
+- Note: The manual schedule still ends September 7, but its former verification-required successor is replaced by rolling live Barnard website hours.
+- Privacy waivers: none

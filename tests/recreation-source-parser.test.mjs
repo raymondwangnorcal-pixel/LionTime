@@ -240,32 +240,164 @@ test('current Barnard DOM publishes verification instead of unbounded seasonal t
   assert.equal(item.evidenceRef, 'barnardFitness:barnard-fitness');
 });
 
+test('publishes the displayed Barnard schedule after September 8 and notes a stale seasonal heading', async () => {
+  const html = await readFixture('recreation-barnard-hours.html');
+  const generated = new Date('2026-09-08T08:00:00-04:00');
+  const stale = find(parseBarnardHours(html, { generated }), 'barnard-fitness');
+
+  assert.equal(stale.effectiveStart, '2026-09-08');
+  assert.equal(stale.effectiveEnd, '2026-09-21');
+  assert.deepEqual(stale.weeklyIntervals['2'], [['09:00', '19:00']]);
+  assert.equal(stale.unavailableStatus, null);
+  assert.equal(stale.reason, "Barnard's seasonal heading may be outdated.");
+
+  const updated = find(parseBarnardHours(
+    html.replaceAll('Summer 2026', 'Fall 2026'),
+    { generated },
+  ), 'barnard-fitness');
+  assert.deepEqual(updated.weeklyIntervals['2'], [['09:00', '19:00']]);
+  assert.equal(updated.reason, null);
+});
+
+test('rejects partial Barnard schedules and missing trusted access copy', async () => {
+  const html = await readFixture('recreation-barnard-hours.html');
+  const generated = new Date('2026-09-08T08:00:00-04:00');
+
+  assert.deepEqual(parseBarnardHours(
+    html.replace(/\s*<strong>Saturday and Sunday<\/strong>:[^<]+/, ''),
+    { generated },
+  ), []);
+  assert.deepEqual(parseBarnardHours(
+    html.replace('open to Barnard students, faculty, and staff', 'open to the campus community'),
+    { generated },
+  ), []);
+});
+
+test('rejects an unparsed Barnard weekday row instead of ignoring a closure', async () => {
+  const html = (await readFixture('recreation-barnard-hours.html')).replace(
+    '</p>',
+    '<br><strong>Monday</strong>: Closed for Labor Day</p>',
+  );
+
+  assert.deepEqual(parseBarnardHours(html, {
+    generated: new Date('2026-09-08T08:00:00-04:00'),
+  }), []);
+});
+
+test('does not prefill Barnard live hours before September 8 even when the page has dates', async () => {
+  const html = (await readFixture('recreation-barnard-hours.html'))
+    .replace('</h3>', '</h3><p>Effective August 1, 2026 through September 30, 2026.</p>');
+  const item = find(parseBarnardHours(html, {
+    generated: new Date('2026-09-07T08:00:00-04:00'),
+  }), 'barnard-fitness');
+
+  assert.equal(item.weeklyIntervals, null);
+  assert.equal(item.unavailableStatus, 'Hours need verification');
+});
+
+test('uses the rolling window and stale-heading note for dated Barnard pages after September 8', async () => {
+  const html = (await readFixture('recreation-barnard-hours.html'))
+    .replace('</h3>', '</h3><p>Effective August 1, 2026 through September 30, 2026.</p>');
+  const item = find(parseBarnardHours(html, {
+    generated: new Date('2026-09-08T08:00:00-04:00'),
+  }), 'barnard-fitness');
+
+  assert.equal(item.effectiveStart, '2026-09-08');
+  assert.equal(item.effectiveEnd, '2026-09-21');
+  assert.equal(item.reason, "Barnard's seasonal heading may be outdated.");
+});
+
+test('rejects Barnard seasonal headings that are not relevant to the generated date', async () => {
+  const html = await readFixture('recreation-barnard-hours.html');
+  const generated = new Date('2026-09-08T08:00:00-04:00');
+
+  for (const heading of ['Spring 2025', 'Winter 2099', 'Spring 2026']) {
+    assert.deepEqual(parseBarnardHours(
+      html.replaceAll('Summer 2026', heading),
+      { generated },
+    ), [], heading);
+  }
+});
+
+test('does not restore the stale-heading note after Barnard changes to Fall 2026', async () => {
+  const html = (await readFixture('recreation-barnard-hours.html'))
+    .replaceAll('Summer 2026', 'Fall 2026');
+  const item = find(parseBarnardHours(html, {
+    generated: new Date('2026-12-01T08:00:00-05:00'),
+  }), 'barnard-fitness');
+
+  assert.equal(item.reason, null);
+});
+
+test('keeps the approved Summer 2026 schedule live with a warning after November', async () => {
+  const html = await readFixture('recreation-barnard-hours.html');
+  const item = find(parseBarnardHours(html, {
+    generated: new Date('2026-12-01T08:00:00-05:00'),
+  }), 'barnard-fitness');
+
+  assert.deepEqual(item.weeklyIntervals['2'], [['09:00', '19:00']]);
+  assert.equal(item.reason, "Barnard's seasonal heading may be outdated.");
+});
+
+test('preserves Barnard provenance and access after an explicit range ends mid-window', async () => {
+  const html = (await readFixture('recreation-barnard-hours.html'))
+    .replace('</h3>', '</h3><p>Effective August 1, 2026 through September 10, 2026.</p>');
+  const generated = new Date('2026-09-08T08:00:00-04:00');
+  const snapshot = resolveRecreationSnapshot({
+    evidence: parseBarnardHours(html, { generated }),
+    generated,
+  });
+  const barnard = snapshot.facilities.find(facility => facility.id === 'barnard-fitness');
+  const afterRange = barnard.days.find(day => day.date === '2026-09-11');
+
+  assert.equal(afterRange.status, 'Hours need verification');
+  assert.deepEqual(afterRange.accessRestrictions, ['Barnard students, faculty, and staff']);
+  assert.deepEqual(afterRange.sourceRefs, ['barnardFitness']);
+  assert.deepEqual(afterRange.evidenceRefs, ['barnardFitness:barnard-fitness']);
+});
+
+test('rejects multiple or partially malformed Barnard effective-date claims', async () => {
+  const html = await readFixture('recreation-barnard-hours.html');
+  const generated = new Date('2026-09-08T08:00:00-04:00');
+  for (const claim of [
+    'Effective August 1, 2026 through September 30, 2026. Effective October 1, 2026 through December 1, 2026.',
+    'Effective August 1, 2026 through September 30, 2026. Effective TBD.',
+  ]) {
+    assert.deepEqual(parseBarnardHours(
+      html.replace('</h3>', `</h3><p>${claim}</p>`),
+      { generated },
+    ), [], claim);
+  }
+});
+
 test('retains an explicit Barnard ID requirement as a separate access restriction', async () => {
   const html = (await readFixture('recreation-barnard-hours.html'))
     .replace('Barnard students, faculty, and staff', 'Barnard ID required')
     .replace('</h3>', '</h3><p>Effective August 1, 2026 through September 30, 2026.</p>');
-  const item = find(parseBarnardHours(html), 'barnard-fitness');
+  const item = find(parseBarnardHours(html, {
+    generated: new Date('2026-09-08T08:00:00-04:00'),
+  }), 'barnard-fitness');
 
   assert.deepEqual(item.accessRestrictions, ['Barnard ID required']);
   assert.deepEqual(item.weeklyIntervals['1'], [['09:00', '19:00']]);
 });
 
-test('uses only exact current Barnard bounds across stale, future, ambiguous, and current DOM shapes', async () => {
+test('uses exact Barnard bounds only when they cover the rolling scrape date', async () => {
   const html = await readFixture('recreation-barnard-hours.html');
-  const generated = new Date('2026-08-21T16:00:00-04:00');
+  const generated = new Date('2026-09-08T08:00:00-04:00');
   const cases = [
     ['stale', 'Effective May 1, 2026 through July 31, 2026.', false],
-    ['future', 'Effective September 1, 2026 through December 20, 2026.', false],
+    ['future', 'Effective September 20, 2026 through December 20, 2026.', false],
     ['current', 'Effective August 1, 2026 through September 30, 2026.', true],
   ];
 
-  const ambiguous = resolveRecreationSnapshot({ evidence: parseBarnardHours(html), generated });
-  assert.equal(facilityDay(ambiguous, 'barnard-fitness').status, 'Hours need verification');
-  assert.deepEqual(facilityDay(ambiguous, 'barnard-fitness').intervals, []);
+  const ambiguous = resolveRecreationSnapshot({ evidence: parseBarnardHours(html, { generated }), generated });
+  assert.equal(facilityDay(ambiguous, 'barnard-fitness').status, null);
+  assert.deepEqual(facilityDay(ambiguous, 'barnard-fitness').intervals, [['09:00', '19:00']]);
 
   for (const [label, bounds, publishesTimes] of cases) {
     const bounded = html.replace('</h3>', `</h3><p>${bounds}</p>`);
-    const snapshot = resolveRecreationSnapshot({ evidence: parseBarnardHours(bounded), generated });
+    const snapshot = resolveRecreationSnapshot({ evidence: parseBarnardHours(bounded, { generated }), generated });
     const resolved = facilityDay(snapshot, 'barnard-fitness');
     assert.equal(resolved.intervals.length > 0, publishesTimes, label);
     assert.equal(resolved.status, publishesTimes ? null : 'Hours need verification', label);

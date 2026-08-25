@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { validateRecreationHoursSnapshot } from '../lib/recreation-hours-schema.js';
+import { parseBarnardHours } from '../lib/recreation-source-parser.js';
 import { runRecreationScraper } from '../scripts/recreation-hours-scraper.mjs';
 
 test('acquires, parses, resolves, validates, and writes one snapshot', async () => {
@@ -139,6 +140,27 @@ test('expires the Barnard Fitness override after September 7', async () => {
   assert.equal(day('2026-09-08').status, 'Hours need verification');
   assert.deepEqual(day('2026-09-08').intervals, []);
   assert.deepEqual(day('2026-09-08').sourceRefs, ['barnardFitness']);
+});
+
+test('resumes the displayed Barnard live schedule on September 8', async () => {
+  const acquired = acquiredFixture(new Date('2026-09-08T08:00:00-04:00'));
+  acquired.pages.barnardFitness.html = await readFile(
+    new URL('./fixtures/recreation-barnard-hours.html', import.meta.url),
+    'utf8',
+  );
+  const snapshot = await runRecreationScraper({
+    acquire: async () => acquired,
+    parsers: { ...parserFixture(), parseBarnardHours },
+    writeJson: async () => {},
+    outputPath: '/tmp/barnard-live-resumption.json',
+  });
+  const barnard = snapshot.facilities.find(item => item.id === 'barnard-fitness');
+  const september8 = barnard.days.find(day => day.date === '2026-09-08');
+
+  assert.deepEqual(september8.intervals, [['09:00', '19:00']]);
+  assert.equal(september8.status, null);
+  assert.equal(september8.reason, "Barnard's seasonal heading may be outdated.");
+  assert.deepEqual(september8.sourceRefs, ['barnardFitness']);
 });
 
 function acquiredFixture(generated = new Date('2026-08-21T16:00:00-04:00')) {
