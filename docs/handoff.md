@@ -1,25 +1,24 @@
-# LionTime Barnard Fitness override handoff
+# LionTime Handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-24T21:51:00-04:00
-Current-Origin: origin-e9816ce85c56ac6c5608ea7a
+Last-Updated: 2026-08-24T22:19:07-04:00
+Current-Origin: origin-44a8c6a0c6140e87e4c8f36d
 
 ## Origins
 
 | Origin-ID | Branch | Created-At |
 |---|---|---|
-| origin-b22132f6aa5678840b05cd1a | frontend/appearance-polish | 2026-08-24T18:33:46-04:00 |
-| origin-e9816ce85c56ac6c5608ea7a | main | 2026-08-24T21:51:00-04:00 |
+| origin-44a8c6a0c6140e87e4c8f36d | main | 2026-08-24T22:19:07-04:00 |
 
 ## Current Goal
 
-Origin-ID: origin-e9816ce85c56ac6c5608ea7a
-Text: Publish the user-confirmed one-time Barnard Fitness schedule in LionHour with exact bounded provenance and no invented September 8 closing time.
+Origin-ID: origin-44a8c6a0c6140e87e4c8f36d
+Text: Resume autonomous live Barnard Fitness scraping after the temporary manual override expires, with a small warning while the official heading remains Summer 2026.
 
 ## Accomplished in Latest Material Session
 
-Origin-ID: origin-e9816ce85c56ac6c5608ea7a
-Text: Implemented exact manual evidence for August 24 through September 7, enforced its date and payload contract in both validators, passed adversarial review, committed and pushed the change, deployed the new schema, reran the challenged Recreation workflow successfully, and verified the updated normal-cache production API response.
+Origin-ID: origin-44a8c6a0c6140e87e4c8f36d
+Text: Implemented, reviewed, tested, committed, pushed, deployed, and production-verified the September 8 rolling Barnard Fitness schedule transition while preserving the manual override through September 7.
 
 ## Outstanding Tasks
 
@@ -28,36 +27,27 @@ Text: Implemented exact manual evidence for August 24 through September 7, enfor
 
 ## Recommended Next Task
 
-Origin-ID: origin-e9816ce85c56ac6c5608ea7a
+Origin-ID: origin-44a8c6a0c6140e87e4c8f36d
 Task-ID: none
-Reason: The requested override is implemented, deployed, published, and publicly verified; scheduled Recreation updates will continue applying it only through September 7.
+Reason: No follow-up task is required.
 
 ## Files Touched
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| assets/recreation-hours.js | origin-b22132f6aa5678840b05cd1a | present | committed | Projects the independently validated Uris current day into Dodge's visible recreationSpaces after the four calendar-backed activity rooms. |
-| assets/recreation-hours.js | origin-e9816ce85c56ac6c5608ea7a | present | committed | Mirrors the exact manual trust contract in browser-side snapshot validation. |
-| docs/decisions.md | origin-b22132f6aa5678840b05cd1a | present | committed | DEC-0043 records the Uris hierarchy policy and implementation commit. |
-| docs/decisions.md | origin-e9816ce85c56ac6c5608ea7a | present | committed | DEC-0044 and its lifecycle update record the approved policy and implementation commit. |
-| docs/recreation-hours-operations.md | origin-b22132f6aa5678840b05cd1a | present | committed | Distinguishes three published API facilities from two top-level Fitness cards and the five visible Dodge rows. |
-| docs/recreation-hours-operations.md | origin-e9816ce85c56ac6c5608ea7a | present | committed | Documents the manual source, exact schedule, resolver priority, and automatic expiry. |
-| index.html | origin-b22132f6aa5678840b05cd1a | present | committed-and-uncommitted | Committed hierarchy helpers hide Uris from top-level rendering, preserve embedded fallback under Dodge, adjust counts, and include child names in search; a separate concurrent uncommitted access-badge condition was preserved. |
-| lib/recreation-hours-catalog.js | origin-e9816ce85c56ac6c5608ea7a | present | committed | Declares the dedicated non-official manual source identity. |
-| lib/recreation-hours-manual-overrides.js | origin-e9816ce85c56ac6c5608ea7a | present | committed | Defines the exact Barnard Fitness dates, intervals, closures, access restriction, priority, provenance, and validator matcher. |
-| lib/recreation-hours-schema.js | origin-e9816ce85c56ac6c5608ea7a | present | committed | Accepts manual provenance only for the exact Barnard target, dates, schedule, access text, and non-restriction payload. |
-| scripts/recreation-hours-scraper.mjs | origin-e9816ce85c56ac6c5608ea7a | present | committed | Injects approved manual evidence into every Recreation resolution after source parsing. |
-| tests/recreation-hours-client.test.mjs | origin-b22132f6aa5678840b05cd1a | present | committed | Proves the live Dodge overlay contains Uris as the fifth visible space with its independent intervals, access, and swim mode. |
-| tests/recreation-hours-client.test.mjs | origin-e9816ce85c56ac6c5608ea7a | present | committed | Covers browser acceptance and rejection of out-of-window and wrong-payload manual snapshots. |
-| tests/recreation-hours-schema.test.mjs | origin-e9816ce85c56ac6c5608ea7a | present | committed | Covers exact acceptance plus wrong target, pre-start, post-expiry, and wrong-access rejection. |
-| tests/recreation-hours-scraper.test.mjs | origin-e9816ce85c56ac6c5608ea7a | present | committed | Covers the full temporary schedule, provenance, and September 8 expiry behavior. |
-| tests/venue-hierarchy.test.mjs | origin-b22132f6aa5678840b05cd1a | present | committed | Proves two visible Fitness cards, embedded Uris fallback under Dodge, and nested Uris search discovery. |
+| docs/decisions.md | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Records DEC-0045 and its verified implementation commit. |
+| docs/recreation-hours-operations.md | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Documents the rolling live-source transition and fail-closed source contract. |
+| index.html | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Renders the stale Summer 2026 warning as small Note metadata. |
+| lib/recreation-source-parser.js | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Publishes complete Barnard schedules beginning September 8 and rejects partial or ambiguous source changes. |
+| tests/recreation-hours-scraper.test.mjs | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Covers scraper-level live resumption on September 8. |
+| tests/recreation-source-parser.test.mjs | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Covers transition dates, heading states, source completeness, effective bounds, access, and provenance. |
+| tests/venue-hierarchy.test.mjs | origin-44a8c6a0c6140e87e4c8f36d | present | committed | Covers visible small-note insertion and omission after the heading changes. |
 
 ## Git / Remote State
 
-Origin-ID: origin-e9816ce85c56ac6c5608ea7a
+Origin-ID: origin-44a8c6a0c6140e87e4c8f36d
 Branch: main
-Head: f7f0355fdbcb8099922e359e73ca247071df9a3b
+Head: 77f32ca6287b91d6a3dac46caa027d6878a96c79
 Upstream: origin/main
 Ahead: 0
 Behind: 0
@@ -76,28 +66,26 @@ Handoff-Commit-Exception: none
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
-| validation-2122d8f62faf0bebb2adaecd | origin-b22132f6aa5678840b05cd1a | node --test tests/recreation-hours-client.test.mjs tests/header-controls.test.mjs tests/venue-hierarchy.test.mjs | passed | 32 tests passed and 0 failed after preserving the concurrent index edit. |
-| validation-2ec29133cfaab8da1e091351 | origin-e9816ce85c56ac6c5608ea7a | GitHub Actions Update recreation hours run 32798141301 attempt 2 | passed | Tests, live-source scrape, snapshot validation, and authenticated publication all succeeded. |
-| validation-34b327229d93ab878497e1ea | origin-e9816ce85c56ac6c5608ea7a | adversarial code review and re-review | passed | The initial unbounded-trust finding was fixed; the second review reported no Critical or Important findings and Ready status. |
-| validation-8b3388a002e8f6a7e2c0de06 | origin-b22132f6aa5678840b05cd1a | Local browser verification against a valid Recreation snapshot | passed | The page rendered two Fitness cards, no top-level Uris card, View spaces (5) with Uris last, searchable Uris discovery through Dodge, no error overlay, and no console errors. |
-| validation-96e53d36e19533154b848d2c | origin-b22132f6aa5678840b05cd1a | validate_ledger.py validate-ledger --input docs/decisions.md | passed | Ledger schema, lifecycle, and privacy checks passed. |
-| validation-cc202e1acb8c6deed1e6e450 | origin-e9816ce85c56ac6c5608ea7a | npm test | partial | 251 of 256 passed in the sandbox; one sandbox-blocked Chromium test passed 6 of 6 with browser permission, and four pre-existing Recreation UI expectation assertions remain. |
-| validation-d5d5c6d3a8a525e24283ce1b | origin-e9816ce85c56ac6c5608ea7a | normal-cache production GET /api/recreation-hours | passed | Generated timestamp is 2026-08-25T01:40:31.458Z; August 24 is Closed with barnardManualOverride provenance, and the approved schedule is present across the current fourteen-day window. |
-| validation-e0b409b1bbaf8977694dcb38 | origin-b22132f6aa5678840b05cd1a | npm test | partial | 247 of 252 tests passed in the sandbox; four previously recorded Recreation view expectation assertions failed, and one sandbox-blocked Chromium test passed 6 of 6 when rerun with browser permissions. |
-| validation-fb1531761053fa488c5edfa4 | origin-e9816ce85c56ac6c5608ea7a | node --test Recreation deployment and browser-client suites | passed | 102 tests passed and 0 failed after the adversarial-review repair. |
+| validation-15194deae0ae48b627d2836b | origin-44a8c6a0c6140e87e4c8f36d | production GET / | passed | Production HTML contains the Barnard stale-heading Note rendering path. |
+| validation-15a7e7f4dd59b6f59b05bae0 | origin-44a8c6a0c6140e87e4c8f36d | cache-busted production GET /api/recreation-hours | passed | Generated 2026-08-25T02:17:52.426Z; August 24 is closed and August 25 is 9 AM to 2 PM with barnardManualOverride provenance. |
+| validation-2f923038c583057c3462651b | origin-44a8c6a0c6140e87e4c8f36d | npm test | partial | 264 of 269 passed; one sandbox-only Chromium launch fails but passes outside the sandbox, and four pre-existing Recreation renderer assertions remain stale. |
+| validation-86d69b7e8decc44282c77300 | origin-44a8c6a0c6140e87e4c8f36d | GitHub Actions Update recreation hours run 32800708218 | passed | Scrape, validation, and production publication completed successfully in 2 minutes 31 seconds. |
+| validation-930fbbbde68bd69edfc37dd3 | origin-44a8c6a0c6140e87e4c8f36d | node --test tests/barnard-dining-hours-parser.test.mjs | passed | 6 tests passed outside the sandbox, including Chromium serialization. |
+| validation-a6f4e8cc423aae352a5b8cf7 | origin-44a8c6a0c6140e87e4c8f36d | node --test tests/recreation-hours-acquire.test.mjs tests/recreation-source-parser.test.mjs tests/recreation-hours-resolver.test.mjs tests/recreation-hours-schema.test.mjs tests/recreation-hours-service.test.mjs tests/recreation-hours-scraper.test.mjs tests/recreation-hours-workflow.test.mjs tests/recreation-hours-client.test.mjs tests/venue-hierarchy.test.mjs | passed | 118 tests passed with zero failures on the final implementation. |
+| validation-bcaff954c4a0a71c5d3949e0 | origin-44a8c6a0c6140e87e4c8f36d | adversarial Barnard live-hours review | passed | Reviewer reported no remaining Critical or Important issues after three remediation rounds. |
 
 ## Risks / Decisions
 
 | Item-ID | Origin-ID | Kind | Status | Description |
 |---|---|---|---|---|
-| decision-3254e0e540e5c41dcb3b38e8 | origin-b22132f6aa5678840b05cd1a | decision | accepted | Keep Uris Pool as an independently validated Recreation facility while presenting it only as the fifth Dodge View spaces row. |
-| decision-c18da25f2364a942f3d09273 | origin-e9816ce85c56ac6c5608ea7a | decision | accepted | Use a distinct, exact, date-bounded manual source for Barnard Fitness and return to verification-required behavior after September 7. |
-| risk-4cefa7fe5f7f892d652e8f4a | origin-b22132f6aa5678840b05cd1a | risk | open | The full suite retains four pre-existing Recreation view expectation failures; the strict repository-backed decision audit also reports an older commit unreachable from this branch, while the history-independent ledger audit passes. |
-| risk-b88d5e253a1e924481c3d3d3 | origin-e9816ce85c56ac6c5608ea7a | risk | open | Columbia may intermittently serve a managed challenge; the first production scrape attempt failed on columbiaModifications, while the bounded retry succeeded without relaxing acquisition or validation. |
+| decision-092c2597ea826ad1235a8dcb | origin-44a8c6a0c6140e87e4c8f36d | decision | accepted | The manual Barnard override remains authoritative through September 7; post-September-8 scrapes publish complete official weekly schedules as rolling evidence and warn only for the approved Summer 2026 heading. |
+| risk-5e267e8b273bd08bc9b5f0e1 | origin-44a8c6a0c6140e87e4c8f36d | risk | open | The date-triggered live path cannot be exercised in production before September 8; deterministic parser and end-to-end scraper tests cover the transition now. |
+| risk-bca657b8c46594b91a1be20f | origin-44a8c6a0c6140e87e4c8f36d | risk | open | Columbia Recreation can intermittently delay or challenge acquisition; the final bounded workflow run succeeded without relaxing fail-closed behavior. |
+| risk-cb7a11f15a2e32badc13eb68 | origin-44a8c6a0c6140e87e4c8f36d | risk | deferred | Four unrelated Recreation renderer assertions in the repository-wide suite are stale against the current renderer output; they predate and do not cover this Barnard card metadata path. |
 
 ## Archive Decision
 
-Origin-ID: origin-e9816ce85c56ac6c5608ea7a
+Origin-ID: origin-44a8c6a0c6140e87e4c8f36d
 Safe-to-Archive: yes
-Reason: The override is committed, pushed, deployed, published, and publicly verified; known unrelated test debt and intermittent source challenges are documented.
+Reason: The requested Barnard transition is implemented, reviewed, pushed, deployed, and verified; remaining risks are documented and unrelated test debt is deferred.
 Next-Action: none
