@@ -581,6 +581,7 @@
     border-radius: 0 0 var(--radius) var(--radius);
     overflow: hidden;
   }
+  .health-hours-dropdown.no-accent { border-color: var(--hairline); }
   .health-hours-toggle {
     display: flex; align-items: center; gap: 0.45rem;
     width: 100%; border: none; border-radius: 0;
@@ -1398,7 +1399,7 @@ function escapeHTML(value) {
   })[character]);
 }
 
-function healthDropdownHTML(now) {
+function healthDropdownHTML(now, noAccent) {
   const healthVenues = VENUES.filter(v => HEALTH_SERVICE_IDS.has(v.id)
     && (activeStatus === 'all' || getStatus(v, now).status === activeStatus));
   healthVenues.sort((a, b) => {
@@ -1406,7 +1407,7 @@ function healthDropdownHTML(now) {
     return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
   });
   const openCount = healthVenues.filter(v => getStatus(v, now).status !== 'closed').length;
-  return `<div class="health-hours-dropdown">
+  return `<div class="health-hours-dropdown${noAccent ? ' no-accent' : ''}">
     <button class="health-hours-toggle" type="button"
             aria-expanded="${healthDropdownExpanded}"
             aria-controls="health-hours-list">
@@ -1462,7 +1463,7 @@ function render() {
           <span class="r">Status</span><span></span>
         </div>
         ${regularShown.map(v => rowHTML(v, now)).join('')}
-        ${hasHealthVenues ? healthDropdownHTML(now) : ''}
+        ${hasHealthVenues ? healthDropdownHTML(now, !regularShown.length) : ''}
       </div>
       ${c.id === 'dining' && window.LionHourDiningVote ? `<div id="dining-vote-card">${LionHourDiningVote.resultsCardHTML()}</div>` : ''}`;
   }).join('');
