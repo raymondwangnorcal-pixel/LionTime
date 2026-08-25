@@ -2,7 +2,7 @@
 
 ## What this pipeline operates
 
-`Update recreation hours` is an independent GitHub Actions workflow. Every four hours at minute 27 it starts headed Playwright Chromium in `xvfb`, reads only the approved official Recreation sources, validates a complete fourteen-day Eastern-time snapshot, and publishes it to the Recreation API. It does not share a scraper, endpoint, Redis key, or workflow with Library or Dining; a Recreation failure must not interrupt either of those pipelines.
+`Update recreation hours` is an independent GitHub Actions workflow. Every four hours at minute 27 it starts headed Playwright Chromium in `xvfb`, reads the approved official Recreation sources, applies any explicitly approved date-bounded manual evidence, validates a complete fourteen-day Eastern-time snapshot, and publishes it to the Recreation API. It does not share a scraper, endpoint, Redis key, or workflow with Library or Dining; a Recreation failure must not interrupt either of those pipelines.
 
 Vercel persists a valid snapshot at `lionhour:recreation-hours:v1`. The browser renders embedded top-level schedules first, then atomically overlays live Recreation data only after validating the complete snapshot.
 
@@ -23,7 +23,7 @@ Under **Settings → Secrets and variables → Actions → Variables**, set thes
 
 The workflow deliberately does not publish unless the enabled value is exactly `true` and the API URL is non-empty. It runs on `27 */4 * * *` and also supports manual dispatch. Leave publishing disabled until the API deployment and first read-only scrape have been checked.
 
-## Official source inventory
+## Source inventory
 
 The allowlisted source manifest contains only these official sources:
 
@@ -32,6 +32,8 @@ The allowlisted source manifest contains only these official sources:
 | Columbia Recreation Hours of Operation | `https://perec.columbia.edu/hours-operation` | Exact-bounded Dodge/Uris baselines, named Dodge activity spaces, and explicit maintenance notices. An ambiguous seasonal label yields verification, not hours. |
 | Columbia Recreation Modified Hours & Closures | `https://perec.columbia.edu/content/modified-hours-closures` | Date-specific, facility-specific, and recurring area restrictions. Unknown catalog targets are ignored; a known recurring target with ambiguous applicability yields verification. |
 | Barnard Physical Well-Being / Fitness Center | `https://barnard.edu/lefrak-center/physical-well-being` | Exact-bounded Barnard Fitness Center hours and separate access restrictions. An ambiguous seasonal label yields verification, not hours. |
+
+The separate trusted manual-source list contains `barnardManualOverride` only. It records the user-confirmed one-time Barnard Fitness schedule for August 24 through September 7, 2026: closed August 24; 9 AM–2 PM August 25; 9 AM–7 PM August 26–27; and closed August 28–September 7. Its explicit date ranges make it inert after September 7. September 8 remains `Hours need verification` because only the 7 AM reopening time—not a closing time—was confirmed. This provenance ID is accepted only for Barnard Fitness and must not be represented as an official-page scrape.
 
 The fixed published data catalog is exactly these three facilities:
 
@@ -51,11 +53,11 @@ The minimal parser fixtures were sanitized from headed, rendered official pages 
 
 Do not add facilities or sources merely because they appear in page text. Squash Courts remains in the underlying catalog and parser as booking-only evidence from the reviewed official portal (`https://recreation.columbia.edu/`), but the client hides it until useful published hours are available. Columbia's `https://perec.columbia.edu/membershipinfo` is excluded from acquisition because it is access policy, not a schedule source. Athletics-only, staff-only, access-unclear, or otherwise unconfirmed facilities are excluded; no other reviewed facility had a published regular undergraduate-access rule suitable for the fixed catalog.
 
-When sources disagree, use the shipped resolver order: date-specific facility closures or modified-hours notices; room-specific availability; current official Recreation schedule; in-range seasonal schedule; general facility page; then a general university directory. A lower-priority normal schedule never overrides a specific closure. Unresolved conflicts must remain `Hours need verification`; no operator may guess an interval or copy Dodge hours to a room with no room-specific schedule.
+When sources disagree, use the shipped resolver order: an approved date-bounded manual override; date-specific facility closures or modified-hours notices; room-specific availability; current official Recreation schedule; in-range seasonal schedule; general facility page; then a general university directory. A lower-priority normal schedule never overrides a specific closure. Unresolved conflicts must remain `Hours need verification`; no operator may guess an interval or copy Dodge hours to a room with no room-specific schedule.
 
 ## Snapshot trust and restriction contract
 
-Every resolved day contains `sourceRefs`, `evidenceRefs`, and `restrictions`. An evidence identity is the exact trusted pair `<official source id>:<catalog target id>`, for example `columbiaHours:blue-gym`. Page-level provenance alone is insufficient: a target publishing intervals must carry its own target-specific identity. A Dodge child may additionally carry `*:dodge` identities only when Dodge constrained that child. Identical independently published schedules remain valid because each target has its own identity.
+Every resolved day contains `sourceRefs`, `evidenceRefs`, and `restrictions`. An evidence identity is the exact trusted pair `<source id>:<catalog target id>`, for example `columbiaHours:blue-gym` or `barnardManualOverride:barnard-fitness`. Page-level provenance alone is insufficient: a target publishing intervals must carry its own target-specific identity. A Dodge child may additionally carry `*:dodge` identities only when Dodge constrained that child. Identical independently published schedules remain valid because each target has its own identity.
 
 Timed maintenance and reservation restrictions are not day statuses. `intervals` contains only residual operating intervals; each explicit restriction retains its own windows, status, reason, availability, access restrictions, source references, and evidence identities. A restriction window cannot overlap the residual intervals. Dodge restrictions are clipped to a child's independently supported availability; when a child schedule is unavailable, a known whole-facility restriction is still carried without inventing child hours. The browser derives `Open`, `Closing soon`, or the active restriction label from the current Eastern minute, so a timed notice does not label the venue closed before or after its window.
 

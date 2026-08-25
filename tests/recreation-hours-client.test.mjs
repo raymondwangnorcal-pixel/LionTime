@@ -124,6 +124,53 @@ test('rejects the whole overlay when one required facility or space is invalid',
   assert.equal(api.buildUpdates(withoutSpace('levien-gymnasium'), venueFixture(), '2026-08-21').ok, false);
 });
 
+test('accepts bounded manual-override provenance for Barnard Fitness', () => {
+  const snapshot = officialize(resolveWith(resolverBaselineEvidence(), {
+    generated: new Date('2026-08-24T12:00:00-04:00'),
+  }));
+  const barnardDay = snapshot.facilities.find(facility => facility.id === 'barnard-fitness').days[0];
+  Object.assign(barnardDay, {
+    intervals: [],
+    status: 'Closed',
+    availabilityType: 'facility-hours',
+    accessRestrictions: ['Barnard students, faculty, and staff'],
+    sourceRefs: ['barnardManualOverride'],
+    evidenceRefs: ['barnardManualOverride:barnard-fitness'],
+  });
+  const result = api.buildUpdates(snapshot, venueFixture(), '2026-08-24');
+
+  assert.equal(result.ok, true);
+  const barnard = result.entries.find(([venue]) => venue.id === 'barnard-fitness')[1];
+  assert.equal(barnard.recreationCurrent.status, 'Closed');
+  assert.deepEqual(Array.from(barnard.recreationCurrent.sourceRefs), ['barnardManualOverride']);
+
+  for (const generatedDate of ['2026-08-21', '2026-09-08']) {
+    const outsideWindow = officialize(resolveWith(resolverBaselineEvidence(), {
+      generated: new Date(`${generatedDate}T12:00:00-04:00`),
+    }));
+    const outsideBarnard = outsideWindow.facilities.find(facility => facility.id === 'barnard-fitness').days[0];
+    Object.assign(outsideBarnard, {
+      intervals: [],
+      status: 'Closed',
+      availabilityType: 'facility-hours',
+      accessRestrictions: ['Barnard students, faculty, and staff'],
+      sourceRefs: ['barnardManualOverride'],
+      evidenceRefs: ['barnardManualOverride:barnard-fitness'],
+    });
+    const rejected = api.buildUpdates(outsideWindow, venueFixture(), generatedDate);
+    assert.equal(rejected.ok, false);
+    assert.match(Array.from(rejected.errors).join('\n'), /outside its approved schedule/i);
+  }
+
+  const wrongPayload = structuredClone(snapshot);
+  const wrongBarnard = wrongPayload.facilities.find(facility => facility.id === 'barnard-fitness').days[0];
+  wrongBarnard.intervals = [['09:00', '19:00']];
+  wrongBarnard.status = null;
+  const rejectedPayload = api.buildUpdates(wrongPayload, venueFixture(), '2026-08-24');
+  assert.equal(rejectedPayload.ok, false);
+  assert.match(Array.from(rejectedPayload.errors).join('\n'), /outside its approved schedule/i);
+});
+
 test('fails closed on malformed provenance and unknown snapshot fields', () => {
   const malformed = validSnapshot();
   malformed.extra = true;

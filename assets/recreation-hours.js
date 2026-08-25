@@ -24,8 +24,10 @@
   const AVAILABILITY_TYPES = new Set([
     'facility-hours', 'open-recreation', 'lap-swim', 'recreation-swim', 'reservation-required',
   ]);
-  const OFFICIAL_SOURCES = new Set(Object.keys(SOURCE_MANIFEST));
+  const MANUAL_SOURCES = new Set(['barnardManualOverride']);
+  const TRUSTED_SOURCES = new Set([...Object.keys(SOURCE_MANIFEST), ...MANUAL_SOURCES]);
   const COLUMBIA_SOURCES = new Set(['columbiaHours', 'columbiaModifications']);
+  const BARNARD_SOURCES = new Set(['barnardFitness', ...MANUAL_SOURCES]);
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -35,6 +37,7 @@
   const RESTRICTION_STATUS_VALUES = new Set([
     'Closed', 'Closed for maintenance', 'Closed for Athletics event', 'Reservation required',
   ]);
+  const BARNARD_MANUAL_ACCESS = ['Barnard students, faculty, and staff'];
 
   function isRecord(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -86,7 +89,7 @@
   }
 
   function allowedSources(targetId) {
-    return targetId === 'barnard-fitness' ? new Set(['barnardFitness']) : COLUMBIA_SOURCES;
+    return targetId === 'barnard-fitness' ? BARNARD_SOURCES : COLUMBIA_SOURCES;
   }
 
   function availabilityAllowed(targetId, availabilityType) {
@@ -117,8 +120,8 @@
     if (!canonicalUnique(value)) errors.push(`${path}.sourceRefs must use canonical unique order`);
     const sources = allowedSources(targetId);
     for (const [index, source] of value.entries()) {
-      if (!OFFICIAL_SOURCES.has(source)) {
-        errors.push(`${path}.sourceRefs[${index}] must reference an official source manifest entry`);
+      if (!TRUSTED_SOURCES.has(source)) {
+        errors.push(`${path}.sourceRefs[${index}] must reference an official source or approved manual override`);
         trusted = false;
       } else if (!sources.has(source)) {
         errors.push(`${path}.sourceRefs[${index}] is not allowed for ${targetId}`);
@@ -148,7 +151,7 @@
       const evidenceTarget = separator > 0 ? evidenceRef.slice(separator + 1) : '';
       const knownTarget = Object.hasOwn(FACILITIES, evidenceTarget) || Object.hasOwn(SPACES, evidenceTarget);
       const allowedTarget = evidenceTarget === targetId || (isDodgeChild && evidenceTarget === 'dodge');
-      if (!OFFICIAL_SOURCES.has(sourceId) || !knownTarget
+      if (!TRUSTED_SOURCES.has(sourceId) || !knownTarget
         || !allowedSources(evidenceTarget).has(sourceId)
         || evidenceRef !== `${sourceId}:${evidenceTarget}` || !allowedTarget) {
         errors.push(`${evidencePath} must be a trusted target-specific evidence identity for ${targetId}`);
@@ -241,6 +244,9 @@
       Array.isArray(restriction.sourceRefs) ? restriction.sourceRefs : [],
       errors,
     );
+    if (usesBarnardManualSource(restriction)) {
+      errors.push(`${path} cannot use the Barnard manual override as restriction evidence`);
+    }
     if (!provenance.trusted || !provenance.allowed || !provenance.present
       || !evidence.trusted || !evidence.present || !evidence.targetSpecific) {
       errors.push(`${path} requires trusted target-specific evidence`);
@@ -312,6 +318,9 @@
       Array.isArray(day.sourceRefs) ? day.sourceRefs : [],
       errors,
     );
+    if (usesBarnardManualSource(day) && !matchesApprovedBarnardManualDay(day, targetId)) {
+      errors.push(`${path} uses the Barnard manual override outside its approved schedule`);
+    }
     const restrictions = validateRestrictions(
       day.restrictions, path, targetId, isDodgeChild, validIntervals ? day.intervals : [], errors,
     );
@@ -347,6 +356,35 @@
       reservationMismatch,
       path,
     };
+  }
+
+  function usesBarnardManualSource(value) {
+    return Array.isArray(value?.sourceRefs) && value.sourceRefs.includes('barnardManualOverride')
+      || Array.isArray(value?.evidenceRefs)
+        && value.evidenceRefs.some(ref => typeof ref === 'string' && ref.startsWith('barnardManualOverride:'));
+  }
+
+  function matchesApprovedBarnardManualDay(day, targetId) {
+    let expectedIntervals;
+    let expectedStatus = null;
+    if (day.date === '2026-08-24' || (day.date >= '2026-08-28' && day.date <= '2026-09-07')) {
+      expectedIntervals = [];
+      expectedStatus = 'Closed';
+    } else if (day.date === '2026-08-25') {
+      expectedIntervals = [['09:00', '14:00']];
+    } else if (day.date >= '2026-08-26' && day.date <= '2026-08-27') {
+      expectedIntervals = [['09:00', '19:00']];
+    }
+    return targetId === 'barnard-fitness'
+      && expectedIntervals !== undefined
+      && JSON.stringify(day.intervals) === JSON.stringify(expectedIntervals)
+      && day.status === expectedStatus
+      && day.reason === null
+      && day.availabilityType === 'facility-hours'
+      && JSON.stringify(day.accessRestrictions) === JSON.stringify(BARNARD_MANUAL_ACCESS)
+      && Array.isArray(day.restrictions)
+      && day.restrictions.length === 0
+      && day.conflict === false;
   }
 
   function validateFacility(facility, index, startDate, errors) {

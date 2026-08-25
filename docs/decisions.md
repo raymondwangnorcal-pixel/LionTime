@@ -857,3 +857,17 @@
 - Superseded by: none
 - Note: The client projects the independently validated Uris day into Dodge's five-row visible space list, retains embedded pool fallback hours, removes the duplicate top-level card from counts and rendering, and preserves nested search discovery.
 - Privacy waivers: none
+
+## DEC-0044 — Use a bounded manual Barnard Fitness schedule
+
+- Date: 2026-08-24
+- Owner: user
+- Status at record: active
+- Decision: LionHour will treat the user-confirmed Barnard Fitness schedule as a trusted manual override from August 24 through September 7, 2026, and will resume verification-required behavior on September 8 because no closing time was confirmed.
+- Rationale: The publisher page does not expose an exact machine-readable date range, while the confirmed temporary schedule supplies complete hours only through September 7.
+- Scope: Recreation evidence provenance, scraper resolution priority, server and client validation, tests, scheduled snapshot publishing, and the Barnard Fitness card.
+- Implementation: pending
+- Recorded against HEAD: `5b87e0ab4525cceade193df7c34795e5c314add7`
+- Supersedes: none
+- Evidence: The user-approved bounded override design in the 2026-08-24 Barnard Fitness implementation conversation.
+- Privacy waivers: none
