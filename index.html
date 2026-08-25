@@ -234,9 +234,9 @@
     transform: rotate(-45deg); transition: transform 0.2s; flex-shrink: 0;
   }
   .sec[aria-expanded="true"]::after { transform: rotate(45deg); }
-  .sec-icon { font-size: 1.15rem; line-height: 1; vertical-align: middle; }
+  .sec-icon { font-size: 1.05rem; line-height: 1; vertical-align: middle; }
   .sec-title {
-    font-size: 0.92rem; font-weight: 700; letter-spacing: 1px;
+    font-size: 0.92rem; font-weight: 700; letter-spacing: 1.6px;
     text-transform: uppercase; color: #fff;
   }
   .sec-rule { flex: 1; background: transparent; }
@@ -610,6 +610,103 @@
     }
     .chips::-webkit-scrollbar { display: none; }
   }
+
+  /* ── Dining vote button (inline in row) ───────── */
+  .dining-vote-btn {
+    display: inline-block; font-size: 0.63rem; font-weight: 700;
+    padding: 0.22rem 0.5rem; border-radius: 20px; white-space: nowrap;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 0.4px;
+    border: 1.5px solid var(--columbia-blue); background: transparent;
+    color: var(--columbia-blue); font-family: inherit;
+    transition: all 0.15s; user-select: none; line-height: 1.2;
+  }
+  .dining-vote-btn:hover { background: #eaf1fa; }
+  .dining-vote-btn.voted {
+    background: var(--columbia-blue); color: #fff;
+    border-color: var(--columbia-blue); cursor: default;
+  }
+
+  /* ── Dining vote results card ─────────────────── */
+  .dining-vote-card {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; margin-top: 0.75rem;
+  }
+  .dining-vote-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.7rem 1.1rem; border-bottom: 1px solid var(--row-line);
+    background: #fafbfc;
+  }
+  .dining-vote-title {
+    font-size: 0.88rem; font-weight: 700; color: var(--text);
+  }
+  .dining-vote-date {
+    font-size: 0.74rem; color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .dining-vote-body { padding: 0.75rem 1.1rem; }
+  .dining-vote-empty {
+    text-align: center; padding: 0.5rem 0; color: var(--text-secondary);
+    font-size: 0.82rem;
+  }
+  .dining-vote-options { display: flex; flex-direction: column; gap: 0.45rem; }
+
+  /* Pre-vote: ranked names */
+  .dining-vote-prestate .dining-vote-rank-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.35rem 0.4rem; font-size: 0.82rem;
+  }
+  .dining-vote-rank { font-weight: 700; color: var(--text-secondary); min-width: 1.2rem; }
+  .dining-vote-rank-name { font-weight: 600; color: var(--text); }
+
+  /* Post-vote: bars + percentages */
+  .dining-vote-option {
+    position: relative; display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.45rem 0.6rem; border-radius: 8px; overflow: hidden;
+    font-size: 0.82rem; min-height: 2rem;
+  }
+  .dining-vote-fill {
+    position: absolute; inset: 0; border-radius: 8px;
+    transition: width 0.4s ease;
+  }
+  .dining-vote-fill.gold { background: #fef3c7; }
+  .dining-vote-fill.blue { background: #dbeafe; }
+  .dining-vote-fill.grey { background: #f1f5f9; }
+  .dining-vote-radio {
+    position: relative; z-index: 1;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid #cbd5e1; flex-shrink: 0;
+  }
+  .dining-vote-radio.checked {
+    border-color: var(--columbia-blue);
+    background: var(--columbia-blue);
+    box-shadow: inset 0 0 0 2.5px #fff;
+  }
+  .dining-vote-opt-name {
+    position: relative; z-index: 1;
+    font-weight: 600; color: var(--text); flex: 1;
+  }
+  .dining-vote-opt-pct {
+    position: relative; z-index: 1;
+    font-weight: 700; color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dining-vote-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 0.6rem; margin-top: 0.5rem;
+    border-top: 1px solid var(--row-line);
+    font-size: 0.72rem; color: var(--muted);
+  }
+  .dining-vote-confirmed {
+    font-weight: 600; color: var(--columbia-blue);
+  }
+
+  @media (max-width: 620px) {
+    .dining-vote-btn { font-size: 0.6rem; padding: 0.18rem 0.42rem; }
+    .dining-vote-card { margin-top: 0.5rem; }
+    .dining-vote-header { padding: 0.6rem 0.85rem; }
+    .dining-vote-body { padding: 0.6rem 0.85rem; }
+  }
 </style>
 </head>
 <body>
@@ -679,6 +776,7 @@
 
 <script src="assets/library-hours.js"></script>
 <script src="assets/dining-hours.js"></script>
+<script src="assets/dining-vote.js"></script>
 <script src="assets/recreation-hours-view.js"></script>
 <script src="assets/student-services-hours-view.js"></script>
 <script src="assets/student-services-hours.js"></script>
@@ -725,7 +823,8 @@ const D = (mon, tue, wed, thu, fri, sat, sun) => ({0:sun,1:mon,2:tue,3:wed,4:thu
 const ALL = h => D(h,h,h,h,h,h,h);
 const WEEKDAYS = (wd, sat=null, sun=null) => D(wd,wd,wd,wd,wd,sat,sun);
 
-const VENUES = [
+/* Expose on globalThis so dining-vote.js can resolve hall display names */
+const VENUES = window.VENUES = [
   /* ── LIBRARIES (top 6 by traffic) ───────────────── */
   { id:'butler', name:'Butler Library', cat:'library', loc:'535 W 114th St',
     hours: D([['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],
@@ -1217,7 +1316,7 @@ function rowHTML(v, now) {
       <span class="dot ${st.status}"></span>
       <span class="name">${v.name}</span>
       <span class="hours">${todayHoursText(v, now)}</span>
-      <span class="status-badges">${v.hideStatusBadge ? '' : `${accessLabel ? `<span class="access-badge">${escapeHTML(accessLabel)}</span>` : ''}<span class="badge ${st.status}">${escapeHTML(st.label)}</span>`}</span>
+      <span class="status-badges">${v.cat === 'dining' && window.LionHourDiningVote ? LionHourDiningVote.voteButtonHTML(v.id) : ''}${v.hideStatusBadge ? '' : `${accessLabel ? `<span class="access-badge">${escapeHTML(accessLabel)}</span>` : ''}<span class="badge ${st.status}">${escapeHTML(st.label)}</span>`}</span>
       ${CHEV}
     </button>
     <div class="detail">
@@ -1302,7 +1401,8 @@ function render() {
         </div>
         ${regularShown.map(v => rowHTML(v, now)).join('')}
         ${hasHealthVenues ? healthDropdownHTML(now) : ''}
-      </div>`;
+      </div>
+      ${c.id === 'dining' && window.LionHourDiningVote ? `<div id="dining-vote-card">${LionHourDiningVote.resultsCardHTML()}</div>` : ''}`;
   }).join('');
 
   stage.innerHTML = sections || `<div class="empty">Nothing matches those filters right now.</div>`;
@@ -1411,6 +1511,9 @@ document.getElementById('stage').addEventListener('click', e => {
   entry.classList.toggle('expanded');
   row.setAttribute('aria-expanded', expanded.has(id));
 });
+if (window.LionHourDiningVote) {
+  LionHourDiningVote.attachClickHandler(document.getElementById('stage'));
+}
 
 window.addEventListener('resize', syncStickyOffset);
 
@@ -1586,6 +1689,9 @@ function hydrateRecreationHours() {
     setStatus: setRecreationHoursStatus,
     today: easternISODate(),
   });
+}
+if (window.LionHourDiningVote) {
+  LionHourDiningVote.init().then(render);
 }
 setInterval(updateClock, 1000);
 setInterval(render, 60000);
