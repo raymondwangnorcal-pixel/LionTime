@@ -99,6 +99,7 @@
 
   /* ── Effective user vote (server or optimistic) ── */
   function effectiveVote() {
+    if (optimistic === '__none__') return null;
     if (optimistic) return optimistic;
     if (serverData?.userVote) return serverData.userVote;
     return getCachedVote();
@@ -231,21 +232,29 @@
   /* ── Vote handler ─────────────────────────────── */
   async function handleVote(hallId) {
     if (pending) return;
-    if (effectiveVote() === hallId) return; // already voted for this one
+
+    const isUnvote = effectiveVote() === hallId;
 
     pending = true;
-    optimistic = hallId;
-    setCachedVote(hallId);
+    optimistic = isUnvote ? '__none__' : hallId;
+    if (isUnvote) clearCachedVote(); else setCachedVote(hallId);
     refresh();
 
-    const result = await postVote(hallId);
+    const result = isUnvote
+      ? await postVote(null)   // hallId: null tells the server to remove the vote
+      : await postVote(hallId);
     if (result) {
       serverData = result;
       optimistic = null;
     } else {
       /* Revert optimistic state on failure */
       optimistic = null;
-      clearCachedVote();
+      if (isUnvote) {
+        /* Restore the vote we tried to remove */
+        setCachedVote(hallId);
+      } else {
+        clearCachedVote();
+      }
     }
     pending = false;
     refresh();
