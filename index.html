@@ -1247,7 +1247,7 @@ function todayHoursText(venue, now) {
    STATE
    ══════════════════════════════════════════════════ */
 let activeCat = 'all';
-let activeStatus = window.matchMedia('(max-width: 620px)').matches ? 'open' : 'all';
+let activeStatus = 'open';
 let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
@@ -1430,6 +1430,8 @@ function render() {
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
     const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && (activeStatus === 'all' || getStatus(v, now).status === activeStatus));
     if (!regularShown.length && !hasHealthVenues) return '';
+    /* Auto-expand health dropdown when it's the only thing with matching venues */
+    if (isStudent && hasHealthVenues && !regularShown.length) healthDropdownExpanded = true;
 
     const isCafe = c.id === 'cafe';
     const allJoesClosed = isCafe && regularShown.filter(v => JOE_IDS.has(v.id))
