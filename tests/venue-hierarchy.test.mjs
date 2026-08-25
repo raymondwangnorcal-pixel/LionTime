@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
-const appScript = scripts.find(script => script.includes('const VENUES = ['));
+const appScript = scripts.find(script => script.includes('VENUES = ['));
 
 if (!appScript) throw new Error('index.html does not contain the LionHour application script');
 
@@ -51,10 +51,14 @@ test('finds Dodge when searching for its nested Uris Pool', () => {
   assert.equal(api.venueMatchesSearch(dodge, 'uris pool'), true);
 });
 
+test('labels the Lehman venue as SIPA Library', () => {
+  assert.equal(api.VENUES.find(venue => venue.id === 'lehman').name, 'SIPA Library');
+});
+
 test('only renders Student Life health services in the Student Life category', () => {
   assert.match(
     appScript,
-    /const hasHealthVenues = isStudent && all\.some\(v => HEALTH_SERVICE_IDS\.has\(v\.id\)\);/,
+    /const hasHealthVenues = isStudent && all\.some\(v => HEALTH_SERVICE_IDS\.has\(v\.id\) && \(activeStatus === 'all' \|\| getStatus\(v, now\)\.status === activeStatus\)\);/,
   );
 });
 
