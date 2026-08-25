@@ -234,6 +234,7 @@
     transform: rotate(-45deg); transition: transform 0.2s; flex-shrink: 0;
   }
   .sec[aria-expanded="true"]::after { transform: rotate(45deg); }
+  .sec-icon { font-size: 1.15rem; line-height: 1; vertical-align: middle; }
   .sec-title {
     font-size: 0.92rem; font-weight: 700; letter-spacing: 1px;
     text-transform: uppercase; color: #fff;
@@ -1290,7 +1291,7 @@ function render() {
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
-        <span class="sec-title">${c.icon} ${c.label}</span>
+        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${regularAll.length} open</span>
       </button>
