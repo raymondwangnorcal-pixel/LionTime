@@ -19,6 +19,9 @@
     },
     "api/student-services-hours.js": {
       "maxDuration": 10
+    },
+    "api/dining-vote.js": {
+      "maxDuration": 10
     }
   }
 }
