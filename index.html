@@ -272,6 +272,12 @@
   .row:focus-visible { outline: 2px solid var(--columbia-light); outline-offset: -2px; }
   .entry:last-child .row { border-bottom: none; }
   .entry.expanded .row { background: #f8fafc; border-bottom-color: transparent; }
+  .entry.expanded {
+    border: 1.5px solid #4a90d9; border-radius: var(--radius);
+    overflow: hidden; margin: 4px 0;
+  }
+  .entry.expanded .row { border-bottom: 1px solid var(--row-line); }
+  .entry.expanded .detail { border-bottom: none; }
 
   .dot { width: 9px; height: 9px; border-radius: 50%; }
   .dot.open { background: var(--open); }
@@ -835,7 +841,7 @@ const VENUES = window.VENUES = [
   { id:'noco', name:'NoCo Library', cat:'library', loc:'Northwest Corner Building, 4th fl',
     hours: WEEKDAYS([['09:00','23:00']], [['11:00','20:00']], [['11:00','23:00']]) },
 
-  { id:'lehman', name:'SIPA Library', cat:'library', loc:'International Affairs Building, 3rd fl',
+  { id:'lehman', name:'Lehman Social Sciences Library', cat:'library', loc:'International Affairs Building, 3rd fl',
     hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
 
   { id:'uris', name:'Uris Library', cat:'library', loc:'Uris Hall, 3rd fl',
