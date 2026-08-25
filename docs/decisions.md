@@ -871,3 +871,11 @@
 - Supersedes: none
 - Evidence: The user-approved bounded override design in the 2026-08-24 Barnard Fitness implementation conversation.
 - Privacy waivers: none
+
+## Update — 2026-08-24 — DEC-0044
+
+- Type: implementation
+- Implementation commit: `db1ebcf3996d747fe105122cd61e9cefb10d605c` — fix(recreation): add bounded Barnard gym hours
+- Superseded by: none
+- Note: The Recreation scraper now injects the exact temporary Barnard schedule with dedicated manual provenance, and both validators enforce its dates, payload, target, and September 7 expiration.
+- Privacy waivers: none
