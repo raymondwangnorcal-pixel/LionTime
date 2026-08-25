@@ -218,20 +218,35 @@
   .sec {
     /* offset is measured from the real control-bar height at runtime */
     position: sticky; top: var(--controls-h, 118px); z-index: 10;
-    display: flex; align-items: baseline; gap: 0.6rem;
-    padding: 1.15rem 0 0.35rem; background: var(--bg);
+    display: flex; align-items: center; gap: 0.6rem;
+    width: 100%; margin: 1.15rem 0 0; padding: 0.78rem 1.1rem;
+    background: var(--columbia-blue); border: none; border-radius: var(--radius) var(--radius) 0 0;
+    box-shadow: var(--shadow); font: inherit; text-align: left; cursor: pointer;
+    transition: background 0.15s, filter 0.15s;
   }
+  .sec:hover { filter: brightness(1.08); }
+  .sec:focus-visible { outline: 2px solid var(--columbia-light); outline-offset: -2px; }
+  /* collapsed: no list beneath, so the bar owns all four corners */
+  .sec[aria-expanded="false"] { border-radius: var(--radius); }
+  .sec::after {
+    content: ''; display: inline-block; width: 8px; height: 8px;
+    border-right: 2.5px solid #fff; border-bottom: 2.5px solid #fff;
+    transform: rotate(-45deg); transition: transform 0.2s; flex-shrink: 0;
+  }
+  .sec[aria-expanded="true"]::after { transform: rotate(45deg); }
   .sec-title {
     font-size: 0.92rem; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--columbia-blue);
+    text-transform: uppercase; color: #fff;
   }
-  .sec-rule { flex: 1; height: 1px; background: var(--hairline); }
-  .sec-meta { font-size: 0.88rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .sec-rule { flex: 1; background: transparent; }
+  .sec-meta { font-size: 0.86rem; color: rgba(255,255,255,0.82); font-variant-numeric: tabular-nums; }
 
   .list {
     background: var(--surface); border-radius: var(--radius);
     box-shadow: var(--shadow); overflow: hidden;
   }
+  /* fused to the bar above: flatten the top corners it would otherwise round */
+  .sec + .list { border-radius: 0 0 var(--radius) var(--radius); }
 
   .cols, .row {
     display: grid;
@@ -1090,6 +1105,7 @@ let activeStatus = 'all';
 let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
+const collapsedCategories = new Set();
 let healthDropdownExpanded = false;
 
 const HEALTH_SERVICE_IDS = new Set([
@@ -1270,12 +1286,14 @@ function render() {
     });
     const regularAll = isStudent ? all.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : all;
     const openN = regularAll.filter(v => getStatus(v, now).status !== 'closed').length;
-    return `<div class="sec">
+    const listId = `list-${c.id}`;
+    const catCollapsed = collapsedCategories.has(c.id);
+    return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
         <span class="sec-title">${c.icon} ${c.label}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${regularAll.length} open</span>
-      </div>
-      <div class="list">
+      </button>
+      <div class="list" id="${listId}"${catCollapsed ? ' hidden' : ''}>
         <div class="cols">
           <span></span><span>Place</span><span>Today</span>
           <span class="r">Status</span><span></span>
@@ -1357,6 +1375,16 @@ document.getElementById('chips').addEventListener('click', e => {
 });
 document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
 document.getElementById('stage').addEventListener('click', e => {
+  const secToggle = e.target.closest('.sec');
+  if (secToggle) {
+    const list = document.getElementById(secToggle.getAttribute('aria-controls'));
+    const isExpanded = secToggle.getAttribute('aria-expanded') === 'true';
+    secToggle.setAttribute('aria-expanded', String(!isExpanded));
+    list.hidden = isExpanded;
+    const catId = secToggle.dataset.cat;
+    if (isExpanded) collapsedCategories.add(catId); else collapsedCategories.delete(catId);
+    return;
+  }
   const healthToggle = e.target.closest('.health-hours-toggle');
   if (healthToggle) {
     const list = document.getElementById(healthToggle.getAttribute('aria-controls'));
