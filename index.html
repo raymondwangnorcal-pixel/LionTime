@@ -653,6 +653,14 @@
       width: 100%; flex-wrap: nowrap; justify-content: flex-start;
       overflow: visible;
     }
+    .entry.expanded {
+      border-top: 1.5px solid #4a90d9;
+      border-radius: var(--radius);
+    }
+    .entry.expanded + .entry.expanded {
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
   }
 
   /* ── Dining vote button (inline in row) ───────── */
