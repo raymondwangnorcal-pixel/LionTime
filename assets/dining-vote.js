@@ -175,7 +175,7 @@
             isUser ? 'selected' : '',
           ].filter(Boolean).join(' ');
           const fillCls = isWinner ? 'gold' : isUser ? 'blue' : 'grey';
-          return `<div class="${cls}">
+          return `<div class="${cls}" data-vote-hall="${esc(entry.id)}">
             <div class="dining-vote-fill ${fillCls}" style="width:${pct}%"></div>
             <div class="dining-vote-radio${isUser ? ' checked' : ''}"></div>
             <span class="dining-vote-opt-name">${esc(hallName(entry.id))}${isWinner ? ' 👑' : ''}</span>
@@ -281,10 +281,17 @@
   function attachClickHandler(container) {
     container.addEventListener('click', e => {
       const btn = e.target.closest('.dining-vote-btn');
-      if (!btn) return;
-      e.stopPropagation(); // prevent row expand
-      const hallId = btn.dataset.voteHall;
-      if (hallId) handleVote(hallId);
+      if (btn) {
+        e.stopPropagation();
+        const hallId = btn.dataset.voteHall;
+        if (hallId) handleVote(hallId);
+        return;
+      }
+      const opt = e.target.closest('.dining-vote-option');
+      if (opt) {
+        const hallId = opt.dataset.voteHall;
+        if (hallId) handleVote(hallId);
+      }
     });
   }
 
