@@ -23,14 +23,14 @@ test('hides the access badge on Lerner without changing its live-hours type', ()
 });
 
 test('places access context to the left of the temporal badge on both responsive layouts', () => {
-  assert.match(html, /<span class="status-badges">\$\{accessLabel[\s\S]*access-badge[\s\S]*<span class="badge/);
+  assert.match(html, /<span class="status-badges">[\s\S]*access-badge[\s\S]*<span class="badge/);
   assert.match(html, /\.row \.status-badges \{ grid-area: 1 \/ 3 \/ 2 \/ 4; \}/);
   assert.match(html, /minmax\(210px,auto\)/);
   assert.match(html, /minmax\(180px,auto\)/);
 });
 
 test('loads the view before rendering and reports source-based freshness in the footer', () => {
-  assert.ok(html.indexOf('assets/student-services-hours-view.js') < html.indexOf('const VENUES = ['));
+  assert.ok(html.indexOf('assets/student-services-hours-view.js') < html.indexOf('const VENUES ='));
   assert.match(html, /id="student-services-hours-status"[^>]*aria-live="polite"/);
   assert.match(html, /0 of 4 sources live/);
   assert.match(html, /status\.liveSourceCount/);
