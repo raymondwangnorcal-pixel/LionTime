@@ -19,6 +19,14 @@ test('recreation publishing runs independently every four hours', async () => {
   assert.doesNotMatch(workflow, /DINING_HOURS_API_URL|LIBRARY_HOURS_API_URL/);
 });
 
+test('Recreation always notifies Telegram with its validated summary', async () => {
+  const workflow = await readFile('.github/workflows/update-recreation-hours.yml', 'utf8');
+  assert.match(workflow, /notification_summary:/);
+  assert.match(workflow, /workflow-notification-summary\.mjs --kind recreation/);
+  assert.match(workflow, /notify:\n    needs: scrape-and-publish\n    if: \$\{\{ always\(\) \}\}/);
+  assert.match(workflow, /source_label: Recreation/);
+  assert.match(workflow, /secrets\.LIONTIME_TELEGRAM_BOT_TOKEN/);
+});
 
 function scheduledMinute(workflow) {
   return workflow.match(/cron: ['"](\d+) \*\/4 \* \* \*['"]/)?.[1];

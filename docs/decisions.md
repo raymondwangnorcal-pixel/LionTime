@@ -937,3 +937,11 @@
 - Supersedes: none
 - Evidence: The user's 2026-08-26 clarification that alerts should send separately from Hermes while using the same Telegram bot for a centralized location.
 - Privacy waivers: none
+
+## Update — 2026-08-26 — DEC-0047
+
+- Type: implementation
+- Implementation commit: `ac1348870636226201b6fea66ca9f03eef358154` — feat: send LionTime workflow updates to Telegram
+- Superseded by: none
+- Note: Added reusable direct Telegram delivery and all four workflow notifications with tested validated-run summaries and failure links.
+- Privacy waivers: none
