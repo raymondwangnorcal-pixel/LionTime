@@ -37,6 +37,14 @@ test('workflow installs Chromium, tests, scrapes, and publishes behind configura
   assert.match(workflow, /DINING_HOURS_API_URL/);
 });
 
+test('Dining always notifies Telegram, including skipped branch-guard runs', () => {
+  assert.match(workflow, /notification_summary:/);
+  assert.match(workflow, /workflow-notification-summary\.mjs --kind dining/);
+  assert.match(workflow, /notify:\n    needs: scrape-and-publish\n    if: \$\{\{ always\(\) \}\}/);
+  assert.match(workflow, /source_label: Dining/);
+  assert.match(workflow, /needs\.scrape-and-publish\.outputs\.notification_summary/);
+  assert.match(workflow, /secrets\.LIONTIME_TELEGRAM_BOT_TOKEN/);
+});
 
 test('Vercel exposes a bounded dining API backed by the dining service', () => {
   assert.deepEqual(vercel.functions['api/dining-hours.js'], { maxDuration: 10 });
