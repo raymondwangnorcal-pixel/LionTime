@@ -909,3 +909,17 @@
 - Superseded by: none
 - Note: The Recreation scraper now resumes complete Barnard weekly schedules on September 8, preserves access and provenance across bounded gaps, and renders the Summer 2026 warning as small metadata.
 - Privacy waivers: none
+
+## DEC-0046 — Use Vercel Web Analytics for site visits
+
+- Date: 2026-08-26
+- Owner: user
+- Status at record: active
+- Decision: LionHour will use Vercel Web Analytics' framework-free loader to collect anonymized aggregate site-visit analytics.
+- Rationale: The static HTML site can use Vercel's built-in, cookie-free analytics without a client framework, additional bundled dependency, or third-party service.
+- Scope: The production page loader, Vercel project Analytics dashboard, and aggregate visitor reporting.
+- Implementation: pending
+- Recorded against HEAD: `970f09392a74c15926d7cefdde8d8ef8b803ddbd`
+- Supersedes: none
+- Evidence: The user's 2026-08-26 request to add Vercel Web Analytics.
+- Privacy waivers: none
