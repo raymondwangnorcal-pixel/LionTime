@@ -657,9 +657,18 @@
       border-top: 1.5px solid #4a90d9;
       border-radius: var(--radius);
     }
+    .entry.expanded:has(+ .entry.expanded) {
+      border-bottom: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
     .entry.expanded + .entry.expanded {
       border-top: none;
       border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .entry.expanded + .entry.expanded:has(+ .entry.expanded) {
+      border-top: none;
+      border-bottom: none;
+      border-radius: 0;
     }
   }
 
