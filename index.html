@@ -308,22 +308,22 @@
   .entry:last-child .row { border-bottom: none; }
   .entry.expanded .row { background: #f8fafc; border-bottom-color: transparent; }
   .entry.expanded {
-    border: 1.5px solid #4a90d9; border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
+    border: 1.5px solid #4a90d9;
+    border-radius: var(--radius);
     overflow: hidden;
     position: relative;
   }
-  .entry.expanded:has(+ .entry.expanded) {
+  .entry.expanded.exp-before {
     border-bottom: none;
-    border-radius: 0;
-    z-index: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
-  .entry.expanded + .entry.expanded {
+  .entry.expanded.exp-after {
+    border-top: none;
     margin-top: -1.5px;
     z-index: 1;
+    border-radius: 0 0 var(--radius) var(--radius);
   }
-  .entry.expanded + .entry.expanded:has(+ .entry.expanded) {
-    border-bottom: none;
+  .entry.expanded.exp-before.exp-after {
     border-radius: 0;
   }
   .entry.expanded .row { border-bottom: 1px solid var(--row-line); }
@@ -331,7 +331,7 @@
   .health-hours-list .entry.expanded {
     border: none; border-radius: 0; margin: 0;
   }
-  .health-hours-list .entry.expanded + .entry.expanded {
+  .health-hours-list .entry.expanded.exp-after {
     margin-top: 0;
   }
 
@@ -669,25 +669,6 @@
     .chips {
       width: 100%; flex-wrap: nowrap; justify-content: flex-start;
       overflow: visible;
-    }
-    .entry.expanded {
-      border-top: 1.5px solid #4a90d9;
-      border-radius: var(--radius);
-    }
-    .entry.expanded:has(+ .entry.expanded) {
-      border-bottom: none;
-      border-radius: var(--radius) var(--radius) 0 0;
-      z-index: 0;
-    }
-    .entry.expanded + .entry.expanded {
-      border-top: none;
-      margin-top: -1.5px;
-      z-index: 1;
-      border-radius: 0 0 var(--radius) var(--radius);
-    }
-    .entry.expanded + .entry.expanded:has(+ .entry.expanded) {
-      border-bottom: none;
-      border-radius: 0;
     }
   }
 
@@ -1458,6 +1439,21 @@ function healthDropdownHTML(now, noAccent) {
   </div>`;
 }
 
+function syncExpandedBorders() {
+  document.querySelectorAll('.list').forEach(list => {
+    const entries = Array.from(list.querySelectorAll(':scope > .entry'));
+    entries.forEach(el => el.classList.remove('exp-before', 'exp-after'));
+    for (let i = 0; i < entries.length; i++) {
+      if (!entries[i].classList.contains('expanded')) continue;
+      const next = entries[i + 1];
+      if (next && next.classList.contains('expanded')) {
+        entries[i].classList.add('exp-before');
+        next.classList.add('exp-after');
+      }
+    }
+  });
+}
+
 function render() {
   const now = nowET();
   const venues = topLevelVenues();
@@ -1508,6 +1504,7 @@ function render() {
   }).join('');
 
   stage.innerHTML = sections || `<div class="empty">Nothing matches those filters right now.</div>`;
+  syncExpandedBorders();
   appendRecreationMetadata(stage, now);
   syncStickyOffset();
 }
@@ -1641,6 +1638,7 @@ document.getElementById('stage').addEventListener('click', e => {
   if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
   entry.classList.toggle('expanded');
   row.setAttribute('aria-expanded', expanded.has(id));
+  syncExpandedBorders();
 });
 if (window.LionHourDiningVote) {
   LionHourDiningVote.attachClickHandler(document.getElementById('stage'));
