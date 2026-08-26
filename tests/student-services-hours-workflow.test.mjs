@@ -24,6 +24,7 @@ test('Student Life workflow runs every four hours in one bounded headed browser 
   assert.doesNotMatch(workflow, /continue-on-error/);
 });
 
+
 test('Vercel exposes the isolated Student Life service with shared write authentication', () => {
   assert.deepEqual(vercel.functions['api/student-services-hours.js'], { maxDuration: 10 });
   assert.match(api, /createStudentServicesHoursService/);

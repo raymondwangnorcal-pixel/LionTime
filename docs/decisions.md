@@ -923,3 +923,17 @@
 - Supersedes: none
 - Evidence: The user's 2026-08-26 request to add Vercel Web Analytics.
 - Privacy waivers: none
+
+## DEC-0047 — Route LionTime run updates through the Hermes Telegram bot
+
+- Date: 2026-08-26
+- Owner: user
+- Status at record: active
+- Decision: LionHour will have GitHub Actions send all completed Library, Dining, Recreation, and Student Life workflow updates directly to the same Telegram bot and chat used by Hermes, without routing delivery through the local Hermes gateway.
+- Rationale: A single Telegram conversation centralizes personal Hermes messages and LionHour operational updates while direct GitHub delivery remains available when the MacBook is off.
+- Scope: GitHub Actions notification workflow, repository Telegram secrets, run-summary formatting, failure delivery, and Telegram chat destination.
+- Implementation: pending
+- Recorded against HEAD: `9677467d9af452fce651470a273940d06efb1ec0`
+- Supersedes: none
+- Evidence: The user's 2026-08-26 clarification that alerts should send separately from Hermes while using the same Telegram bot for a centralized location.
+- Privacy waivers: none

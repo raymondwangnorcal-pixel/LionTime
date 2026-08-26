@@ -37,6 +37,7 @@ test('workflow installs Chromium, tests, scrapes, and publishes behind configura
   assert.match(workflow, /DINING_HOURS_API_URL/);
 });
 
+
 test('Vercel exposes a bounded dining API backed by the dining service', () => {
   assert.deepEqual(vercel.functions['api/dining-hours.js'], { maxDuration: 10 });
   assert.deepEqual(vercel.functions['api/barnard-dining-hours.js'], { maxDuration: 10 });
