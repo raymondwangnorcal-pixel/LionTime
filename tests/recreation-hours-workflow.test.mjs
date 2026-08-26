@@ -19,6 +19,7 @@ test('recreation publishing runs independently every four hours', async () => {
   assert.doesNotMatch(workflow, /DINING_HOURS_API_URL|LIBRARY_HOURS_API_URL/);
 });
 
+
 function scheduledMinute(workflow) {
   return workflow.match(/cron: ['"](\d+) \*\/4 \* \* \*['"]/)?.[1];
 }
