@@ -16,6 +16,8 @@ jobs:
   scrape-and-publish:
     runs-on: ubuntu-24.04
     timeout-minutes: 12
+    outputs:
+      notification_summary: ${{ steps.notification-summary.outputs.summary }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +40,17 @@ jobs:
           tests/recreation-hours-workflow.test.mjs
       - name: Scrape validated Recreation hours
         run: xvfb-run --auto-servernum node scripts/recreation-hours-scraper.mjs --json-out "$RUNNER_TEMP/recreation-hours.json"
+      - name: Format notification summary
+        id: notification-summary
+        env:
+          PUBLISH_ENABLED: ${{ vars.RECREATION_HOURS_PUBLISH_ENABLED }}
+        run: |
+          summary="$(node scripts/workflow-notification-summary.mjs --kind recreation --input "$RUNNER_TEMP/recreation-hours.json" --publish-enabled "${PUBLISH_ENABLED:-false}")"
+          {
+            echo 'summary<<EOF'
+            echo "$summary"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
       - name: Publish validated snapshot
         if: vars.RECREATION_HOURS_PUBLISH_ENABLED == 'true' && vars.RECREATION_HOURS_API_URL != ''
         env:
@@ -51,3 +64,15 @@ jobs:
           -H "Authorization: Bearer $UPDATE_SECRET"
           -H "Content-Type: application/json"
           --data-binary "@$RUNNER_TEMP/recreation-hours.json"
+  notify:
+    needs: scrape-and-publish
+    if: ${{ always() }}
+    uses: ./.github/workflows/send-telegram-update.yml
+    with:
+      source_label: Recreation
+      conclusion: ${{ needs.scrape-and-publish.result }}
+      summary: ${{ needs.scrape-and-publish.outputs.notification_summary }}
+      run_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    secrets:
+      telegram_bot_token: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+      telegram_chat_id: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}

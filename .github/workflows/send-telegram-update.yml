@@ -1,0 +1,54 @@
+name: Send Telegram workflow update
+
+on:
+  workflow_call:
+    inputs:
+      source_label:
+        required: true
+        type: string
+      conclusion:
+        required: true
+        type: string
+      summary:
+        required: false
+        type: string
+      run_url:
+        required: true
+        type: string
+    secrets:
+      telegram_bot_token:
+        required: true
+      telegram_chat_id:
+        required: true
+
+permissions: {}
+
+jobs:
+  send:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Send Telegram update
+        env:
+          SOURCE_LABEL: ${{ inputs.source_label }}
+          CONCLUSION: ${{ inputs.conclusion }}
+          SUMMARY: ${{ inputs.summary }}
+          RUN_URL: ${{ inputs.run_url }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.telegram_bot_token }}
+          TELEGRAM_CHAT_ID: ${{ secrets.telegram_chat_id }}
+        run: |
+          if [ "$CONCLUSION" = "success" ] && [ -n "$SUMMARY" ]; then
+            message="$SUMMARY"
+          else
+            case "$CONCLUSION" in
+              failure) status='failed' ;;
+              cancelled) status='cancelled' ;;
+              skipped) status='skipped' ;;
+              *) status='did not complete' ;;
+            esac
+            message="$SOURCE_LABEL workflow $status. Details: $RUN_URL"
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${message}"
