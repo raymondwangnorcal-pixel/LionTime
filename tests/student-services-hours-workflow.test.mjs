@@ -24,6 +24,13 @@ test('Student Life workflow runs every four hours in one bounded headed browser 
   assert.doesNotMatch(workflow, /continue-on-error/);
 });
 
+test('Student Life always notifies Telegram with its validated summary', () => {
+  assert.match(workflow, /notification_summary:/);
+  assert.match(workflow, /workflow-notification-summary\.mjs --kind student-life/);
+  assert.match(workflow, /notify:\n    needs: scrape-and-publish\n    if: \$\{\{ always\(\) \}\}/);
+  assert.match(workflow, /source_label: Student Life/);
+  assert.match(workflow, /secrets\.LIONTIME_TELEGRAM_BOT_TOKEN/);
+});
 
 test('Vercel exposes the isolated Student Life service with shared write authentication', () => {
   assert.deepEqual(vercel.functions['api/student-services-hours.js'], { maxDuration: 10 });

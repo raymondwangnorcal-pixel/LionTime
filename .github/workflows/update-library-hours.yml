@@ -16,18 +16,35 @@ jobs:
   scrape-and-publish:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    outputs:
+      notification_summary: ${{ steps.notification-summary.outputs.summary }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Test scraper
         run: python -m unittest tests/test_scrape.py -v
       - name: Scrape current library hours
         run: python scrape.py --json-out "$RUNNER_TEMP/library-hours.json"
+      - name: Format notification summary
+        id: notification-summary
+        env:
+          PUBLISH_ENABLED: ${{ vars.LIBRARY_HOURS_PUBLISH_ENABLED }}
+        run: |
+          summary="$(node scripts/workflow-notification-summary.mjs --kind library --input "$RUNNER_TEMP/library-hours.json" --publish-enabled "${PUBLISH_ENABLED:-false}")"
+          {
+            echo 'summary<<EOF'
+            echo "$summary"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
       - name: Publish validated snapshot
         if: vars.LIBRARY_HOURS_PUBLISH_ENABLED == 'true'
         env:
@@ -40,3 +57,15 @@ jobs:
           -H "Authorization: Bearer $UPDATE_SECRET"
           -H "Content-Type: application/json"
           --data-binary "@$RUNNER_TEMP/library-hours.json"
+  notify:
+    needs: scrape-and-publish
+    if: ${{ always() }}
+    uses: ./.github/workflows/send-telegram-update.yml
+    with:
+      source_label: Library
+      conclusion: ${{ needs.scrape-and-publish.result }}
+      summary: ${{ needs.scrape-and-publish.outputs.notification_summary }}
+      run_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    secrets:
+      telegram_bot_token: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+      telegram_chat_id: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
