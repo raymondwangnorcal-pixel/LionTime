@@ -311,11 +311,28 @@
     border: 1.5px solid #4a90d9; border-top: none;
     border-radius: 0 0 var(--radius) var(--radius);
     overflow: hidden;
+    position: relative;
+  }
+  .entry.expanded:has(+ .entry.expanded) {
+    border-bottom: none;
+    border-radius: 0;
+    z-index: 0;
+  }
+  .entry.expanded + .entry.expanded {
+    margin-top: -1.5px;
+    z-index: 1;
+  }
+  .entry.expanded + .entry.expanded:has(+ .entry.expanded) {
+    border-bottom: none;
+    border-radius: 0;
   }
   .entry.expanded .row { border-bottom: 1px solid var(--row-line); }
   .entry.expanded .detail { border-bottom: none; }
   .health-hours-list .entry.expanded {
     border: none; border-radius: 0; margin: 0;
+  }
+  .health-hours-list .entry.expanded + .entry.expanded {
+    margin-top: 0;
   }
 
   .dot { width: 9px; height: 9px; border-radius: 50%; }
@@ -660,13 +677,15 @@
     .entry.expanded:has(+ .entry.expanded) {
       border-bottom: none;
       border-radius: var(--radius) var(--radius) 0 0;
+      z-index: 0;
     }
     .entry.expanded + .entry.expanded {
       border-top: none;
+      margin-top: -1.5px;
+      z-index: 1;
       border-radius: 0 0 var(--radius) var(--radius);
     }
     .entry.expanded + .entry.expanded:has(+ .entry.expanded) {
-      border-top: none;
       border-bottom: none;
       border-radius: 0;
     }
