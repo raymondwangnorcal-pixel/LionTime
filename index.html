@@ -1404,9 +1404,6 @@ function rowHTML(v, now) {
       <div class="week week-mobile">${weekHTML(v, now)}</div>
       <div class="week week-desktop">${weekHTMLDesktop(v, now)}</div>
       ${serviceDetails}
-      ${v.sourceNote ? `<div class="note">Columbia Dining: ${escapeHTML(v.sourceNote)}</div>` : ''}
-      ${v.note ? `<div class="note">${escapeHTML(v.note)}</div>` : ''}
-      ${v.estimated ? `<div class="note">Hours not published online<span class="est">est.</span></div>` : ''}
       ${v.recreationLive ? `<div data-recreation-metadata="${v.id}"></div>` : ''}
       ${recreationSpaces.length && window.LionHourRecreationView
         ? `<div aria-label="${DODGE_SPACES_CONTROL}">${LionHourRecreationView.renderSpaces(recreationSpaces, now, expandedRecreationSpaces.has(v.id))}</div>` : ''}
