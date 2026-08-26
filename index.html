@@ -1298,6 +1298,7 @@ const expanded = new Set();
 const expandedRecreationSpaces = new Set();
 const collapsedCategories = new Set();
 if (new Date() < new Date(2026, 8, 4)) collapsedCategories.add('dining');
+const SUMMER_HIDDEN_CAFES = new Date() < new Date(2026, 8, 8) ? new Set(['bj-butler','bj-uris','bj-mudd','bj-everett','lenfest-cafe']) : new Set();
 let healthDropdownExpanded = false;
 
 const HEALTH_SERVICE_IDS = new Set([
@@ -1340,7 +1341,7 @@ function venueMatchesSearch(venue, term) {
 }
 
 function topLevelVenues(venues = VENUES) {
-  return venues.filter(venue => !venue.parentId);
+  return venues.filter(venue => !venue.parentId && !SUMMER_HIDDEN_CAFES.has(venue.id));
 }
 
 function dodgeSpacesFor(venue, now) {
@@ -1517,7 +1518,7 @@ function render() {
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
-        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}${c.id === 'dining' && new Date() < new Date(2026, 8, 4) ? ' <span style="font-size:0.7em;font-weight:600;letter-spacing:0.5px;text-transform:none;background:rgba(255,255,255,0.22);padding:0.15em 0.55em;border-radius:9px;vertical-align:middle;margin-left:0.4em">Closed for summer</span>' : ''}</span>
+        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}${c.id === 'dining' && new Date() < new Date(2026, 8, 4) ? ' <span style="font-size:0.85em;font-weight:600;letter-spacing:0.5px;text-transform:none;background:rgba(255,255,255,0.22);padding:0.25em 0.65em;border-radius:9px;vertical-align:middle;margin-left:0.5em">Closed for summer</span>' : ''}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
