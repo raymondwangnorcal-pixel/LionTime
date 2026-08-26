@@ -1517,7 +1517,7 @@ function render() {
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
-        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}${c.id === 'dining' && new Date() < new Date(2026, 8, 4) ? ' <span style="font-size:0.75em;font-weight:400;opacity:0.82;letter-spacing:0;text-transform:none">(Closed for summer)</span>' : ''}</span>
+        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}${c.id === 'dining' && new Date() < new Date(2026, 8, 4) ? ' <span style="font-size:0.7em;font-weight:600;letter-spacing:0.5px;text-transform:none;background:rgba(255,255,255,0.22);padding:0.15em 0.55em;border-radius:9px;vertical-align:middle;margin-left:0.4em">Closed for summer</span>' : ''}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
