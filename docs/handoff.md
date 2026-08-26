@@ -1,7 +1,7 @@
 # LionTime Handoff
 
 Schema-Version: 1
-Last-Updated: 2026-08-26T16:57:37-04:00
+Last-Updated: 2026-08-26T17:01:00-04:00
 Current-Origin: origin-39c30bda14ce4b5f11aec5b9
 
 ## Origins
@@ -37,7 +37,6 @@ Reason: The last verified production deployment served an older commit, and this
 
 | Path | Origin-ID | Presence | State | Notes |
 |---|---|---|---|---|
-| .DS_Store | origin-39c30bda14ce4b5f11aec5b9 | present | uncommitted | Pre-existing local Finder metadata change; leave untouched unless the user requests otherwise. |
 | Filter preview.png | origin-8c44a92438783ad841e0d78b | present | committed | Committed visual artifact from the UI change series. |
 | api/dining-vote.js | origin-8c44a92438783ad841e0d78b | present | committed | Committed Dining vote API from current main history. |
 | assets/dining-vote.js | origin-8c44a92438783ad841e0d78b | present | committed | Committed browser-side Dining vote behavior from current main history. |
@@ -56,13 +55,13 @@ Reason: The last verified production deployment served an older commit, and this
 
 Origin-ID: origin-39c30bda14ce4b5f11aec5b9
 Branch: main
-Head: a92fb9f6cfff12485160b4e53921cd8ca41fa504
+Head: c48e8acf634552840eeb59bbf19765b2d45bae93
 Upstream: origin/main
-Ahead: 0
+Ahead: 1
 Behind: 0
 Remote-Freshness: verified
 Remote-Freshness-Reason: none
-Project-Working-Tree: dirty
+Project-Working-Tree: clean
 Handoff-Path-State-Before-Write: clean
 Handoff-Commit-Exception: none
 
@@ -70,15 +69,16 @@ Handoff-Commit-Exception: none
 
 | Commit | Subject |
 |---|---|
+| c48e8acf634552840eeb59bbf19765b2d45bae93 | docs: update handoff (2026-08-26) |
 
 ## Validation
 
 | Validation-ID | Origin-ID | Command | Result | Evidence |
 |---|---|---|---|---|
 | validation-29bca2bf22cd0b9d7ebb91e0 | origin-39c30bda14ce4b5f11aec5b9 | node --test tests/favicon.test.mjs | passed | One browser test passed, confirming the declared PNG favicon is served from project assets. |
+| validation-42c7c9006d993f892c35a75b | origin-39c30bda14ce4b5f11aec5b9 | handoff repository state correction audit | passed | The first handoff commit is present and the current worktree is clean; .DS_Store appeared only in the preceding favicon commit file list. |
 | validation-96dd29d3a64c39da67720205 | origin-8c44a92438783ad841e0d78b | git fetch --prune origin and repository audit | passed | The prior audit found main and origin/main synchronized with a clean worktree. |
-| validation-be2e576953e747e009e4fe6e | origin-39c30bda14ce4b5f11aec5b9 | git fetch --prune origin and handoff audit | passed | main and origin/main both resolve to a92fb9f6cfff12485160b4e53921cd8ca41fa504 with zero ahead or behind commits; only .DS_Store remains modified. |
-| validation-d9b40f62a839add298043323 | origin-8c44a92438783ad841e0d78b | Vercel deployment and public HTML inspection | failed | The last production inspection found an older forced-redeploy commit and pre-fix public HTML. |
+| validation-be2e576953e747e009e4fe6e | origin-39c30bda14ce4b5f11aec5b9 | git fetch --prune origin and handoff audit | passed | main and origin/main both resolve to a92fb9f6cfff12485160b4e53921cd8ca41fa504 with zero ahead or behind commits and a clean worktree. |
 
 ## Risks / Decisions
 
