@@ -910,7 +910,7 @@ const VENUES = window.VENUES = [
     hours: WEEKDAYS([['09:00','21:00']], [['11:00','18:00']], [['12:00','21:00']]),
     note:'Service desk closes 15 minutes before the library.' },
 
-  { id:'math', name:'Mathematics Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
+  { id:'math', name:'Math Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
     hours: WEEKDAYS([['09:00','20:00']], null, [['13:00','20:00']]) },
 
   { id:'milstein', name:'Milstein Library', cat:'library', loc:'Milstein Center, Barnard College',
@@ -1007,14 +1007,14 @@ const VENUES = window.VENUES = [
              [['08:00','15:00']],null,null) },
 
   /* ── FITNESS ────────────────────────────────────── */
-  { id:'dodge', name:'Dodge Fitness Center', cat:'fitness', loc:'3030 Broadway',
+  { id:'dodge', name:'Dodge Gym', cat:'fitness', loc:'3030 Broadway',
     hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]) },
 
-  { id:'uris-pool', name:'Uris Pool', cat:'fitness', parentId:'dodge', loc:'Dodge Fitness Center, lower level',
+  { id:'uris-pool', name:'Uris Pool', cat:'fitness', parentId:'dodge', loc:'Dodge Gym, lower level',
     hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
                     [['13:00','17:00']], [['13:00','17:00']]) },
 
-  { id:'barnard-fitness', name:'Barnard Fitness Center', cat:'fitness', loc:'LeFrak Center, Barnard College',
+  { id:'barnard-fitness', name:'Barnard Gym', cat:'fitness', loc:'LeFrak Center, Barnard College',
     hours: ALL(null) },
 
   /* ── STUDENT LIFE & SERVICES ────────────────────── */
@@ -1031,7 +1031,7 @@ const VENUES = window.VENUES = [
     hours: WEEKDAYS([['12:00','16:00']]), studentAccessType:'office-hours', hideStatusBadge:true,
     note:'Live source includes check-in week, Fall Rush, holidays, and regular fall hours.' },
 
-  { id:'alice-health', name:'Alice! Health Promotion', cat:'student', loc:'John Jay Hall, 3rd fl',
+  { id:'alice-health', name:'Alice Health', cat:'student', loc:'John Jay Hall, 3rd fl',
     hours: WEEKDAYS([['09:00','17:00']]), studentAccessType:'office-hours',
     note:'Virtual appointments and selected virtual drop-in services are also available.' },
 
@@ -1296,10 +1296,16 @@ const ORDER = { 'open':0, 'closing-soon':1, 'closed':2 };
 const CHEV = `<svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const DODGE_SPACES_CONTROL = 'View spaces';
 
+function statusMatchesFilter(status, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'open') return status === 'open' || status === 'closing-soon';
+  return status === filter;
+}
+
 function matchesFilters(v, now, ignoreStatus) {
   if (activeCat !== 'all' && v.cat !== activeCat) return false;
   if (!venueMatchesSearch(v, searchTerm)) return false;
-  if (!ignoreStatus && activeStatus !== 'all' && getStatus(v, now).status !== activeStatus) return false;
+  if (!ignoreStatus && !statusMatchesFilter(getStatus(v, now).status, activeStatus)) return false;
   return true;
 }
 
@@ -1419,7 +1425,7 @@ function escapeHTML(value) {
 
 function healthDropdownHTML(now, noAccent) {
   const healthVenues = VENUES.filter(v => HEALTH_SERVICE_IDS.has(v.id)
-    && (activeStatus === 'all' || getStatus(v, now).status === activeStatus));
+    && statusMatchesFilter(getStatus(v, now).status, activeStatus));
   healthVenues.sort((a, b) => {
     const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
     return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
@@ -1465,11 +1471,11 @@ function render() {
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
     const all = venues.filter(v => v.cat === c.id && matchesFilters(v, now, true));
-    const shown = all.filter(v => activeStatus === 'all' || getStatus(v, now).status === activeStatus);
+    const shown = all.filter(v => statusMatchesFilter(getStatus(v, now).status, activeStatus));
 
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
-    const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && (activeStatus === 'all' || getStatus(v, now).status === activeStatus));
+    const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && statusMatchesFilter(getStatus(v, now).status, activeStatus));
     if (!regularShown.length && !hasHealthVenues) return '';
     /* Auto-expand health dropdown when it's the only thing with matching venues */
     if (isStudent && hasHealthVenues && !regularShown.length) healthDropdownExpanded = true;
@@ -1486,13 +1492,13 @@ function render() {
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
     const regularAll = isStudent ? all.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : all;
-    const openN = regularAll.filter(v => getStatus(v, now).status !== 'closed').length;
+    const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
         <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}</span>
         <span class="sec-rule"></span>
-        <span class="sec-meta">${openN} of ${regularAll.length} open</span>
+        <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
       <div class="list" id="${listId}"${catCollapsed ? ' hidden' : ''}>
         <div class="cols">
