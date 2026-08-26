@@ -1,6 +1,11 @@
 (function diningVote(global) {
   'use strict';
 
+
+  /* ── Date gate: hide voting UI until September 4, 2026 ── */
+  const VOTING_START = '2026-09-04';
+  const gateDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+  if (gateDate < VOTING_START) return;
   /* ── Constants ────────────────────────────────── */
   const STORAGE_FP   = 'lionhour:vote:fp';
   const STORAGE_DATE = 'lionhour:vote:date';
