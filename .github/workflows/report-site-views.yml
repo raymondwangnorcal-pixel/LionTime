@@ -45,13 +45,14 @@ jobs:
           now_ms=$(( now_s * 1000 ))
           six_h_ago_ms=$(( (now_s - 6 * 3600) * 1000 ))
           twenty_four_h_ago_ms=$(( (now_s - 24 * 3600) * 1000 ))
+          thirty_days_ago_ms=$(( (now_s - 30 * 86400) * 1000 ))
 
-          # All-time totals (since epoch)
-          all_time=$(fetch \
-            --data-urlencode "since=0" \
+          # Last 30 days (hobby plan limit is 31 days)
+          last_30d=$(fetch \
+            --data-urlencode "since=$thirty_days_ago_ms" \
             --data-urlencode "until=$now_ms")
-          ALL_VIEWS=$(jq '.data.pageviews // 0' <<< "$all_time")
-          ALL_VISITORS=$(jq '.data.visitors // 0' <<< "$all_time")
+          VIEWS_30D=$(jq '.data.pageviews // 0' <<< "$last_30d")
+          VISITORS_30D=$(jq '.data.visitors // 0' <<< "$last_30d")
 
           # Last 24 hours
           last_24h=$(fetch \
@@ -74,7 +75,7 @@ jobs:
             "LionHour Site Views Report" \
             "Last 6 hours: $VIEWS_6H views ($VISITORS_6H visitors)" \
             "Last 24 hours: $VIEWS_24H views ($VISITORS_24H visitors)" \
-            "All time: $ALL_VIEWS views ($ALL_VISITORS visitors)" \
+            "Last 30 days: $VIEWS_30D views ($VISITORS_30D visitors)" \
             "Generated: $report_time")
 
           curl --fail-with-body --silent --show-error \

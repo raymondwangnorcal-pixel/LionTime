@@ -22,7 +22,7 @@ test('site views report workflow has correct structure and safeguards', () => {
   assert.match(workflow, /LIONTIME_TELEGRAM_BOT_TOKEN/);
   assert.match(workflow, /LIONTIME_TELEGRAM_CHAT_ID/);
 
-  // Queries Vercel Analytics count endpoint
+  // Queries Vercel Analytics count endpoint with time windows
   assert.match(workflow, /api\.vercel\.com.*web-analytics.*count/);
 
   // Sends via Telegram with safe curl options
