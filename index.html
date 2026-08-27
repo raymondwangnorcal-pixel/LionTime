@@ -1386,7 +1386,7 @@ function weekHTML(v, now) {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
     const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
-    const unpub = /not published/i.test(hoursText);
+    const unpub = /not published/i.test(hoursText) || /^closed$/i.test(hoursText);
     return `<div class="wk-row${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
       <span>${hoursText}</span>
