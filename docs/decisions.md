@@ -945,3 +945,17 @@
 - Superseded by: none
 - Note: Added reusable direct Telegram delivery and all four workflow notifications with tested validated-run summaries and failure links.
 - Privacy waivers: none
+
+## DEC-0048 — Track poster performance with permanent QR routes
+
+- Date: 2026-08-27
+- Owner: user
+- Status at record: active
+- Decision: LionHour will track five permanent poster-specific QR routes using aggregate Upstash counters, uncached temporary redirects, 400-day daily retention, and a secret-protected ranking endpoint.
+- Rationale: Separate Dodge, Butler, General Dining, Ferris, and Hewitt routes allow poster placement performance to be compared without retaining visitor identifiers or depending on a managed QR provider.
+- Scope: Public QR URLs, Vercel routing and functions, aggregate Redis keys and retention, private statistics access, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `e6d746ef0739168d2d41269c3c2238c2d0796923`
+- Supersedes: none
+- Evidence: The user's approved five-poster QR tracking design in the 2026-08-27 implementation conversation.
+- Privacy waivers: none
