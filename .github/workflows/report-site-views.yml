@@ -24,12 +24,21 @@ jobs:
           api="https://api.vercel.com/v1/query/web-analytics/visits/count"
 
           fetch() {
-            curl --fail-with-body --silent --show-error \
+            local response http_code body
+            response=$(curl --silent --show-error \
               --retry 3 --retry-all-errors \
+              -w '\n%{http_code}' \
               --get "$api" \
               -H "Authorization: Bearer $VERCEL_TOKEN" \
               --data-urlencode "projectId=$VERCEL_PROJECT_ID" \
-              "$@"
+              "$@")
+            http_code=$(echo "$response" | tail -1)
+            body=$(echo "$response" | sed '$d')
+            if [ "$http_code" -ge 400 ]; then
+              echo "Vercel API error (HTTP $http_code): $body" >&2
+              return 1
+            fi
+            echo "$body"
           }
 
           now_s=$(date +%s)
