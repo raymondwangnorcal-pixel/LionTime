@@ -42,21 +42,28 @@ jobs:
           }
 
           now_s=$(date +%s)
+          now_ms=$(( now_s * 1000 ))
           six_h_ago_ms=$(( (now_s - 6 * 3600) * 1000 ))
           twenty_four_h_ago_ms=$(( (now_s - 24 * 3600) * 1000 ))
 
-          # All-time totals (no time filter)
-          all_time=$(fetch)
+          # All-time totals (since epoch)
+          all_time=$(fetch \
+            --data-urlencode "since=0" \
+            --data-urlencode "until=$now_ms")
           ALL_VIEWS=$(jq '.data.pageviews // 0' <<< "$all_time")
           ALL_VISITORS=$(jq '.data.visitors // 0' <<< "$all_time")
 
           # Last 24 hours
-          last_24h=$(fetch --data-urlencode "since=$twenty_four_h_ago_ms")
+          last_24h=$(fetch \
+            --data-urlencode "since=$twenty_four_h_ago_ms" \
+            --data-urlencode "until=$now_ms")
           VIEWS_24H=$(jq '.data.pageviews // 0' <<< "$last_24h")
           VISITORS_24H=$(jq '.data.visitors // 0' <<< "$last_24h")
 
           # Last 6 hours
-          last_6h=$(fetch --data-urlencode "since=$six_h_ago_ms")
+          last_6h=$(fetch \
+            --data-urlencode "since=$six_h_ago_ms" \
+            --data-urlencode "until=$now_ms")
           VIEWS_6H=$(jq '.data.pageviews // 0' <<< "$last_6h")
           VISITORS_6H=$(jq '.data.visitors // 0' <<< "$last_6h")
 
