@@ -959,3 +959,11 @@
 - Supersedes: none
 - Evidence: The user's approved five-poster QR tracking design in the 2026-08-27 implementation conversation.
 - Privacy waivers: none
+
+## Update — 2026-08-27 — DEC-0048
+
+- Type: implementation
+- Implementation commit: `c1774dccede01265234dce1b4ac45c9d2e4c90e6` — feat(qr): track poster scans
+- Superseded by: none
+- Note: Added five permanent poster routes, aggregate all-time and bounded daily counters, resilient uncached redirects, authenticated rankings, tests, and deployment guidance.
+- Privacy waivers: none
