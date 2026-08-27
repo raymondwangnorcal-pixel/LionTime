@@ -1,0 +1,68 @@
+name: Report site views
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Query Vercel Analytics and send Telegram report
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+
+          api="https://api.vercel.com/v1/query/web-analytics/visits/count"
+
+          fetch() {
+            curl --fail-with-body --silent --show-error \
+              --retry 3 --retry-all-errors \
+              --get "$api" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              --data-urlencode "projectId=$VERCEL_PROJECT_ID" \
+              "$@"
+          }
+
+          now_s=$(date +%s)
+          six_h_ago_ms=$(( (now_s - 6 * 3600) * 1000 ))
+          twenty_four_h_ago_ms=$(( (now_s - 24 * 3600) * 1000 ))
+
+          # All-time totals (no time filter)
+          all_time=$(fetch)
+          ALL_VIEWS=$(jq '.data.pageviews // 0' <<< "$all_time")
+          ALL_VISITORS=$(jq '.data.visitors // 0' <<< "$all_time")
+
+          # Last 24 hours
+          last_24h=$(fetch --data-urlencode "since=$twenty_four_h_ago_ms")
+          VIEWS_24H=$(jq '.data.pageviews // 0' <<< "$last_24h")
+          VISITORS_24H=$(jq '.data.visitors // 0' <<< "$last_24h")
+
+          # Last 6 hours
+          last_6h=$(fetch --data-urlencode "since=$six_h_ago_ms")
+          VIEWS_6H=$(jq '.data.pageviews // 0' <<< "$last_6h")
+          VISITORS_6H=$(jq '.data.visitors // 0' <<< "$last_6h")
+
+          # Format report
+          report_time=$(TZ='America/New_York' date '+%b %-d, %Y %-I:%M %p ET')
+
+          message=$(printf '%s\n\n%s\n%s\n%s\n\n%s' \
+            "LionHour Site Views Report" \
+            "Last 6 hours: $VIEWS_6H views ($VISITORS_6H visitors)" \
+            "Last 24 hours: $VIEWS_24H views ($VISITORS_24H visitors)" \
+            "All time: $ALL_VIEWS views ($ALL_VISITORS visitors)" \
+            "Generated: $report_time")
+
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${message}"
