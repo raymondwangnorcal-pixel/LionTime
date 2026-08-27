@@ -4,6 +4,12 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/qr/:poster",
+      "destination": "/api/qr?poster=:poster"
+    }
+  ],
   "functions": {
     "api/dining-hours.js": {
       "maxDuration": 10
@@ -21,6 +27,12 @@
       "maxDuration": 10
     },
     "api/dining-vote.js": {
+      "maxDuration": 10
+    },
+    "api/qr.js": {
+      "maxDuration": 10
+    },
+    "api/qr-stats.js": {
       "maxDuration": 10
     }
   }
