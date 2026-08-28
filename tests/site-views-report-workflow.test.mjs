@@ -35,3 +35,18 @@ test('site views report workflow has correct structure and safeguards', () => {
   assert.doesNotMatch(workflow, /actions\/checkout/);
   assert.doesNotMatch(workflow, /hermes/i);
 });
+
+test('adds authenticated QR totals without suppressing the site report on QR failure', () => {
+  const workflow = fs.readFileSync(
+    new URL('../.github/workflows/report-site-views.yml', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(workflow, /QR_STATS_SECRET:\s*\$\{\{ secrets\.QR_STATS_SECRET \}\}/);
+  assert.match(workflow, /https:\/\/lionhour\.com\/api\/qr-stats/);
+  assert.match(workflow, /Authorization: Bearer \$QR_STATS_SECRET/);
+  assert.match(workflow, /QR Poster Scans/);
+  assert.match(workflow, /allTime.*today/s);
+  assert.match(workflow, /QR scan report unavailable/);
+  assert.match(workflow, /if qr_stats=.*curl/s);
+});

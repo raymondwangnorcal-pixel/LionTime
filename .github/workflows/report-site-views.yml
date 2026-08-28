@@ -12,16 +12,18 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Query Vercel Analytics and send Telegram report
+      - name: Query site and QR analytics and send Telegram report
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          QR_STATS_SECRET: ${{ secrets.QR_STATS_SECRET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
         run: |
           set -euo pipefail
 
           api="https://api.vercel.com/v1/query/web-analytics/visits/count"
+          qr_stats_api="https://lionhour.com/api/qr-stats"
 
           fetch() {
             local response http_code body
@@ -68,14 +70,48 @@ jobs:
           VIEWS_6H=$(jq '.data.pageviews // 0' <<< "$last_6h")
           VISITORS_6H=$(jq '.data.visitors // 0' <<< "$last_6h")
 
+          # QR poster totals. Keep the normal site report available if this source fails.
+          qr_section=$(printf '%s\n%s' "QR Poster Scans" "QR scan report unavailable")
+          if [[ -n "$QR_STATS_SECRET" ]]; then
+            if qr_stats=$(curl --fail-with-body --silent --show-error \
+              --retry 3 --retry-all-errors \
+              -H "Authorization: Bearer $QR_STATS_SECRET" \
+              "$qr_stats_api"); then
+              if qr_lines=$(jq -er '
+                if ((.posters | type) == "array")
+                  and (([.posters[].id] | sort) == ["butler", "dining", "dodge", "ferris", "hewitt"])
+                  and all(.posters[];
+                    ((.label | type) == "string")
+                    and ((.allTime | type) == "number")
+                    and ((.today | type) == "number")
+                    and (.allTime >= 0)
+                    and (.today >= 0))
+                then .posters
+                  | map("\(.label): \(.allTime) total · \(.today) today")
+                  | join("\n")
+                else error("invalid QR stats response")
+                end
+              ' <<< "$qr_stats"); then
+                qr_section=$(printf '%s\n%s' "QR Poster Scans" "$qr_lines")
+              else
+                echo "QR stats response failed validation; sending site report without QR totals" >&2
+              fi
+            else
+              echo "QR stats request failed; sending site report without QR totals" >&2
+            fi
+          else
+            echo "QR_STATS_SECRET is not configured; sending site report without QR totals" >&2
+          fi
+
           # Format report
           report_time=$(TZ='America/New_York' date '+%b %-d, %Y %-I:%M %p ET')
 
-          message=$(printf '%s\n\n%s\n%s\n%s\n\n%s' \
+          message=$(printf '%s\n\n%s\n%s\n%s\n\n%s\n\n%s' \
             "LionHour Site Views Report" \
             "Last 6 hours: $VIEWS_6H views ($VISITORS_6H visitors)" \
             "Last 24 hours: $VIEWS_24H views ($VISITORS_24H visitors)" \
             "Last 30 days: $VIEWS_30D views ($VISITORS_30D visitors)" \
+            "$qr_section" \
             "Generated: $report_time")
 
           curl --fail-with-body --silent --show-error \

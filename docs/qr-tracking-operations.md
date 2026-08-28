@@ -16,7 +16,7 @@ Counts are aggregate route visits. Repeated scans, browser reloads, link preview
 
 ## Deployment
 
-The tracker uses the same Upstash Redis environment variables as LionHour's existing Dining voting feature. Add a strong `QR_STATS_SECRET` to the Vercel project for Production, and optionally Preview, before deploying.
+The tracker uses the same Upstash Redis environment variables as LionHour's existing Dining voting feature. Add a strong `QR_STATS_SECRET` to the Vercel project for Production, and optionally Preview, before deploying. Add the same value as a GitHub Actions repository secret named `QR_STATS_SECRET` so the scheduled Telegram report can authenticate to the private statistics endpoint.
 
 After deployment, verify each printed destination returns a `302` whose `Location` is `/` and whose `Cache-Control` is `no-store`.
 
@@ -43,3 +43,5 @@ The response lists all five posters in descending all-time order and includes bo
 ```
 
 Unauthorized requests return `401` and never expose the counts.
+
+The `Report site views` GitHub Actions workflow includes these rankings in its existing Telegram message every six hours. A manual workflow dispatch sends the same report on demand. If the QR endpoint or secret is unavailable, the Telegram message still includes site views and marks the QR section unavailable.

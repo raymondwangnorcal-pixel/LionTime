@@ -967,3 +967,17 @@
 - Superseded by: none
 - Note: Added five permanent poster routes, aggregate all-time and bounded daily counters, resilient uncached redirects, authenticated rankings, tests, and deployment guidance.
 - Privacy waivers: none
+
+## DEC-0049 — Include QR rankings in the site-views Telegram report
+
+- Date: 2026-08-27
+- Owner: user
+- Status at record: active
+- Decision: LionHour's six-hour site-views Telegram report will include authenticated current-day and all-time rankings for all five QR posters while degrading to an unavailable notice without suppressing site metrics when QR reporting fails.
+- Rationale: The existing report provides one recurring place to compare poster performance, while independent failure handling preserves the established site-traffic report during QR endpoint or configuration problems.
+- Scope: The scheduled and manually dispatched site-views workflow, GitHub Actions secret usage, QR response validation, Telegram message formatting, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `dcbf233c36b3fa1b0549ccbf5374011d73c940ac`
+- Supersedes: none
+- Evidence: The user's 2026-08-27 request to add QR scan counts to the existing Telegram workflow.
+- Privacy waivers: none
