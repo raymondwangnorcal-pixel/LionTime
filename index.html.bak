@@ -811,48 +811,6 @@
     .dining-vote-header { padding: 0.6rem 0.85rem; }
     .dining-vote-body { padding: 0.6rem 0.85rem; }
   }
-
-  /* ── Birthday surprise page ─────────────────── */
-  .birthday-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    background: #1a0a2e;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.5s ease;
-    overflow: hidden;
-  }
-  .birthday-overlay.active { opacity: 1; pointer-events: auto; }
-  .birthday-overlay .birthday-close {
-    position: absolute; top: 1rem; right: 1.2rem; z-index: 2;
-    width: 40px; height: 40px; border: none; border-radius: 50%;
-    background: rgba(255,255,255,0.15); color: white; font-size: 1.4rem;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-  }
-  .birthday-overlay .birthday-close:hover { background: rgba(255,255,255,0.3); }
-  .birthday-img-wrap {
-    max-width: 90vw; max-height: 80vh; border-radius: 16px; overflow: hidden;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-    animation: bdayFloat 3s ease-in-out infinite;
-  }
-  .birthday-img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
-  @keyframes bdayFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-  .birthday-sparkles {
-    position: absolute; inset: 0; pointer-events: none; overflow: hidden;
-  }
-  .birthday-sparkles .sparkle {
-    position: absolute; width: 6px; height: 6px; border-radius: 50%;
-    background: gold; opacity: 0;
-    animation: sparkleAnim 2s ease-in-out infinite;
-  }
-  @keyframes sparkleAnim {
-    0% { opacity: 0; transform: translateY(0) scale(0); }
-    50% { opacity: 1; transform: translateY(-30px) scale(1); }
-    100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
-  }
 </style>
 </head>
 <body>
@@ -866,15 +824,6 @@
   </div>
   <div class="sidebar-nav" id="sidebar-nav"></div>
 </nav>
-
-<!-- Birthday surprise overlay -->
-<div class="birthday-overlay" id="birthday-overlay">
-  <button class="birthday-close" id="birthday-close" aria-label="Close">&times;</button>
-  <div class="birthday-sparkles" id="birthday-sparkles"></div>
-  <div class="birthday-img-wrap">
-    <img src="assets/birthday-surprise.png" alt="Happy Birthday Mom">
-  </div>
-</div>
 
 <div class="page-wrap">
 <header class="header">
@@ -1783,83 +1732,6 @@ document.getElementById('sidebar-nav').addEventListener('click', e => {
 });
 
 renderSidebarNav();
-
-/* ── Birthday surprise (auto-expires 1 hour after deploy) ───── */
-(function() {
-  var BIRTHDAY_DEPLOY_TS = 1787959941017; // placeholder, replaced below
-  try { BIRTHDAY_DEPLOY_TS = BIRTHDAY_DEPLOY_TS || Date.now(); } catch(e) {}
-  var BIRTHDAY_TTL_MS = 60 * 60 * 1000;
-
-  function isBirthdayActive() {
-    return (Date.now() - BIRTHDAY_DEPLOY_TS) < BIRTHDAY_TTL_MS;
-  }
-
-  function injectBirthdayNavItem() {
-    if (!isBirthdayActive()) return;
-    var nav = document.getElementById('sidebar-nav');
-    if (!nav) return;
-    var old = document.getElementById('sidebar-birthday-item');
-    if (old) old.remove();
-    var oldDiv = document.getElementById('sidebar-birthday-divider');
-    if (oldDiv) oldDiv.remove();
-
-    var divider = document.createElement('div');
-    divider.className = 'sidebar-divider';
-    divider.id = 'sidebar-birthday-divider';
-    nav.appendChild(divider);
-
-    var btn = document.createElement('button');
-    btn.className = 'sidebar-nav-item';
-    btn.id = 'sidebar-birthday-item';
-    btn.innerHTML = '<span class="nav-icon">&#x2753;</span>???';
-    btn.style.color = '#b45309';
-    btn.addEventListener('click', function() {
-      toggleSidebar(false);
-      showBirthdayOverlay();
-    });
-    nav.appendChild(btn);
-  }
-
-  function showBirthdayOverlay() {
-    var ov = document.getElementById('birthday-overlay');
-    ov.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    generateSparkles();
-  }
-
-  function hideBirthdayOverlay() {
-    var ov = document.getElementById('birthday-overlay');
-    ov.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  function generateSparkles() {
-    var container = document.getElementById('birthday-sparkles');
-    container.innerHTML = '';
-    var colors = ['gold', '#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff78ae'];
-    for (var i = 0; i < 30; i++) {
-      var s = document.createElement('div');
-      s.className = 'sparkle';
-      s.style.left = Math.random() * 100 + '%';
-      s.style.top = Math.random() * 100 + '%';
-      s.style.background = colors[Math.floor(Math.random() * colors.length)];
-      s.style.animationDelay = (Math.random() * 3) + 's';
-      s.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-      s.style.width = (4 + Math.random() * 6) + 'px';
-      s.style.height = s.style.width;
-      container.appendChild(s);
-    }
-  }
-
-  document.getElementById('birthday-close').addEventListener('click', hideBirthdayOverlay);
-
-  var _origRenderSidebarNav = renderSidebarNav;
-  renderSidebarNav = function() {
-    _origRenderSidebarNav();
-    injectBirthdayNavItem();
-  };
-  injectBirthdayNavItem();
-})();
 
 function configureAboutDismissal(about, eventTarget, scrollTarget = eventTarget) {
   const close = () => { about.open = false; };
