@@ -23,7 +23,7 @@ jobs:
           set -euo pipefail
 
           api="https://api.vercel.com/v1/query/web-analytics/visits/count"
-          qr_stats_api="https://lionhour.com/api/qr-stats"
+          qr_stats_api="https://www.lionhour.com/api/qr-stats"
 
           fetch() {
             local response http_code body

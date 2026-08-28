@@ -43,7 +43,8 @@ test('adds authenticated QR totals without suppressing the site report on QR fai
   );
 
   assert.match(workflow, /QR_STATS_SECRET:\s*\$\{\{ secrets\.QR_STATS_SECRET \}\}/);
-  assert.match(workflow, /https:\/\/lionhour\.com\/api\/qr-stats/);
+  assert.match(workflow, /https:\/\/www\.lionhour\.com\/api\/qr-stats/);
+  assert.doesNotMatch(workflow, /qr_stats_api="https:\/\/lionhour\.com/);
   assert.match(workflow, /Authorization: Bearer \$QR_STATS_SECRET/);
   assert.match(workflow, /QR Poster Scans/);
   assert.match(workflow, /allTime.*today/s);

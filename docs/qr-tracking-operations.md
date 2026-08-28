@@ -27,7 +27,7 @@ Request the private report with the secret in the Authorization header:
 ```sh
 curl --fail-with-body --silent --show-error \
   -H "Authorization: Bearer $QR_STATS_SECRET" \
-  https://lionhour.com/api/qr-stats
+  https://www.lionhour.com/api/qr-stats
 ```
 
 The response lists all five posters in descending all-time order and includes both all-time and current-day totals:
