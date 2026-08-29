@@ -995,3 +995,11 @@
 - Supersedes: none
 - Evidence: User-supplied official Labor Day 2026 Operating Hours PDF reviewed on 2026-08-29.
 - Privacy waivers: none
+
+## Update — 2026-08-29 — DEC-0050
+
+- Type: implementation
+- Implementation commit: `ff1d1c66e934216f6ad8b45522f1b6490b48f8fd` — Preserve verified Labor Day intervals during source challenges
+- Superseded by: none
+- Note: The verified September 4-7 Labor Day payload now succeeds only when the official Labor Day source returns a managed challenge.
+- Privacy waivers: none
