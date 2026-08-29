@@ -981,3 +981,17 @@
 - Supersedes: none
 - Evidence: The user's 2026-08-27 request to add QR scan counts to the existing Telegram workflow.
 - Privacy waivers: none
+
+## DEC-0050 — Preserve verified Labor Day intervals during a source challenge
+
+- Date: 2026-08-29
+- Owner: user
+- Status at record: active
+- Decision: When the Labor Day 2026 Dining page is challenge-blocked, LionHour will publish the user-supplied, officially verified September 4-7 intervals for that one bounded schedule.
+- Rationale: Columbia will not provide automated access, and the attached official PDF supplies exact, date-limited hours without guessing or bypassing the protection.
+- Scope: Dining Labor Day acquisition fallback, published Dining snapshot, and regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `7e9dbeba470a4fdb6dfc7ce56aff650419ffd26b`
+- Supersedes: none
+- Evidence: User-supplied official Labor Day 2026 Operating Hours PDF reviewed on 2026-08-29.
+- Privacy waivers: none
