@@ -812,11 +812,8 @@
     .dining-vote-body { padding: 0.6rem 0.85rem; }
   }
 
-  /* Hide page content behind splash */
-  body.splash-active .page-wrap,
-  body.splash-active .sidebar,
-  body.splash-active .sidebar-overlay,
-  body.splash-active .header { visibility: hidden; }
+  /* Hide ALL page content behind splash — nuclear approach */
+  body.splash-active > *:not(.splash-overlay) { display: none !important; }
   /* ── Welcome splash overlay ─────────────────── */
   .splash-overlay {
     position: fixed; inset: 0; z-index: 9999;
@@ -830,16 +827,17 @@
     width: 100%; height: 100%; object-fit: cover; object-position: center bottom;
   }
   .splash-close {
-    position: absolute; top: max(1rem, env(safe-area-inset-top, 1rem));
-    right: 1rem; z-index: 10;
-    width: 44px; height: 44px; border: none; border-radius: 50%;
-    background: rgba(0,0,0,0.45); color: white;
-    font-size: 1.5rem; line-height: 1;
+    position: absolute; top: max(1.2rem, env(safe-area-inset-top, 1.2rem));
+    right: 1.2rem; z-index: 10;
+    width: 52px; height: 52px; border: 2px solid rgba(255,255,255,0.6); border-radius: 50%;
+    background: rgba(0,0,0,0.7); color: white;
+    font-size: 1.8rem; line-height: 1;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     transition: background 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   }
-  .splash-close:hover { background: rgba(0,0,0,0.65); }
+  .splash-close:hover { background: rgba(0,0,0,0.85); }
 </style>
 </head>
 <body>
