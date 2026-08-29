@@ -65,6 +65,15 @@ test('uses the requested display labels for SIPA and Faculty House venues', () =
   ]);
 });
 
+test('uses the current weekend opening time for Joe\'s Coffee at NoCo', () => {
+  const noco = api.VENUES.find(venue => venue.id === 'joe-noco');
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify([noco.hours[0], noco.hours[6]])),
+    [[['08:00', '17:00']], [['08:00', '17:00']]],
+  );
+});
+
 test('only renders Student Life health services in the Student Life category', () => {
   assert.match(
     appScript,
