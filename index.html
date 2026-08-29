@@ -403,7 +403,7 @@
     display: none; padding: 0.6rem 1.1rem 1rem 2.95rem;
     background: #f8fafc; border-bottom: 1px solid var(--row-line);
   }
-  .entry.expanded .detail { display: block; }
+  .entry.expanded .detail { display: block; cursor: pointer; }
   .week {
     background: #fff; border-radius: 10px;
     border: 1px solid var(--hairline);
@@ -1723,6 +1723,17 @@ document.getElementById('stage').addEventListener('click', e => {
     spacesToggle.setAttribute('aria-expanded', String(!isExpanded));
     list.hidden = isExpanded;
     if (isExpanded) expandedRecreationSpaces.delete('dodge'); else expandedRecreationSpaces.add('dodge');
+    return;
+  }
+  /* Clicking the detail area (expanded hours) also collapses the entry */
+  const detail = e.target.closest('.detail');
+  if (detail && !e.target.closest('button, a, input, .dining-vote-btn, .recreation-spaces-toggle')) {
+    const entry = detail.closest('.entry');
+    const id = entry.dataset.id;
+    expanded.delete(id);
+    entry.classList.remove('expanded');
+    entry.querySelector('.row')?.setAttribute('aria-expanded', 'false');
+    syncExpandedBorders();
     return;
   }
   const row = e.target.closest('.row'); if (!row) return;
