@@ -811,9 +811,43 @@
     .dining-vote-header { padding: 0.6rem 0.85rem; }
     .dining-vote-body { padding: 0.6rem 0.85rem; }
   }
+
+  /* ── Welcome splash overlay ─────────────────── */
+  .splash-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0b1e3d;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 1; transition: opacity 0.8s ease;
+    cursor: default;
+  }
+  .splash-overlay.fade-out { opacity: 0; pointer-events: none; }
+  .splash-overlay img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .splash-close {
+    position: absolute; top: max(1rem, env(safe-area-inset-top, 1rem));
+    right: 1rem; z-index: 10;
+    width: 44px; height: 44px; border: none; border-radius: 50%;
+    background: rgba(0,0,0,0.45); color: white;
+    font-size: 1.5rem; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    transition: background 0.2s;
+  }
+  .splash-close:hover { background: rgba(0,0,0,0.65); }
 </style>
 </head>
 <body>
+
+<!-- Welcome splash screen -->
+<div class="splash-overlay" id="splash-overlay">
+  <button class="splash-close" id="splash-close" aria-label="Close">&times;</button>
+  <picture>
+    <source media="(orientation: portrait)" srcset="assets/welcome-splash.jpg">
+    <source media="(orientation: landscape)" srcset="assets/welcome-splash-wide.png">
+    <img src="assets/welcome-splash.jpg" alt="Welcome, Class of 2030!">
+  </picture>
+</div>
 
 <!-- Sidebar -->
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -1515,7 +1549,11 @@ function render() {
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
     const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && statusMatchesFilter(getStatus(v, now).status, activeStatus));
-    if (!regularShown.length && !hasHealthVenues) return '';
+    const isDiningSummer = c.id === 'dining' && new Date() < new Date(2026, 8, 4);
+    if (!regularShown.length && !hasHealthVenues && !isDiningSummer) return '';
+    /* Dining: when no venues match the status filter, show the section collapsed with all venues */
+    const diningForceCollapsed = isDiningSummer && !regularShown.length;
+    if (diningForceCollapsed && !collapsedCategories.has(c.id)) collapsedCategories.add(c.id);
     /* Auto-expand health dropdown when it's the only thing with matching venues */
     if (isStudent && hasHealthVenues && !regularShown.length) healthDropdownExpanded = true;
 
@@ -1531,6 +1569,11 @@ function render() {
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
     const regularAll = isStudent ? all.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : all;
+    const diningAllVenues = diningForceCollapsed ? regularAll.slice().sort((a, b) => {
+      const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
+      return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
+    }) : null;
+
     const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
@@ -1544,7 +1587,7 @@ function render() {
           <span></span><span class="strong">Place</span><span class="strong">Today</span>
           <span class="r">Status</span><span></span>
         </div>
-        ${regularShown.map(v => rowHTML(v, now)).join('')}
+        ${(diningAllVenues || regularShown).map(v => rowHTML(v, now)).join('')}
         ${hasHealthVenues ? healthDropdownHTML(now, !regularShown.length) : ''}
       </div>
       ${c.id === 'dining' && window.LionHourDiningVote ? `<div id="dining-vote-card">${LionHourDiningVote.resultsCardHTML()}</div>` : ''}`;
@@ -1883,5 +1926,33 @@ setInterval(render, 60000);
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 
+
+<script>
+/* ── Welcome splash: auto-fade after 5s, dismiss on X ───── */
+(function() {
+  var overlay = document.getElementById('splash-overlay');
+  var closeBtn = document.getElementById('splash-close');
+  if (!overlay) return;
+
+  function dismiss() {
+    overlay.classList.add('fade-out');
+    document.body.style.overflow = '';
+    setTimeout(function() { overlay.remove(); }, 900);
+  }
+
+  // Prevent scroll while splash is visible
+  document.body.style.overflow = 'hidden';
+
+  // Auto-fade after 5 seconds
+  var timer = setTimeout(dismiss, 5000);
+
+  // Close button
+  closeBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    clearTimeout(timer);
+    dismiss();
+  });
+})();
+</script>
 </body>
 </html>
