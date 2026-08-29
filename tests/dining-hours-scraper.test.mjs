@@ -241,7 +241,7 @@ test('publishes fourteen Barnard days when the optional third week is unavailabl
   assert.equal(nextClicks, 1);
 });
 
-test('allows a passive 403 challenge to clear and isolates one that remains', async () => {
+test('uses the verified Labor Day intervals when its source remains challenge-blocked', async () => {
   let currentUrl = '';
   let laborChallengeActive = true;
   let laborArticleRead = false;
@@ -269,7 +269,6 @@ test('allows a passive 403 challenge to clear and isolates one that remains', as
     async waitForTimeout(value) {
       if (value === 12_000) {
         challengeWaits.push(currentUrl);
-        if (currentUrl.includes('labor-day')) laborChallengeActive = false;
       }
     },
     async evaluate() { return JSON.stringify(completeDataset()); },
@@ -306,10 +305,28 @@ test('allows a passive 403 challenge to clear and isolates one that remains', as
 
   assert.equal(batch.attempts[2].sourceId, 'labor-day-2026');
   assert.equal(batch.attempts[2].result, 'success');
+  assert.deepEqual(batch.attempts[2].payload, {
+    id: 'labor-day-2026',
+    days: [
+      { date: '2026-09-04', venues: {
+        ferris: [['09:00', '20:00']], chefmikes: [['11:00', '20:00']], jjs: [['12:00', '20:00']],
+      } },
+      { date: '2026-09-05', venues: {
+        ferris: [['09:00', '20:00']], chefmikes: [['11:00', '20:00']], jjs: [['12:00', '20:00']],
+      } },
+      { date: '2026-09-06', venues: {
+        ferris: [['09:00', '20:00']], johnjay: [['09:30', '21:00']],
+        chefmikes: [['11:00', '20:00']], jjs: [['12:00', '21:00']],
+      } },
+      { date: '2026-09-07', venues: {
+        ferris: [['09:00', '20:00']], johnjay: [['09:30', '21:00']], jjs: [['12:00', '21:00']],
+      } },
+    ],
+  });
   assert.equal(batch.attempts[3].sourceId, 'fall-2026');
   assert.equal(batch.attempts[3].result, 'failure');
   assert.equal(batch.attempts[3].failureCode, 'challenge');
-  assert.equal(laborArticleRead, true);
+  assert.equal(laborArticleRead, false);
   assert.equal(fallArticleRead, false);
   assert.equal(challengeWaits.length, 2);
 });
