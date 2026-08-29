@@ -812,6 +812,11 @@
     .dining-vote-body { padding: 0.6rem 0.85rem; }
   }
 
+  /* Hide page content behind splash */
+  body.splash-active .page-wrap,
+  body.splash-active .sidebar,
+  body.splash-active .sidebar-overlay,
+  body.splash-active .header { visibility: hidden; }
   /* ── Welcome splash overlay ─────────────────── */
   .splash-overlay {
     position: fixed; inset: 0; z-index: 9999;
@@ -822,7 +827,7 @@
   }
   .splash-overlay.fade-out { opacity: 0; pointer-events: none; }
   .splash-overlay img {
-    width: 100%; height: 100%; object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover; object-position: center bottom;
   }
   .splash-close {
     position: absolute; top: max(1rem, env(safe-area-inset-top, 1rem));
@@ -1934,13 +1939,19 @@ setInterval(render, 60000);
   var closeBtn = document.getElementById('splash-close');
   if (!overlay) return;
 
+  // Disappear permanently after Sept 4 at midnight ET (04:00 UTC)
+  var EXPIRY = new Date('2026-09-04T04:00:00Z').getTime();
+  if (Date.now() >= EXPIRY) { overlay.remove(); document.body.classList.remove('splash-active'); return; }
+
   function dismiss() {
     overlay.classList.add('fade-out');
     document.body.style.overflow = '';
+    document.body.classList.remove('splash-active');
     setTimeout(function() { overlay.remove(); }, 900);
   }
 
   // Prevent scroll while splash is visible
+  document.body.classList.add('splash-active');
   document.body.style.overflow = 'hidden';
 
   // Auto-fade after 5 seconds
