@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import test from 'node:test';
 
@@ -50,4 +51,33 @@ test('adds authenticated QR totals without suppressing the site report on QR fai
   assert.match(workflow, /allTime.*today/s);
   assert.match(workflow, /QR scan report unavailable/);
   assert.match(workflow, /if qr_stats=.*curl/s);
+});
+
+test('QR report validation accepts all seven approved poster rows', () => {
+  const workflow = fs.readFileSync(
+    new URL('../.github/workflows/report-site-views.yml', import.meta.url),
+    'utf8'
+  );
+  const match = workflow.match(/if qr_lines=\$\(jq -er '\n([\s\S]*?)\n\s*' <<< "\$qr_stats"\); then/);
+  assert.ok(match, 'QR report jq program should be extractable from the workflow');
+
+  const input = {
+    posters: [
+      { id: 'dodge', label: 'Dodge', allTime: 2, today: 1 },
+      { id: 'butler', label: 'Butler', allTime: 1, today: 0 },
+      { id: 'dining', label: 'General Dining', allTime: 1, today: 0 },
+      { id: 'ferris', label: 'Ferris', allTime: 0, today: 0 },
+      { id: 'hewitt', label: 'Hewitt', allTime: 0, today: 0 },
+      { id: 'plug', label: 'Plug', allTime: 0, today: 0 },
+      { id: 'feedback', label: 'Feedback', allTime: 0, today: 0 },
+    ],
+  };
+  const result = spawnSync('jq', ['-er', match[1]], {
+    input: JSON.stringify(input),
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Plug: 0 total · 0 today/);
+  assert.match(result.stdout, /Feedback: 0 total · 0 today/);
 });

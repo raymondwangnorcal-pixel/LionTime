@@ -1031,3 +1031,47 @@
 - Supersedes: none
 - Evidence: User request on 2026-08-29 to label LionHour as operated by Gapless Labs.
 - Privacy waivers: none
+
+## DEC-0053 — Expand permanent QR tracking to seven poster routes
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour will add permanent Plug and Feedback QR routes to the existing five poster-specific aggregate trackers.
+- Rationale: Separate Plug and Feedback counters let their poster performance be compared under the same privacy-preserving measurement model as the existing placements.
+- Scope: Public QR URLs, approved poster registry, aggregate Redis fields, private statistics response, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `a5c01dc3aa8793d9228d8acfa83819007bd52a2b`
+- Supersedes: DEC-0048
+- Evidence: The user-approved bounded seven-poster QR design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## DEC-0054 — Report all seven QR posters through Telegram
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour's site-views Telegram workflow will validate and report Plug and Feedback alongside the existing five QR posters.
+- Rationale: Recurring reports must accept the expanded statistics contract so the two new placements remain visible without weakening payload validation.
+- Scope: Site-views GitHub Actions workflow, QR response validation, Telegram rankings, and regression tests.
+- Implementation: pending
+- Recorded against HEAD: `a5c01dc3aa8793d9228d8acfa83819007bd52a2b`
+- Supersedes: DEC-0049
+- Evidence: The user-approved bounded seven-poster QR design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0048
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0053
+- Note: The original five-route contract is expanded to include Plug and Feedback under the same aggregate tracking policy.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0049
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0054
+- Note: The original five-poster Telegram contract is expanded to validate and report all seven approved routes.
+- Privacy waivers: none
