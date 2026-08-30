@@ -1135,3 +1135,33 @@
 - Superseded by: DEC-0056
 - Note: The seven-poster Telegram contract is expanded to validate and report Orientation.
 - Privacy waivers: none
+
+## DEC-0057 — Shorten the welcome splash presentation
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour's shared mobile and desktop welcome splash will remain fully visible for 0.8 seconds and then fade out over 0.3 seconds.
+- Rationale: The shorter presentation keeps the welcome visible briefly without delaying access to the site content.
+- Scope: Welcome splash timing, fade transition, cleanup behavior, and mobile and desktop regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `7461128a0e9a522acda8580f2645176a7529d280`
+- Supersedes: none
+- Evidence: The user-approved bounded welcome-timing design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0055
+
+- Type: implementation
+- Implementation commit: `7461128a0e9a522acda8580f2645176a7529d280` — Expand QR tracking and reporting to eight poster routes
+- Superseded by: none
+- Note: Added Orientation to the permanent tracker, authenticated statistics response, tests, and operations guidance.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0056
+
+- Type: implementation
+- Implementation commit: `7461128a0e9a522acda8580f2645176a7529d280` — Expand QR tracking and reporting to eight poster routes
+- Superseded by: none
+- Note: Expanded the site-views Telegram workflow to validate and report all eight approved QR posters.
+- Privacy waivers: none

@@ -819,7 +819,7 @@
     position: fixed; inset: 0; z-index: 9999;
     background: #0b1e3d;
     display: flex; align-items: center; justify-content: center;
-    opacity: 1; transition: opacity 0.8s ease;
+    opacity: 1; transition: opacity 0.3s ease;
     cursor: default;
   }
   .splash-overlay.fade-out { opacity: 0; pointer-events: none; }
@@ -1943,7 +1943,7 @@ setInterval(render, 60000);
 
 
 <script>
-/* ── Welcome splash: auto-fade after 5s, dismiss on X ───── */
+/* ── Welcome splash: auto-fade after 0.8s, dismiss on X ─── */
 (function() {
   var overlay = document.getElementById('splash-overlay');
   var closeBtn = document.getElementById('splash-close');
@@ -1957,15 +1957,15 @@ setInterval(render, 60000);
     overlay.classList.add('fade-out');
     document.body.style.overflow = '';
     document.body.classList.remove('splash-active');
-    setTimeout(function() { overlay.remove(); }, 900);
+    setTimeout(function() { overlay.remove(); }, 300);
   }
 
   // Prevent scroll while splash is visible
   document.body.classList.add('splash-active');
   document.body.style.overflow = 'hidden';
 
-  // Auto-fade after 5 seconds
-  var timer = setTimeout(dismiss, 2000);
+  // Auto-fade after 0.8 seconds
+  var timer = setTimeout(dismiss, 800);
 
   // Close button
   closeBtn.addEventListener('click', function(e) {
