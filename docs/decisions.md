@@ -1075,3 +1075,63 @@
 - Superseded by: DEC-0054
 - Note: The original five-poster Telegram contract is expanded to validate and report all seven approved routes.
 - Privacy waivers: none
+
+## DEC-0055 — Expand permanent QR tracking to eight poster routes
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour will add a permanent Orientation QR route to the seven existing poster-specific aggregate trackers.
+- Rationale: A separate Orientation counter lets that campaign's performance be compared under the same privacy-preserving measurement model as the other placements.
+- Scope: Public QR URLs, approved poster registry, aggregate Redis fields, private statistics response, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `aeb1d561f96ee5fc315f777413f0990d154f3c0c`
+- Supersedes: DEC-0053
+- Evidence: The user-approved bounded eight-poster QR design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## DEC-0056 — Report all eight QR posters through Telegram
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour's site-views Telegram workflow will validate and report Orientation alongside the seven existing QR posters.
+- Rationale: Recurring reports must accept the expanded statistics contract so Orientation remains visible without weakening payload validation.
+- Scope: Site-views GitHub Actions workflow, QR response validation, Telegram rankings, and regression tests.
+- Implementation: pending
+- Recorded against HEAD: `aeb1d561f96ee5fc315f777413f0990d154f3c0c`
+- Supersedes: DEC-0054
+- Evidence: The user-approved bounded eight-poster QR design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0053
+
+- Type: implementation
+- Implementation commit: `aeb1d561f96ee5fc315f777413f0990d154f3c0c` — Expand QR tracking to seven poster routes
+- Superseded by: none
+- Note: Added Plug and Feedback to the permanent tracker, authenticated statistics response, Telegram validator, tests, and operations guidance.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0054
+
+- Type: implementation
+- Implementation commit: `aeb1d561f96ee5fc315f777413f0990d154f3c0c` — Expand QR tracking to seven poster routes
+- Superseded by: none
+- Note: Expanded the site-views Telegram workflow to validate and report all seven approved QR posters.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0053
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0055
+- Note: The seven-route contract is expanded to include Orientation under the same aggregate tracking policy.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0054
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0056
+- Note: The seven-poster Telegram contract is expanded to validate and report Orientation.
+- Privacy waivers: none

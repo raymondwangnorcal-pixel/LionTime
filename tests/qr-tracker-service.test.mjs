@@ -30,7 +30,7 @@ test('records each approved poster scan before redirecting without caching', asy
   const store = createMemoryStore();
   const service = createQrTrackerService({ store, now: () => FIXED_NOW });
 
-  for (const poster of ['dodge', 'butler', 'dining', 'ferris', 'hewitt', 'plug', 'feedback']) {
+  for (const poster of ['dodge', 'butler', 'dining', 'ferris', 'hewitt', 'plug', 'feedback', 'orientation']) {
     const response = await service.handleScan({ method: 'GET', poster });
     assert.equal(response.status, 302);
     assert.equal(response.headers.Location, '/');
@@ -38,7 +38,16 @@ test('records each approved poster scan before redirecting without caching', asy
   }
 
   assert.deepEqual(store.inspect(), {
-    allTime: { dodge: 1, butler: 1, dining: 1, ferris: 1, hewitt: 1, plug: 1, feedback: 1 },
+    allTime: {
+      dodge: 1,
+      butler: 1,
+      dining: 1,
+      ferris: 1,
+      hewitt: 1,
+      plug: 1,
+      feedback: 1,
+      orientation: 1,
+    },
     daily: {
       '2026-08-27': {
         dodge: 1,
@@ -48,6 +57,7 @@ test('records each approved poster scan before redirecting without caching', asy
         hewitt: 1,
         plug: 1,
         feedback: 1,
+        orientation: 1,
       },
     },
   });
@@ -112,6 +122,7 @@ test('returns authenticated scan totals ranked by all-time performance', async (
       { id: 'butler', label: 'Butler', allTime: 3, today: 0 },
       { id: 'feedback', label: 'Feedback', allTime: 0, today: 0 },
       { id: 'hewitt', label: 'Hewitt', allTime: 0, today: 0 },
+      { id: 'orientation', label: 'Orientation', allTime: 0, today: 0 },
       { id: 'plug', label: 'Plug', allTime: 0, today: 0 },
     ],
   });
