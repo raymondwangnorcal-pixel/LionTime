@@ -1003,3 +1003,31 @@
 - Superseded by: none
 - Note: The verified September 4-7 Labor Day payload now succeeds only when the official Labor Day source returns a managed challenge.
 - Privacy waivers: none
+
+## DEC-0051 — Publish a LionHour privacy policy for current measurement and feedback data
+
+- Date: 2026-08-29
+- Owner: user
+- Status at record: active
+- Decision: LionHour will publish a footer-linked privacy policy naming the operator and explaining that aggregate website views, aggregate QR scans, and feedback submissions are collected to improve site performance.
+- Rationale: Visitors need a clear disclosure of the service's current measurement and feedback practices before any advertising integration.
+- Scope: Footer navigation, public privacy notice, Vercel Web Analytics, Upstash QR counters, and the Google Forms/Sheets feedback workflow.
+- Implementation: pending
+- Recorded against HEAD: `1cfe0a0c7c11bd35ebe9613bfa54bb96fa66e1f4`
+- Supersedes: none
+- Evidence: User request on 2026-08-29 to add a privacy-policy link and disclose LionHour's operator, website views, QR tracking, feedback, purpose, and Google Sheets storage.
+- Privacy waivers: none
+
+## DEC-0052 — Identify Gapless Labs as LionHour’s operator
+
+- Date: 2026-08-29
+- Owner: user
+- Status at record: active
+- Decision: LionHour’s public privacy policy will identify Gapless Labs as the site operator.
+- Rationale: Visitors need a consistent organization name for the party responsible for the privacy notice and site operations.
+- Scope: Public privacy policy and any future operator disclosures.
+- Implementation: pending
+- Recorded against HEAD: `1cfe0a0c7c11bd35ebe9613bfa54bb96fa66e1f4`
+- Supersedes: none
+- Evidence: User request on 2026-08-29 to label LionHour as operated by Gapless Labs.
+- Privacy waivers: none
