@@ -1347,7 +1347,7 @@ function todayHoursText(venue, now) {
    STATE
    ══════════════════════════════════════════════════ */
 let activeCat = 'all';
-let activeStatus = 'open';
+let activeStatus = new Date() < new Date('2026-08-31T11:15:00Z') ? 'all' : 'open';
 let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
