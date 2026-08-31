@@ -79,7 +79,7 @@ jobs:
               "$qr_stats_api"); then
               if qr_lines=$(jq -er '
                 if ((.posters | type) == "array")
-                  and (([.posters[].id] | sort) == ["butler", "dining", "dodge", "feedback", "ferris", "hewitt", "orientation", "plug"])
+                  and (([.posters[].id] | sort) == ["butler", "dining", "discord", "dodge", "feedback", "ferris", "hewitt", "orientation", "plug", "reddit"])
                   and all(.posters[];
                     ((.label | type) == "string")
                     and ((.allTime | type) == "number")

@@ -53,7 +53,7 @@ test('adds authenticated QR totals without suppressing the site report on QR fai
   assert.match(workflow, /if qr_stats=.*curl/s);
 });
 
-test('QR report validation accepts all eight approved poster rows', () => {
+test('QR report validation accepts all ten approved poster rows', () => {
   const workflow = fs.readFileSync(
     new URL('../.github/workflows/report-site-views.yml', import.meta.url),
     'utf8'
@@ -71,6 +71,8 @@ test('QR report validation accepts all eight approved poster rows', () => {
       { id: 'plug', label: 'Plug', allTime: 0, today: 0 },
       { id: 'feedback', label: 'Feedback', allTime: 0, today: 0 },
       { id: 'orientation', label: 'Orientation', allTime: 0, today: 0 },
+      { id: 'discord', label: 'Discord', allTime: 0, today: 0 },
+      { id: 'reddit', label: 'Reddit', allTime: 0, today: 0 },
     ],
   };
   const result = spawnSync('jq', ['-er', match[1]], {
@@ -82,4 +84,6 @@ test('QR report validation accepts all eight approved poster rows', () => {
   assert.match(result.stdout, /Plug: 0 total · 0 today/);
   assert.match(result.stdout, /Feedback: 0 total · 0 today/);
   assert.match(result.stdout, /Orientation: 0 total · 0 today/);
+  assert.match(result.stdout, /Discord: 0 total · 0 today/);
+  assert.match(result.stdout, /Reddit: 0 total · 0 today/);
 });
