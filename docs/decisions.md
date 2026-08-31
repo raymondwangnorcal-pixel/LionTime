@@ -1217,3 +1217,41 @@
 - Superseded by: DEC-0059
 - Note: The eight-poster Telegram contract is expanded to validate and report Discord and Reddit.
 - Privacy waivers: none
+
+## DEC-0060 — Hold the welcome splash for one second before fading
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour's shared mobile and desktop welcome splash will remain fully visible for 1 second and then fade out over 0.3 seconds.
+- Rationale: The revised timing gives the welcome image a complete second of visibility while keeping the transition brief.
+- Scope: Welcome splash timing, fade transition, cleanup behavior, and mobile and desktop regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `f1d24beb74c0ce6f1f02f40da77e80196379e973`
+- Supersedes: DEC-0057
+- Evidence: The user-approved bounded welcome-timing design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0058
+
+- Type: implementation
+- Implementation commit: `f1d24beb74c0ce6f1f02f40da77e80196379e973` — Expand QR tracking and reporting to Discord and Reddit
+- Superseded by: none
+- Note: Added Discord and Reddit to the permanent aggregate tracker, authenticated statistics response, tests, and operations guidance.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0059
+
+- Type: implementation
+- Implementation commit: `f1d24beb74c0ce6f1f02f40da77e80196379e973` — Expand QR tracking and reporting to Discord and Reddit
+- Superseded by: none
+- Note: Expanded the site-views Telegram workflow to validate and report all ten approved QR trackers.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0057
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0060
+- Note: The 0.8-second hold is replaced by a 1-second hold while retaining the 0.3-second fade.
+- Privacy waivers: none

@@ -1943,7 +1943,7 @@ setInterval(render, 60000);
 
 
 <script>
-/* ── Welcome splash: auto-fade after 0.8s, dismiss on X ─── */
+/* ── Welcome splash: auto-fade after 1s, dismiss on X ─── */
 (function() {
   var overlay = document.getElementById('splash-overlay');
   var closeBtn = document.getElementById('splash-close');
@@ -1964,8 +1964,8 @@ setInterval(render, 60000);
   document.body.classList.add('splash-active');
   document.body.style.overflow = 'hidden';
 
-  // Auto-fade after 0.8 seconds
-  var timer = setTimeout(dismiss, 800);
+  // Auto-fade after 1 second
+  var timer = setTimeout(dismiss, 1000);
 
   // Close button
   closeBtn.addEventListener('click', function(e) {
