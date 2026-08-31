@@ -22,7 +22,7 @@ for (const [device, viewport] of [
   ['mobile', { width: 390, height: 844 }],
   ['desktop', { width: 1440, height: 900 }],
 ]) {
-  test(`${device} welcome splash holds for 0.8 seconds and fades for 0.3 seconds`, async () => {
+  test(`${device} welcome splash holds for 1 second and fades for 0.3 seconds`, async () => {
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport });
 
@@ -32,7 +32,7 @@ for (const [device, viewport] of [
       await page.clock.pauseAt(startTime);
       await page.setContent(testDocument);
 
-      await page.clock.fastForward(799);
+      await page.clock.fastForward(999);
       assert.equal(await page.locator('#splash-overlay').evaluate((node) => node.classList.contains('fade-out')), false);
 
       await page.clock.fastForward(1);
