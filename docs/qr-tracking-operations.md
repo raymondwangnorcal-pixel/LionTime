@@ -1,6 +1,6 @@
 # QR poster tracking
 
-LionHour tracks aggregate visits from eight permanent poster URLs:
+LionHour tracks aggregate visits from ten permanent poster URLs:
 
 | Poster | QR destination |
 | --- | --- |
@@ -12,6 +12,8 @@ LionHour tracks aggregate visits from eight permanent poster URLs:
 | Plug | `https://lionhour.com/qr/plug` |
 | Feedback | `https://lionhour.com/qr/feedback` |
 | Orientation | `https://lionhour.com/qr/orientation` |
+| Discord | `https://lionhour.com/qr/discord` |
+| Reddit | `https://lionhour.com/qr/reddit` |
 
 Each successful request increments an all-time hash and an Eastern-date daily hash in Upstash Redis, then returns an uncached `302` redirect to the LionHour home page. The daily hashes expire after 400 days; all-time totals do not expire. If Redis is temporarily unavailable, the visitor is still redirected and the failed scan is logged rather than counted.
 
@@ -33,7 +35,7 @@ curl --fail-with-body --silent --show-error \
   https://www.lionhour.com/api/qr-stats
 ```
 
-The response lists all eight posters in descending all-time order and includes both all-time and current-day totals:
+The response lists all ten posters in descending all-time order and includes both all-time and current-day totals:
 
 ```json
 {

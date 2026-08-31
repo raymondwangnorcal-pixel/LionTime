@@ -1165,3 +1165,55 @@
 - Superseded by: none
 - Note: Expanded the site-views Telegram workflow to validate and report all eight approved QR posters.
 - Privacy waivers: none
+
+## DEC-0058 — Expand permanent QR tracking to ten poster routes
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour will add permanent Discord and Reddit QR routes to the eight existing poster-specific aggregate trackers.
+- Rationale: Separate Discord and Reddit counters let those outreach channels be compared under the same privacy-preserving measurement model as the other placements.
+- Scope: Public QR URLs, approved poster registry, aggregate Redis fields, private statistics response, tests, and operations guidance.
+- Implementation: pending
+- Recorded against HEAD: `b0008ff951e44da6663a01630d1667029a798575`
+- Supersedes: DEC-0055
+- Evidence: The user-approved bounded ten-poster QR design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## DEC-0059 — Report all ten QR posters through Telegram
+
+- Date: 2026-08-30
+- Owner: user
+- Status at record: active
+- Decision: LionHour's site-views Telegram workflow will validate and report Discord and Reddit alongside the eight existing QR posters.
+- Rationale: Recurring reports must accept the expanded statistics contract so both outreach channels remain visible without weakening payload validation.
+- Scope: Site-views GitHub Actions workflow, QR response validation, Telegram rankings, and regression tests.
+- Implementation: pending
+- Recorded against HEAD: `b0008ff951e44da6663a01630d1667029a798575`
+- Supersedes: DEC-0056
+- Evidence: The user-approved bounded ten-poster QR design in the 2026-08-30 implementation conversation.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0057
+
+- Type: implementation
+- Implementation commit: `ae88ad1329d10b0a90b7c8957f0f5a20c94dc9f6` — Shorten welcome splash presentation
+- Superseded by: none
+- Note: The shared welcome splash now holds for 0.8 seconds, fades for 0.3 seconds, and has mobile and desktop Chromium regression coverage.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0055
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0058
+- Note: The eight-route contract is expanded to include Discord and Reddit under the same aggregate tracking policy.
+- Privacy waivers: none
+
+## Update — 2026-08-30 — DEC-0056
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0059
+- Note: The eight-poster Telegram contract is expanded to validate and report Discord and Reddit.
+- Privacy waivers: none
