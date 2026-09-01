@@ -84,11 +84,18 @@ function sourceDate(value, field) {
   throw new Error(`invalid ${field}`);
 }
 
-function cleanStatus(value) {
+function cleanStatus(value, maxLength = 160) {
   if (value === null || value === undefined) return null;
   if (Array.isArray(value)) {
-    const parts = value.map((item) => cleanStatus(item)).filter(Boolean);
-    return parts.length ? parts.join(' · ') : null;
+    const parts = value.map((item) => cleanStatus(item, maxLength)).filter(Boolean);
+    if (!parts.length) return null;
+    let result = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      const next = `${result} · ${parts[i]}`;
+      if (next.length > maxLength) return result;
+      result = next;
+    }
+    return result;
   }
   if (isRecord(value)) return cleanStatus(value.title ?? value.value ?? value.text);
   const cleaned = String(value).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ')
