@@ -113,6 +113,32 @@ test('updates six libraries while preserving embedded Lehman hours', async () =>
   assert.deepEqual(Array.from(status.fallbackIds), ['lehman']);
 });
 
+test('updates five libraries while preserving embedded Lehman and Business hours', async () => {
+  const snapshot = makeValidSnapshot();
+  for (const id of ['lehman', 'business']) {
+    const library = snapshot.libraries.find((l) => l.id === id);
+    Object.assign(library, {
+      useEmbeddedFallback: true,
+      fallbackReason: 'unapproved-overnight-hours',
+      schedules: [],
+    });
+  }
+  const list = venues();
+  let status;
+  const result = await api.hydrate({
+    venues: list,
+    fetchImpl: async () => ({ ok: true, json: async () => snapshot }),
+    render() {},
+    setStatus: (next) => { status = next; },
+    today: '2026-08-20',
+    now: new Date('2026-08-20T17:00:00Z'),
+  });
+  assert.equal(result.applied, true);
+  assert.equal(result.updatedCount, 5);
+  assert.deepEqual(Array.from(result.fallbackIds).sort(), ['business', 'lehman']);
+  assert.equal(status.kind, 'partial');
+});
+
 test('rejects missing or untrusted Milstein holiday provenance atomically', () => {
   for (const holidayUrl of [undefined, 'https://example.com/visit/hours']) {
     const snapshot = makeValidSnapshot();
