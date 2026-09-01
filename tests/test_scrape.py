@@ -324,7 +324,7 @@ class ScraperContractTests(unittest.TestCase):
         self.assertIsNone(parse_hours_text("tbd"))
         self.assertIsNone(parse_hours_text("Tbd"))
 
-    def test_business_overnight_hours_trigger_embedded_fallback(self):
+    def test_business_overnight_hours_are_approved(self):
         html = """
         <table><tr><td>
           <div class="fulldate">2026-08-20</div>
@@ -337,10 +337,10 @@ class ScraperContractTests(unittest.TestCase):
             datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
             fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
         )
-        self.assertTrue(entry["useEmbeddedFallback"])
-        self.assertEqual(entry["fallbackReason"], "unapproved-overnight-hours")
-        self.assertEqual(entry["schedules"], [])
-        self.assertNotIn("scrapeFailed", entry)
+        self.assertNotIn("useEmbeddedFallback", entry)
+        self.assertNotIn("fallbackReason", entry)
+        schedule = entry["schedules"][0]
+        self.assertEqual(schedule["hours"]["4"], {"open": "10:00", "close": "02:00"})
 
     def test_accepts_explicit_business_embedded_fallback(self):
         payload = make_complete_payload()
