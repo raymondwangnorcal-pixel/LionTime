@@ -1347,7 +1347,16 @@ function todayHoursText(venue, now) {
    STATE
    ══════════════════════════════════════════════════ */
 let activeCat = 'all';
-let activeStatus = new Date() < new Date('2026-08-31T11:15:00Z') ? 'all' : 'open';
+let activeStatus = (() => {
+  const now = new Date();
+  if (now >= new Date(2026, 8, 4)) return 'open';
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false,
+  }).formatToParts(now);
+  const h = parseInt(parts.find(p => p.type === 'hour').value, 10);
+  const m = parseInt(parts.find(p => p.type === 'minute').value, 10);
+  return (h > 19 || (h === 19 && m >= 30)) ? 'all' : 'open';
+})();
 let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
