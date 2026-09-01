@@ -46,7 +46,7 @@ DISPLAYED_LIBRARIES = [
     },
 ]
 DISPLAYED_LIBRARY_IDS = {library["id"] for library in DISPLAYED_LIBRARIES}
-EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman"}
+EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman", "business"}
 EMBEDDED_FALLBACK_REASON = "unapproved-overnight-hours"
 LEHMAN_MERIDIEM_ANOMALY = {"open": "21:00", "close": "17:00"}
 LEHMAN_CORRECTED_HOURS = {"open": "09:00", "close": "17:00"}
@@ -83,6 +83,10 @@ def parse_hours_text(text: str) -> Optional[dict[str, str]]:
     normalized = " ".join(text.split())
     if normalized.casefold() == "closed":
         return None
+    if normalized.casefold() == "tbd":
+        return None
+    if re.match(r"(?i)open\s+24\s+hours", normalized):
+        return {"open": "00:00", "close": "00:00"}
     match = RANGE_RE.search(normalized)
     if not match:
         raise ScheduleParseError(f"unrecognized hours text: {normalized!r}")

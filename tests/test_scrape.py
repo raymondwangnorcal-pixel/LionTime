@@ -309,6 +309,49 @@ class ScraperContractTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(json.loads(destination.read_text()), payload)
 
+    def test_parses_open_24_hours_text(self):
+        result = parse_hours_text("Open 24 hours on 09/08/2026")
+        self.assertEqual(result, {"open": "00:00", "close": "00:00"})
+
+    def test_parses_open_24_hours_without_date(self):
+        result = parse_hours_text("Open 24 hours")
+        self.assertEqual(result, {"open": "00:00", "close": "00:00"})
+
+    def test_parses_tbd_as_closed(self):
+        self.assertIsNone(parse_hours_text("TBD"))
+
+    def test_parses_tbd_case_insensitive(self):
+        self.assertIsNone(parse_hours_text("tbd"))
+        self.assertIsNone(parse_hours_text("Tbd"))
+
+    def test_business_overnight_hours_trigger_embedded_fallback(self):
+        html = """
+        <table><tr><td>
+          <div class="fulldate">2026-08-20</div>
+          <div class="day-hours">10:00AM - 2:00AM</div>
+        </td></tr></table>
+        """
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "business")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+        )
+        self.assertTrue(entry["useEmbeddedFallback"])
+        self.assertEqual(entry["fallbackReason"], "unapproved-overnight-hours")
+        self.assertEqual(entry["schedules"], [])
+        self.assertNotIn("scrapeFailed", entry)
+
+    def test_accepts_explicit_business_embedded_fallback(self):
+        payload = make_complete_payload()
+        business = next(item for item in payload["libraries"] if item["id"] == "business")
+        business.update({
+            "useEmbeddedFallback": True,
+            "fallbackReason": "unapproved-overnight-hours",
+            "schedules": [],
+        })
+        self.assertEqual(validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS), [])
+
 
 if __name__ == "__main__":
     unittest.main()
