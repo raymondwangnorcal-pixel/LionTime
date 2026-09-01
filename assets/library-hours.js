@@ -11,6 +11,7 @@
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const FALLBACK_REASON = 'unapproved-overnight-hours';
+  const EMBEDDED_FALLBACK_IDS = ['lehman', 'business'];
   const BARNARD_PRIMARY_URL = 'https://hours.library.columbia.edu/locations/barnard';
   const BARNARD_HOLIDAY_URL = 'https://library.barnard.edu/visit/hours';
 
@@ -45,7 +46,7 @@
       const venue = venues.find((item) => item.id === ID_MAP[scraperId]);
       if (!venue) return { ok: false };
       if (library.useEmbeddedFallback === true) {
-        if (scraperId !== 'lehman' || library.fallbackReason !== FALLBACK_REASON
+        if (!EMBEDDED_FALLBACK_IDS.includes(scraperId) || library.fallbackReason !== FALLBACK_REASON
           || library.temporarilyClosed !== false || library.schedules.length !== 0) {
           return { ok: false };
         }
