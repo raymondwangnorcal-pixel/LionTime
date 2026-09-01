@@ -11,6 +11,7 @@ import {
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
 } from '../lib/recreation-source-parser.js';
+import { RECREATION_FACILITIES } from '../lib/recreation-hours-catalog.js';
 import { acquireRecreationSources } from './recreation-hours-acquire.mjs';
 
 const PARSER_SOURCES = Object.freeze([
@@ -19,6 +20,10 @@ const PARSER_SOURCES = Object.freeze([
   ['barnardFitness', 'parseBarnardHours'],
 ]);
 const REQUIRED_FACILITIES = new Set(['dodge', 'uris-pool', 'barnard-fitness']);
+const SOURCE_PRIMARY_FACILITIES = Object.freeze({
+  columbiaHours: ['dodge', 'uris-pool'],
+  barnardFitness: ['barnard-fitness'],
+});
 const MAX_ERROR_LENGTH = 400;
 
 export async function runRecreationScraper({
@@ -33,10 +38,18 @@ export async function runRecreationScraper({
   if (typeof outputPath !== 'string' || !outputPath) throw new Error('missing --json-out path');
 
   const acquired = await acquire();
-  const evidence = [...parseAllSources(acquired, parsers), ...manualOverrides];
-  if (!hasRequiredFacilities(evidence)) throw invalidSnapshotError('missing required facility evidence');
+  const { evidence: parsedEvidence, deniedSourceIds } = parseAllSources(acquired, parsers);
+  const evidence = [...parsedEvidence, ...manualOverrides];
+  const deniedFacilities = new Set(deniedSourceIds.flatMap(id => SOURCE_PRIMARY_FACILITIES[id] || []));
+  if (!hasRequiredFacilities(evidence, deniedFacilities)) throw invalidSnapshotError('missing required facility evidence');
 
   const snapshot = resolve({ evidence, generated: acquired.generated });
+  if (deniedFacilities.size > 0) {
+    snapshot.accessDenied = [...deniedFacilities].map(id => ({
+      id,
+      name: RECREATION_FACILITIES[id].name,
+    }));
+  }
   const validation = validate(snapshot);
   if (!validation.ok) throw invalidSnapshotError(validation.errors?.[0]);
 
@@ -49,8 +62,14 @@ function parseAllSources(acquired, parsers) {
     throw invalidSnapshotError('acquisition returned incomplete data');
   }
 
+  const deniedSourceIds = [];
   const evidence = PARSER_SOURCES.flatMap(([sourceId, parserName]) => {
-    const html = acquired.pages[sourceId]?.html;
+    const page = acquired.pages[sourceId];
+    if (page?.accessDenied) {
+      deniedSourceIds.push(sourceId);
+      return [];
+    }
+    const html = page?.html;
     const parser = parsers?.[parserName];
     if (typeof html !== 'string' || typeof parser !== 'function') {
       throw invalidSnapshotError(`missing ${sourceId} source or parser`);
@@ -79,12 +98,13 @@ function parseAllSources(acquired, parsers) {
       }
     }
   }
-  return evidence;
+  return { evidence, deniedSourceIds };
 }
 
-function hasRequiredFacilities(evidence) {
+function hasRequiredFacilities(evidence, deniedFacilities = new Set()) {
   return evidence.every(item => item && typeof item === 'object')
-    && [...REQUIRED_FACILITIES].every(targetId => evidence.some(item => item.targetId === targetId));
+    && [...REQUIRED_FACILITIES].every(targetId =>
+      deniedFacilities.has(targetId) || evidence.some(item => item.targetId === targetId));
 }
 
 function invalidSnapshotError(detail = '') {

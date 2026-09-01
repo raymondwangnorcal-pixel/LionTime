@@ -26,7 +26,13 @@ export function formatNotificationSummary(kind, snapshot, { publishEnabled } = {
 
   if (kind === 'recreation') {
     if (!Array.isArray(snapshot.facilities) || snapshot.facilities.length === 0) throw new Error('recreation snapshot must include facilities');
-    return `Recreation hours ${action}: ${timestamp}${publication} · ${snapshot.facilities.length} of ${snapshot.facilities.length} live`;
+    const denied = Array.isArray(snapshot.accessDenied) ? snapshot.accessDenied : [];
+    const live = snapshot.facilities.length - denied.length;
+    let message = `Recreation hours ${action}: ${timestamp}${publication} · ${live} of ${snapshot.facilities.length} live`;
+    if (denied.length > 0) {
+      message += `\n⚠️ Access denied: ${denied.map(f => f.name).join(', ')}`;
+    }
+    return message;
   }
 
   throw new Error(`unsupported notification kind: ${kind}`);

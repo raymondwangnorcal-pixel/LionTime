@@ -24,15 +24,16 @@ export async function acquireRecreationSources({
         await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});
         const title = await page.title();
         const html = await page.content();
-        if (/just a moment|attention required/i.test(title) || !/<main\b|<article\b/i.test(html)) {
-          throw new Error(`${sourceId}: managed challenge or missing official content`);
-        }
-        pages[sourceId] = { url, html };
-        if (sourceId === 'columbiaHours') {
-          try {
-            pages[sourceId].activityCalendars = await calendarsImpl({ page, timeoutMs });
-          } catch {
-            pages[sourceId].activityCalendars = failedActivityCalendars();
+        if (/just a moment|attention required|access denied/i.test(title) || !/<main\b|<article\b/i.test(html)) {
+          pages[sourceId] = { url, accessDenied: true };
+        } else {
+          pages[sourceId] = { url, html };
+          if (sourceId === 'columbiaHours') {
+            try {
+              pages[sourceId].activityCalendars = await calendarsImpl({ page, timeoutMs });
+            } catch {
+              pages[sourceId].activityCalendars = failedActivityCalendars();
+            }
           }
         }
       } finally {

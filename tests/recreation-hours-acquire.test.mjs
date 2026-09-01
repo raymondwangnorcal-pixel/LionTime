@@ -81,16 +81,42 @@ function activityCalendarResults() {
   }]));
 }
 
-test('closes Chromium and rejects when a managed challenge remains', async () => {
+test('marks page as access-denied when a managed challenge remains', async () => {
   const calls = [];
-  const chromiumImpl = fakeChromium({
-    pages: new Map([['https://perec.columbia.edu/hours-operation', '<title>Just a moment...</title>']]),
-    calls,
+  const pages = new Map([
+    ['https://perec.columbia.edu/hours-operation', '<title>Just a moment...</title><main></main>'],
+    ['https://perec.columbia.edu/content/modified-hours-closures', '<main><h1>Modified Hours & Closures</h1></main>'],
+    ['https://barnard.edu/lefrak-center/physical-well-being', '<main><h1>Physical Well-Being</h1></main>'],
+  ]);
+  const result = await acquireRecreationSources({
+    chromiumImpl: fakeChromium({ pages, calls }),
+    timeoutMs: 1000,
+    calendarsImpl: async () => activityCalendarResults(),
   });
-  await assert.rejects(
-    acquireRecreationSources({ chromiumImpl, timeoutMs: 1000 }),
-    /managed challenge|missing official content/i,
-  );
+  assert.equal(result.pages.columbiaHours.accessDenied, true);
+  assert.equal(result.pages.columbiaHours.html, undefined);
+  assert.equal(result.pages.columbiaModifications.accessDenied, undefined);
+  assert.ok(calls.includes('browser.close'));
+});
+
+test('marks all pages as access-denied when server denies access', async () => {
+  const calls = [];
+  const accessDeniedHtml = '<html><head><title>Access denied | Physical Education and Recreation</title></head><body><main><h1>Access denied</h1><p>You are not authorized to access this page.</p></main></body></html>';
+  const result = await acquireRecreationSources({
+    chromiumImpl: fakeChromium({
+      pages: new Map([
+        ['https://perec.columbia.edu/hours-operation', accessDeniedHtml],
+        ['https://perec.columbia.edu/content/modified-hours-closures', accessDeniedHtml],
+        ['https://barnard.edu/lefrak-center/physical-well-being', accessDeniedHtml],
+      ]),
+      calls,
+    }),
+    timeoutMs: 1000,
+  });
+  assert.equal(result.pages.columbiaHours.accessDenied, true);
+  assert.equal(result.pages.columbiaModifications.accessDenied, true);
+  assert.equal(result.pages.barnardFitness.accessDenied, true);
+  assert.equal(Object.values(result.pages).every(p => p.html === undefined), true);
   assert.ok(calls.includes('browser.close'));
 });
 
@@ -105,9 +131,9 @@ function fakeChromium({ pages, calls }) {
             async goto(url) { currentUrl = url; },
             async waitForLoadState() {},
             async title() {
-              return /<title>Just a moment<\/title>/i.test(pages.get(currentUrl) || '')
-                ? 'Just a moment...'
-                : 'Official hours';
+              const html = pages.get(currentUrl) || '';
+              const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+              return titleMatch ? titleMatch[1] : 'Official hours';
             },
             async content() { return pages.get(currentUrl) || ''; },
             async close() { calls.push('page.close'); },

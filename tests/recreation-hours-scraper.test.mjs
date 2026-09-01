@@ -163,6 +163,56 @@ test('resumes the displayed Barnard live schedule on September 8', async () => {
   assert.deepEqual(september8.sourceRefs, ['barnardFitness']);
 });
 
+test('produces a valid snapshot with accessDenied when columbiaHours is denied', async () => {
+  const writes = [];
+  const acquired = acquiredFixture();
+  acquired.pages.columbiaHours = { url: 'https://perec.columbia.edu/hours-operation', accessDenied: true };
+
+  const snapshot = await runRecreationScraper({
+    acquire: async () => acquired,
+    parsers: parserFixture(),
+    writeJson: async (path, value) => writes.push([path, value]),
+    outputPath: '/tmp/access-denied.json',
+  });
+
+  assert.equal(snapshot.facilities.length, 3);
+  assert.deepEqual(snapshot.accessDenied, [
+    { id: 'dodge', name: 'Dodge Fitness Center' },
+    { id: 'uris-pool', name: 'Uris Pool' },
+  ]);
+  const dodge = snapshot.facilities.find(f => f.id === 'dodge');
+  assert.ok(dodge.days.every(day => day.status === 'Hours need verification'));
+  assert.ok(dodge.days.every(day => day.intervals.length === 0));
+  const barnard = snapshot.facilities.find(f => f.id === 'barnard-fitness');
+  assert.ok(barnard.days.some(day => day.intervals.length > 0));
+  assert.deepEqual(writes, [['/tmp/access-denied.json', snapshot]]);
+});
+
+test('produces a valid snapshot with accessDenied when all sources are denied', async () => {
+  const acquired = {
+    generated: new Date('2026-08-21T16:00:00-04:00'),
+    pages: {
+      columbiaHours: { url: 'https://perec.columbia.edu/hours-operation', accessDenied: true },
+      columbiaModifications: { url: 'https://perec.columbia.edu/content/modified-hours-closures', accessDenied: true },
+      barnardFitness: { url: 'https://barnard.edu/lefrak-center/physical-well-being', accessDenied: true },
+    },
+  };
+
+  const snapshot = await runRecreationScraper({
+    acquire: async () => acquired,
+    parsers: parserFixture(),
+    writeJson: async () => {},
+    outputPath: '/tmp/all-denied.json',
+  });
+
+  assert.equal(snapshot.facilities.length, 3);
+  assert.equal(snapshot.accessDenied.length, 3);
+  const dodge = snapshot.facilities.find(f => f.id === 'dodge');
+  const pool = snapshot.facilities.find(f => f.id === 'uris-pool');
+  assert.ok(dodge.days.every(d => d.status === 'Hours need verification'));
+  assert.ok(pool.days.every(d => d.status === 'Hours need verification'));
+});
+
 function acquiredFixture(generated = new Date('2026-08-21T16:00:00-04:00')) {
   return {
     generated,
