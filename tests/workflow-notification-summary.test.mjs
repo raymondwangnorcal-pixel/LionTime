@@ -29,6 +29,20 @@ test('formats Recreation facilities and Student Life source counts', () => {
   assert.equal(formatNotificationSummary('student-life', { generated, attempts: [{ result: 'success' }, { result: 'success' }, { result: 'failure' }, { result: 'success' }] }, { publishEnabled: true }), 'Student Life hours updated: Aug 26, 2026, 12:58 PM ET · 3 of 4 sources live');
 });
 
+test('includes access-denied buildings in Recreation notification', () => {
+  const summary = formatNotificationSummary('recreation', {
+    generated,
+    facilities: [{ id: 'dodge' }, { id: 'uris-pool' }, { id: 'barnard-fitness' }],
+    accessDenied: [
+      { id: 'dodge', name: 'Dodge Fitness Center' },
+      { id: 'uris-pool', name: 'Uris Pool' },
+    ],
+  }, { publishEnabled: true });
+
+  assert.ok(summary.startsWith('Recreation hours updated: Aug 26, 2026, 12:58 PM ET · 1 of 3 live'));
+  assert.ok(summary.includes('⚠️ Access denied: Dodge Fitness Center, Uris Pool'));
+});
+
 test('rejects unsupported snapshots', () => {
   assert.throws(() => formatNotificationSummary('unknown', { generated }, { publishEnabled: true }), /unsupported notification kind/);
   assert.throws(() => formatNotificationSummary('library', { generated, libraries: [] }, { publishEnabled: true }), /library snapshot/);
