@@ -1049,7 +1049,7 @@ const VENUES = window.VENUES = [
              [['09:00','21:00']],[['09:00','21:00']],[['09:00','21:00']]) },
 
   { id:'joe-noco', name:"Joe's Coffee (NoCo)", cat:'cafe', loc:'Northwest Corner Building, 550 W 120th St',
-    hours: WEEKDAYS([['07:00','19:00']], [['08:00','17:00']], [['08:00','17:00']]),
+    hours: WEEKDAYS([['07:00','19:00']], [['09:00','17:00']], [['09:00','17:00']]),
     note:'Columbia ID required for entry.' },
 
   { id:'cafe-east', name:'Cafe East', cat:'cafe', loc:'Lerner Hall, Room 2E',
@@ -1361,7 +1361,7 @@ let searchTerm = '';
 const expanded = new Set();
 const expandedRecreationSpaces = new Set();
 const collapsedCategories = new Set();
-const SUMMER_HIDDEN_CAFES = new Date() < new Date(2026, 8, 8) ? new Set(['bj-butler','bj-uris','bj-mudd','bj-everett','lenfest-cafe']) : new Set();
+
 let healthDropdownExpanded = false;
 
 const HEALTH_SERVICE_IDS = new Set([
@@ -1404,7 +1404,7 @@ function venueMatchesSearch(venue, term) {
 }
 
 function topLevelVenues(venues = VENUES) {
-  return venues.filter(venue => !venue.parentId && !SUMMER_HIDDEN_CAFES.has(venue.id));
+  return venues.filter(venue => !venue.parentId);
 }
 
 function dodgeSpacesFor(venue, now) {
