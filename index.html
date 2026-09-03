@@ -1562,7 +1562,7 @@ function render() {
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
     const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && statusMatchesFilter(getStatus(v, now).status, activeStatus));
-    const isDiningSummer = c.id === 'dining' && new Date() < new Date(2026, 8, 4);
+    const isDiningSummer = c.id === 'dining' && openN === 0;
     if (!regularShown.length && !hasHealthVenues && !isDiningSummer) return '';
     /* Dining: when no venues match the status filter, show the section collapsed with all venues */
     const diningForceCollapsed = isDiningSummer && !regularShown.length;
@@ -1591,7 +1591,7 @@ function render() {
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
-        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}${c.id === 'dining' && new Date() < new Date(2026, 8, 4) ? ' <span style="font-size:0.85em;font-weight:600;letter-spacing:0.5px;text-transform:none;background:rgba(255,255,255,0.22);padding:0.25em 0.65em;border-radius:9px;vertical-align:middle;margin-left:0.5em">Closed for summer</span>' : ''}</span>
+        <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
