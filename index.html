@@ -1319,6 +1319,7 @@ function todayHoursText(venue, now) {
   const spans = activeIntervals(venue, now.dow)
     .filter(iv => iv.end > 0 && iv.start < 1440)        // touches today at all
     .filter(iv => iv.start >= 0 || iv.end > now.mins)   // yesterday's spill: only while live
+    .filter(iv => iv.end > now.mins || iv.start > now.mins) // hide intervals already elapsed today
     .sort((a, b) => a.start - b.start);
 
   // A multi-day 24h run yields one span per source day — merge them back.
