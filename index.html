@@ -1562,11 +1562,7 @@ function render() {
     const isStudent = c.id === 'student';
     const regularShown = isStudent ? shown.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : shown;
     const hasHealthVenues = isStudent && all.some(v => HEALTH_SERVICE_IDS.has(v.id) && statusMatchesFilter(getStatus(v, now).status, activeStatus));
-    const isDiningSummer = c.id === 'dining' && openN === 0;
-    if (!regularShown.length && !hasHealthVenues && !isDiningSummer) return '';
-    /* Dining: when no venues match the status filter, show the section collapsed with all venues */
-    const diningForceCollapsed = isDiningSummer && !regularShown.length;
-    if (diningForceCollapsed && !collapsedCategories.has(c.id)) collapsedCategories.add(c.id);
+    if (!regularShown.length && !hasHealthVenues) return '';
     /* Auto-expand health dropdown when it's the only thing with matching venues */
     if (isStudent && hasHealthVenues && !regularShown.length) healthDropdownExpanded = true;
 
@@ -1581,11 +1577,7 @@ function render() {
       const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
       return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
     });
-    const regularAll = isStudent ? all.filter(v => !HEALTH_SERVICE_IDS.has(v.id)) : all;
-    const diningAllVenues = diningForceCollapsed ? regularAll.slice().sort((a, b) => {
-      const d = ORDER[getStatus(a, now).status] - ORDER[getStatus(b, now).status];
-      return d !== 0 ? d : VENUES.indexOf(a) - VENUES.indexOf(b);
-    }) : null;
+
 
     const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
     const listId = `list-${c.id}`;
@@ -1600,7 +1592,7 @@ function render() {
           <span></span><span class="strong">Place</span><span class="strong">Today</span>
           <span class="r">Status</span><span></span>
         </div>
-        ${(diningAllVenues || regularShown).map(v => rowHTML(v, now)).join('')}
+        ${regularShown.map(v => rowHTML(v, now)).join('')}
         ${hasHealthVenues ? healthDropdownHTML(now, !regularShown.length) : ''}
       </div>
       ${c.id === 'dining' && window.LionHourDiningVote ? `<div id="dining-vote-card">${LionHourDiningVote.resultsCardHTML()}</div>` : ''}`;
