@@ -238,6 +238,7 @@
     hydrate:          hydrate,
     toggleBarHTML:     toggleBarHTML,
     menusScreenHTML:   menusScreenHTML,
+    switchView:       switchView,
     get activeView()  { return activeView; },
     get menuData()    { return menuData; }
   };

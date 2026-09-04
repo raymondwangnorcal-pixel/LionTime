@@ -296,6 +296,26 @@
   .sec-rule { flex: 1; background: transparent; }
   .sec-meta { font-size: 0.86rem; color: rgba(255,255,255,0.82); font-variant-numeric: tabular-nums; }
 
+  /* ── Dining: inline Hours/Menus toggle inside .sec ── */
+  .sec-view-toggle {
+    display: inline-flex; border-radius: 6px;
+    background: rgba(255,255,255,0.18); padding: 2px; gap: 2px;
+    margin-left: auto; margin-right: 0.3rem;
+    flex-shrink: 0;
+  }
+  .sec-toggle-btn {
+    font: inherit; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 0.2rem 0.7rem; border-radius: 5px;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+    user-select: none; -webkit-user-select: none;
+  }
+  .sec-toggle-btn:hover { background: rgba(255,255,255,0.12); }
+  .sec-toggle-btn.active {
+    background: rgba(255,255,255,0.92); color: var(--columbia-blue);
+  }
+
   .list {
     background: var(--surface); border-radius: var(--radius);
     box-shadow: var(--shadow); overflow: hidden;
@@ -673,6 +693,8 @@
     .sec-icon { font-size: 0.9rem; }
     .sec-title { font-size: 0.78rem; letter-spacing: 1.2px; }
     .sec-meta { font-size: 0.75rem; }
+    .sec-view-toggle { padding: 1px; gap: 1px; margin-right: 0.15rem; }
+    .sec-toggle-btn { font-size: 0.56rem; padding: 0.15rem 0.5rem; }
     .sec::after { width: 7px; height: 7px; border-width: 2px; }
     .row {
       grid-template-columns: 10px minmax(0,1fr) auto 12px;
@@ -845,7 +867,6 @@
     padding: 0.55rem 1rem 0.45rem;
     background: var(--surface);
     border-bottom: 1px solid var(--hairline);
-    position: sticky; top: calc(var(--controls-h, 118px) + 43px); z-index: 9;
   }
   .view-toggle {
     display: inline-flex; border-radius: 8px;
@@ -865,6 +886,7 @@
   }
 
   /* When menus view is active, hide hours-specific children */
+  .list.menus-active > .cols,
   .list.menus-active > .entry,
   .list.menus-active > .health-hours-dropdown { display: none !important; }
 
@@ -872,7 +894,6 @@
   .meal-period-bar {
     display: flex; gap: 0; padding: 0.45rem 0.75rem;
     background: #f4f7fb; border-bottom: 1px solid var(--hairline);
-    position: sticky; top: calc(var(--controls-h, 118px) + 89px); z-index: 8;
   }
   .meal-period-tab {
     flex: 1; font: inherit; font-size: 0.72rem; font-weight: 600;
@@ -947,10 +968,9 @@
 
   /* ── Dining Menus: responsive ────────────────── */
   @media (max-width: 620px) {
-    .view-toggle-bar { padding: 0.45rem 0.75rem 0.35rem; top: calc(var(--controls-h, 118px) + 37px); }
+    .view-toggle-bar { padding: 0.45rem 0.75rem 0.35rem; }
     .view-toggle-btn { font-size: 0.68rem; padding: 0.25rem 0.9rem; }
     .meal-period-tab { font-size: 0.68rem; padding: 0.35rem 0.2rem; }
-    .meal-period-bar { top: calc(var(--controls-h, 118px) + 77px); }
     .menu-hall-header { padding: 0.6rem 0.85rem 0.35rem; }
     .menu-hall-body { padding: 0 0.85rem 0.6rem; }
     .menu-hall-hours { display: none; }
@@ -1705,7 +1725,10 @@ function render() {
     const hasMenus = isDining && window.LionHourDiningMenus;
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
         <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}</span>
-        <span class="sec-rule"></span>
+        ${isDining && hasMenus ? `<span class="sec-view-toggle" data-dining-toggle>
+          <span class="sec-toggle-btn${LionHourDiningMenus.activeView === 'hours' ? ' active' : ''}" data-view="hours">Hours</span>
+          <span class="sec-toggle-btn${LionHourDiningMenus.activeView === 'menus' ? ' active' : ''}" data-view="menus">Menus</span>
+        </span>` : '<span class="sec-rule"></span>'}
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
       <div class="list${isDining && hasMenus && LionHourDiningMenus.activeView === 'menus' ? ' menus-active' : ''}" id="${listId}"${catCollapsed ? ' hidden' : ''}>
@@ -1713,7 +1736,6 @@ function render() {
           <span></span><span class="strong">Place</span><span class="strong">Today</span>
           <span class="r">Status</span><span></span>
         </div>
-        ${isDining && hasMenus ? LionHourDiningMenus.toggleBarHTML() : ''}
         ${regularShown.map(v => rowHTML(v, now)).join('')}
         ${hasHealthVenues ? healthDropdownHTML(now, !regularShown.length) : ''}
         ${isDining && hasMenus ? LionHourDiningMenus.menusScreenHTML() : ''}
@@ -1823,8 +1845,20 @@ document.addEventListener('scroll', () => {
 }, { passive: true });
 document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value; render(); });
 document.getElementById('stage').addEventListener('click', e => {
+  /* Dining view toggle inside .sec — handle before collapse */
+  const diningToggleBtn = e.target.closest('.sec-toggle-btn');
+  if (diningToggleBtn) {
+    const view = diningToggleBtn.getAttribute('data-view');
+    if (view && window.LionHourDiningMenus) {
+      LionHourDiningMenus.switchView(view);
+      render();
+    }
+    return;
+  }
   const secToggle = e.target.closest('.sec');
   if (secToggle) {
+    /* Don't collapse if click was on the toggle container */
+    if (e.target.closest('[data-dining-toggle]')) return;
     const list = document.getElementById(secToggle.getAttribute('aria-controls'));
     const isExpanded = secToggle.getAttribute('aria-expanded') === 'true';
     secToggle.setAttribute('aria-expanded', String(!isExpanded));
