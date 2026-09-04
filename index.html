@@ -838,6 +838,122 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   }
   .splash-close:hover { background: rgba(0,0,0,0.85); }
+
+  /* ── Dining Menus: view toggle ────────────────── */
+  .view-toggle-bar {
+    display: flex; justify-content: center;
+    padding: 0.55rem 1rem 0.45rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .view-toggle {
+    display: inline-flex; border-radius: 8px;
+    background: #e8edf3; padding: 3px; gap: 2px;
+  }
+  .view-toggle-btn {
+    font: inherit; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 0.3rem 1.1rem; border-radius: 6px;
+    border: none; cursor: pointer;
+    background: transparent; color: var(--text-secondary);
+    transition: background 0.15s, color 0.15s;
+  }
+  .view-toggle-btn.active {
+    background: var(--surface); color: var(--columbia-blue);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* When menus view is active, hide hours-specific children */
+  .list.menus-active > .cols,
+  .list.menus-active > .entry,
+  .list.menus-active > .health-hours-dropdown { display: none !important; }
+
+  /* ── Dining Menus: meal-period tabs ───────────── */
+  .meal-period-bar {
+    display: flex; gap: 0; padding: 0.45rem 0.75rem;
+    background: #f4f7fb; border-bottom: 1px solid var(--hairline);
+  }
+  .meal-period-tab {
+    flex: 1; font: inherit; font-size: 0.72rem; font-weight: 600;
+    padding: 0.4rem 0.3rem; border: none; cursor: pointer;
+    background: transparent; color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .meal-period-tab.active {
+    color: var(--columbia-blue);
+    border-bottom-color: var(--columbia-blue);
+  }
+
+  /* ── Dining Menus: hall cards ─────────────────── */
+  .menus-screen { background: var(--surface); }
+  .menu-hall {
+    border-bottom: 1px solid var(--hairline);
+  }
+  .menu-hall:last-child { border-bottom: none; }
+  .menu-hall-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.7rem 1.1rem 0.4rem;
+  }
+  .menu-hall-name {
+    font-size: 0.82rem; font-weight: 650; color: var(--text);
+    flex: 1; min-width: 0;
+  }
+  .menu-hall-hours {
+    font-size: 0.68rem; color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .menu-hall-badge {
+    font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; padding: 0.15rem 0.45rem;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .menu-hall-badge.open   { background: var(--open-bg);   color: var(--open-ink); }
+  .menu-hall-badge.closed { background: var(--closed-bg); color: var(--closed-ink); }
+  .menu-hall-body { padding: 0 1.1rem 0.7rem; }
+
+  /* ── Dining Menus: stations & items ──────────── */
+  .station { margin-top: 0.5rem; }
+  .station-header {
+    display: flex; align-items: center; gap: 0.4rem;
+    margin-bottom: 0.3rem;
+  }
+  .station-name {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--columbia-blue);
+  }
+  .station-count {
+    font-size: 0.58rem; font-weight: 700; color: var(--columbia-blue);
+    background: #dce7f5; border-radius: 4px;
+    padding: 0.08rem 0.35rem; min-width: 1.1rem;
+    text-align: center;
+  }
+  .menu-items {
+    display: flex; flex-wrap: wrap; gap: 0.15rem 0.55rem;
+  }
+  .menu-item {
+    font-size: 0.78rem; color: var(--text);
+    line-height: 1.65; white-space: nowrap;
+  }
+  .menu-item::before {
+    content: '·'; color: #c2cdd9;
+    margin-right: 0.3rem; font-weight: 700;
+  }
+  .menu-empty {
+    font-size: 0.78rem; color: var(--muted);
+    font-style: italic; padding: 0.4rem 1.1rem 0.7rem;
+  }
+
+  /* ── Dining Menus: responsive ────────────────── */
+  @media (max-width: 620px) {
+    .view-toggle-bar { padding: 0.45rem 0.75rem 0.35rem; }
+    .view-toggle-btn { font-size: 0.68rem; padding: 0.25rem 0.9rem; }
+    .meal-period-tab { font-size: 0.68rem; padding: 0.35rem 0.2rem; }
+    .menu-hall-header { padding: 0.6rem 0.85rem 0.35rem; }
+    .menu-hall-body { padding: 0 0.85rem 0.6rem; }
+    .menu-hall-hours { display: none; }
+    .menu-item { font-size: 0.74rem; }
+  }
 </style>
 </head>
 <body>
@@ -918,6 +1034,7 @@
 <script src="assets/library-hours.js"></script>
 <script src="assets/dining-hours.js"></script>
 <script src="assets/dining-vote.js"></script>
+<script src="assets/dining-menus.js"></script>
 <script src="assets/recreation-hours-view.js"></script>
 <script src="assets/student-services-hours-view.js"></script>
 <script src="assets/student-services-hours.js"></script>
@@ -1582,20 +1699,24 @@ function render() {
     const openN = all.filter(v => getStatus(v, now).status !== 'closed').length;
     const listId = `list-${c.id}`;
     const catCollapsed = collapsedCategories.has(c.id);
+    const isDining = c.id === 'dining';
+    const hasMenus = isDining && window.LionHourDiningMenus;
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
         <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}</span>
         <span class="sec-rule"></span>
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
-      <div class="list" id="${listId}"${catCollapsed ? ' hidden' : ''}>
+      <div class="list${isDining && hasMenus && LionHourDiningMenus.activeView === 'menus' ? ' menus-active' : ''}" id="${listId}"${catCollapsed ? ' hidden' : ''}>
+        ${isDining && hasMenus ? LionHourDiningMenus.toggleBarHTML() : ''}
         <div class="cols">
           <span></span><span class="strong">Place</span><span class="strong">Today</span>
           <span class="r">Status</span><span></span>
         </div>
         ${regularShown.map(v => rowHTML(v, now)).join('')}
         ${hasHealthVenues ? healthDropdownHTML(now, !regularShown.length) : ''}
+        ${isDining && hasMenus ? LionHourDiningMenus.menusScreenHTML() : ''}
       </div>
-      ${c.id === 'dining' && window.LionHourDiningVote ? `<div id="dining-vote-card">${LionHourDiningVote.resultsCardHTML()}</div>` : ''}`;
+      ${isDining && window.LionHourDiningVote ? `<div id="dining-vote-card">${LionHourDiningVote.resultsCardHTML()}</div>` : ''}`;
   }).join('');
 
   stage.innerHTML = sections || `<div class="empty">Nothing matches those filters right now.</div>`;
@@ -1905,6 +2026,9 @@ if (window.LionHourDiningHours) {
     setStatus: setDiningHoursStatus,
     today: easternISODate(),
   });
+}
+if (window.LionHourDiningMenus) {
+  LionHourDiningMenus.hydrate();
 }
 if (window.LionHourStudentServicesHours) {
   LionHourStudentServicesHours.hydrate({
