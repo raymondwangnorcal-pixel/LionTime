@@ -202,6 +202,7 @@ def extract_barnard_holiday_closures(
         if not cells:
             continue
         label = " ".join(cells[0].get_text(" ", strip=True).split())
+        label = re.sub(r"[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]", "-", label)
         m_same = same_month_re.fullmatch(label)
         m_cross = cross_month_re.fullmatch(label) if not m_same else None
         if m_same:
