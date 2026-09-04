@@ -865,7 +865,6 @@
   }
 
   /* When menus view is active, hide hours-specific children */
-  .list.menus-active > .cols,
   .list.menus-active > .entry,
   .list.menus-active > .health-hours-dropdown { display: none !important; }
 
@@ -1710,11 +1709,11 @@ function render() {
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
       <div class="list${isDining && hasMenus && LionHourDiningMenus.activeView === 'menus' ? ' menus-active' : ''}" id="${listId}"${catCollapsed ? ' hidden' : ''}>
-        ${isDining && hasMenus ? LionHourDiningMenus.toggleBarHTML() : ''}
         <div class="cols">
           <span></span><span class="strong">Place</span><span class="strong">Today</span>
           <span class="r">Status</span><span></span>
         </div>
+        ${isDining && hasMenus ? LionHourDiningMenus.toggleBarHTML() : ''}
         ${regularShown.map(v => rowHTML(v, now)).join('')}
         ${hasHealthVenues ? healthDropdownHTML(now, !regularShown.length) : ''}
         ${isDining && hasMenus ? LionHourDiningMenus.menusScreenHTML() : ''}
