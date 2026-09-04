@@ -67,7 +67,7 @@
         if (interval === null) {
           hours[day] = null;
         } else if (interval && OPEN_TIME.test(interval.open || '') && CLOSE_TIME.test(interval.close || '')
-          && (scraperId === 'butler_24' || scraperId === 'business' || interval.close > interval.open)) {
+          && (scraperId === 'butler_24' || scraperId === 'business' || interval.close === '00:00' || interval.close > interval.open)) {
           hours[day] = [[interval.open, interval.close]];
         } else {
           return { ok: false };
