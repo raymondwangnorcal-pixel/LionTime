@@ -169,41 +169,59 @@ def extract_barnard_holiday_closures(
     if "library closed" not in headers:
         raise ScheduleParseError("Barnard holiday closure table identity is missing")
 
+    _WEEKDAY = r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)"
+    _MONTH = (
+        r"(?:January|February|March|April|May|June|July|August|"
+        r"September|October|November|December)"
+    )
+    same_month_re = re.compile(
+        rf"({_WEEKDAY}),\s+({_MONTH})\s+(\d{{1,2}})"
+        rf"(?:\s*[–—-]\s*(\d{{1,2}}))?$",
+        re.IGNORECASE,
+    )
+    cross_month_re = re.compile(
+        rf"({_WEEKDAY}),\s+({_MONTH})\s+(\d{{1,2}})"
+        rf"\s*[–—-]\s*{_WEEKDAY},\s+({_MONTH})\s+(\d{{1,2}})$",
+        re.IGNORECASE,
+    )
+
+    def _resolve_start(month_name: str, day: int, weekday: str) -> date:
+        """Resolve the start date of a range using the weekday to disambiguate the year."""
+        for year in sorted(years):
+            try:
+                candidate = datetime.strptime(f"{month_name} {day} {year}", "%B %d %Y").date()
+            except ValueError:
+                continue
+            if candidate.strftime("%A").casefold() == weekday.casefold():
+                return candidate
+        raise ScheduleParseError(f"Barnard holiday weekday is ambiguous or incorrect for {month_name} {day}")
+
     closures: set[str] = set()
     for row in table.find_all("tr"):
         cells = row.find_all("td")
         if not cells:
             continue
         label = " ".join(cells[0].get_text(" ", strip=True).split())
-        match = re.fullmatch(
-            r"(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+"
-            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+"
-            r"(\d{1,2})"
-            r"(?:\s*[–—-]\s*(\d{1,2}))?",
-            label,
-            re.IGNORECASE,
-        )
-        if not match:
+        m_same = same_month_re.fullmatch(label)
+        m_cross = cross_month_re.fullmatch(label) if not m_same else None
+        if m_same:
+            weekday, month, day_start_s, day_end_s = m_same.groups()
+            start = _resolve_start(month, int(day_start_s), weekday)
+            for day_value in range(int(day_start_s), int(day_end_s or day_start_s) + 1):
+                closures.add(start.replace(day=day_value).isoformat())
+        elif m_cross:
+            weekday, month_start, day_start_s, month_end, day_end_s = m_cross.groups()
+            start = _resolve_start(month_start, int(day_start_s), weekday)
+            end_year = start.year
+            end = datetime.strptime(f"{month_end} {day_end_s} {end_year}", "%B %d %Y").date()
+            if end < start:
+                end = end.replace(year=end_year + 1)
+            cursor = start
+            while cursor <= end:
+                closures.add(cursor.isoformat())
+                cursor += timedelta(days=1)
+        else:
             raise ScheduleParseError(f"unrecognized Barnard holiday date: {label!r}")
-        weekday, month, day_start, day_end = match.groups()
-        day_values = list(range(int(day_start), int(day_end or day_start) + 1))
-        for day_value in day_values:
-            candidates = []
-            for year in years:
-                try:
-                    candidate = datetime.strptime(
-                        f"{month} {day_value} {year}",
-                        "%B %d %Y",
-                    ).date()
-                except ValueError as exc:
-                    raise ScheduleParseError(f"invalid Barnard holiday date: {label!r}") from exc
-                if day_value == int(day_start):
-                    if candidate.strftime("%A").casefold() != weekday.casefold():
-                        continue
-                candidates.append(candidate)
-            if len(candidates) != 1:
-                raise ScheduleParseError(f"Barnard holiday weekday is ambiguous or incorrect: {label!r}")
-            closures.add(candidates[0].isoformat())
     return closures
 
 
