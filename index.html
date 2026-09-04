@@ -845,6 +845,7 @@
     padding: 0.55rem 1rem 0.45rem;
     background: var(--surface);
     border-bottom: 1px solid var(--hairline);
+    position: sticky; top: calc(var(--controls-h, 118px) + 43px); z-index: 9;
   }
   .view-toggle {
     display: inline-flex; border-radius: 8px;
@@ -872,6 +873,7 @@
   .meal-period-bar {
     display: flex; gap: 0; padding: 0.45rem 0.75rem;
     background: #f4f7fb; border-bottom: 1px solid var(--hairline);
+    position: sticky; top: calc(var(--controls-h, 118px) + 89px); z-index: 8;
   }
   .meal-period-tab {
     flex: 1; font: inherit; font-size: 0.72rem; font-weight: 600;
@@ -946,9 +948,10 @@
 
   /* ── Dining Menus: responsive ────────────────── */
   @media (max-width: 620px) {
-    .view-toggle-bar { padding: 0.45rem 0.75rem 0.35rem; }
+    .view-toggle-bar { padding: 0.45rem 0.75rem 0.35rem; top: calc(var(--controls-h, 118px) + 37px); }
     .view-toggle-btn { font-size: 0.68rem; padding: 0.25rem 0.9rem; }
     .meal-period-tab { font-size: 0.68rem; padding: 0.35rem 0.2rem; }
+    .meal-period-bar { top: calc(var(--controls-h, 118px) + 77px); }
     .menu-hall-header { padding: 0.6rem 0.85rem 0.35rem; }
     .menu-hall-body { padding: 0 0.85rem 0.6rem; }
     .menu-hall-hours { display: none; }
