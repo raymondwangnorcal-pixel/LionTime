@@ -932,39 +932,48 @@
   }
   .menu-hall-badge.open   { background: var(--open-bg);   color: var(--open-ink); }
   .menu-hall-badge.closed { background: var(--closed-bg); color: var(--closed-ink); }
-  .menu-hall-body { padding: 0 1.1rem 0.7rem; }
+  .menu-hall-body { padding: 0.15rem 0.85rem 0.75rem; }
 
   /* ── Dining Menus: stations & items ──────────── */
-  .station { margin-top: 0.5rem; }
+  .station {
+    margin-top: 0.55rem;
+    border-left: 3px solid var(--columbia-blue);
+    padding-left: 0.65rem;
+    margin-left: 0.15rem;
+  }
   .station-header {
     display: flex; align-items: center; gap: 0.4rem;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.35rem;
   }
   .station-name {
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.7px; color: var(--columbia-blue);
   }
   .station-count {
-    font-size: 0.58rem; font-weight: 700; color: var(--columbia-blue);
+    font-size: 0.54rem; font-weight: 700; color: var(--columbia-blue);
     background: #dce7f5; border-radius: 4px;
-    padding: 0.08rem 0.35rem; min-width: 1.1rem;
+    padding: 0.06rem 0.32rem; min-width: 1.1rem;
     text-align: center;
   }
   .menu-items {
-    display: flex; flex-wrap: wrap; gap: 0.15rem 0.55rem;
+    display: flex; flex-wrap: wrap; gap: 0.3rem;
   }
   .menu-item {
-    font-size: 0.78rem; color: var(--text);
-    line-height: 1.65; white-space: nowrap;
-  }
-  .menu-item::before {
-    content: '·'; color: #c2cdd9;
-    margin-right: 0.3rem; font-weight: 700;
+    font-size: 0.72rem; color: var(--text);
+    background: #f4f6f9; border-radius: 6px;
+    padding: 0.22rem 0.55rem;
+    white-space: nowrap; line-height: 1.4;
   }
   .menu-empty {
     font-size: 0.78rem; color: var(--muted);
     font-style: italic; padding: 0.4rem 1.1rem 0.7rem;
   }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .menu-item { background: #2a3040; }
+    :root:not([data-theme='light']) .station { border-left-color: #7ab3e0; }
+  }
+  :root[data-theme='dark'] .menu-item { background: #2a3040; }
+  :root[data-theme='dark'] .station { border-left-color: #7ab3e0; }
 
   /* ── Dining Menus: responsive ────────────────── */
   @media (max-width: 620px) {
@@ -974,7 +983,7 @@
     .menu-hall-header { padding: 0.6rem 0.85rem 0.35rem; }
     .menu-hall-body { padding: 0 0.85rem 0.6rem; }
     .menu-hall-hours { display: none; }
-    .menu-item { font-size: 0.74rem; }
+    .menu-item { font-size: 0.68rem; padding: 0.18rem 0.45rem; }
   }
 </style>
 </head>
