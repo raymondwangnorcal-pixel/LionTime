@@ -1736,7 +1736,7 @@ function render() {
     const hasMenus = isDining && window.LionHourDiningMenus;
     return `<button type="button" class="sec" data-cat="${c.id}" aria-expanded="${!catCollapsed}" aria-controls="${listId}">
         <span class="sec-title"><span class="sec-icon">${c.icon}</span> ${c.label}</span>
-        ${isDining && hasMenus ? `<span class="sec-view-toggle" data-dining-toggle>
+        ${isDining && hasMenus ? `<span class="sec-rule"></span><span class="sec-view-toggle" data-dining-toggle>
           <span class="sec-toggle-btn${LionHourDiningMenus.activeView === 'hours' ? ' active' : ''}" data-view="hours">Hours</span>
           <span class="sec-toggle-btn${LionHourDiningMenus.activeView === 'menus' ? ' active' : ''}" data-view="menus">Menus</span>
         </span>` : '<span class="sec-rule"></span>'}
