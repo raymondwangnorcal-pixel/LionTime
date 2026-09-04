@@ -300,23 +300,25 @@
   .sec-view-toggle {
     display: inline-flex; align-items: stretch;
     border-radius: 10px;
-    background: rgba(255,255,255,0.2); padding: 3px; gap: 3px;
+    background: #fff; padding: 3px; gap: 3px;
     margin: -0.78rem 0 -0.78rem auto;
     flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.6);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   }
   .sec-toggle-btn {
     font: inherit; font-size: 0.78rem; font-weight: 700;
     letter-spacing: 0.5px; text-transform: uppercase;
-    padding: 0.55rem 1.1rem; border-radius: 8px;
-    color: rgba(255,255,255,0.8);
+    padding: 0.55rem 1.1rem; border-radius: 7px;
+    color: var(--columbia-blue);
     cursor: pointer; transition: background 0.15s, color 0.15s;
     user-select: none; -webkit-user-select: none;
     display: inline-flex; align-items: center;
   }
-  .sec-toggle-btn:hover { background: rgba(255,255,255,0.15); }
+  .sec-toggle-btn:hover { background: #edf2f9; }
   .sec-toggle-btn.active {
-    background: rgba(255,255,255,0.95); color: var(--columbia-blue);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    background: var(--columbia-blue); color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
 
   .list {
