@@ -848,7 +848,7 @@
   <picture>
     <source media="(orientation: portrait)" srcset="assets/welcome-splash.jpg">
     <source media="(orientation: landscape)" srcset="assets/welcome-splash-wide.png">
-    <img src="assets/welcome-splash.jpg" alt="Welcome, Class of 2030!">
+    <img src="assets/welcome-splash.jpg" alt="Welcome Back to Campus!">
   </picture>
 </div>
 
@@ -1951,7 +1951,7 @@ setInterval(render, 60000);
   if (!overlay) return;
 
   // Disappear permanently after Sept 4 at midnight ET (04:00 UTC)
-  var EXPIRY = new Date('2026-09-04T04:00:00Z').getTime();
+  var EXPIRY = new Date('2026-09-11T04:00:00Z').getTime();
   if (Date.now() >= EXPIRY) { overlay.remove(); document.body.classList.remove('splash-active'); return; }
 
   function dismiss() {
