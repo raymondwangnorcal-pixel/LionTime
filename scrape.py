@@ -307,7 +307,9 @@ def _has_unapproved_overnight(library_id: str, schedules: list[dict]) -> bool:
     if library_id in ("butler_24", "business"):
         return False
     return any(
-        interval is not None and interval["close"] <= interval["open"]
+        interval is not None
+        and interval["close"] != "00:00"
+        and interval["close"] <= interval["open"]
         for schedule in schedules
         for interval in schedule["hours"].values()
     )
@@ -488,7 +490,7 @@ def validate_publishable_payload(payload: object, required_ids: set[str]) -> lis
                 )
                 if not valid_interval:
                     errors.append(f"{library_id}: invalid hours for day {day}")
-                elif library_id not in ("butler_24", "business") and interval["close"] <= interval["open"]:
+                elif library_id not in ("butler_24", "business") and interval["close"] != "00:00" and interval["close"] <= interval["open"]:
                     error = f"{library_id}: overnight hours are not allowed"
                     if error not in errors:
                         errors.append(error)
