@@ -298,8 +298,9 @@
 
   /* ── Dining: inline Hours/Menus toggle inside .sec ── */
   .sec-view-toggle {
-    position: absolute; left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
+    position: absolute; left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: fit-content; margin: 0 auto;
     display: inline-flex; align-items: stretch;
     border-radius: 8px;
     background: #fff; padding: 2px; gap: 2px;
