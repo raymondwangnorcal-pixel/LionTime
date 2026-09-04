@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-04",
-  "scrapedAt": "2026-09-04T13:09:36.201879-04:00",
+  "scrapedAt": "2026-09-04T16:49:52.167012-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -581,10 +581,11 @@
               "name": "Homestyle",
               "items": [
                 "Sweet Chili Chicken",
+                "Sweet Chili and Thai Basil Tofu",
                 "Vegan Nugget",
                 "Steamed Rice",
                 "Vegetable Spring Roll",
-                "Brussels Sprouts"
+                "Roasted Vegetables"
               ]
             },
             {
@@ -602,10 +603,11 @@
               "name": "Performance kitchen",
               "items": [
                 "Sweet Chili Chicken",
+                "Sweet Chili and Thai Basil Tofu",
                 "Vegan Nugget",
                 "Steamed Rice",
                 "Vegetable Spring Roll",
-                "Blanched Broccoli"
+                "Roasted Vegetables"
               ]
             },
             {
