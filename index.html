@@ -271,7 +271,7 @@
 
   .sec {
     /* offset is measured from the real control-bar height at runtime */
-    position: sticky; top: var(--controls-h, 118px); z-index: 10;
+    position: sticky; top: var(--controls-h, 118px); z-index: 10; /* relative child anchor */
     display: flex; align-items: center; gap: 0.6rem;
     width: 100%; margin: 1.15rem 0 0; padding: 0.78rem 1.1rem;
     background: var(--columbia-blue); border: none; border-radius: var(--radius) var(--radius) 0 0;
@@ -298,18 +298,19 @@
 
   /* ── Dining: inline Hours/Menus toggle inside .sec ── */
   .sec-view-toggle {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
     display: inline-flex; align-items: stretch;
-    border-radius: 10px;
-    background: #fff; padding: 3px; gap: 3px;
-    margin: -0.78rem auto;
+    border-radius: 8px;
+    background: #fff; padding: 2px; gap: 2px;
     flex-shrink: 0;
     border: 2px solid rgba(255,255,255,0.6);
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   }
   .sec-toggle-btn {
-    font: inherit; font-size: 0.7rem; font-weight: 700;
+    font: inherit; font-size: 0.62rem; font-weight: 700;
     letter-spacing: 0.5px; text-transform: uppercase;
-    padding: 0.45rem 0.9rem; border-radius: 7px;
+    padding: 0.35rem 0.7rem; border-radius: 6px;
     color: var(--columbia-blue);
     cursor: pointer; transition: background 0.15s, color 0.15s;
     user-select: none; -webkit-user-select: none;
@@ -698,7 +699,7 @@
     .sec-icon { font-size: 0.9rem; }
     .sec-title { font-size: 0.78rem; letter-spacing: 1.2px; }
     .sec-meta { font-size: 0.75rem; }
-    .sec-view-toggle { padding: 2px; gap: 2px; margin: -0.45rem auto -0.45rem auto; }
+    .sec-view-toggle { padding: 2px; gap: 2px; }
     .sec-toggle-btn { font-size: 0.6rem; padding: 0.3rem 0.6rem; }
     .sec::after { width: 7px; height: 7px; border-width: 2px; }
     .row {
