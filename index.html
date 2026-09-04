@@ -298,9 +298,6 @@
 
   /* ── Dining: inline Hours/Menus toggle inside .sec ── */
   .sec-view-toggle {
-    position: absolute; left: 0; right: 0; top: 50%;
-    transform: translateY(-50%);
-    width: fit-content; margin: 0 auto;
     display: inline-flex; align-items: stretch;
     border-radius: 8px;
     background: #fff; padding: 2px; gap: 2px;
@@ -1740,7 +1737,7 @@ function render() {
         ${isDining && hasMenus ? `<span class="sec-rule"></span><span class="sec-view-toggle" data-dining-toggle>
           <span class="sec-toggle-btn${LionHourDiningMenus.activeView === 'hours' ? ' active' : ''}" data-view="hours">Hours</span>
           <span class="sec-toggle-btn${LionHourDiningMenus.activeView === 'menus' ? ' active' : ''}" data-view="menus">Menus</span>
-        </span>` : '<span class="sec-rule"></span>'}
+        </span><span class="sec-rule"></span>` : '<span class="sec-rule"></span>'}
         <span class="sec-meta">${openN} of ${all.length} open</span>
       </button>
       <div class="list${isDining && hasMenus && LionHourDiningMenus.activeView === 'menus' ? ' menus-active' : ''}" id="${listId}"${catCollapsed ? ' hidden' : ''}>
