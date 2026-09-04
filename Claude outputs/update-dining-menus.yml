@@ -1,0 +1,109 @@
+name: Update dining menus
+
+on:
+  schedule:
+    - cron: '17 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-dining-menus
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-commit:
+    if: github.repository == 'raymondwangnorcal-pixel/LionTime' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      notification_summary: ${{ steps.summary.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Scrape dining menus
+        run: python scrape_menus.py --out data/menus.json
+
+      - name: Commit menu data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p data
+          git add data/menus.json
+          if git diff --cached --quiet; then
+            echo "No menu changes to commit"
+          else
+            git commit -m "Update dining menus $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi
+
+      - name: Build notification summary
+        id: summary
+        run: |
+          unavailable=$(python3 -c "
+          import json, sys
+          with open('data/menus.json') as f:
+            data = json.load(f)
+          items = data.get('unavailable', [])
+          if not items:
+            print('All menus scraped successfully.')
+            sys.exit(0)
+          lines = [f'Menu scrape: {len(items)} unavailable']
+          for u in items:
+            lines.append(f'  - {u[\"name\"]} ({u[\"meal\"]}): {u[\"status\"]}')
+          print('\n'.join(lines))
+          ")
+          {
+            echo 'summary<<EOF'
+            echo "$unavailable"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Alert on unavailable menus
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
+        run: |
+          unavailable=$(python3 -c "
+          import json
+          with open('data/menus.json') as f:
+            data = json.load(f)
+          items = data.get('unavailable', [])
+          if not items:
+            exit(0)
+          lines = ['⚠️ LionHour: Menu(s) unavailable on LionDine']
+          for u in items:
+            lines.append(f'• {u[\"name\"]} ({u[\"meal\"]}): {u[\"status\"]}')
+          lines.append('')
+          lines.append('Fix: check liondine.com and update if needed.')
+          print('\n'.join(lines))
+          " 2>&1) || true
+          if [ -n "$unavailable" ]; then
+            curl --fail-with-body --silent --show-error \
+              --retry 3 --retry-all-errors \
+              -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text=${unavailable}"
+          fi
+
+  notify:
+    needs: scrape-and-commit
+    if: ${{ always() && needs.scrape-and-commit.result != 'success' }}
+    uses: ./.github/workflows/send-telegram-update.yml
+    with:
+      source_label: Dining Menus
+      conclusion: ${{ needs.scrape-and-commit.result }}
+      summary: ${{ needs.scrape-and-commit.outputs.notification_summary }}
+      run_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    secrets:
+      telegram_bot_token: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+      telegram_chat_id: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
