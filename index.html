@@ -896,19 +896,19 @@
 
   /* ── Dining Menus: meal-period tabs ───────────── */
   .meal-period-bar {
-    display: flex; gap: 0; padding: 0.45rem 0.75rem;
-    background: #f4f7fb; border-bottom: 1px solid var(--hairline);
+    display: flex; gap: 0; padding: 0;
+    background: #f0f3f8; border-bottom: 1px solid var(--hairline);
   }
   .meal-period-tab {
     flex: 1; font: inherit; font-size: 0.72rem; font-weight: 600;
-    padding: 0.4rem 0.3rem; border: none; cursor: pointer;
-    background: transparent; color: var(--text-secondary);
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
+    padding: 0.4rem 0.6rem; border: none; cursor: pointer;
+    background: transparent; color: #4a5568;
+    transition: background 0.15s, color 0.15s;
+    text-align: center;
   }
+  .meal-period-tab:hover { background: rgba(91,155,213,0.12); }
   .meal-period-tab.active {
-    color: var(--columbia-blue);
-    border-bottom-color: var(--columbia-blue);
+    background: #89b9e2; color: #fff;
   }
 
   /* ── Dining Menus: hall cards ─────────────────── */
@@ -979,7 +979,7 @@
   @media (max-width: 620px) {
     .view-toggle-bar { padding: 0.45rem 0.75rem 0.35rem; }
     .view-toggle-btn { font-size: 0.68rem; padding: 0.25rem 0.9rem; }
-    .meal-period-tab { font-size: 0.68rem; padding: 0.35rem 0.2rem; }
+    .meal-period-tab { font-size: 0.68rem; padding: 0.35rem 0.5rem; }
     .menu-hall-header { padding: 0.6rem 0.85rem 0.35rem; }
     .menu-hall-body { padding: 0 0.85rem 0.6rem; }
     .menu-hall-hours { display: none; }
