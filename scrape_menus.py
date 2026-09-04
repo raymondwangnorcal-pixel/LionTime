@@ -25,6 +25,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import datetime, timezone, timedelta
@@ -336,6 +337,9 @@ def main():
           file=sys.stderr)
 
     # Write output
+    out_dir = os.path.dirname(args.out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(args.out, 'w') as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
 
