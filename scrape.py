@@ -178,27 +178,32 @@ def extract_barnard_holiday_closures(
         match = re.fullmatch(
             r"(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+"
             r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+"
-            r"(\d{1,2})",
+            r"(\d{1,2})"
+            r"(?:\s*[–—-]\s*(\d{1,2}))?",
             label,
             re.IGNORECASE,
         )
         if not match:
             raise ScheduleParseError(f"unrecognized Barnard holiday date: {label!r}")
-        weekday, month, day_value = match.groups()
-        candidates = []
-        for year in years:
-            try:
-                candidate = datetime.strptime(
-                    f"{month} {day_value} {year}",
-                    "%B %d %Y",
-                ).date()
-            except ValueError as exc:
-                raise ScheduleParseError(f"invalid Barnard holiday date: {label!r}") from exc
-            if candidate.strftime("%A").casefold() == weekday.casefold():
+        weekday, month, day_start, day_end = match.groups()
+        day_values = list(range(int(day_start), int(day_end or day_start) + 1))
+        for day_value in day_values:
+            candidates = []
+            for year in years:
+                try:
+                    candidate = datetime.strptime(
+                        f"{month} {day_value} {year}",
+                        "%B %d %Y",
+                    ).date()
+                except ValueError as exc:
+                    raise ScheduleParseError(f"invalid Barnard holiday date: {label!r}") from exc
+                if day_value == int(day_start):
+                    if candidate.strftime("%A").casefold() != weekday.casefold():
+                        continue
                 candidates.append(candidate)
-        if len(candidates) != 1:
-            raise ScheduleParseError(f"Barnard holiday weekday is ambiguous or incorrect: {label!r}")
-        closures.add(candidates[0].isoformat())
+            if len(candidates) != 1:
+                raise ScheduleParseError(f"Barnard holiday weekday is ambiguous or incorrect: {label!r}")
+            closures.add(candidates[0].isoformat())
     return closures
 
 
