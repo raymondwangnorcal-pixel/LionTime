@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-05",
-  "scrapedAt": "2026-09-05T11:19:29.534210-04:00",
+  "scrapedAt": "2026-09-05T14:22:30.710137-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -443,60 +443,41 @@
             {
               "name": "500 Degrees",
               "items": [
-                "Cheese Pizza",
+                "Classic Cheese",
                 "Roasted Vegetable Pizza",
-                "Buffalo Chicken Pizza"
+                "Chicken Pizza"
               ]
             },
             {
               "name": "Homestyle",
               "items": [
-                "French Toast Sticks",
-                "Waffles",
-                "Buttermilk Pancakes",
-                "Vegan Sausage Patty",
-                "Grilled Teriyaki Tofu"
-              ]
-            },
-            {
-              "name": "Flame",
-              "items": [
                 "Scrambled Eggs",
-                "Free Range Eggs",
-                "Egg White Omelet",
-                "Chopped Onion",
-                "Diced Red Bell Peppers",
-                "Roasted Mushroom",
-                "Sauteed Spinach",
-                "Chopped Tomatoes",
-                "Cheddar Cheese",
-                "Shredded Mozzarella Cheese"
+                "Hash Brown Patty",
+                "Chicken Sausage Link",
+                "Veggie Sausage Patty",
+                "Tofu Scramble"
               ]
             },
             {
-              "name": "Performance Kitchen",
+              "name": "Delicious without",
               "items": [
-                "Scrambled Eggs",
-                "Chicken Sausage Patty",
-                "Home Fries with Onions & Peppers",
-                "White Rice",
-                "Braised Cabbage",
-                "Beef Pepper Steak"
-              ]
-            },
-            {
-              "name": "Delicious Without",
-              "items": [
-                "Oatmeal",
-                "Sauteed Breakfast Potatoes",
-                "Turkey Sausage Links",
-                "Zucchini and Summer Squash",
-                "Fresh Fruit Salad",
+                "Rosemary Roasted Chicken Quarter",
+                "Turkey Bacon",
+                "Shredded Steamed potatoes",
+                "Roasted Vegetable Mix",
                 "Garden Salad",
-                "Garbanzo Bean Salad",
-                "Oat Milk Chia Seed Pudding",
-                "Cinnamon Maple Overnight Oats",
-                "Cinnamon Apples"
+                "Fresh Fruit Salad",
+                "Quinoa Cranberry Squash Salad"
+              ]
+            },
+            {
+              "name": "Performance kitchen",
+              "items": [
+                "Hamburger Patty, Seasoned",
+                "All Beef Hot Dog",
+                "Macaroni & Cheese",
+                "Meatless Malibu Garden Burger",
+                "Green Beans"
               ]
             },
             {
@@ -538,71 +519,39 @@
               "items": [
                 "Classic Cheese",
                 "Roasted Vegetable Pizza",
-                "Barbecue Chicken Pizza"
-              ]
-            },
-            {
-              "name": "Delicious without",
-              "items": [
-                "Oatmeal",
-                "Beef Taco Meat",
-                "White Rice",
-                "Fried Plantains",
-                "Roasted Corn",
-                "Cilantro Salsa",
-                "Chickpea Cucumber Salad",
-                "Fresh Fruit Salad"
+                "Chicken Pizza"
               ]
             },
             {
               "name": "Homestyle",
               "items": [
-                "French Toast Sticks",
-                "Waffles",
-                "Buttermilk Pancakes",
-                "Vegan Sausage Patty",
-                "Grilled Teriyaki Tofu"
-              ]
-            },
-            {
-              "name": "Flame",
-              "items": [
                 "Scrambled Eggs",
-                "Free Range Eggs",
-                "Egg White Omelet",
-                "Chopped Onion",
-                "Diced Red Bell Peppers",
-                "Roasted Mushroom",
-                "Sauteed Spinach",
-                "Chopped Tomatoes",
-                "Cheddar Cheese",
-                "Shredded Mozzarella Cheese"
+                "Hash Brown Patty",
+                "Chicken Sausage Link",
+                "Veggie Sausage Patty",
+                "Tofu Scramble"
               ]
             },
             {
-              "name": "Performance Kitchen",
+              "name": "Delicious without",
               "items": [
-                "Scrambled Eggs",
-                "Chicken Sausage Patty",
-                "Home Fries with Onions & Peppers",
-                "White Rice",
-                "Braised Cabbage",
-                "Beef Pepper Steak"
-              ]
-            },
-            {
-              "name": "Delicious Without",
-              "items": [
-                "Oatmeal",
-                "Sauteed Breakfast Potatoes",
-                "Turkey Sausage Links",
-                "Zucchini and Summer Squash",
-                "Fresh Fruit Salad",
+                "Rosemary Roasted Chicken Quarter",
+                "Turkey Bacon",
+                "Shredded Steamed potatoes",
+                "Roasted Vegetable Mix",
                 "Garden Salad",
-                "Garbanzo Bean Salad",
-                "Oat Milk Chia Seed Pudding",
-                "Cinnamon Maple Overnight Oats",
-                "Cinnamon Apples"
+                "Fresh Fruit Salad",
+                "Quinoa Cranberry Squash Salad"
+              ]
+            },
+            {
+              "name": "Performance kitchen",
+              "items": [
+                "Hamburger Patty, Seasoned",
+                "All Beef Hot Dog",
+                "Macaroni & Cheese",
+                "Meatless Malibu Garden Burger",
+                "Green Beans"
               ]
             },
             {
