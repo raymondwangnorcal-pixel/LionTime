@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-05",
-  "scrapedAt": "2026-09-05T00:37:19.917237-04:00",
+  "scrapedAt": "2026-09-05T06:42:47.719240-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -17,21 +17,21 @@
             {
               "name": "Main Line",
               "items": [
-                "Chocolate Croissants",
+                "Biscuits and Sausage Gravy",
                 "Scrambled Eggs",
-                "Tater Tots",
-                "Turkey Sausage",
-                "Smoked Maple Sausage",
-                "Mushrooms and Kale",
+                "Hashbrown",
+                "Ham",
+                "Chicken Sausage",
+                "Roasted Broccoli and Carrots",
                 "Egg White Scramble"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Hot Berry Quinoa",
-                "Roasted Potatoes",
-                "Vegan Sausage"
+                "Vegan Sausage",
+                "Just Egg",
+                "Cauliflower"
               ]
             },
             {
@@ -54,33 +54,33 @@
             {
               "name": "Main Line",
               "items": [
-                "Chocolate Croissants",
+                "Biscuits and Sausage Gravy",
                 "Scrambled Eggs",
-                "Tater Tots",
-                "Turkey Sausage",
-                "Smoked Maple Sausage",
-                "Mushrooms and Kale",
+                "Hashbrown",
+                "Ham",
+                "Chicken Sausage",
+                "Roasted Broccoli and Carrots",
                 "Egg White Scramble"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Stir Fry Eggplant",
-                "Edamame Rice",
-                "Bok Choy"
+                "BBQ Tofu",
+                "Sweet Plantains",
+                "Mixed Vegetables"
               ]
             },
             {
               "name": "Action Station",
               "items": [
-                "Sushi Bowls"
+                "Bagel Bar"
               ]
             },
             {
               "name": "Made-to-Order Station",
               "items": [
-                "Chopped Cheese"
+                "Pasta: assorted toppings"
               ]
             }
           ],
@@ -97,31 +97,31 @@
             {
               "name": "Main Line",
               "items": [
-                "Creamy Chicken Alfredo",
-                "Garlic Oil Penne",
-                "Chickpeas",
-                "Roasted Squash",
-                "Garlic Bread"
+                "Pot Roast",
+                "Egg Noodles",
+                "Garlic Bread",
+                "Lentil Stew",
+                "Roasted Brussels Sprouts"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Fried Sweet Chili Tofu",
-                "Jasmine Rice",
-                "Bok Choy"
+                "Lentil Stew",
+                "White Rice",
+                "Roasted Brussels Sprouts"
               ]
             },
             {
               "name": "Action Station",
               "items": [
-                "Mac and Cheese"
+                "Chinese Takeout"
               ]
             },
             {
               "name": "Made-to-Order Station",
               "items": [
-                "Chopped Cheese"
+                "Pasta: assorted toppings"
               ]
             }
           ],
@@ -156,25 +156,25 @@
             {
               "name": "Main Line",
               "items": [
-                "Grilled Pineapple Burger",
-                "Fried Fish Sandwich",
-                "Sausage and Peppers",
-                "Three Bean Chili",
-                "Truffle Mushroom Melt"
+                "Caramelized Onion & Swiss Burger",
+                "Roast Beef and Cheddar Sandwich",
+                "Beef Lo Mein",
+                "Vegan Meatball Sandwich",
+                "Caramelized Onion and Swiss Black Bean Burger"
               ]
             },
             {
               "name": "Fry Station",
               "items": [
-                "Boneless Wings",
-                "Onion Rings",
-                "Sour Cream and Onion Wedges"
+                "Chicken Wings",
+                "Mozzarella Sticks",
+                "Spicy Fries"
               ]
             },
             {
               "name": "Grill",
               "items": [
-                "Taco Bell Chicken Quesadilla",
+                "Strawberry Cheesecake Stuffed French Toast",
                 "Cheeseburger",
                 "Hamburger",
                 "Beyond Burger",
@@ -197,7 +197,7 @@
                 "Hummus",
                 "Grilled Chicken",
                 "Guacamole",
-                "Tortellini Pasta Salad"
+                "Cheese Tortellini"
               ]
             }
           ],
@@ -214,25 +214,25 @@
             {
               "name": "Main Line",
               "items": [
-                "Grilled Pineapple Burger",
-                "Fried Fish Sandwich",
-                "Sausage and Peppers",
-                "Three Bean Chili",
-                "Truffle Mushroom Melt"
+                "Caramelized Onion and Swiss Burger",
+                "Roast Beef and Cheddar Sandwich",
+                "Beef Lo Mein",
+                "Vegan Meatball Sub",
+                "Caramelized Onion and Swiss Black Bean Burger"
               ]
             },
             {
               "name": "Fry Station",
               "items": [
-                "Boneless Wings",
-                "Onion Rings",
-                "Sour Cream and Onion Wedges"
+                "Chicken Wings",
+                "Mozzarella Sticks",
+                "Spicy Fries"
               ]
             },
             {
               "name": "Grill",
               "items": [
-                "Taco Bell Chicken Quesadilla",
+                "Strawberry Cheesecake Stuffed French Toast",
                 "Cheeseburger",
                 "Hamburger",
                 "Beyond Burger",
@@ -251,10 +251,11 @@
                 "Romaine Lettuce",
                 "Pickles",
                 "Carrots",
+                "Tomatoes",
                 "Hummus",
                 "Grilled Chicken",
                 "Guacamole",
-                "Tortellini Pasta Salad"
+                "Cheese Tortellini"
               ]
             }
           ],
@@ -440,25 +441,62 @@
           "available": true,
           "stations": [
             {
+              "name": "500 Degrees",
+              "items": [
+                "Cheese Pizza",
+                "Roasted Vegetable Pizza",
+                "Buffalo Chicken Pizza"
+              ]
+            },
+            {
               "name": "Homestyle",
+              "items": [
+                "French Toast Sticks",
+                "Waffles",
+                "Buttermilk Pancakes",
+                "Vegan Sausage Patty",
+                "Grilled Teriyaki Tofu"
+              ]
+            },
+            {
+              "name": "Flame",
+              "items": [
+                "Scrambled Eggs",
+                "Free Range Eggs",
+                "Egg White Omelet",
+                "Chopped Onion",
+                "Diced Red Bell Peppers",
+                "Roasted Mushroom",
+                "Sauteed Spinach",
+                "Chopped Tomatoes",
+                "Cheddar Cheese",
+                "Shredded Mozzarella Cheese"
+              ]
+            },
+            {
+              "name": "Performance Kitchen",
               "items": [
                 "Scrambled Eggs",
                 "Chicken Sausage Patty",
                 "Home Fries with Onions & Peppers",
-                "Waffles",
-                "Tofu Scramble",
-                "Meatless Breakfast Sausage Patty"
+                "Braised Cabbage",
+                "White Rice",
+                "Beef Pepper Steak"
               ]
             },
             {
-              "name": "Performance kitchen",
+              "name": "Delicious Without",
               "items": [
-                "Scrambled Eggs",
-                "Home Fries with Onions & Peppers",
-                "Waffles",
-                "Beef Breakfast Sausage",
-                "Tofu Scramble",
-                "Meatless Breakfast Sausage Patty"
+                "Oatmeal",
+                "Sauteed Breakfast Potatoes",
+                "Turkey Sausage Links",
+                "Zucchini and Summer Squash",
+                "Fresh Fruit Salad",
+                "Garden Salad",
+                "Garbanzo Bean Salad",
+                "Oat Milk Chia Seed Pudding",
+                "Cinnamon Maple Overnight Oats",
+                "Cinnamon Apples"
               ]
             },
             {
@@ -472,22 +510,16 @@
                 "Cherry Tomatoes",
                 "Mandarin Oranges",
                 "Croutons",
-                "Raspberry Balsamic Vinagrette",
+                "Fat Free Raspberry Dressing",
                 "Fat Free Italian Dressing"
-              ]
-            },
-            {
-              "name": "Desserts",
-              "items": [
-                "Cherry Pie"
               ]
             },
             {
               "name": "Soup",
               "items": [
-                "southwest tortilla soup",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
-                "Crackers, Saltine, 2 CT, Zesta"
+                "Lemon Orzo Chicken Soup",
+                "Crackers, Saltine, 2 CT, Zesta",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
               ]
             }
           ],
@@ -504,29 +536,73 @@
             {
               "name": "500 Degrees",
               "items": [
-                "Steamed Green Beans",
-                "White Rice",
-                "tofu \"bacon\""
-              ]
-            },
-            {
-              "name": "Homestyle",
-              "items": [
-                "Baked Chicken Quarter",
-                "Meatless Chorizo Tinga",
-                "Cajun Vegetable Rice",
-                "Fried Plantains",
-                "Steamed Green Beans"
+                "Classic Cheese",
+                "Roasted Vegetable Pizza",
+                "Barbecue Chicken Pizza"
               ]
             },
             {
               "name": "Delicious without",
               "items": [
-                "Cajun Chicken",
+                "Oatmeal",
+                "Beef Taco Meat",
                 "White Rice",
-                "Corn",
+                "Fried Plantains",
+                "Roasted Corn",
+                "Cilantro Salsa",
+                "Chickpea Cucumber Salad",
+                "Fresh Fruit Salad"
+              ]
+            },
+            {
+              "name": "Homestyle",
+              "items": [
+                "French Toast Sticks",
+                "Waffles",
+                "Buttermilk Pancakes",
+                "Vegan Sausage Patty",
+                "Grilled Teriyaki Tofu"
+              ]
+            },
+            {
+              "name": "Flame",
+              "items": [
+                "Scrambled Eggs",
+                "Free Range Eggs",
+                "Egg White Omelet",
+                "Chopped Onion",
+                "Diced Red Bell Peppers",
+                "Roasted Mushroom",
+                "Sauteed Spinach",
+                "Chopped Tomatoes",
+                "Cheddar Cheese",
+                "Shredded Mozzarella Cheese"
+              ]
+            },
+            {
+              "name": "Performance Kitchen",
+              "items": [
+                "Scrambled Eggs",
+                "Chicken Sausage Patty",
+                "Home Fries with Onions & Peppers",
+                "Braised Cabbage",
+                "White Rice",
+                "Beef Pepper Steak"
+              ]
+            },
+            {
+              "name": "Delicious Without",
+              "items": [
+                "Oatmeal",
+                "Sauteed Breakfast Potatoes",
+                "Turkey Sausage Links",
+                "Zucchini and Summer Squash",
+                "Fresh Fruit Salad",
                 "Garden Salad",
-                "Quinoa Cranberry Squash Salad"
+                "Garbanzo Bean Salad",
+                "Oat Milk Chia Seed Pudding",
+                "Cinnamon Maple Overnight Oats",
+                "Cinnamon Apples"
               ]
             },
             {
@@ -540,22 +616,16 @@
                 "Cherry Tomatoes",
                 "Mandarin Oranges",
                 "Croutons",
-                "Raspberry Balsamic Vinagrette",
+                "Fat Free Raspberry Dressing",
                 "Fat Free Italian Dressing"
-              ]
-            },
-            {
-              "name": "Desserts",
-              "items": [
-                "Cherry Pie"
               ]
             },
             {
               "name": "Soup",
               "items": [
-                "southwest tortilla soup",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
-                "Crackers, Saltine, 2 CT, Zesta"
+                "Lemon Orzo Chicken Soup",
+                "Crackers, Saltine, 2 CT, Zesta",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
               ]
             }
           ],
@@ -573,41 +643,39 @@
               "name": "500 Degrees",
               "items": [
                 "Classic Cheese",
-                "Buffalo Chicken Pizza",
+                "Barbecue Chicken Pizza",
                 "Roasted Vegetable Pizza"
               ]
             },
             {
               "name": "Homestyle",
               "items": [
-                "Sweet Chili Chicken",
-                "Sweet Chili and Thai Basil Tofu",
-                "Vegan Nugget",
-                "Steamed Rice",
-                "Vegetable Spring Roll",
-                "Roasted Vegetables"
+                "Meatballs",
+                "Vegan Meatballs",
+                "Garlic Bread",
+                "Spaghetti",
+                "Peas and Carrots"
               ]
             },
             {
               "name": "Delicious without",
               "items": [
-                "Herb Chicken Breast",
-                "Vegetable Paella",
-                "Steamed Green Beans",
-                "Garden Salad",
-                "Garbanzo Bean Salad",
-                "Cuban Black Beans"
+                "Beef Taco Meat",
+                "White Rice",
+                "Fried Plantains",
+                "Roasted Corn",
+                "Chickpea Cucumber Salad",
+                "Lime Cilantro Cabbage Slaw",
+                "Garden Salad"
               ]
             },
             {
               "name": "Performance kitchen",
               "items": [
-                "Sweet Chili Chicken",
-                "Sweet Chili and Thai Basil Tofu",
-                "Vegan Nugget",
-                "Steamed Rice",
-                "Vegetable Spring Roll",
-                "Roasted Vegetables"
+                "Roasted Herb Chicken",
+                "Seasoned Rice",
+                "Penne with Marinara",
+                "Baby Carrots"
               ]
             },
             {
@@ -621,22 +689,16 @@
                 "Cherry Tomatoes",
                 "Mandarin Oranges",
                 "Croutons",
-                "Raspberry Balsamic Vinagrette",
+                "Fat Free Raspberry Dressing",
                 "Fat Free Italian Dressing"
-              ]
-            },
-            {
-              "name": "Desserts",
-              "items": [
-                "Cherry Pie"
               ]
             },
             {
               "name": "Soup",
               "items": [
-                "southwest tortilla soup",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
-                "Crackers, Saltine, 2 CT, Zesta"
+                "Lemon Orzo Chicken Soup",
+                "Crackers, Saltine, 2 CT, Zesta",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
               ]
             }
           ],
