@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "date": "2026-09-04",
-  "scrapedAt": "2026-09-04T20:09:41.198195-04:00",
+  "date": "2026-09-05",
+  "scrapedAt": "2026-09-05T00:37:19.917237-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -434,8 +434,8 @@
         "breakfast": {
           "name": "Hewitt",
           "hours": {
-            "open": "7:00 AM",
-            "close": "9:00 AM"
+            "open": "11:00 AM",
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
@@ -497,7 +497,7 @@
           "name": "Hewitt",
           "hours": {
             "open": "11:00 AM",
-            "close": "2:00 PM"
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
