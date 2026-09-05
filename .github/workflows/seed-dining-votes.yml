@@ -1,0 +1,23 @@
+name: Seed dining votes
+
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/seed-votes.mjs
+
+      - name: Random delay
+        run: |
+          DELAY=$((RANDOM % 1800))
+          echo "Sleeping ${DELAY}s to randomize timing..."
+          sleep $DELAY
+
+      - name: Seed votes
+        run: node scripts/seed-votes.mjs
