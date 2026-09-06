@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "date": "2026-09-05",
-  "scrapedAt": "2026-09-05T19:57:50.811357-04:00",
+  "date": "2026-09-06",
+  "scrapedAt": "2026-09-06T00:47:25.869253-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -9,8 +9,8 @@
         "breakfast": {
           "name": "Ferris",
           "hours": {
-            "open": "10:00 AM",
-            "close": "2:00 PM"
+            "open": "9:00 AM",
+            "close": "11:00 AM"
           },
           "available": true,
           "stations": [
@@ -46,8 +46,8 @@
         "lunch": {
           "name": "Ferris",
           "hours": {
-            "open": "10:00 AM",
-            "close": "4:00 PM"
+            "open": "11:00 AM",
+            "close": "5:00 PM"
           },
           "available": true,
           "stations": [
@@ -89,7 +89,7 @@
         "dinner": {
           "name": "Ferris",
           "hours": {
-            "open": "4:00 PM",
+            "open": "5:00 PM",
             "close": "8:00 PM"
           },
           "available": true,
@@ -148,8 +148,8 @@
         "lunch": {
           "name": "JJ's",
           "hours": {
-            "open": "11:00 AM",
-            "close": "8:00 PM"
+            "open": "12:00 PM",
+            "close": "9:00 PM"
           },
           "available": true,
           "stations": [
@@ -206,8 +206,8 @@
         "dinner": {
           "name": "JJ's",
           "hours": {
-            "open": "11:00 AM",
-            "close": "8:00 PM"
+            "open": "12:00 PM",
+            "close": "9:00 PM"
           },
           "available": true,
           "stations": [
@@ -402,31 +402,40 @@
       "meals": {
         "breakfast": {
           "name": "John Jay",
-          "hours": null,
+          "hours": {
+            "open": "9:30 AM",
+            "close": "11:00 AM"
+          },
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "No menu published"
         },
         "lunch": {
           "name": "John Jay",
-          "hours": null,
+          "hours": {
+            "open": "11:00 AM",
+            "close": "4:00 PM"
+          },
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "No menu published"
         },
         "dinner": {
           "name": "John Jay",
-          "hours": null,
+          "hours": {
+            "open": "4:00 PM",
+            "close": "9:00 PM"
+          },
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "No menu published"
         },
         "late-night": {
           "name": "John Jay",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -768,9 +777,27 @@
   },
   "unavailable": [
     {
+      "venue": "johnjay",
+      "name": "John Jay",
+      "meal": "breakfast",
+      "status": "No menu published"
+    },
+    {
+      "venue": "johnjay",
+      "name": "John Jay",
+      "meal": "lunch",
+      "status": "No menu published"
+    },
+    {
       "venue": "chefmikes",
       "name": "Chef Mike's",
       "meal": "lunch",
+      "status": "No menu published"
+    },
+    {
+      "venue": "johnjay",
+      "name": "John Jay",
+      "meal": "dinner",
       "status": "No menu published"
     },
     {
