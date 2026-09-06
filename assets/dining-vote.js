@@ -158,16 +158,8 @@
     }
 
     let bodyHTML;
-    if (!voted) {
-      /* Pre-vote: ranked names, no bars */
-      bodyHTML = `<div class="dining-vote-options dining-vote-prestate">
-        ${top.map((entry, i) => `<div class="dining-vote-rank-row">
-          <span class="dining-vote-rank">${i + 1}.</span>
-          <span class="dining-vote-rank-name">${esc(hallName(entry.id))}</span>
-        </div>`).join('')}
-      </div>`;
-    } else {
-      /* Post-vote: bars + percentages */
+    {
+      /* Bars + percentages (always shown) */
       const userVote = effectiveVote();
       const maxPct = top.length ? Math.round((top[0].votes / total) * 100) : 0;
       bodyHTML = `<div class="dining-vote-options">
