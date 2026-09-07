@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-07",
-  "scrapedAt": "2026-09-07T08:43:50.534335-04:00",
+  "scrapedAt": "2026-09-07T14:45:43.568889-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -435,7 +435,7 @@
               "name": "Soup Station",
               "items": [
                 "Oatmeal",
-                "Blueberry",
+                "Berry",
                 "Grits"
               ]
             },
@@ -460,7 +460,7 @@
             {
               "name": "Main Line",
               "items": [
-                "Kung Pao Shrimp",
+                "Kung Pao Beef",
                 "Ginger Basmati Rice",
                 "Farro",
                 "Edamame",
@@ -470,7 +470,7 @@
             {
               "name": "Halal Station",
               "items": [
-                "Garlic Chili Tilapia",
+                "Sweet Chili Beef",
                 "Ginger Basmati Rice",
                 "Bok Choy"
               ]
@@ -478,7 +478,7 @@
             {
               "name": "Gluten Free Station",
               "items": [
-                "Garlic Chili Tilapia",
+                "Sweet Chili Beef",
                 "Ginger Basmati Rice",
                 "Bok Choy"
               ]
@@ -486,7 +486,7 @@
             {
               "name": "Vegan Station",
               "items": [
-                "Stir Fry Tempeh",
+                "Stir Fry Jackfruit",
                 "Ginger Basmati Rice",
                 "Bok Choy"
               ]
@@ -513,7 +513,7 @@
                 "Garlic Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Chicken Alfredo",
+                "Poblano Cream",
                 "Zucchini",
                 "Garlic Rolls"
               ]
