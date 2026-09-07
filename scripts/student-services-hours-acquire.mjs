@@ -37,7 +37,7 @@ async function acquireLerner(page, timeoutMs) {
         || /^https:\/\/calendar\.google\.com\/calendar\/embed\?/i.test(value)));
     return candidate || null;
   });
-  if (!calendarUrl) throw new SourceAcquisitionError('missing-content', 'Lerner calendar link is missing');
+  if (!calendarUrl) return { homeHtml };
   const resolved = new URL(calendarUrl, entryUrl);
   if (resolved.origin === new URL(entryUrl).origin && resolved.pathname === '/events') {
     await page.goto(resolved.href, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
