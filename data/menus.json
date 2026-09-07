@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-07",
-  "scrapedAt": "2026-09-07T14:45:43.568889-04:00",
+  "scrapedAt": "2026-09-07T18:52:18.699975-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -99,8 +99,8 @@
               "items": [
                 "Turkey Meatloaf",
                 "Mashed Potatoes",
-                "Couscous Pilaf",
-                "Green Beans",
+                "Garlic Bread",
+                "Vegetable Medley",
                 "Green Lentils"
               ]
             },
@@ -108,8 +108,8 @@
               "name": "Vegan Station",
               "items": [
                 "Vegan Meatloaf",
-                "Mashed Potatoes",
-                "Green Beans"
+                "Yellow Rice",
+                "Vegetable Medley"
               ]
             },
             {
@@ -538,35 +538,35 @@
             {
               "name": "Main Line",
               "items": [
-                "Lemon Caper Chicken",
+                "Chicken Piccata",
                 "Sautéed Broccoli",
                 "Bulgar",
-                "Garlic Bread",
+                "Rice Pilaf",
                 "Red Beans"
               ]
             },
             {
               "name": "Halal Station",
               "items": [
-                "Lemon Caper Chicken",
+                "Chicken Piccata",
                 "Sautéed Broccoli",
-                "Garlic Bread"
+                "Rice Pilaf"
               ]
             },
             {
               "name": "Gluten Free Station",
               "items": [
-                "Lemon Caper Chicken",
+                "Chicken Piccata",
                 "Sautéed Broccoli",
-                "GF Penne"
+                "Rice Pilaf"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Aloo Gobi",
+                "Rajma Beans",
                 "Sauteed Broccoli",
-                "Basmati Rice"
+                "Rice Pilaf"
               ]
             },
             {
@@ -584,7 +584,7 @@
                 "Garlic Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Chicken Alfredo",
+                "Poblano Cream Sauce",
                 "Zucchini",
                 "Garlic Rolls"
               ]
