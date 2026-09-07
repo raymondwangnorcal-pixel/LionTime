@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "date": "2026-09-06",
-  "scrapedAt": "2026-09-06T19:59:40.526147-04:00",
+  "date": "2026-09-07",
+  "scrapedAt": "2026-09-07T00:51:25.901702-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -995,34 +995,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for breakfast"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Chef Mike's",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "8:00 PM"
-          },
+          "hours": null,
           "available": false,
           "stations": [],
-          "status": "No menu published"
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Chef Mike's",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "8:00 PM"
-          },
+          "hours": null,
           "available": false,
           "stations": [],
-          "status": "No menu published"
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Chef Mike's",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -1091,18 +1085,5 @@
       }
     }
   },
-  "unavailable": [
-    {
-      "venue": "chefmikes",
-      "name": "Chef Mike's",
-      "meal": "lunch",
-      "status": "No menu published"
-    },
-    {
-      "venue": "chefmikes",
-      "name": "Chef Mike's",
-      "meal": "dinner",
-      "status": "No menu published"
-    }
-  ]
+  "unavailable": []
 }
