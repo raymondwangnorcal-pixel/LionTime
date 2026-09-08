@@ -838,32 +838,6 @@
     .dining-vote-body { padding: 0.6rem 0.85rem; }
   }
 
-  /* Hide ALL page content behind splash — nuclear approach */
-  body.splash-active > *:not(.splash-overlay) { display: none !important; }
-  /* ── Welcome splash overlay ─────────────────── */
-  .splash-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #0b1e3d;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 1; transition: opacity 0.3s ease;
-    cursor: default;
-  }
-  .splash-overlay.fade-out { opacity: 0; pointer-events: none; }
-  .splash-overlay img {
-    width: 100%; height: 100%; object-fit: cover; object-position: center center;
-  }
-  .splash-close {
-    position: absolute; top: max(1.2rem, env(safe-area-inset-top, 1.2rem));
-    right: 1.2rem; z-index: 10;
-    width: 52px; height: 52px; border: 2px solid rgba(255,255,255,0.6); border-radius: 50%;
-    background: rgba(0,0,0,0.7); color: white;
-    font-size: 1.8rem; line-height: 1;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    transition: background 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  }
-  .splash-close:hover { background: rgba(0,0,0,0.85); }
 
   /* ── Dining Menus: view toggle ────────────────── */
   .view-toggle-bar {
@@ -988,16 +962,6 @@
 </style>
 </head>
 <body>
-
-<!-- Welcome splash screen -->
-<div class="splash-overlay" id="splash-overlay">
-  <button class="splash-close" id="splash-close" aria-label="Close">&times;</button>
-  <picture>
-    <source media="(orientation: portrait)" srcset="assets/welcome-splash.jpg">
-    <source media="(orientation: landscape)" srcset="assets/welcome-splash-wide.png">
-    <img src="assets/welcome-splash.jpg" alt="Welcome Back to Campus!">
-  </picture>
-</div>
 
 <!-- Sidebar -->
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -2112,38 +2076,5 @@ setInterval(render, 60000);
 <script defer src="/_vercel/insights/script.js"></script>
 
 
-<script>
-/* ── Welcome splash: auto-fade after 1s, dismiss on X ─── */
-(function() {
-  var overlay = document.getElementById('splash-overlay');
-  var closeBtn = document.getElementById('splash-close');
-  if (!overlay) return;
-
-  // Disappear permanently after Sept 4 at midnight ET (04:00 UTC)
-  var EXPIRY = new Date('2026-09-11T04:00:00Z').getTime();
-  if (Date.now() >= EXPIRY) { overlay.remove(); document.body.classList.remove('splash-active'); return; }
-
-  function dismiss() {
-    overlay.classList.add('fade-out');
-    document.body.style.overflow = '';
-    document.body.classList.remove('splash-active');
-    setTimeout(function() { overlay.remove(); }, 300);
-  }
-
-  // Prevent scroll while splash is visible
-  document.body.classList.add('splash-active');
-  document.body.style.overflow = 'hidden';
-
-  // Auto-fade after 1 second
-  var timer = setTimeout(dismiss, 1000);
-
-  // Close button
-  closeBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    clearTimeout(timer);
-    dismiss();
-  });
-})();
-</script>
 </body>
 </html>
