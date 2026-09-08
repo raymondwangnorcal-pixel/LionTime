@@ -207,8 +207,21 @@
     backdrop-filter: saturate(180%) blur(8px);
     border-bottom: 1px solid var(--hairline);
   }
+  .cat-tabs {
+    max-width: 1200px; margin: 0 auto; padding: 0.55rem 1.5rem 0;
+    display: flex; justify-content: center; gap: 0.15rem;
+  }
+  .cat-tab {
+    padding: 0.4rem 0.85rem 0.5rem; font-size: 0.84rem; font-weight: 600;
+    color: var(--text-secondary); text-decoration: none; white-space: nowrap;
+    border-bottom: 2px solid transparent; border-radius: 6px 6px 0 0;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .cat-tab:hover { color: var(--columbia-blue); background: #f3f7fb; }
+  .cat-tab.active { color: var(--columbia-blue); border-bottom-color: var(--columbia-blue); }
+  .cat-tab:focus-visible { outline: 2px solid var(--columbia-light); outline-offset: -2px; }
   .controls-inner {
-    max-width: 1200px; margin: 0 auto; padding: 0.75rem 1.5rem 0.7rem;
+    max-width: 1200px; margin: 0 auto; padding: 0.55rem 1.5rem 0.7rem;
     display: flex; align-items: center; justify-content: center; gap: 0.35rem;
   }
   .search-input {
@@ -455,7 +468,10 @@
   }
   .wk-row.unpublished { background: #f3f4f6; color: var(--muted); }
   .wk-row span:first-child { min-width: 6.5rem; }
-  .wk-row span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
+  .wk-row span:last-child { font-variant-numeric: tabular-nums; text-align: right; white-space: normal; }
+  .wk-source-row { padding: 0.45rem 0.85rem 0.55rem; font-size: 0.74rem; }
+  .wk-source { color: var(--columbia-blue); text-decoration: none; font-weight: 500; }
+  .wk-source:hover { text-decoration: underline; }
 
   /* Desktop: horizontal columns */
   @media (min-width: 601px) {
@@ -465,6 +481,7 @@
       grid-template-columns: repeat(7, 1fr);
       background: #f8fafc;
     }
+    .week-desktop .wk-source-row { grid-column: 1 / -1; border-top: 1px solid #eef1f5; }
     .wk-col {
       min-width: 0;
       padding: 0.65rem 0.45rem 0.6rem;
@@ -739,6 +756,13 @@
       width: 100%; flex-wrap: nowrap; justify-content: flex-start;
       overflow: visible;
     }
+    .cat-tabs {
+      justify-content: flex-start; gap: 0; padding: 0.35rem 0.6rem 0;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab { font-size: 0.8rem; padding: 0.35rem 0.7rem 0.45rem; scroll-snap-align: start; }
   }
 
   /* ── Dining vote button (inline in row) ───────── */
@@ -1008,6 +1032,14 @@
 </header>
 
 <div class="controls">
+  <nav class="cat-tabs" id="cat-tabs" aria-label="Category">
+    <a class="cat-tab active" href="/" data-cat="all">All</a>
+    <a class="cat-tab" href="/hours/dining" data-cat="dining">Dining</a>
+    <a class="cat-tab" href="/hours/libraries" data-cat="library">Libraries</a>
+    <a class="cat-tab" href="/hours/cafes" data-cat="cafe">Cafes</a>
+    <a class="cat-tab" href="/hours/fitness" data-cat="fitness">Fitness</a>
+    <a class="cat-tab" href="/hours/student-life" data-cat="student">Services</a>
+  </nav>
   <div class="controls-inner">
     <div class="chips" id="chips"></div>
     <span class="chip-sep"></span>
@@ -1344,6 +1376,38 @@ function sourceDisplayStatus(venue, dow) {
     || value === 'Hours need verification') ? value : null;
 }
 
+/* Official schedules, per category — shown when a day's hours can't be
+   verified so the reader always has somewhere authoritative to go. */
+const OFFICIAL_SOURCES = {
+  library: 'https://hours.library.columbia.edu/',
+  dining:  'https://dining.columbia.edu/content/locations-hours',
+  cafe:    'https://dining.columbia.edu/content/locations-hours',
+  fitness: 'https://perec.columbia.edu/hours-operation',
+  student: 'https://www.health.columbia.edu/content/hours-and-locations',
+};
+
+/* Label for a day with no intervals. The scraper stores the source's whole
+   display string (e.g. "Sunday – Thursday: 9:30 a.m. – 9:00 p.m.") as the
+   day status, which is provenance, not a per-day fact. Only a genuine
+   closure or a known "we don't have it" phrase may stand in for hours;
+   anything else on a zero-interval day means Closed. */
+const UNAVAILABLE_STATUS = /not published|pending first live|load from official|need verification|unavailable/i;
+function closedDayLabel(venue, dow) {
+  const value = sourceStatus(venue, dow);
+  if (!value) return { text: 'Closed', kind: 'closed' };
+  if (/^closed\b/i.test(value)) return { text: value, kind: 'closed' };
+  if (UNAVAILABLE_STATUS.test(value)) return { text: 'Hours unavailable', kind: 'unavailable' };
+  if (value === 'Reservation required') return { text: value, kind: 'status' };
+  return { text: 'Closed', kind: 'closed' };
+}
+
+function officialSourceLink(venue) {
+  const url = OFFICIAL_SOURCES[venue.cat];
+  return url
+    ? `<a class="wk-source" href="${url}" target="_blank" rel="noopener noreferrer">Check the official schedule ↗</a>`
+    : '';
+}
+
 function activeSourceRestriction(venue, now) {
   const restrictions = venue.sourceRestrictions?.[((now.dow % 7) + 7) % 7];
   if (!Array.isArray(restrictions)) return null;
@@ -1596,13 +1660,21 @@ function weekHTML(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
-    const unpub = /not published/i.test(hoursText) || /^closed$/i.test(hoursText);
+    const label = h.length ? null : closedDayLabel(v, dow);
+    const hoursText = h.length ? h.map(fmtRange).join('<br>') : escapeHTML(label.text);
+    const unpub = !h.length && label.kind !== 'status';
     return `<div class="wk-row${i === 0 ? ' today' : ''}${unpub ? ' unpublished' : ''}">
       <span>${DAY_NAMES[dow]}${i === 0 ? ' · today' : ''}</span>
       <span>${hoursText}</span>
     </div>`;
-  }).join('');
+  }).join('') + weekSourceHTML(v, now);
+}
+
+/* Appended under a week view when any day is unverifiable. */
+function weekSourceHTML(v, now) {
+  const anyUnavailable = Array.from({ length: 7 }, (_, i) => (now.dow + i) % 7)
+    .some(dow => !dayHours(v, dow).length && closedDayLabel(v, dow).kind === 'unavailable');
+  return anyUnavailable ? `<div class="wk-source-row">${officialSourceLink(v)}</div>` : '';
 }
 
 function weekHTMLDesktop(v, now) {
@@ -1610,8 +1682,9 @@ function weekHTMLDesktop(v, now) {
   return Array.from({ length: 7 }, (_, i) => {
     const dow = (now.dow + i) % 7;
     const h = dayHours(v, dow);
-    const hoursText = h.length ? h.map(fmtRange).join('<br>') : sourceStatus(v, dow) || 'Closed';
-    const unpub = /not published/i.test(hoursText);
+    const label = h.length ? null : closedDayLabel(v, dow);
+    const hoursText = h.length ? h.map(fmtRange).join('<br>') : escapeHTML(label.text);
+    const unpub = !h.length && label.kind === 'unavailable';
     const d = new Date(todayET);
     d.setDate(d.getDate() + i);
     const dateLabel = i === 0 ? 'Today' : `${d.getMonth() + 1}/${d.getDate()}`;
@@ -1619,7 +1692,7 @@ function weekHTMLDesktop(v, now) {
       <span class="wk-col-heading"><span class="wk-col-day">${DAY_SHORT[dow]}</span><span class="wk-col-date">· ${dateLabel}</span></span>
       <span class="wk-col-hours">${hoursText}</span>
     </div>`;
-  }).join('');
+  }).join('') + weekSourceHTML(v, now);
 }
 
 function rowHTML(v, now) {
@@ -1700,6 +1773,7 @@ function render() {
   const venues = topLevelVenues();
   renderChrome(now);
   renderSidebarNav();
+  renderCatTabs();
 
   const stage = document.getElementById('stage');
   const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
@@ -1932,6 +2006,23 @@ function toggleSidebar(forceOpen) {
 
 hamburger.addEventListener('click', () => toggleSidebar());
 sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+function renderCatTabs() {
+  document.querySelectorAll('#cat-tabs .cat-tab').forEach(tab => {
+    const active = tab.dataset.cat === activeCat;
+    tab.classList.toggle('active', active);
+    if (active) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
+  });
+}
+
+document.getElementById('cat-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.cat-tab');
+  if (!tab) return;
+  e.preventDefault();
+  activeCat = tab.dataset.cat;
+  render();
+  tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+});
 
 function renderSidebarNav() {
   const nav = document.getElementById('sidebar-nav');
