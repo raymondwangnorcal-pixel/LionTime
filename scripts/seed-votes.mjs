@@ -73,6 +73,11 @@ const SCHEDULES = {
   },
 };
 
+/** Per-hall weight multiplier (default 1.0). Lower → picked less often. */
+const WEIGHTS = {
+  jjs: 0.3,
+};
+
 /* ── Helpers ─────────────────────────────────────────────────── */
 
 function toMin(hhmm) {
@@ -123,6 +128,17 @@ function isOpen(hallId, { jsDay, minutes }) {
   return false;
 }
 
+function weightedPick(halls) {
+  const weights = halls.map(h => WEIGHTS[h] ?? 1);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < halls.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return halls[i];
+  }
+  return halls[halls.length - 1];
+}
+
 function randomFP() {
   return randomBytes(32).toString('hex');
 }
@@ -153,8 +169,7 @@ if (openHalls.length === 0) {
 
 console.log(`Open (${openHalls.length}): ${openHalls.join(', ')}`);
 
-const picks = Array.from({ length: VOTE_COUNT }, () =>
-  openHalls[Math.floor(Math.random() * openHalls.length)]);
+const picks = Array.from({ length: VOTE_COUNT }, () => weightedPick(openHalls));
 const dist = {};
 for (const h of picks) dist[h] = (dist[h] || 0) + 1;
 console.log('Votes:', JSON.stringify(dist));
