@@ -69,7 +69,7 @@
   /* iOS Safari ignores overflow-x on the root elements for touch scrolling.
      A plain <div> wrapper fixes it: overflow-x:hidden on a non-root element
      reliably blocks horizontal scroll on every browser.
-     Fixed-position children (sidebar, overlay) live OUTSIDE this div. */
+     Fixed-position children (if any) live OUTSIDE this div. */
   .page-wrap {
     width: 100%;
     overflow-x: hidden;   /* fallback for pre-Safari-16 */
@@ -104,65 +104,7 @@
   }
   .header-content { position: relative; z-index: 1; display: inline-flex; flex-direction: column; align-items: center; }
 
-  /* ── Hamburger menu button ───────────────────── */
-  .hamburger {
-    position: absolute; top: 1.4rem; left: 1.2rem; z-index: 5;
-    width: 38px; height: 38px; border: none; background: rgba(255,255,255,0.15);
-    border-radius: 8px; cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 5px;
-    transition: background 0.2s;
-  }
-  .hamburger:hover { background: rgba(255,255,255,0.28); }
-  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
-  .hamburger.open span:nth-child(2) { opacity: 0; }
-  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
-  .hamburger span {
-    display: block; width: 20px; height: 2.5px;
-    background: white; border-radius: 1px;
-    transition: transform 0.25s, opacity 0.25s;
-  }
 
-  /* ── Sidebar ─────────────────────────────────── */
-  .sidebar-overlay {
-    position: fixed; inset: 0; z-index: 49;
-    background: rgba(0,0,0,0.35); opacity: 0;
-    pointer-events: none; transition: opacity 0.3s;
-  }
-  .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
-  .sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
-    width: 280px; max-width: 80vw;
-    background: #fff; box-shadow: 2px 0 16px rgba(0,0,0,0.12);
-    transform: translateX(-100%); transition: transform 0.3s ease;
-    display: flex; flex-direction: column; overflow-y: auto;
-  }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-header {
-    background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
-    color: white; padding: 1.6rem 1.4rem 1.2rem;
-  }
-  .sidebar-header .logo { justify-content: flex-start; margin-bottom: 0.15rem; }
-  .sidebar-header .subtitle { font-size: 0.78rem; opacity: 0.8; text-align: left; }
-  .sidebar-nav { padding: 0.6rem 0; flex: 1; }
-  .sidebar-nav-item {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.75rem 1.4rem; font-size: 0.92rem; font-weight: 500;
-    color: var(--text); cursor: pointer; border: none; background: none;
-    width: 100%; text-align: left; font-family: inherit;
-    text-decoration: none; box-sizing: border-box;
-    transition: background 0.15s;
-  }
-  .sidebar-nav-item:hover { background: var(--bg); }
-  .sidebar-nav-item.active {
-    background: #eaf1fa; color: var(--columbia-blue); font-weight: 600;
-    border-right: 3px solid var(--columbia-blue);
-  }
-  .sidebar-nav-item .nav-icon { font-size: 1.15rem; width: 1.5rem; text-align: center; }
-  .sidebar-nav-item .nav-count {
-    margin-left: auto; font-size: 0.75rem; font-weight: 600;
-    color: var(--text-secondary); opacity: 0.7;
-  }
-  .sidebar-divider { height: 1px; background: var(--hairline); margin: 0.4rem 1.2rem; }
 
   /* ── Header nav links (top-right) ────────────── */
   .header-actions {
@@ -744,8 +686,6 @@
     .search-input { flex: 1 1 100%; font-size: 0.82rem; }
     .chip { font-size: 0.72rem; padding: 0.3rem 0.7rem; }
     .header { padding: 0.8rem 1rem 0.6rem; }
-    .hamburger { top: 0.9rem; left: 0.8rem; width: 36px; height: 36px; gap: 5px; }
-    .hamburger span { width: 18px; }
     .header-actions { top: 0.9rem; right: 0.8rem; gap: 0.2rem; }
     .header-link { font-size: 0.82rem; }
     .lion-icon { width: 2.4rem; height: 2.4rem; }
@@ -1001,27 +941,10 @@
 </head>
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<nav class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <div class="logo"><img class="lion-icon" src="assets/lionhour-mascot.png" alt="LionHour mascot"><h2 class="site-title" style="font-size:1.4rem">Lion<span>Hour</span></h2></div>
-    <p class="subtitle">Campus building hours</p>
-  </div>
-  <nav class="sidebar-nav" id="sidebar-nav" aria-label="Browse by category">
-    <a class="sidebar-nav-item active" href="/" data-cat="all"><span class="nav-icon">🏠</span>Home</a>
-    <a class="sidebar-nav-item" href="/hours/dining" data-cat="dining"><span class="nav-icon">🍜</span>Dining</a>
-    <a class="sidebar-nav-item" href="/hours/libraries" data-cat="library"><span class="nav-icon">📚</span>Libraries</a>
-    <a class="sidebar-nav-item" href="/hours/cafes" data-cat="cafe"><span class="nav-icon">☕</span>Cafes</a>
-    <a class="sidebar-nav-item" href="/hours/fitness" data-cat="fitness"><span class="nav-icon">💪</span>Fitness</a>
-    <a class="sidebar-nav-item" href="/hours/student-life" data-cat="student"><span class="nav-icon">🎓</span>Student Life &amp; Services</a>
-  </nav>
-</nav>
 
 <div class="page-wrap">
 <header class="header">
   <div class="header-bg" aria-hidden="true"></div>
-  <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
   <div class="header-actions">
     <a class="header-link" href="https://docs.google.com/forms/d/e/1FAIpQLSdpToXB8tdcgGGDQYynTmuKIf2JU-3d3ojvyx7o9GIn8mRSSg/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Feedback</a>
     <details class="about-details" id="about-details">
@@ -1127,8 +1050,8 @@ const CATEGORIES = [
 ];
 
 const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
-/* Static category pages (generated by scripts/generate-seo.mjs). The sidebar
-   links point here so crawlers see real URLs; JS intercepts the click and
+/* Static category pages (generated by scripts/generate-seo.mjs). The category
+   tabs link here so crawlers see real URLs; JS intercepts the click and
    filters in place, so users never leave the live tracker. */
 const CAT_SLUG = { library:'libraries', dining:'dining', cafe:'cafes', fitness:'fitness', student:'student-life' };
 const catHref = id => id === 'all' ? '/' : `/hours/${CAT_SLUG[id]}`;
@@ -1778,7 +1701,6 @@ function render() {
   const now = nowET();
   const venues = topLevelVenues();
   renderChrome(now);
-  renderSidebarNav();
   renderCatTabs();
 
   const stage = document.getElementById('stage');
@@ -1997,22 +1919,6 @@ if (window.LionHourDiningVote) {
 
 window.addEventListener('resize', syncStickyOffset);
 
-/* ── Sidebar ───────────────────────────────────── */
-const sidebar = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
-const hamburger = document.querySelector('.hamburger');
-
-function toggleSidebar(forceOpen) {
-  const open = forceOpen !== undefined ? forceOpen : !sidebar.classList.contains('open');
-  sidebar.classList.toggle('open', open);
-  sidebarOverlay.classList.toggle('open', open);
-  hamburger.classList.toggle('open', open);
-  document.body.style.overflow = open ? 'hidden' : '';
-}
-
-hamburger.addEventListener('click', () => toggleSidebar());
-sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
-
 function renderCatTabs() {
   document.querySelectorAll('#cat-tabs .cat-tab').forEach(tab => {
     const active = tab.dataset.cat === activeCat;
@@ -2030,30 +1936,6 @@ document.getElementById('cat-tabs').addEventListener('click', e => {
   tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
 
-function renderSidebarNav() {
-  const nav = document.getElementById('sidebar-nav');
-  const venues = topLevelVenues();
-  const items = CATEGORIES.map(c => {
-    const count = c.id === 'all' ? venues.length : venues.filter(v => v.cat === c.id).length;
-    const label = c.id === 'all' ? 'Home' : c.label;
-    const icon = c.id === 'all' ? '🏠' : c.icon;
-    return `<a class="sidebar-nav-item${c.id === activeCat ? ' active' : ''}" href="${catHref(c.id)}" data-cat="${c.id}">
-      <span class="nav-icon">${icon}</span>${label}<span class="nav-count">${count}</span>
-    </a>`;
-  });
-  nav.innerHTML = items.join('');
-}
-
-document.getElementById('sidebar-nav').addEventListener('click', e => {
-  const btn = e.target.closest('.sidebar-nav-item');
-  if (!btn) return;
-  e.preventDefault();
-  activeCat = btn.dataset.cat;
-  toggleSidebar(false);
-  render();
-});
-
-renderSidebarNav();
 
 function configureAboutDismissal(about, eventTarget, scrollTarget = eventTarget) {
   const close = () => { about.open = false; };
