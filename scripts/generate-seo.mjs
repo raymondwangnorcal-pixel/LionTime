@@ -49,11 +49,41 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const SCHEMA_DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const CATEGORY = {
-  library: { label: 'Library', plural: 'Libraries' },
-  dining: { label: 'Dining hall', plural: 'Dining halls' },
-  cafe: { label: 'Cafe', plural: 'Cafes' },
-  fitness: { label: 'Fitness', plural: 'Gyms & fitness' },
-  student: { label: 'Student services', plural: 'Student life & services' },
+  library: {
+    label: 'Library', plural: 'Libraries', slug: 'libraries',
+    h1: 'Columbia University library hours',
+    title: 'Columbia Library Hours — Butler, NoCo, Avery & More | LionHour',
+    description: 'Opening hours for every Columbia University library: Butler (open 24 hours during the semester), NoCo, Uris, Avery, Math, SIPA and Milstein. Updated live.',
+    intro: 'Butler runs around the clock from Sunday morning through Friday night during the semester; the departmental libraries keep shorter hours and most close early on Saturdays. Hours shift during reading week, finals and breaks.',
+  },
+  dining: {
+    label: 'Dining hall', plural: 'Dining halls', slug: 'dining',
+    h1: 'Columbia dining hall hours',
+    title: 'Columbia Dining Hall Hours — John Jay, Ferris, JJ\'s Place | LionHour',
+    description: 'Today\'s hours for Columbia dining halls: John Jay, Ferris, JJ\'s Place (open overnight), Chef Mike\'s, Chef Don\'s, Faculty House, Grace Dodge and Barnard\'s Hewitt. Updated live.',
+    intro: 'Ferris is the all-week anchor, John Jay closes Friday and Saturday this semester, and JJ\'s Place is the overnight option — open from noon until 10 the next morning. Barnard halls load their schedule live.',
+  },
+  cafe: {
+    label: 'Cafe', plural: 'Cafes', slug: 'cafes',
+    h1: 'Columbia campus cafe hours',
+    title: 'Columbia Cafe Hours — Butler Cafe, Joe Coffee, Cafe East | LionHour',
+    description: 'Opening hours for cafes on Columbia\'s campus: Butler Cafe, the three Joe Coffee locations, Cafe East, Uris, Mudd, Everett, Lenfest and Liz\'s Place at Barnard.',
+    intro: 'Butler Cafe stays open until midnight Monday to Thursday. The Joe Coffee locations require a Columbia ID for entry, and the Law School cafes close early on Fridays.',
+  },
+  fitness: {
+    label: 'Fitness', plural: 'Gyms & fitness', slug: 'fitness',
+    h1: 'Columbia gym hours',
+    title: 'Columbia Gym Hours — Dodge Fitness Center & Uris Pool | LionHour',
+    description: 'Dodge Fitness Center opening hours, Uris Pool lap-swim times, and Barnard\'s LeFrak gym. See if the gym is open right now at Columbia.',
+    intro: 'Dodge opens at 6 AM on weekdays and 8 AM on weekends. The pool keeps its own narrower schedule inside those hours, so check it separately before heading down.',
+  },
+  student: {
+    label: 'Student services', plural: 'Student life & services', slug: 'student-life',
+    h1: 'Columbia student services hours',
+    title: 'Columbia Student Services Hours — Lerner, Bookstore, Mail Center | LionHour',
+    description: 'Office hours for Columbia student services: Lerner Hall, the bookstore, the student mail center, Disability Services, the health insurance office and more.',
+    intro: 'Most offices keep weekday business hours; Lerner Hall itself is open later and on weekends. Several services see students by appointment only.',
+  },
 };
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -101,6 +131,25 @@ function openingHoursSpec(hours) {
 
 const hasHours = v => Array.from({ length: 7 }, (_, d) => v.hours?.[d]).some(r => r && r.length);
 
+/** Collapse a week into "Mon–Thu 9 AM – 11 PM · Fri 9 AM – 8 PM · Sat–Sun Closed". */
+const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function weekSummary(hours) {
+  const order = [1, 2, 3, 4, 5, 6, 0]; // Monday-first
+  const groups = [];
+  for (const d of order) {
+    const text = dayText(hours?.[d]);
+    const last = groups[groups.length - 1];
+    if (last && last.text === text) last.days.push(d);
+    else groups.push({ text, days: [d] });
+  }
+  return groups.map(g => {
+    const span = g.days.length === 1
+      ? DAY_ABBR[g.days[0]]
+      : `${DAY_ABBR[g.days[0]]}–${DAY_ABBR[g.days[g.days.length - 1]]}`;
+    return `${span} ${g.text}`;
+  }).join(' · ');
+}
+
 /* ── 3. Build the venue list ──────────────────────────────────────── */
 const pages = VENUES.map(v => ({
   ...v,
@@ -141,6 +190,12 @@ td{color:var(--text2)}
 .pill-list{list-style:none;display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.6rem}
 .pill-list a{display:inline-block;background:var(--surface);border:1px solid var(--line);
 border-radius:999px;padding:.28rem .8rem;font-size:.85rem;text-decoration:none}
+.venue-list{list-style:none;display:grid;gap:.15rem}
+.venue-row{display:grid;grid-template-columns:1fr;gap:.1rem;padding:.65rem 0;border-bottom:1px solid var(--line)}
+.venue-row:last-child{border-bottom:0}
+.venue-name{font-weight:600;text-decoration:none;font-size:.97rem}
+.venue-loc{font-size:.82rem;color:var(--text2)}
+.venue-week{font-size:.86rem;color:var(--text2);font-variant-numeric:tabular-nums}
 .foot{font-size:.8rem;color:var(--text2);border-top:1px solid var(--line);padding-top:1rem;margin-top:2rem}
 @media(max-width:520px){th{width:5.5rem;font-size:.88rem}td{font-size:.88rem}}
 `.trim();
@@ -219,11 +274,13 @@ for (const v of pages) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'LionHour', item: ORIGIN },
       { '@type': 'ListItem', position: 2, name: 'Campus hours', item: `${ORIGIN}/hours` },
-      { '@type': 'ListItem', position: 3, name: `${v.name} hours`, item: v.url },
+      { '@type': 'ListItem', position: 3, name: CATEGORY[v.cat]?.plural ?? 'Buildings', item: `${ORIGIN}/hours/${CATEGORY[v.cat]?.slug}` },
+      { '@type': 'ListItem', position: 4, name: `${v.name} hours`, item: v.url },
     ],
   };
 
-  const body = `<p class="crumb"><a href="/">LionHour</a> › <a href="/hours">Campus hours</a> › ${esc(v.name)}</p>
+  const cat = CATEGORY[v.cat];
+  const body = `<p class="crumb"><a href="/">LionHour</a> › <a href="/hours">Campus hours</a> › <a href="/hours/${cat.slug}">${esc(cat.plural)}</a> › ${esc(v.name)}</p>
 <h1>${esc(v.name)} hours</h1>
 <p class="meta">${esc(v.catLabel)} · ${esc(v.loc)} · Columbia University, Morningside Heights</p>
 <a class="cta" href="/">See if ${esc(v.name)} is open right now →</a>
@@ -238,7 +295,7 @@ ${hasHours(v) ? '' : '<p class="note">This location publishes its schedule live 
 </div>
 
 ${siblings.length ? `<div class="card">
-<h2>Other ${esc((CATEGORY[v.cat]?.plural ?? 'places').toLowerCase())} at Columbia</h2>
+<h2><a href="/hours/${cat.slug}" style="text-decoration:none;color:inherit">Other ${esc(cat.plural.toLowerCase())} at Columbia →</a></h2>
 <ul class="pill-list">
 ${siblings.map(s => `<li><a href="/hours/${s.slug}">${esc(s.name)}</a></li>`).join('\n')}
 </ul>
@@ -253,6 +310,68 @@ ${siblings.map(s => `<li><a href="/hours/${s.slug}">${esc(s.name)}</a></li>`).jo
   written++;
 }
 
+/* ── 5b. Category pages ───────────────────────────────────────────── */
+const catPages = [];
+for (const [catId, meta] of Object.entries(CATEGORY)) {
+  const list = byCat[catId] || [];
+  if (!list.length) continue;
+  const url = `${ORIGIN}/hours/${meta.slug}`;
+  catPages.push({ ...meta, id: catId, url, count: list.length });
+
+  const rows = list.map(p => `<li class="venue-row">
+  <a class="venue-name" href="/hours/${p.slug}">${esc(p.name)}</a>
+  <span class="venue-loc">${esc(p.loc)}</span>
+  <span class="venue-week">${hasHours(p) ? esc(weekSummary(p.hours)) : 'Schedule loads live'}</span>
+</li>`).join('\n');
+
+  const itemList = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: meta.h1,
+    url,
+    numberOfItems: list.length,
+    itemListElement: list.map((p, i) => ({
+      '@type': 'ListItem', position: i + 1, name: p.name, url: p.url,
+    })),
+  };
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'LionHour', item: ORIGIN },
+      { '@type': 'ListItem', position: 2, name: 'Campus hours', item: `${ORIGIN}/hours` },
+      { '@type': 'ListItem', position: 3, name: meta.plural, item: url },
+    ],
+  };
+
+  const others = Object.values(CATEGORY).filter(c => c.slug !== meta.slug && byCat[Object.keys(CATEGORY).find(k => CATEGORY[k] === c)]?.length);
+
+  const body = `<p class="crumb"><a href="/">LionHour</a> › <a href="/hours">Campus hours</a> › ${esc(meta.plural)}</p>
+<h1>${esc(meta.h1)}</h1>
+<p class="meta">${list.length} locations · Columbia University, Morningside Heights</p>
+<a class="cta" href="/?cat=${catId}">See which ${esc(meta.plural.toLowerCase())} are open right now →</a>
+<p>${esc(meta.intro)}</p>
+
+<div class="card">
+<h2>Typical semester hours</h2>
+<ul class="venue-list">
+${rows}
+</ul>
+</div>
+
+<div class="card">
+<h2>Other places on campus</h2>
+<ul class="pill-list">
+${others.map(c => `<li><a href="/hours/${c.slug}">${esc(c.plural)}</a></li>`).join('\n')}
+</ul>
+</div>`;
+
+  const head = `<script type="application/ld+json">${JSON.stringify(itemList)}</script>
+<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+`;
+  writeFileSync(join(ROOT, 'hours', `${meta.slug}.html`), chrome(meta.title, meta.description, url, body, head));
+}
+
 /* ── 6. Hub page ──────────────────────────────────────────────────── */
 const hubBody = `<p class="crumb"><a href="/">LionHour</a> › Campus hours</p>
 <h1>Columbia University building hours</h1>
@@ -260,7 +379,7 @@ const hubBody = `<p class="crumb"><a href="/">LionHour</a> › Campus hours</p>
 services on Columbia's Morningside campus.</p>
 <a class="cta" href="/">See what's open right now →</a>
 ${Object.entries(CATEGORY).filter(([c]) => byCat[c]?.length).map(([c, meta]) => `<div class="card">
-<h2>${esc(meta.plural)}</h2>
+<h2><a href="/hours/${meta.slug}" style="text-decoration:none;color:inherit">${esc(meta.plural)} →</a></h2>
 <ul class="pill-list">
 ${byCat[c].map(p => `<li><a href="/hours/${p.slug}">${esc(p.name)}</a></li>`).join('\n')}
 </ul>
@@ -281,6 +400,7 @@ const today = new Date().toISOString().slice(0, 10);
 const urls = [
   { loc: `${ORIGIN}/`, priority: '1.0', freq: 'hourly' },
   { loc: `${ORIGIN}/hours`, priority: '0.9', freq: 'daily' },
+  ...catPages.map(c => ({ loc: c.url, priority: '0.8', freq: 'daily' })),
   ...pages.filter(p => !NOINDEX.has(p.id))
     .map(p => ({ loc: p.url, priority: '0.7', freq: 'weekly' })),
   { loc: `${ORIGIN}/privacy`, priority: '0.2', freq: 'yearly' },
@@ -309,6 +429,6 @@ Disallow: /qr/
 Sitemap: ${ORIGIN}/sitemap.xml
 `);
 
-console.log(`✓ ${written} venue pages + hub`);
+console.log(`✓ ${written} venue pages + ${catPages.length} category pages + hub`);
 console.log(`✓ sitemap.xml (${urls.length} URLs)`);
 console.log(`✓ robots.txt`);
