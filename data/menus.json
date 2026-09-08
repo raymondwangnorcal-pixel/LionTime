@@ -1,38 +1,138 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-08",
-  "scrapedAt": "2026-09-08T00:47:08.043860-04:00",
+  "scrapedAt": "2026-09-08T07:26:32.765390-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
       "meals": {
         "breakfast": {
           "name": "Ferris",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "7:30 AM",
+            "close": "11:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "French Toast",
+                "Scrambled Eggs",
+                "Hashbrown",
+                "Maple Sausage",
+                "Chicken Sausage",
+                "Roasted Brussels",
+                "Egg White Scramble"
+              ]
+            },
+            {
+              "name": "Vegan Station",
+              "items": [
+                "Hashbrown Patty",
+                "Just Egg",
+                "Vegan Sausage"
+              ]
+            },
+            {
+              "name": "Made-to-Order Station",
+              "items": [
+                "Omelet: assorted toppings"
+              ]
+            }
+          ],
+          "status": null
         },
         "lunch": {
           "name": "Ferris",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "5:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "French Toast",
+                "Scrambled Eggs",
+                "Hashbrown",
+                "Maple Sausage",
+                "Chicken Sausage",
+                "Roasted Brussels",
+                "Egg White Scramble"
+              ]
+            },
+            {
+              "name": "Vegan Station",
+              "items": [
+                "Sweet and Sour Tofu",
+                "Jasmine Rice",
+                "Bok Choy"
+              ]
+            },
+            {
+              "name": "Action Station",
+              "items": [
+                "Tacos"
+              ]
+            },
+            {
+              "name": "Made-to-Order Station",
+              "items": [
+                "Pasta"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Ferris",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "5:00 PM",
+            "close": "8:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Beef Chili",
+                "Rice Pilaf",
+                "Corn Bread",
+                "Black Eyed Peas",
+                "Broccoli and Tomatoes"
+              ]
+            },
+            {
+              "name": "Vegan Station",
+              "items": [
+                "Vegan Chili",
+                "Black Eyed Peas",
+                "Broccoli and Tomatoes"
+              ]
+            },
+            {
+              "name": "Action Station",
+              "items": [
+                "Chicken Tikka Masala"
+              ]
+            },
+            {
+              "name": "Made-to-Order Station",
+              "items": [
+                "Pasta"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Ferris",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -40,31 +140,182 @@
       "meals": {
         "breakfast": {
           "name": "JJ's",
-          "hours": null,
+          "hours": {
+            "open": "12:00 PM",
+            "close": "10:00 AM"
+          },
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "No menu published"
         },
         "lunch": {
           "name": "JJ's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "12:00 PM",
+            "close": "10:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Cajun Burger",
+                "Pot Roast Po Boy",
+                "Crispy Chicken Korean BBQ Sandwich",
+                "Mushroom Burger",
+                "Edamame Dumplings"
+              ]
+            },
+            {
+              "name": "Fry Station",
+              "items": [
+                "Boneless Wings",
+                "Mozzarella Sticks",
+                "Steak Fries"
+              ]
+            },
+            {
+              "name": "Grill",
+              "items": [
+                "Carnitas Quesadilla",
+                "Cheeseburger",
+                "Hamburger",
+                "Beyond Burger",
+                "Black Bean Burger",
+                "Crispy Chicken",
+                "Grilled Chicken",
+                "Quesadilla",
+                "Omelet",
+                "Pancakes",
+                "French Toast"
+              ]
+            },
+            {
+              "name": "Salad",
+              "items": [
+                "Romaine Lettuce",
+                "Jalapenos",
+                "Avocado",
+                "Shredded Pepperjack",
+                "Bacon Bits",
+                "Honey BBQ Chicken",
+                "BBQ Tofu"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "JJ's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "12:00 PM",
+            "close": "10:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Cajun Burger",
+                "Pot Roast Po Boy",
+                "Crispy Chicken Korean BBQ Sandwich",
+                "Mushroom Burger",
+                "Edamame Dumplings"
+              ]
+            },
+            {
+              "name": "Fry Station",
+              "items": [
+                "Boneless Wings",
+                "Mozzarella Sticks",
+                "Steak Fries"
+              ]
+            },
+            {
+              "name": "Grill",
+              "items": [
+                "Carnitas Quesadilla",
+                "Cheeseburger",
+                "Hamburger",
+                "Beyond Burger",
+                "Black Bean Burger",
+                "Crispy Chicken",
+                "Grilled Chicken",
+                "Quesadilla",
+                "Omelet",
+                "Pancakes",
+                "French Toast"
+              ]
+            },
+            {
+              "name": "Salad",
+              "items": [
+                "Romaine Lettuce",
+                "Jalapenos",
+                "Shredded Pepperjack",
+                "Bacon Bits",
+                "Honey BBQ Chicken",
+                "BBQ Tofu"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "JJ's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "12:00 PM",
+            "close": "10:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Cajun Burger",
+                "Pot Roast Po Boy",
+                "Crispy Chicken Korean BBQ Sandwich",
+                "Mushroom Burger",
+                "Edamame Dumplings"
+              ]
+            },
+            {
+              "name": "Fry Station",
+              "items": [
+                "Boneless Wings",
+                "Mozzarella Sticks",
+                "Steak Fries"
+              ]
+            },
+            {
+              "name": "Grill",
+              "items": [
+                "Carnitas Quesadilla",
+                "Cheeseburger",
+                "Hamburger",
+                "Beyond Burger",
+                "Black Bean Burger",
+                "Crispy Chicken",
+                "Grilled Chicken",
+                "Quesadilla",
+                "Omelet",
+                "Pancakes",
+                "French Toast"
+              ]
+            },
+            {
+              "name": "Salad",
+              "items": [
+                "Romaine Lettuce",
+                "Jalapenos",
+                "Shredded Pepperjack",
+                "Bacon Bits",
+                "Honey BBQ Chicken",
+                "BBQ Tofu"
+              ]
+            }
+          ],
+          "status": null
         }
       }
     },
@@ -75,28 +326,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Faculty House",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Faculty House",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Faculty House",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         }
       }
     },
@@ -107,28 +358,68 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for breakfast"
         },
         "lunch": {
           "name": "Grace Dodge",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "7:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Grill",
+              "items": [
+                "Chicken Nachos: taco seasoned chicken, fresh chips, pico, sour cream, shredded lettuce, pickled jalapenos, queso",
+                "Mixed Bean Nachos: mixed beans, fresh chips, pico, sour cream, shredded lettuce, pickled jalapenos, queso"
+              ]
+            },
+            {
+              "name": "Hot Station",
+              "items": [
+                "Korean BBQ Chicken",
+                "Braised Tofu",
+                "Cabbage, Zucchini, Carrots",
+                "Vegetable Fried Rice"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Grace Dodge",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "7:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Grill",
+              "items": [
+                "Chicken Nachos: taco seasoned chicken, fresh chips, pico, sour cream, shredded lettuce, pickled jalapenos, queso",
+                "Mixed Bean Nachos: mixed beans, fresh chips, pico, sour cream, shredded lettuce, pickled jalapenos, queso"
+              ]
+            },
+            {
+              "name": "Hot Station",
+              "items": [
+                "Korean BBQ Chicken",
+                "Braised Tofu",
+                "Cabbage, Zucchini, Carrots",
+                "Vegetable Fried Rice"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Grace Dodge",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -139,28 +430,39 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for breakfast"
         },
         "lunch": {
           "name": "Johnny's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "2:30 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Lunch Service",
+              "items": [
+                "Meatball Sub: Meatball parm on a garlic roll with Italian bean salad and roasted broccoli rabe",
+                "Vegan Meatball Sub: Vegan meatball parm on a garlic roll with Italian bean salad and roasted broccoli rabe"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Johnny's",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for dinner"
         },
         "late-night": {
           "name": "Johnny's",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -171,28 +473,69 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for breakfast"
         },
         "lunch": {
           "name": "Fac Shack",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "12:00 PM",
+            "close": "4:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Daily Offerings",
+              "items": [
+                "Harissa Chicken",
+                "Tofu Shawarma",
+                "Greek Lemon Basmati Rice",
+                "Grilled Seasonal Vegetables",
+                "Tahini",
+                "Pickled Red Onions"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Fac Shack",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "4:00 PM",
+            "close": "8:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Dinner Service",
+              "items": [
+                "Harissa Chicken",
+                "Tofu Shawarma",
+                "Greek Lemon Basmati Rice",
+                "Grilled Seasonal Vegetables",
+                "Tahini",
+                "Pickled Red Onions"
+              ]
+            },
+            {
+              "name": "Daily Offerings",
+              "items": [
+                "Harissa Chicken",
+                "Tofu Shawarma",
+                "Greek Lemon Basmati Rice",
+                "Grilled Seasonal Vegetables",
+                "Tahini",
+                "Pickled Red Onions"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Fac Shack",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -200,31 +543,216 @@
       "meals": {
         "breakfast": {
           "name": "John Jay",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "9:30 AM",
+            "close": "11:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Scrambled Eggs",
+                "Egg White Scramble",
+                "Blueberry Pancakes",
+                "Vegetable Medley",
+                "Home Fries",
+                "Turkey Sausage"
+              ]
+            },
+            {
+              "name": "Vegan Station",
+              "items": [
+                "Tofu Scramble",
+                "Vegan Sausage",
+                "Vegetable Medley"
+              ]
+            },
+            {
+              "name": "Chef Mike's Kitchen",
+              "items": [
+                "Tropical Smoothie"
+              ]
+            },
+            {
+              "name": "Soup Station",
+              "items": [
+                "Oatmeal",
+                "Banana Maple Oatmeal",
+                "Farina"
+              ]
+            },
+            {
+              "name": "Nook",
+              "items": [
+                "Apple Turnover",
+                "Cinnamon Bun"
+              ]
+            }
+          ],
+          "status": null
         },
         "lunch": {
           "name": "John Jay",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "4:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Chicken Divan",
+                "Garlic Mashed Potatoes",
+                "Spelt",
+                "Zucchini",
+                "Black Eyed Peas"
+              ]
+            },
+            {
+              "name": "Halal Station",
+              "items": [
+                "Chicken Divan",
+                "Garlic Mashed Potatoes",
+                "Zucchini"
+              ]
+            },
+            {
+              "name": "Gluten Free Station",
+              "items": [
+                "Chicken Divan",
+                "Garlic Mashed Potatoes",
+                "Zucchini"
+              ]
+            },
+            {
+              "name": "Vegan Station",
+              "items": [
+                "Sweet Chili Tofu",
+                "Basmati Rice",
+                "Zucchini"
+              ]
+            },
+            {
+              "name": "Chef Mike's Kitchen",
+              "items": [
+                "Tropical Smoothie"
+              ]
+            },
+            {
+              "name": "Soup Station",
+              "items": [
+                "Beef and Barley",
+                "Fennel and White Bean",
+                "Maple Banana Oatmeal"
+              ]
+            },
+            {
+              "name": "Pasta Station",
+              "items": [
+                "Marinara",
+                "Mushroom Lentil Bolognese",
+                "Basil Oil",
+                "Pasta",
+                "Whole Wheat Pasta",
+                "Pesto Alfredo",
+                "Eggplant",
+                "Garlic Rolls"
+              ]
+            },
+            {
+              "name": "Action Station",
+              "items": [
+                "Bao Buns: teriyaki chicken, char siu bbq pork, sweet chili glazed tempeh"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "John Jay",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "4:00 PM",
+            "close": "9:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Main Line",
+              "items": [
+                "Bacon Cheeseburger Mac and Cheese",
+                "Braised Greens",
+                "Bulgar",
+                "Garlic Bread",
+                "Baked Beans"
+              ]
+            },
+            {
+              "name": "Halal Station",
+              "items": [
+                "Beefaroni",
+                "Braised Greens",
+                "Garlic Bread"
+              ]
+            },
+            {
+              "name": "Gluten Free Station",
+              "items": [
+                "GF Cheeseburger Mac and Cheese",
+                "Braised Greens"
+              ]
+            },
+            {
+              "name": "Vegan Station",
+              "items": [
+                "Hoisin Mushroom and Edamame Stir Fry",
+                "Braised Greens",
+                "Basmati Rice"
+              ]
+            },
+            {
+              "name": "Soup Station",
+              "items": [
+                "Beef and Barley",
+                "Fennel and White Bean"
+              ]
+            },
+            {
+              "name": "Pasta Station",
+              "items": [
+                "Marinara",
+                "Mushroom Bolognese",
+                "Basil Oil",
+                "Pasta",
+                "Whole Wheat Pasta",
+                "Pesto Alfredo",
+                "Eggplant",
+                "Garlic Rolls"
+              ]
+            },
+            {
+              "name": "Action Station",
+              "items": [
+                "Bao Buns: teriyaki chicken, char siu bbq pork, sweet chili glazed tempeh"
+              ]
+            },
+            {
+              "name": "Grill",
+              "items": [
+                "BBQ Chicken Grilled Cheese",
+                "Vegan Hotdog"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "John Jay",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -232,31 +760,407 @@
       "meals": {
         "breakfast": {
           "name": "Hewitt",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "7:30 AM",
+            "close": "10:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "500 Degrees",
+              "items": [
+                "Cheese Flatbread",
+                "Cheese Pizza",
+                "Scrambled Eggs",
+                "Chicken Sausage Link",
+                "Veggie Breakfast Pizza"
+              ]
+            },
+            {
+              "name": "Homestyle",
+              "items": [
+                "French Toast",
+                "Waffles",
+                "Chicken Sausage Patty",
+                "Buttermilk Biscuit",
+                "Hash Brown Patty"
+              ]
+            },
+            {
+              "name": "Flame",
+              "items": [
+                "Scrambled Eggs",
+                "cage-free fried egg",
+                "Egg White Omelet",
+                "Chopped Onion",
+                "Diced Red Bell Peppers",
+                "Roasted Mushroom",
+                "Sauteed Spinach",
+                "Chopped Tomatoes",
+                "Cheddar Cheese"
+              ]
+            },
+            {
+              "name": "Performance Kitchen",
+              "items": [
+                "Scrambled Eggs",
+                "Scrambled Eggs with Cheese",
+                "Chicken Sausage Patty",
+                "Hash Brown Patty",
+                "Veggie Sausage Patty",
+                "Tofu Scramble"
+              ]
+            },
+            {
+              "name": "Delicious Without",
+              "items": [
+                "Oatmeal",
+                "Breakfast Potatoes",
+                "Turkey Bacon",
+                "Roasted Vegetable Blend",
+                "Cubed Pineapple",
+                "Garden Salad",
+                "Cubed Watermelon",
+                "Oat Milk Chia Seed Pudding"
+              ]
+            },
+            {
+              "name": "The Sweet Shoppe",
+              "items": [
+                "Croissant",
+                "Chocolate Croissant",
+                "Blueberry Muffin",
+                "Double Chocolate Chip Muffin",
+                "Cranberry Muffin",
+                "Corn Muffin",
+                "Apricot Danish",
+                "Apple Danish",
+                "Raspberry Danish"
+              ]
+            },
+            {
+              "name": "Fuel",
+              "items": [
+                "Low Fat Vanilla Yogurt",
+                "Low Fat Strawberry Yogurt",
+                "Fat Free Vanilla Greek Yogurt",
+                "Cubed Honeydew",
+                "Cubed Pineapple",
+                "Fresh Fruit Salad"
+              ]
+            },
+            {
+              "name": "Fresh 52",
+              "items": [
+                "Spring Mix",
+                "Chopped Romaine Lettuce",
+                "Baby Spinach",
+                "Sliced Red Onion",
+                "Sliced Cucumber",
+                "Cherry Tomatoes",
+                "Mandarin Oranges",
+                "Croutons",
+                "Fat Free Raspberry Dressing",
+                "Fat Free Italian Dressing"
+              ]
+            },
+            {
+              "name": "Soup",
+              "items": [
+                "Lentil Soup",
+                "Chicken Vegetable Soup",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
+                "Crackers, Saltine, 2 CT, Zesta"
+              ]
+            }
+          ],
+          "status": null
         },
         "lunch": {
           "name": "Hewitt",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "2:30 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "500 Degrees",
+              "items": [
+                "Cheese Pizza",
+                "Buffalo Chicken Pizza",
+                "Roasted Vegetable Pizza",
+                "Crushed Red Pepper",
+                "Dried Oregano",
+                "Parmesan Cheese"
+              ]
+            },
+            {
+              "name": "Homestyle",
+              "items": [
+                "Pepper Steak",
+                "Potato Wedges",
+                "Baked PAOW",
+                "Mixed Vegetables",
+                "Plantain Tostones"
+              ]
+            },
+            {
+              "name": "Flame",
+              "items": [
+                "Hamburger Patty",
+                "Whole Wheat Hamburger Bun",
+                "American Cheese Slice",
+                "Hot Dog",
+                "Grilled Chicken",
+                "Sliced Red Onion",
+                "Lettuce Leaf",
+                "Meatless Black Bean Burger",
+                "3/8\" French Fries, Fried",
+                "Grilled Tater Wedges"
+              ]
+            },
+            {
+              "name": "Performance Kitchen",
+              "items": [
+                "Meatballs",
+                "Rigatoni",
+                "Marinara Sauce",
+                "Garlic Breadstick",
+                "Green Bean Saute"
+              ]
+            },
+            {
+              "name": "Delicious Without",
+              "items": [
+                "Baked Barbecue Chicken Wings",
+                "White Rice",
+                "Spicy Black Beans",
+                "Blanched Cauliflower",
+                "Kale Salad with Beets and Citrus Vinaigrette",
+                "Olive Salad",
+                "Spinach Salad",
+                "Oat Milk Chia Seed Pudding",
+                "Cinnamon Maple Overnight Oats"
+              ]
+            },
+            {
+              "name": "The Sweet Shoppe",
+              "items": [
+                "Chocolate Cupcake",
+                "Croissant",
+                "Chocolate Croissant",
+                "Blueberry Muffin",
+                "Assorted Donuts",
+                "Scones",
+                "Key Lime Pie",
+                "Vanilla Cupcake"
+              ]
+            },
+            {
+              "name": "Fuel",
+              "items": [
+                "Hard Boiled Egg",
+                "Celery Sticks",
+                "Creamy Blue Cheese Dip",
+                "Cubed Pineapple",
+                "Cubed Cantaloupe"
+              ]
+            },
+            {
+              "name": "Salad Bar",
+              "items": [
+                "Chicken Marinara with Tortellini",
+                "Quinoa",
+                "Vegetable Medley",
+                "Garbanzo Bean Salad",
+                "Balsamic Vinaigrette",
+                "Golden Italian Dressing",
+                "Caesar Dressing",
+                "Italian Vinaigrette Dressing",
+                "Buttermilk Ranch Dressing",
+                "Salad Dressing, Raspberry Vinaigrette, Fat Free, 1.5 oz"
+              ]
+            },
+            {
+              "name": "The Nooke",
+              "items": [
+                "Vegetarian Vegetable Soup",
+                "Cream of Chicken Soup",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
+                "Crackers, Saltine, 2 CT, Zesta"
+              ]
+            },
+            {
+              "name": "Fresh 52",
+              "items": [
+                "Spring Mix",
+                "Chopped Romaine Lettuce",
+                "Baby Spinach",
+                "Sliced Red Onion",
+                "Sliced Cucumber",
+                "Cherry Tomatoes",
+                "Mandarin Oranges",
+                "Croutons",
+                "Fat Free Raspberry Dressing",
+                "Fat Free Italian Dressing"
+              ]
+            },
+            {
+              "name": "Soup",
+              "items": [
+                "Lentil Soup",
+                "Chicken Vegetable Soup",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
+                "Crackers, Saltine, 2 CT, Zesta"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Hewitt",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "4:30 PM",
+            "close": "8:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "500 Degrees",
+              "items": [
+                "Cheese Pizza",
+                "Chicken Pizza",
+                "Roasted Vegetable Pizza",
+                "Crushed Red Pepper",
+                "Dried Oregano",
+                "Grilled Veggie Pizza",
+                "Parmesan Cheese"
+              ]
+            },
+            {
+              "name": "Homestyle",
+              "items": [
+                "Beef Taco Meat",
+                "Cilantro Lime Rice",
+                "Yuca Fries",
+                "Roasted Corn",
+                "Vegan Chicken Free Nuggets"
+              ]
+            },
+            {
+              "name": "Flame",
+              "items": [
+                "Hamburger Patty",
+                "Whole Wheat Hamburger Bun",
+                "American Cheese Slice",
+                "Hot Dog",
+                "Grilled Chicken",
+                "Sliced Red Onion",
+                "Lettuce Leaf",
+                "Meatless Black Bean Burger",
+                "3/8\" French Fries, Fried",
+                "Grilled Tater Wedges"
+              ]
+            },
+            {
+              "name": "Performance Kitchen",
+              "items": [
+                "Pesto Grilled Tofu",
+                "Rigatoni",
+                "Garlic Breadstick",
+                "Mixed Vegetables",
+                "Marinara Sauce"
+              ]
+            },
+            {
+              "name": "Delicious Without",
+              "items": [
+                "Grilled Steak",
+                "White Rice",
+                "Three Bean Chili",
+                "Cauliflower",
+                "Tomato Olive Salad",
+                "Kale Salad",
+                "Spinach Salad",
+                "Oat Milk Chia Seed Pudding",
+                "Cinnamon Maple Overnight Oats",
+                "Cinnamon Apples"
+              ]
+            },
+            {
+              "name": "The Sweet Shoppe",
+              "items": [
+                "Cranberry Muffin",
+                "Blueberry Muffin",
+                "Chocolate Cupcake",
+                "Vanilla Cupcake",
+                "Apple Crumb Cake",
+                "Raspberry Oatmeal Bar"
+              ]
+            },
+            {
+              "name": "Fuel",
+              "items": [
+                "Fresh Herb Croutons",
+                "French Fried Onions"
+              ]
+            },
+            {
+              "name": "Salad Bar",
+              "items": [
+                "Chicken Marinara with Tortellini",
+                "Quinoa",
+                "Vegetable Medley",
+                "Garbanzo Bean Salad",
+                "Balsamic Vinaigrette",
+                "Golden Italian Dressing",
+                "Caesar Dressing",
+                "Italian Vinaigrette Dressing",
+                "Buttermilk Ranch Dressing",
+                "Salad Dressing, Raspberry Vinaigrette, Fat Free, 1.5 oz"
+              ]
+            },
+            {
+              "name": "The Nooke",
+              "items": [
+                "Crackers, Saltine, 2 CT, Zesta",
+                "Fresh Croutons"
+              ]
+            },
+            {
+              "name": "Fresh 52",
+              "items": [
+                "Spring Mix",
+                "Chopped Romaine Lettuce",
+                "Baby Spinach",
+                "Sliced Red Onion",
+                "Sliced Cucumber",
+                "Cherry Tomatoes",
+                "Mandarin Oranges",
+                "Croutons",
+                "Fat Free Raspberry Dressing",
+                "Fat Free Italian Dressing"
+              ]
+            },
+            {
+              "name": "Soup",
+              "items": [
+                "Lentil Soup",
+                "Chicken Vegetable Soup",
+                "Crackers, Oyster, Zesta, Keebler, 0.5 oz",
+                "Crackers, Saltine, 2 CT, Zesta"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Hewitt",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -267,28 +1171,80 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for breakfast"
         },
         "lunch": {
           "name": "Chef Mike's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "10:30 AM",
+            "close": "10:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Build Your Own - Counter",
+              "items": [
+                "Protein: Turkey, Roast Beef, Tuna, Ham, Buffalo Chicken, Grilled Vegetables, Chipotle Tofu, Italian Tofu",
+                "Cheese: Swiss, American, Pepper Jack, Provolone, Cheddar",
+                "Toppings: Lettuce, Tomato, Red Onion, Banana Peppers, Roasted Red Peppers, Guacamole, Jalapeños, Hummus",
+                "Dressings: Red Wine Vinegar, Balsamic Vinegar, Olive Oil, Mayo, Mustard, Ranch"
+              ]
+            },
+            {
+              "name": "Cold Special - Cold Express Case",
+              "items": [
+                "The Fran: Egg Salad, Shredded Lettuce, Tomato",
+                "Hummus and Veggies: Hummus, Cannellini Beans, Beets, Arugula"
+              ]
+            },
+            {
+              "name": "Hot Special - Hot Express Case",
+              "items": [
+                "Chef Mike's Grandma's Special"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Chef Mike's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "10:30 AM",
+            "close": "10:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Build Your Own - Counter",
+              "items": [
+                "Protein: Turkey, Roast Beef, Tuna, Ham, Buffalo Chicken, Grilled Vegetables, Chipotle Tofu, Italian Tofu",
+                "Cheese: Swiss, American, Pepper Jack, Provolone, Cheddar",
+                "Toppings: Lettuce, Tomato, Red Onion, Banana Peppers, Roasted Red Peppers, Guacamole, Jalapeños, Hummus",
+                "Dressings: Red Wine Vinegar, Balsamic Vinegar, Olive Oil, Mayo, Mustard, Ranch"
+              ]
+            },
+            {
+              "name": "Cold Special - Cold Express Case",
+              "items": [
+                "The Fran: Egg Salad, Shredded Lettuce, Tomato",
+                "Hummus and Veggies: Hummus, Cannellini Beans, Beets, Arugula"
+              ]
+            },
+            {
+              "name": "Hot Special - Hot Express Case",
+              "items": [
+                "Chef Mike's Grandma's Special"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Chef Mike's",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -299,28 +1255,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Diana",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Diana",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Diana",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed today"
         }
       }
     },
@@ -328,34 +1284,104 @@
       "meals": {
         "breakfast": {
           "name": "Chef Don's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "8:00 AM",
+            "close": "11:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Sandwiches",
+              "items": [
+                "Bacon egg and cheese bagel",
+                "Ham egg and cheese bagel",
+                "Vegan breakfast bagel"
+              ]
+            },
+            {
+              "name": "Sides",
+              "items": [
+                "Cup of oatmeal",
+                "Piece of fruit",
+                "Danish pastry",
+                "Small coffee or tea"
+              ]
+            }
+          ],
+          "status": null
         },
         "lunch": {
           "name": "Chef Don's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "6:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Entree",
+              "items": [
+                "Build your own pizza",
+                "Toasted Cuban sandwich"
+              ]
+            },
+            {
+              "name": "Sides",
+              "items": [
+                "Piece of fruit",
+                "Soup",
+                "Milkshake",
+                "Freestyle machine beverage",
+                "Dessert"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Chef Don's",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed this week"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "6:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Entree",
+              "items": [
+                "Build your own pizza",
+                "Toasted Cuban sandwich"
+              ]
+            },
+            {
+              "name": "Sides",
+              "items": [
+                "Piece of fruit",
+                "Soup",
+                "Milkshake",
+                "Freestyle machine beverage",
+                "Dessert"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Chef Don's",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed this week"
+          "status": "Closed for latenight"
         }
       }
     }
   },
-  "unavailable": []
+  "unavailable": [
+    {
+      "venue": "jjs",
+      "name": "JJ's",
+      "meal": "breakfast",
+      "status": "No menu published"
+    }
+  ]
 }
