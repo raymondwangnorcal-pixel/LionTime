@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 900, height: 1250 } });
+await p.goto('file://' + process.cwd() + '/hours/butler-library.html');
+await p.screenshot({ path: process.env.HOME + '/mnt/LionTime/_seo-preview.png', fullPage: true });
+const p2 = await b.newPage({ viewport: { width: 900, height: 1250 } });
+await p2.goto('file://' + process.cwd() + '/hours/index.html');
+await p2.screenshot({ path: process.env.HOME + '/mnt/LionTime/_seo-preview-hub.png', fullPage: true });
+await b.close();
+console.log('ok');

@@ -1,0 +1,7 @@
+# lionhour.com
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /qr/
+
+Sitemap: https://lionhour.com/sitemap.xml
