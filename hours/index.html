@@ -41,6 +41,12 @@ td{color:var(--text2)}
 .pill-list{list-style:none;display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.6rem}
 .pill-list a{display:inline-block;background:var(--surface);border:1px solid var(--line);
 border-radius:999px;padding:.28rem .8rem;font-size:.85rem;text-decoration:none}
+.venue-list{list-style:none;display:grid;gap:.15rem}
+.venue-row{display:grid;grid-template-columns:1fr;gap:.1rem;padding:.65rem 0;border-bottom:1px solid var(--line)}
+.venue-row:last-child{border-bottom:0}
+.venue-name{font-weight:600;text-decoration:none;font-size:.97rem}
+.venue-loc{font-size:.82rem;color:var(--text2)}
+.venue-week{font-size:.86rem;color:var(--text2);font-variant-numeric:tabular-nums}
 .foot{font-size:.8rem;color:var(--text2);border-top:1px solid var(--line);padding-top:1rem;margin-top:2rem}
 @media(max-width:520px){th{width:5.5rem;font-size:.88rem}td{font-size:.88rem}}</style>
 </head>
@@ -53,7 +59,7 @@ border-radius:999px;padding:.28rem .8rem;font-size:.85rem;text-decoration:none}
 services on Columbia's Morningside campus.</p>
 <a class="cta" href="/">See what's open right now →</a>
 <div class="card">
-<h2>Libraries</h2>
+<h2><a href="/hours/libraries" style="text-decoration:none;color:inherit">Libraries →</a></h2>
 <ul class="pill-list">
 <li><a href="/hours/butler-library">Butler Library</a></li>
 <li><a href="/hours/noco-library">NoCo Library</a></li>
@@ -65,7 +71,7 @@ services on Columbia's Morningside campus.</p>
 </ul>
 </div>
 <div class="card">
-<h2>Dining halls</h2>
+<h2><a href="/hours/dining" style="text-decoration:none;color:inherit">Dining halls →</a></h2>
 <ul class="pill-list">
 <li><a href="/hours/john-jay-dining">John Jay Dining</a></li>
 <li><a href="/hours/ferris-dining-hall">Ferris Dining Hall</a></li>
@@ -83,7 +89,7 @@ services on Columbia's Morningside campus.</p>
 </ul>
 </div>
 <div class="card">
-<h2>Cafes</h2>
+<h2><a href="/hours/cafes" style="text-decoration:none;color:inherit">Cafes →</a></h2>
 <ul class="pill-list">
 <li><a href="/hours/butler-cafe">Butler Cafe</a></li>
 <li><a href="/hours/joes-coffee-noco">Joe's Coffee (NoCo)</a></li>
@@ -98,7 +104,7 @@ services on Columbia's Morningside campus.</p>
 </ul>
 </div>
 <div class="card">
-<h2>Gyms &amp; fitness</h2>
+<h2><a href="/hours/fitness" style="text-decoration:none;color:inherit">Gyms &amp; fitness →</a></h2>
 <ul class="pill-list">
 <li><a href="/hours/dodge-gym">Dodge Gym</a></li>
 <li><a href="/hours/uris-pool">Uris Pool</a></li>
@@ -106,7 +112,7 @@ services on Columbia's Morningside campus.</p>
 </ul>
 </div>
 <div class="card">
-<h2>Student life &amp; services</h2>
+<h2><a href="/hours/student-life" style="text-decoration:none;color:inherit">Student life &amp; services →</a></h2>
 <ul class="pill-list">
 <li><a href="/hours/alfred-lerner-hall">Alfred Lerner Hall</a></li>
 <li><a href="/hours/columbia-university-bookstore">Columbia University Bookstore</a></li>

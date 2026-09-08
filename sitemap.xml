@@ -13,6 +13,36 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://lionhour.com/hours/libraries</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lionhour.com/hours/dining</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lionhour.com/hours/cafes</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lionhour.com/hours/fitness</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lionhour.com/hours/student-life</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://lionhour.com/hours/butler-library</loc>
     <lastmod>2026-09-08</lastmod>
     <changefreq>weekly</changefreq>

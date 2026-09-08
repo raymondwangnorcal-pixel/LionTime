@@ -41,15 +41,21 @@ td{color:var(--text2)}
 .pill-list{list-style:none;display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.6rem}
 .pill-list a{display:inline-block;background:var(--surface);border:1px solid var(--line);
 border-radius:999px;padding:.28rem .8rem;font-size:.85rem;text-decoration:none}
+.venue-list{list-style:none;display:grid;gap:.15rem}
+.venue-row{display:grid;grid-template-columns:1fr;gap:.1rem;padding:.65rem 0;border-bottom:1px solid var(--line)}
+.venue-row:last-child{border-bottom:0}
+.venue-name{font-weight:600;text-decoration:none;font-size:.97rem}
+.venue-loc{font-size:.82rem;color:var(--text2)}
+.venue-week{font-size:.86rem;color:var(--text2);font-variant-numeric:tabular-nums}
 .foot{font-size:.8rem;color:var(--text2);border-top:1px solid var(--line);padding-top:1rem;margin-top:2rem}
 @media(max-width:520px){th{width:5.5rem;font-size:.88rem}td{font-size:.88rem}}</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Place","name":"Cafe East","url":"https://lionhour.com/hours/cafe-east","address":{"@type":"PostalAddress","streetAddress":"Lerner Hall, Room 2E","addressLocality":"New York","addressRegion":"NY","addressCountry":"US"},"containedInPlace":{"@type":"CollegeOrUniversity","name":"Columbia University","url":"https://www.columbia.edu/"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Sunday","opens":"11:00","closes":"19:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Monday","opens":"10:30","closes":"19:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Tuesday","opens":"10:30","closes":"19:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Wednesday","opens":"10:30","closes":"19:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Thursday","opens":"10:30","closes":"19:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Friday","opens":"10:30","closes":"19:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"https://schema.org/Saturday","opens":"11:00","closes":"19:30"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"LionHour","item":"https://lionhour.com"},{"@type":"ListItem","position":2,"name":"Campus hours","item":"https://lionhour.com/hours"},{"@type":"ListItem","position":3,"name":"Cafe East hours","item":"https://lionhour.com/hours/cafe-east"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"LionHour","item":"https://lionhour.com"},{"@type":"ListItem","position":2,"name":"Campus hours","item":"https://lionhour.com/hours"},{"@type":"ListItem","position":3,"name":"Cafes","item":"https://lionhour.com/hours/cafes"},{"@type":"ListItem","position":4,"name":"Cafe East hours","item":"https://lionhour.com/hours/cafe-east"}]}</script>
 </head>
 <body>
 <header class="header"><a href="/">Lion<span>Hour</span></a></header>
 <div class="wrap">
-<p class="crumb"><a href="/">LionHour</a> › <a href="/hours">Campus hours</a> › Cafe East</p>
+<p class="crumb"><a href="/">LionHour</a> › <a href="/hours">Campus hours</a> › <a href="/hours/cafes">Cafes</a> › Cafe East</p>
 <h1>Cafe East hours</h1>
 <p class="meta">Cafe · Lerner Hall, Room 2E · Columbia University, Morningside Heights</p>
 <a class="cta" href="/">See if Cafe East is open right now →</a>
@@ -70,7 +76,7 @@ border-radius:999px;padding:.28rem .8rem;font-size:.85rem;text-decoration:none}
 </div>
 
 <div class="card">
-<h2>Other cafes at Columbia</h2>
+<h2><a href="/hours/cafes" style="text-decoration:none;color:inherit">Other cafes at Columbia →</a></h2>
 <ul class="pill-list">
 <li><a href="/hours/butler-cafe">Butler Cafe</a></li>
 <li><a href="/hours/joes-coffee-noco">Joe's Coffee (NoCo)</a></li>
