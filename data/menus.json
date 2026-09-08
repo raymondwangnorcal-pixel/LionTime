@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-08",
-  "scrapedAt": "2026-09-08T07:26:32.765390-04:00",
+  "scrapedAt": "2026-09-08T12:42:54.634507-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -323,31 +323,86 @@
       "meals": {
         "breakfast": {
           "name": "Faculty House",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "7:30 AM",
+            "close": "11:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "2nd Floor",
+              "items": [
+                "Yogurt Parfait",
+                "Scrambled Eggs with Cheese",
+                "Scramble eggs",
+                "Home Fries",
+                "Fruit Cup",
+                "French Toast",
+                "Boiled Eggs"
+              ]
+            }
+          ],
+          "status": null
         },
         "lunch": {
           "name": "Faculty House",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "11:00 AM",
+            "close": "2:30 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "2nd Floor",
+              "items": [
+                "Chicken Taco",
+                "Beyond Carnitas",
+                "Mexican rice",
+                "Flour Tortillas",
+                "Corn Tortillas",
+                "Assorted Taco Toppings: Lettuce, Pico de Gallo, Jalapenos, Guacamole, Salsa, Sour Cream"
+              ]
+            },
+            {
+              "name": "4th Floor",
+              "items": [
+                "Za'atar Roasted Chicken",
+                "Vegan Kofta",
+                "Mujadara Rice with Lentils",
+                "Green Tahini",
+                "Pickled Red Onions"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Faculty House",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "5:00 PM",
+            "close": "9:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "2nd Floor",
+              "items": [
+                "Tarragon Chicken",
+                "Vegan Cassoulet",
+                "Gratin Potatoes",
+                "Roasted Herbed Mushrooms",
+                "Green Beans Provençal"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Faculty House",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed today"
+          "status": "Closed for latenight"
         }
       }
     },
@@ -364,7 +419,7 @@
           "name": "Grace Dodge",
           "hours": {
             "open": "11:00 AM",
-            "close": "7:00 PM"
+            "close": "7:30 PM"
           },
           "available": true,
           "stations": [
@@ -391,7 +446,7 @@
           "name": "Grace Dodge",
           "hours": {
             "open": "11:00 AM",
-            "close": "7:00 PM"
+            "close": "7:30 PM"
           },
           "available": true,
           "stations": [
@@ -436,7 +491,7 @@
           "name": "Johnny's",
           "hours": {
             "open": "11:00 AM",
-            "close": "2:30 PM"
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
@@ -486,12 +541,11 @@
             {
               "name": "Daily Offerings",
               "items": [
-                "Harissa Chicken",
-                "Tofu Shawarma",
-                "Greek Lemon Basmati Rice",
-                "Grilled Seasonal Vegetables",
-                "Tahini",
-                "Pickled Red Onions"
+                "Za'atar Roasted Chicken",
+                "Vegan Kofta",
+                "Mujadara Rice with Lentils",
+                "Green Tahini",
+                "Roasted Eggplant, Peppers & Zucchini"
               ]
             }
           ],
@@ -508,23 +562,21 @@
             {
               "name": "Dinner Service",
               "items": [
-                "Harissa Chicken",
-                "Tofu Shawarma",
-                "Greek Lemon Basmati Rice",
-                "Grilled Seasonal Vegetables",
-                "Tahini",
-                "Pickled Red Onions"
+                "Za'atar Roasted Chicken",
+                "Vegan Kofta",
+                "Mujadara Rice with Lentils",
+                "Green Tahini",
+                "Roasted Eggplant, Peppers & Zucchini"
               ]
             },
             {
               "name": "Daily Offerings",
               "items": [
-                "Harissa Chicken",
-                "Tofu Shawarma",
-                "Greek Lemon Basmati Rice",
-                "Grilled Seasonal Vegetables",
-                "Tahini",
-                "Pickled Red Onions"
+                "Za'atar Roasted Chicken",
+                "Vegan Kofta",
+                "Mujadara Rice with Lentils",
+                "Green Tahini",
+                "Roasted Eggplant, Peppers & Zucchini"
               ]
             }
           ],
@@ -605,7 +657,7 @@
               "items": [
                 "Chicken Divan",
                 "Garlic Mashed Potatoes",
-                "Spelt",
+                "Quinoa",
                 "Zucchini",
                 "Black Eyed Peas"
               ]
@@ -656,7 +708,7 @@
                 "Basil Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Pesto Alfredo",
+                "Creamy Chipotle Sweet Potato",
                 "Eggplant",
                 "Garlic Rolls"
               ]
@@ -1084,8 +1136,8 @@
                 "Kale Salad",
                 "Spinach Salad",
                 "Oat Milk Chia Seed Pudding",
-                "Cinnamon Maple Overnight Oats",
-                "Cinnamon Apples"
+                "Cinnamon Apples",
+                "Cinnamon Maple Overnight Oats"
               ]
             },
             {
@@ -1176,8 +1228,8 @@
         "lunch": {
           "name": "Chef Mike's",
           "hours": {
-            "open": "10:30 AM",
-            "close": "10:00 PM"
+            "open": "11:00 AM",
+            "close": "2:00 AM"
           },
           "available": true,
           "stations": [
@@ -1209,8 +1261,8 @@
         "dinner": {
           "name": "Chef Mike's",
           "hours": {
-            "open": "10:30 AM",
-            "close": "10:00 PM"
+            "open": "11:00 AM",
+            "close": "2:00 AM"
           },
           "available": true,
           "stations": [
@@ -1252,31 +1304,300 @@
       "meals": {
         "breakfast": {
           "name": "Diana",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "8:00 AM",
+            "close": "11:00 AM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Homestyle",
+              "items": [
+                "scrambled eggs",
+                "French Toast",
+                "Belgian Waffle",
+                "Buttermilk Pancakes",
+                "Breakfast Potatoes",
+                "Pork Sausage Patty"
+              ]
+            },
+            {
+              "name": "Breakfast Grill",
+              "items": [
+                "Brioche Bun",
+                "cage-free fried egg",
+                "Bacon",
+                "Turkey Bacon",
+                "Pork Sausage Patty",
+                "Fried Hash Brown Patty",
+                "Tater Tots",
+                "Eggs",
+                "Sliced American Cheese",
+                "Diced Tomatoes"
+              ]
+            },
+            {
+              "name": "Oatmeal Bar",
+              "items": [
+                "Hard Boiled Egg",
+                "Steel Cut Oatmeal",
+                "Raisins",
+                "Ground Cinnamon",
+                "Light Brown Sugar"
+              ]
+            },
+            {
+              "name": "Fresh Juiced",
+              "items": [
+                "Ruby Red Surge",
+                "Antioxidant Power",
+                "Green Detox",
+                "C Clearly Carrot Orange",
+                "B Cleansed"
+              ]
+            },
+            {
+              "name": "Smoothie Lab",
+              "items": [
+                "Very Green Smoothie",
+                "Strawberry Banana Smoothie",
+                "Carrot and Apple Smoothie",
+                "Berry Blast Smoothie",
+                "Green Monster"
+              ]
+            },
+            {
+              "name": "Bowls and Blends",
+              "items": [
+                "Mango and Orange Smoothie",
+                "Banana Berry Smoothie",
+                "Tropical Greens Smoothie",
+                "Orange Creamsicle Smoothie",
+                "Acai Berry Puree Mix",
+                "Diced Mango",
+                "Sliced Banana",
+                "Blueberries",
+                "Sliced Strawberries",
+                "Chia Seeds"
+              ]
+            }
+          ],
+          "status": null
         },
         "lunch": {
           "name": "Diana",
-          "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "hours": {
+            "open": "11:30 AM",
+            "close": "5:00 PM"
+          },
+          "available": true,
+          "stations": [
+            {
+              "name": "Pizza",
+              "items": [
+                "Margherita Pizza",
+                "Shredded Mozzarella Cheese",
+                "Sliced Pepperoni",
+                "Sausage Pork Crumbles",
+                "Grilled Chicken",
+                "Diced Ham",
+                "Plum Tomato",
+                "Sliced Mushrooms",
+                "Sliced Black Olives",
+                "Chopped Spinach"
+              ]
+            },
+            {
+              "name": "Bowl life",
+              "items": [
+                "General Tso's Chicken",
+                "Crispy Baked Tofu",
+                "General Tso's Sauce",
+                "Vegetable Fried Rice",
+                "Roasted Broccoli",
+                "Edamame Dumpling"
+              ]
+            },
+            {
+              "name": "Sono",
+              "items": [
+                "Grilled Chili Lime Chicken",
+                "Beef Taco Meat",
+                "Cilantro Pesto Tofu",
+                "Black Beans",
+                "Yellow Rice",
+                "Cheese Quesadillas",
+                "Chicken Quesadilla",
+                "CHE 19 Hard Shell Beef Taco"
+              ]
+            },
+            {
+              "name": "Sono Bar",
+              "items": [
+                "Guacamole",
+                "Sliced Jalapeno",
+                "Sour Cream",
+                "Pico de Gallo",
+                "Cheddar Cheese",
+                "Diced Red Onions",
+                "Roasted Salsa Verde",
+                "Chipotle Sour Cream",
+                "Shredded Iceberg Lettuce"
+              ]
+            },
+            {
+              "name": "Smoothie Lab",
+              "items": [
+                "Very Green Smoothie",
+                "Strawberry Banana Smoothie",
+                "Carrot and Apple Smoothie",
+                "Berry Blast Smoothie",
+                "Green Monster"
+              ]
+            },
+            {
+              "name": "Bowls and Blends",
+              "items": [
+                "Mango and Orange Smoothie",
+                "Banana Berry Smoothie",
+                "Tropical Greens Smoothie",
+                "Orange Creamsicle Smoothie",
+                "Acai Berry Puree Mix",
+                "Diced Mango",
+                "Sliced Banana",
+                "Blueberries",
+                "Sliced Strawberries",
+                "Chia Seeds"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "Diana",
           "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "available": true,
+          "stations": [
+            {
+              "name": "Pizza",
+              "items": [
+                "Margherita Pizza",
+                "Shredded Mozzarella Cheese",
+                "Sliced Pepperoni",
+                "Grilled Chicken",
+                "Diced Ham",
+                "Plum Tomato",
+                "Sliced Mushrooms",
+                "Sliced Black Olives",
+                "Chopped Spinach",
+                "Roasted Red Peppers"
+              ]
+            },
+            {
+              "name": "Bowl life",
+              "items": [
+                "Popcorn Chicken Bowl",
+                "Grilled Chicken",
+                "Breaded Chicken Bites",
+                "Smoked BBQ Tofu",
+                "Mashed Potatoes",
+                "Brown Gravy",
+                "Roasted Corn and Peppers"
+              ]
+            },
+            {
+              "name": "Sono",
+              "items": [
+                "Chili Rub Chicken",
+                "Beef Taco Meat",
+                "Cilantro Pesto Tofu",
+                "Yellow Rice",
+                "Black Beans",
+                "Cheese Quesadillas",
+                "Chicken Quesadilla",
+                "CHE 19 Hard Shell Beef Taco"
+              ]
+            },
+            {
+              "name": "Sono Bar",
+              "items": [
+                "Guacamole",
+                "Mild Picante Salsa",
+                "Sliced Jalapeno",
+                "Sour Cream",
+                "Pico de Gallo",
+                "Cheddar Cheese",
+                "Diced Red Onions",
+                "Roasted Salsa Verde",
+                "Chipotle Sour Cream",
+                "Shredded Iceberg Lettuce"
+              ]
+            }
+          ],
+          "status": null
         },
         "late-night": {
           "name": "Diana",
           "hours": null,
-          "available": false,
-          "stations": [],
-          "status": "Closed today"
+          "available": true,
+          "stations": [
+            {
+              "name": "Pizza",
+              "items": [
+                "Margherita Pizza",
+                "Shredded Mozzarella Cheese",
+                "Sliced Pepperoni",
+                "Grilled Chicken",
+                "Diced Ham",
+                "Plum Tomato",
+                "Sliced Mushrooms",
+                "Sliced Black Olives",
+                "Chopped Spinach",
+                "Roasted Red Peppers"
+              ]
+            },
+            {
+              "name": "Bowl life",
+              "items": [
+                "Popcorn Chicken Bowl",
+                "Grilled Chicken",
+                "Breaded Chicken Bites",
+                "Smoked BBQ Tofu",
+                "Mashed Potatoes",
+                "Brown Gravy",
+                "Roasted Corn and Peppers"
+              ]
+            },
+            {
+              "name": "Sono",
+              "items": [
+                "Chili Rub Chicken",
+                "Beef Taco Meat",
+                "Cilantro Pesto Tofu",
+                "Yellow Rice",
+                "Black Beans",
+                "Cheese Quesadillas",
+                "Chicken Quesadilla",
+                "CHE 19 Hard Shell Beef Taco"
+              ]
+            },
+            {
+              "name": "Sono Bar",
+              "items": [
+                "Guacamole",
+                "Mild Picante Salsa",
+                "Sliced Jalapeno",
+                "Sour Cream",
+                "Pico de Gallo",
+                "Cheddar Cheese",
+                "Diced Red Onions",
+                "Roasted Salsa Verde",
+                "Chipotle Sour Cream",
+                "Shredded Iceberg Lettuce"
+              ]
+            }
+          ],
+          "status": null
         }
       }
     },
@@ -1314,7 +1635,7 @@
           "name": "Chef Don's",
           "hours": {
             "open": "11:00 AM",
-            "close": "6:00 PM"
+            "close": "7:00 PM"
           },
           "available": true,
           "stations": [
@@ -1342,7 +1663,7 @@
           "name": "Chef Don's",
           "hours": {
             "open": "11:00 AM",
-            "close": "6:00 PM"
+            "close": "7:00 PM"
           },
           "available": true,
           "stations": [
