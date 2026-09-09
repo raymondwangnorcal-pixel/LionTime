@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-08",
-  "scrapedAt": "2026-09-08T17:14:16.431977-04:00",
+  "scrapedAt": "2026-09-08T20:20:03.215273-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -735,9 +735,9 @@
               "items": [
                 "Bacon Cheeseburger Mac and Cheese",
                 "Braised Greens",
-                "Bulgar",
+                "Farro",
                 "Garlic Bread",
-                "Baked Beans"
+                "Black Eyed Peas"
               ]
             },
             {
@@ -751,7 +751,7 @@
             {
               "name": "Gluten Free Station",
               "items": [
-                "GF Cheeseburger Mac and Cheese",
+                "Bacon Cheeseburger Mac and Cheese",
                 "Braised Greens"
               ]
             },
@@ -778,7 +778,7 @@
                 "Basil Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Pesto Alfredo",
+                "Creamy Chipotle Sweet Potato",
                 "Eggplant",
                 "Garlic Rolls"
               ]
