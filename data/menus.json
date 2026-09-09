@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-09",
-  "scrapedAt": "2026-09-09T08:59:58.183647-04:00",
+  "scrapedAt": "2026-09-09T13:51:54.787332-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -781,58 +781,70 @@
             {
               "name": "500 Degrees",
               "items": [
-                "Cheese Pizza",
-                "Scrambled Eggs",
-                "Chicken Sausage Link",
-                "Veggie Breakfast Pizza"
+                "Veggie Breakfast Pizza",
+                "Breakfast Pizza, Potato, Cracked Eggs",
+                "Margherita Pizza Vegan Cheese"
               ]
             },
             {
               "name": "Homestyle",
               "items": [
-                "Waffles",
-                "Buttermilk Pancakes",
-                "French Toast",
+                "Scrambled Eggs",
+                "Pancakes",
+                "Beef Breakfast Sausage",
                 "Tater Tots",
-                "Turkey Bacon"
+                "Tofu Scramble"
               ]
             },
             {
               "name": "Flame",
               "items": [
                 "Scrambled Eggs",
-                "cage-free fried egg",
+                "Free Range Eggs",
                 "Egg White Omelet",
                 "Chopped Onion",
                 "Diced Red Bell Peppers",
                 "Roasted Mushroom",
                 "Sauteed Spinach",
                 "Chopped Tomatoes",
-                "Cheddar Cheese"
+                "Cheddar Cheese",
+                "Shredded Mozzarella Cheese"
               ]
             },
             {
               "name": "Performance Kitchen",
               "items": [
                 "Scrambled Eggs",
-                "Scrambled Eggs with Cheese",
-                "Chicken Sausage Patty",
+                "Pancakes",
+                "Beef Breakfast Sausage",
                 "Tater Tots",
-                "Tofu Scramble",
-                "Veggie Sausage Patty"
+                "Tofu Scramble"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
                 "Oatmeal",
-                "Breakfast Potatoes",
-                "Chicken Sausage Patty",
-                "Roasted Brussels Sprouts",
-                "Garden Salad",
+                "Shredded Steamed potatoes",
+                "Beef Breakfast Sausage",
+                "Brussels Sprouts",
+                "Fresh Fruit Salad",
+                "Kale Salad",
                 "Cubed Pineapple",
-                "Cubed Watermelon",
-                "Oat Milk Chia Seed Pudding"
+                "Chia Pudding",
+                "Pumpkin Spice Oat Milk Overnight Oats"
+              ]
+            },
+            {
+              "name": "Fruit & Yogurt",
+              "items": [
+                "Low Fat Strawberry Yogurt",
+                "Low Fat Vanilla Yogurt",
+                "Oats and Honey Granola",
+                "Fresh Pineapple",
+                "Cubed Honeydew",
+                "Cubed Cantaloupe",
+                "Blueberries"
               ]
             },
             {
@@ -843,51 +855,20 @@
                 "Cranberry Muffin",
                 "Corn Muffin",
                 "Croissant",
-                "Cinnamon Roll"
+                "Lemon Pound Cake",
+                "Oreo Blonde Brownies",
+                "Black and White Cookies",
+                "Assorted Donuts"
               ]
             },
             {
-              "name": "Fuel",
+              "name": "Condiments",
               "items": [
-                "Low Fat Vanilla Yogurt",
-                "Low Fat Strawberry Yogurt",
-                "Fat Free Vanilla Greek Yogurt",
-                "Cubed Honeydew",
-                "Fresh Fruit Salad",
-                "Red Seedless Grapes"
-              ]
-            },
-            {
-              "name": "Fresh 52",
-              "items": [
-                "Spring Mix",
-                "Chopped Romaine Lettuce",
-                "Baby Spinach",
-                "Sliced Red Onion",
-                "Sliced Cucumber",
-                "Cherry Tomatoes",
-                "Mandarin Oranges",
-                "Croutons",
-                "Fat Free Raspberry Dressing",
-                "Fat Free Italian Dressing"
-              ]
-            },
-            {
-              "name": "Desserts",
-              "items": [
-                "Peppermint Ganache Brownie",
-                "Red Velvet Cake",
-                "Chocolate Brownie",
-                "Blondie"
-              ]
-            },
-            {
-              "name": "Soup",
-              "items": [
-                "Tomato Basil Soup",
-                "Pacific Trader Shrimp Soup",
-                "Crackers, Saltine, 2 CT, Zesta",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
+                "Ketchup",
+                "Mayonnaise",
+                "Yellow Mustard",
+                "Barbecue Sauce",
+                "Honey Mustard Dressing"
               ]
             }
           ],
@@ -904,142 +885,104 @@
             {
               "name": "500 Degrees",
               "items": [
-                "Cheese Pizza",
-                "Buffalo Chicken Pizza",
-                "Roasted Vegetable Pizza",
-                "Crushed Red Pepper",
-                "Dried Oregano"
+                "Garam Masala Roasted Garbanzo Beans",
+                "Roasted Asparagus",
+                "White Rice",
+                "PAOW Pepperoni Style Pizza, Vegan Cheese",
+                "Margherita Pizza Vegan Cheese",
+                "2Mato's Vegan Veggie Pizza",
+                "Dried Oregano",
+                "Parmesan Cheese",
+                "Crushed Red Pepper"
               ]
             },
             {
               "name": "Homestyle",
               "items": [
-                "Chicken Fried Chicken",
-                "Seasoned Rice",
-                "Cheese Ravioli",
-                "Seasoned Cabbage",
-                "Plantain Tostones"
+                "Roast Turkey",
+                "Cranberry Sauce",
+                "Parmesan Orzo",
+                "Roasted Potatoes",
+                "Roasted Asparagus"
               ]
             },
             {
               "name": "Flame",
               "items": [
-                "Hamburger Patty",
-                "Whole Wheat Hamburger Bun",
-                "American Cheese Slice",
-                "Hot Dog",
-                "Grilled Chicken",
-                "Sliced Red Onion",
-                "Lettuce Leaf",
-                "Meatless Black Bean Burger",
-                "3/8\" French Fries, Fried",
-                "Grilled Tater Wedges"
+                "Scrambled Eggs",
+                "Egg Omelette",
+                "Egg White Omelet",
+                "Chopped Onion",
+                "Diced Red Bell Peppers",
+                "Roasted Mushroom",
+                "Sauteed Spinach",
+                "Chopped Tomatoes",
+                "Cheddar Cheese"
               ]
             },
             {
               "name": "Performance Kitchen",
               "items": [
-                "Meatballs",
-                "Rigatoni",
-                "Marinara Sauce",
-                "Garlic Breadstick",
-                "Green Bean Saute"
+                "Bowtie Pasta",
+                "Penne Pasta",
+                "Pomodoro Sauce",
+                "Alfredo Sauce",
+                "Tomato Alfredo Blush Sauce"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
-                "Sweet Chili Chicken",
-                "White Rice",
-                "Chickpeas, Spinach, Tomatoes",
-                "Green Bean Saute",
-                "Kale Salad",
-                "Tomato Olive Salad",
-                "Roasted Vegetable Salad",
-                "Oat Milk Chia Seed Pudding",
-                "Cinnamon Maple Overnight Oats",
-                "Cinnamon Apples"
+                "Beef Taco Meat",
+                "Spicy Black Beans",
+                "cilantro lime rice",
+                "Roasted Corn",
+                "6\" Corn Tortilla",
+                "Guacamole",
+                "Garden Salad",
+                "Garbanzo Bean Salad",
+                "Corn Salad",
+                "Oat Milk Chia Seed Pudding"
               ]
             },
             {
               "name": "The Sweet Shoppe",
               "items": [
-                "Rice Krispie Treat",
-                "Cranberry Muffin",
                 "Blueberry Muffin",
-                "Croissant",
-                "Double Chocolate Chip Muffin",
+                "Country Corn Muffin",
+                "Chocolate Chip Muffin",
+                "Oreo Brownie",
+                "Chocolate Chip Bread Pudding",
+                "M&M Blonde Brownies",
+                "Chocolate Brownie",
+                "Banana Iced Sheet Cake",
                 "Chocolate Cupcake",
-                "Apple Turnover",
-                "Blueberry Scone"
-              ]
-            },
-            {
-              "name": "Fuel",
-              "items": [
-                "Hard Boiled Egg",
-                "Celery Sticks",
-                "Pickled Red Onions",
-                "Cubed Cantaloupe",
-                "Cubed Watermelon",
-                "Cubed Pineapple"
+                "Vanilla Cupcake"
               ]
             },
             {
               "name": "Salad Bar",
               "items": [
-                "Shaved Brussel Sprouts & Kale Salad",
-                "Cilantro Lime Slaw",
-                "Spicy Black Bean and Corn Salad",
-                "Garbanzo Bean Salad",
-                "Balsamic Vinaigrette",
-                "Golden Italian Dressing",
-                "Caesar Dressing",
-                "Italian Vinaigrette Dressing",
-                "Buttermilk Ranch Dressing",
-                "Salad Dressing, Raspberry Vinaigrette, Fat Free, 1.5 oz"
-              ]
-            },
-            {
-              "name": "The Nooke",
-              "items": [
-                "Tomato Basil Soup",
-                "Chicken Noodle Soup",
-                "Crackers, Saltine, 2 CT, Zesta",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
-              ]
-            },
-            {
-              "name": "Fresh 52",
-              "items": [
-                "Spring Mix",
-                "Chopped Romaine Lettuce",
+                "Mixed Field Greens",
+                "Romaine Blend",
                 "Baby Spinach",
-                "Sliced Red Onion",
+                "Grape Tomatoes",
                 "Sliced Cucumber",
-                "Cherry Tomatoes",
-                "Mandarin Oranges",
-                "Croutons",
-                "Fat Free Raspberry Dressing",
-                "Fat Free Italian Dressing"
+                "Shredded Carrots",
+                "Sliced Black Olives",
+                "Quinoa",
+                "Sliced Green Bell Pepper",
+                "Garbonzo Beans"
               ]
             },
             {
-              "name": "Desserts",
+              "name": "Condiments",
               "items": [
-                "Peppermint Ganache Brownie",
-                "Red Velvet Cake",
-                "Chocolate Brownie",
-                "Blondie"
-              ]
-            },
-            {
-              "name": "Soup",
-              "items": [
-                "Tomato Basil Soup",
-                "Pacific Trader Shrimp Soup",
-                "Crackers, Saltine, 2 CT, Zesta",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
+                "Ketchup",
+                "Mayonnaise",
+                "Yellow Mustard",
+                "Barbecue Sauce",
+                "Honey Mustard Dressing"
               ]
             }
           ],
@@ -1057,21 +1000,21 @@
               "name": "500 Degrees",
               "items": [
                 "Cheese Pizza",
-                "Chicken Pizza",
-                "Roasted Vegetable Pizza",
-                "Crushed Red Pepper",
+                "Grilled Veggie Pizza",
+                "2Mato's Vegan Veggie Pizza",
                 "Dried Oregano",
-                "Parmesan Cheese"
+                "Parmesan Cheese",
+                "Crushed Red Pepper"
               ]
             },
             {
               "name": "Homestyle",
               "items": [
-                "BBQ Chicken",
-                "Waffles",
-                "Yellow Rice",
-                "Tofu Curry",
-                "Green Bean Saute"
+                "Moroccan Chicken",
+                "Provencal Fish",
+                "Lentil Loaf",
+                "Moroccan Couscous",
+                "Moroccan Eggplant"
               ]
             },
             {
@@ -1086,107 +1029,86 @@
                 "Lettuce Leaf",
                 "Meatless Black Bean Burger",
                 "3/8\" French Fries, Fried",
-                "Grilled Tater Wedges"
+                "Tater Tots"
               ]
             },
             {
               "name": "Performance Kitchen",
               "items": [
-                "Pesto Grilled Tofu",
-                "Rigatoni",
-                "Garlic Breadstick",
-                "Mixed Vegetables",
-                "Marinara Sauce"
+                "Macaroni & Cheese",
+                "Roasted Chicken",
+                "Penne Pasta",
+                "Marinara Sauce",
+                "Garlic Sticks"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
-                "Roasted Herb Chicken",
+                "Grilled Lime Cilantro Chicken Breast",
+                "Pinto Beans",
+                "Roasted Zucchini and Yellow Squash",
                 "White Rice",
-                "Spicy Black Beans",
-                "Brussels Sprouts",
-                "Tomato Olive Salad",
-                "Kale Salad",
-                "Spinach Salad",
+                "Shredded Iceberg Lettuce",
+                "Guacamole",
+                "Black Bean Corn Salad",
                 "Oat Milk Chia Seed Pudding",
-                "Cinnamon Maple Overnight Oats",
-                "Strawberry Oatmeal Crisp"
+                "Overnight Chia and Oats",
+                "Cinnamon Apples"
               ]
             },
             {
               "name": "The Sweet Shoppe",
               "items": [
-                "Popcorn, Butter, Microwavable, 3.5 oz",
-                "Assorted Donuts",
-                "Apple Turnover",
-                "Vanilla Cupcake",
-                "Cranberry Muffin",
-                "Crumbled Blueberry Loaf",
-                "Rice Krispie Treat"
+                "Blueberry Muffin",
+                "Country Corn Muffin",
+                "Chocolate Chip Muffin",
+                "Oreo Brownie",
+                "Chocolate Chip Bread Pudding",
+                "M&M Blonde Brownies",
+                "Chocolate Brownie",
+                "Banana Iced Sheet Cake",
+                "Chocolate Cupcake",
+                "Vanilla Cupcake"
               ]
             },
             {
-              "name": "Fuel",
+              "name": "Toppings Bar",
               "items": [
-                "Fresh Herb Croutons",
-                "French Fried Onions",
-                "Crackers, Saltine, 2 CT, Zesta"
+                "Chocolate Fudge",
+                "Caramel Sauce",
+                "Blueberry Sauce",
+                "Chocolate Sauce",
+                "Raspberry Sauce",
+                "Oreo Crumbles",
+                "Rainbow Sprinkles",
+                "Chocolate Sprinkles",
+                "Maraschino Cherries"
               ]
             },
             {
               "name": "Salad Bar",
               "items": [
-                "Shaved Brussel Sprouts & Kale Salad",
-                "Cilantro Lime Slaw",
-                "Spicy Black Bean and Corn Salad",
-                "Garbanzo Bean Salad",
-                "Balsamic Vinaigrette",
-                "Golden Italian Dressing",
-                "Caesar Dressing",
-                "Italian Vinaigrette Dressing",
-                "Buttermilk Ranch Dressing",
-                "Salad Dressing, Raspberry Vinaigrette, Fat Free, 1.5 oz"
-              ]
-            },
-            {
-              "name": "The Nooke",
-              "items": [
-                "Crackers, Saltine, 2 CT, Zesta",
-                "Fresh Croutons"
-              ]
-            },
-            {
-              "name": "Fresh 52",
-              "items": [
-                "Spring Mix",
-                "Chopped Romaine Lettuce",
+                "Mixed Field Greens",
+                "Romaine Blend",
                 "Baby Spinach",
-                "Sliced Red Onion",
+                "Grape Tomatoes",
                 "Sliced Cucumber",
-                "Cherry Tomatoes",
-                "Mandarin Oranges",
-                "Croutons",
-                "Fat Free Raspberry Dressing",
-                "Fat Free Italian Dressing"
+                "Shredded Carrots",
+                "Sliced Black Olives",
+                "Quinoa",
+                "Sliced Green Bell Pepper",
+                "Garbonzo Beans"
               ]
             },
             {
-              "name": "Desserts",
+              "name": "Condiments",
               "items": [
-                "Peppermint Ganache Brownie",
-                "Red Velvet Cake",
-                "Chocolate Brownie",
-                "Blondie"
-              ]
-            },
-            {
-              "name": "Soup",
-              "items": [
-                "Tomato Basil Soup",
-                "Pacific Trader Shrimp Soup",
-                "Crackers, Saltine, 2 CT, Zesta",
-                "Crackers, Oyster, Zesta, Keebler, 0.5 oz"
+                "Ketchup",
+                "Mayonnaise",
+                "Yellow Mustard",
+                "Barbecue Sauce",
+                "Honey Mustard Dressing"
               ]
             }
           ],
@@ -1231,14 +1153,14 @@
               "name": "Cold Special - Cold Express Case",
               "items": [
                 "Chicken Bacon Ranch: Chicken, Bacon, Pepperjack Cheese, Spinach",
-                "Spicy Vegan Chicken: Vegan Chicken Patty, Vegan Mozzarella, Banana Peppers, Hot Sauce"
+                "Spicy Tofu: Tofu, Banana Peppers, Hot Sauce, Tomatoes, Onions"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
                 "Grilled Chicken & Gouda: Breaded Chicken, Gouda Cheese & Honey Mustard",
-                "Sweet Chili Vegan Chicken: Sweet Chili Sauce, Breaded Chick'n Patty, Sliced Cucumbers, Vegan Mozzarella Cheese"
+                "Beyond Sausage and Peppers: Beyond Sausage, White Beans, Peppers, Onions"
               ]
             }
           ],
@@ -1265,14 +1187,14 @@
               "name": "Cold Special - Cold Express Case",
               "items": [
                 "Chicken Bacon Ranch: Chicken, Bacon, Pepperjack Cheese, Spinach",
-                "Spicy Vegan Chicken: Vegan Chicken Patty, Vegan Mozzarella, Banana Peppers, Hot Sauce"
+                "Spicy Tofu: Tofu, Tomatoes, Onions, Banana Peppers, Hot Sauce"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
                 "Grilled Chicken & Gouda: Grilled Chicken, Honey Mustard, Gouda Cheese",
-                "Sweet Chili Vegan Chicken: Sweet Chili Sauce, Breaded Chick'n Patty, Sliced Cucumbers, Vegan Mozzarella Cheese"
+                "Beyond Sausage and Peppers: Beyond Sausage, White Beans, Peppers, Onions"
               ]
             }
           ],
