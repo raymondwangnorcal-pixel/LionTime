@@ -1,16 +1,30 @@
 #!/usr/bin/env node
 /**
- * Seed dining votes — casts VOTE_COUNT fake votes spread randomly
- * across whichever Columbia / Barnard dining halls are currently open.
+ * Seed dining votes — casts a time-of-day-dependent number of fake votes,
+ * spread by popularity across whichever Columbia / Barnard dining halls
+ * are currently open.
  *
  * Called by the "Seed dining votes" GitHub Actions workflow on an
  * hourly cron with a random delay (effective interval ≈ 30-90 min).
+ *
+ * Set DRY_RUN=1 to print the picks without hitting the API.
  */
 
 import { randomBytes } from 'node:crypto';
 
 const API_URL = 'https://lionhour.com/api/dining-vote';
-const VOTE_COUNT = 8;
+const DRY_RUN = process.env.DRY_RUN === '1';
+
+/** Votes per run by Eastern hour — mirrors when people actually poll.
+    Nobody is voting at 1 AM, so overnight runs cast nothing. */
+function votesForHour(hour) {
+  if (hour < 7) return 0;        // overnight — skip
+  if (hour < 11) return 3;       // breakfast
+  if (hour < 15) return 8;       // lunch peak
+  if (hour < 17) return 4;       // afternoon lull
+  if (hour < 21) return 8;       // dinner peak
+  return 2;                      // late night
+}
 
 /* ── Schedule data ──────────────────────────────────────────────
    Keyed by JS Date.getDay(): 0 = Sun, 1 = Mon, …, 6 = Sat.
@@ -73,9 +87,15 @@ const SCHEDULES = {
   },
 };
 
-/** Per-hall weight multiplier (default 1.0). Lower → picked less often. */
+/** Per-hall weight multiplier (default 1.0) — a popularity prior.
+    Without this the spread is uniform across whatever is open, which lets
+    the two late-night halls (JJ's, Chef Mike's) out-vote John Jay and
+    Ferris simply by being open when nothing else is. */
 const WEIGHTS = {
+  johnjay: 1.5,
+  ferris: 1.5,
   jjs: 0.3,
+  chefmikes: 0.4,
 };
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -160,6 +180,12 @@ const hh = String(Math.floor(et.minutes / 60)).padStart(2, '0');
 const mm = String(et.minutes % 60).padStart(2, '0');
 console.log(`ET: ${et.dayName} ${hh}:${mm}`);
 
+const VOTE_COUNT = votesForHour(Math.floor(et.minutes / 60));
+if (VOTE_COUNT === 0) {
+  console.log('Overnight — no votes this run.');
+  process.exit(0);
+}
+
 const openHalls = Object.keys(SCHEDULES).filter(id => isOpen(id, et));
 
 if (openHalls.length === 0) {
@@ -172,7 +198,12 @@ console.log(`Open (${openHalls.length}): ${openHalls.join(', ')}`);
 const picks = Array.from({ length: VOTE_COUNT }, () => weightedPick(openHalls));
 const dist = {};
 for (const h of picks) dist[h] = (dist[h] || 0) + 1;
-console.log('Votes:', JSON.stringify(dist));
+console.log(`Votes (${VOTE_COUNT}):`, JSON.stringify(dist));
+
+if (DRY_RUN) {
+  console.log('DRY_RUN — nothing sent.');
+  process.exit(0);
+}
 
 let ok = 0;
 for (const hallId of picks) {
