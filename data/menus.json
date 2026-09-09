@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-09",
-  "scrapedAt": "2026-09-09T13:51:54.787332-04:00",
+  "scrapedAt": "2026-09-09T16:59:16.602494-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -667,7 +667,7 @@
                 "Garlic Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Bolognese",
+                "Gochujang Tomato Cream Sauce",
                 "Spinach and Sundried Tomatoes",
                 "Garlic Rolls"
               ]
@@ -738,7 +738,7 @@
                 "Garlic Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Bolognese",
+                "Gochujang Tomato Cream Sauce",
                 "Spinach and Sundried Tomatoes",
                 "Garlic Rolls"
               ]
@@ -753,7 +753,7 @@
               "name": "Grill",
               "items": [
                 "Grilled Salmon",
-                "Vegan Hotdog"
+                "Grilled Portabella"
               ]
             }
           ],
@@ -923,11 +923,11 @@
             {
               "name": "Performance Kitchen",
               "items": [
-                "Bowtie Pasta",
                 "Penne Pasta",
+                "Herb Chicken",
                 "Pomodoro Sauce",
                 "Alfredo Sauce",
-                "Tomato Alfredo Blush Sauce"
+                "Breadsticks"
               ]
             },
             {
@@ -939,9 +939,9 @@
                 "Roasted Corn",
                 "6\" Corn Tortilla",
                 "Guacamole",
-                "Garden Salad",
-                "Garbanzo Bean Salad",
-                "Corn Salad",
+                "Shredded Romaine",
+                "Chopped Tomatoes",
+                "Chickpea Cucumber Salad",
                 "Oat Milk Chia Seed Pudding"
               ]
             },
@@ -950,29 +950,26 @@
               "items": [
                 "Blueberry Muffin",
                 "Country Corn Muffin",
-                "Chocolate Chip Muffin",
-                "Oreo Brownie",
-                "Chocolate Chip Bread Pudding",
-                "M&M Blonde Brownies",
                 "Chocolate Brownie",
-                "Banana Iced Sheet Cake",
-                "Chocolate Cupcake",
-                "Vanilla Cupcake"
+                "Blondie",
+                "Scones",
+                "Cranberry Muffin",
+                "Apple Turnover"
               ]
             },
             {
               "name": "Salad Bar",
               "items": [
-                "Mixed Field Greens",
+                "Chopped Iceberg Lettuce",
                 "Romaine Blend",
                 "Baby Spinach",
                 "Grape Tomatoes",
                 "Sliced Cucumber",
-                "Shredded Carrots",
                 "Sliced Black Olives",
                 "Quinoa",
                 "Sliced Green Bell Pepper",
-                "Garbonzo Beans"
+                "Garbonzo Beans",
+                "Shredded Cheddar Cheese"
               ]
             },
             {
@@ -1013,7 +1010,7 @@
                 "Moroccan Chicken",
                 "Provencal Fish",
                 "Lentil Loaf",
-                "Moroccan Couscous",
+                "White Rice",
                 "Moroccan Eggplant"
               ]
             },
@@ -1046,7 +1043,7 @@
               "name": "Delicious Without",
               "items": [
                 "Grilled Lime Cilantro Chicken Breast",
-                "Pinto Beans",
+                "Mixed Beans",
                 "Roasted Zucchini and Yellow Squash",
                 "White Rice",
                 "Shredded Iceberg Lettuce",
@@ -1089,16 +1086,16 @@
             {
               "name": "Salad Bar",
               "items": [
-                "Mixed Field Greens",
+                "Chopped Iceberg Lettuce",
                 "Romaine Blend",
                 "Baby Spinach",
                 "Grape Tomatoes",
                 "Sliced Cucumber",
-                "Shredded Carrots",
                 "Sliced Black Olives",
                 "Quinoa",
                 "Sliced Green Bell Pepper",
-                "Garbonzo Beans"
+                "Garbonzo Beans",
+                "Shredded Cheddar Cheese"
               ]
             },
             {
