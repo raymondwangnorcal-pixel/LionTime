@@ -519,3 +519,25 @@ function columbiaDatedModificationsHtml() {
     </div>
   </article></main>`;
 }
+
+test('reads the Fall 2026 Barnard format with split shifts and a shared meridiem', async () => {
+  const html = await readFixture('recreation-barnard-hours-fall-2026.html');
+  const generated = new Date('2026-09-09T14:00:00-04:00');
+  const item = find(parseBarnardHours(html, { generated }), 'barnard-fitness');
+
+  assert.equal(item.unavailableStatus, null);
+  assert.equal(item.reason, null);
+  assert.equal(item.effectiveStart, '2026-09-09');
+  assert.deepEqual(item.weeklyIntervals['1'], [['07:00', '09:50'], ['14:30', '21:00']]);
+  assert.deepEqual(item.weeklyIntervals['4'], [['07:00', '09:50'], ['14:30', '21:00']]);
+  assert.deepEqual(item.weeklyIntervals['5'], [['07:00', '17:30']]);
+  assert.deepEqual(item.weeklyIntervals['6'], [['09:00', '18:00']]);
+  assert.deepEqual(item.weeklyIntervals['0'], [['09:00', '18:00']]);
+  assert.deepEqual(item.accessRestrictions, ['Barnard students, faculty, and staff']);
+});
+
+test('still rejects a Barnard row whose split shifts overlap or run backwards', async () => {
+  const html = (await readFixture('recreation-barnard-hours-fall-2026.html'))
+    .replace('<strong>Monday</strong>: 7-9:50am / 2:30-9pm', '<strong>Monday</strong>: 7-11am / 10am-9pm');
+  assert.deepEqual(parseBarnardHours(html, { generated: new Date('2026-09-09T14:00:00-04:00') }), []);
+});
