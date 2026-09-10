@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-09",
-  "scrapedAt": "2026-09-09T16:59:16.602494-04:00",
+  "scrapedAt": "2026-09-09T20:18:08.942323-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -381,7 +381,6 @@
                 "Butter Chicken",
                 "Curry Tofu",
                 "Cumin Rice",
-                "Masala Roasted Potatoes",
                 "Aloo Gobi"
               ]
             }
@@ -996,9 +995,13 @@
             {
               "name": "500 Degrees",
               "items": [
-                "Cheese Pizza",
-                "Grilled Veggie Pizza",
+                "Garam Masala Roasted Garbanzo Beans",
+                "White Rice",
+                "Crispy Baked Tofu",
+                "Roasted Zucchini",
+                "PAOW Pepperoni Style Pizza, Vegan Cheese",
                 "2Mato's Vegan Veggie Pizza",
+                "Margherita Pizza Vegan Cheese",
                 "Dried Oregano",
                 "Parmesan Cheese",
                 "Crushed Red Pepper"
@@ -1033,7 +1036,7 @@
               "name": "Performance Kitchen",
               "items": [
                 "Macaroni & Cheese",
-                "Roasted Chicken",
+                "Chicken Cacciatore",
                 "Penne Pasta",
                 "Marinara Sauce",
                 "Garlic Sticks"
@@ -1042,13 +1045,13 @@
             {
               "name": "Delicious Without",
               "items": [
-                "Grilled Lime Cilantro Chicken Breast",
-                "Mixed Beans",
+                "Roasted Chicken",
+                "Bean and Tomato Chili",
                 "Roasted Zucchini and Yellow Squash",
                 "White Rice",
-                "Shredded Iceberg Lettuce",
-                "Guacamole",
-                "Black Bean Corn Salad",
+                "Baby Arugula",
+                "Chickpea Cucumber Salad",
+                "Roasted Potato Salad",
                 "Oat Milk Chia Seed Pudding",
                 "Overnight Chia and Oats",
                 "Cinnamon Apples"
@@ -1057,16 +1060,8 @@
             {
               "name": "The Sweet Shoppe",
               "items": [
-                "Blueberry Muffin",
-                "Country Corn Muffin",
-                "Chocolate Chip Muffin",
-                "Oreo Brownie",
-                "Chocolate Chip Bread Pudding",
-                "M&M Blonde Brownies",
-                "Chocolate Brownie",
                 "Banana Iced Sheet Cake",
-                "Chocolate Cupcake",
-                "Vanilla Cupcake"
+                "Black and White Cookies"
               ]
             },
             {
