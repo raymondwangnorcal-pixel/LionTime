@@ -11,7 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: scripts/seed-votes.mjs
+          sparse-checkout: |
+            scripts/seed-votes.mjs
+            lib/venue-catalog.generated.mjs
 
       - name: Random delay
         run: |
