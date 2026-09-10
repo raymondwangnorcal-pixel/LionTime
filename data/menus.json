@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-10",
-  "scrapedAt": "2026-09-10T13:43:31.651209-04:00",
+  "scrapedAt": "2026-09-10T16:56:02.404874-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -933,7 +933,10 @@
                 "2Mato's Vegan Veggie Pizza",
                 "Dried Oregano",
                 "Parmesan Cheese",
-                "Crushed Red Pepper"
+                "Crushed Red Pepper",
+                "Cajun Lentil Stew",
+                "White Rice",
+                "Steamed Green Beans"
               ]
             },
             {
@@ -942,8 +945,8 @@
                 "California Beef Curry",
                 "Tandoori Chicken Tikka",
                 "Alu Chole",
-                "Fried Paneer Cheese",
-                "Basmati Rice"
+                "Basmati Rice",
+                "Steamed Green Beans"
               ]
             },
             {
@@ -1075,18 +1078,17 @@
               "name": "Performance Kitchen",
               "items": [
                 "Macaroni and Cheese",
-                "White Cheddar Macaroni and Cheese",
+                "Creamy Penne Alfredo",
                 "Garlic Sticks",
                 "Mexican Corn",
-                "Steamed Green Beans"
+                "Roasted Asparagus"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
-                "BBQ Chicken Wings",
+                "Garlic Herb Roasted Chicken Quarter",
                 "Seasoned Rice",
-                "Three Bean Vegetarian Chili",
                 "Brussels Sprouts",
                 "Spinach Salad",
                 "Garden Salad",
