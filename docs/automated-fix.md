@@ -1,9 +1,10 @@
-# Automated parser fixes — design (v2)
+# Automated parser fixes — design (v2.1)
 
 Status: proposed, nothing built. v1 written 2026-09-10 after four parser breaks in one
 week (Barnard gym, Dining locations feed, Health, Mail), all caused by Columbia pages
 rolling over to Fall 2026 wording. v2 the same day, after the adversarial review in
-`docs/telegram-bot-review-codex.md` (findings R1–R17).
+`docs/telegram-bot-review-codex.md` (findings R1–R17); v2.1 after the owner's answers,
+recorded as DEC-0062 … DEC-0070 in `docs/decisions.md`.
 
 The loop being automated is the one done by hand this week: fetch the live page, run the
 parser against it, patch the parser, save the page as a fixture, add a test, commit. v2
@@ -86,7 +87,7 @@ autofix-parser.yml   (workflow_run on the four scrape workflows, any conclusion)
         reject if the patch adds any of: child_process, fetch(, eval(, new Function(,
             import( with a non-literal, process.env, or a new dependency
         apply on branch autofix/<source>/<hash>; run the category's test files
-            and the full suite against the baseline-quarantine list             ← R2
+            and the full suite (green after DEC-0065)                          ← R2
         run scripts/autofix-values-table.mjs → parses the new fixture with the
             *patched* parser and renders every venue/service, weekday, interval,
             access type, and effective date range                                ← R4
@@ -95,11 +96,16 @@ autofix-parser.yml   (workflow_run on the four scrape workflows, any conclusion)
         Telegram: one message with the PR link (no merge button)
 ```
 
-### 3.1 Evidence capture
+### 3.1 Evidence capture and retention (DEC-0067)
 
 Every fix this week needed the *actual failing page*. Each scraper, on any failure,
 writes what it received to `$RUNNER_TEMP/scrape/<sourceId>.<html|json>` and records the
-path and SHA-256 in the manifest. The manifest is written **before** the scraper decides
+path and SHA-256 in the manifest. Evidence is uploaded with `retention-days: 14` and is
+**never committed**. The fixture that the fixer adds to the repo is a *sanitised*
+reduction: only the elements the parser reads, with a header giving URL and capture
+date; navigation, scripts, contact details, and unrelated content are removed. The
+`propose` job rejects a fixture larger than 32 KB or containing `<script`, an email
+address, or a phone number, which forces the reduction to have happened. The manifest is written **before** the scraper decides
 whether to exit non-zero (R14: the student-services scraper currently throws before
 writing anything on total failure — that ordering flips).
 
@@ -148,8 +154,10 @@ Produce a patch that does exactly this, and nothing else:
 1. Reproduce: run the parser in `${PARSER_FILE}` against the evidence file.
 2. Update the parser so it parses this page. Prefer stable structure (headings,
    weekday labels, data attributes) over the page's prose.
-3. Copy the evidence file to `tests/fixtures/${FIXTURE_NAME}` with a header comment
-   giving the URL and capture date.
+3. Write a **sanitised** fixture to `tests/fixtures/${FIXTURE_NAME}`: keep only the
+   markup the parser reads (the section, its headings, the hours text), drop
+   navigation, scripts, images, contact details, and unrelated content. Add a header
+   comment giving the URL and capture date. The fixture must be under 32 KB.
 4. Add a test in `${TEST_FILE}` that parses the new fixture and asserts concrete
    weekdays and intervals — not merely "does not throw".
 5. Keep every existing fixture and test passing.
@@ -185,9 +193,8 @@ never gets this far.
 1. **Manifest + evidence capture** in the four scrapers, written before any exit
    decision. Useful alone: the next hand-fix starts from an artifact, not a browser
    session.
-2. **Baseline quarantine**: `tests/quarantine.json` listing the 14 known-failing tests
-   by name, and a `npm run test:gate` that fails on any *other* failure. Needed by the
-   propose job and by the Telegram plan's `/merge` (R2).
+2. **Fix the 14 baseline failures** (DEC-0065). No quarantine list; `npm test` must be
+   green before the propose job's gate means anything (R2).
 3. **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
    run". Confirm it triggers on a green dining run with a `parse` entry and not on a
    `navigation` one.
@@ -202,6 +209,15 @@ never gets this far.
 
 One generate job per attempt: a few minutes of hosted runner and a few dollars of model
 usage. §3.3 bounds it at three per day, one per source per day.
+
+## 7b. Where the code runs (DEC-0063, open question)
+
+Merged parser code for dining executes on the self-hosted runner: the laptop today, a
+Mac mini within a month. The allowlist and constraint scan in §3 reduce what generated
+code can do; they do not eliminate it. The owner has not yet chosen between running the
+dining scraper in a container on that machine, a separate unprivileged macOS user for
+the runner, or accepting the residual risk on the strength of diff review. The Mac mini
+migration is the natural moment to decide, since the runner is being installed fresh.
 
 ## 8. Known limits
 

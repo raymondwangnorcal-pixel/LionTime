@@ -1,8 +1,9 @@
-# Two-way Telegram bot — design (v2)
+# Two-way Telegram bot — design (v2.1)
 
 Status: proposed, nothing built. v1 written 2026-09-10; v2 the same day after the
-adversarial review in `docs/telegram-bot-review-codex.md`. Finding numbers below (R1–R17)
-refer to that file.
+adversarial review in `docs/telegram-bot-review-codex.md`; v2.1 after the owner's answers
+to the pre-implementation questions (recorded as DEC-0062 … DEC-0070 in
+`docs/decisions.md`). Finding numbers (R1–R17) refer to the review.
 
 Today the bot (the NewsAgent token) only sends: each scrape workflow `curl`s
 `sendMessage`. Nothing listens. This plan makes the same bot receive messages from
@@ -27,9 +28,9 @@ v1 than v1 of this document proposed.
 | Decision | Choice |
 | --- | --- |
 | Transport | Telegram webhook → Vercel function `api/telegram.js`. No polling; the Mac is not always-on |
-| Who may talk to it | One Telegram **user id** (`TELEGRAM_OWNER_USER_ID`), in a **private** chat (`chat.type === "private"`). Group messages are dropped even if the group is the notification chat |
+| Who may talk to it | An **allowlist** of Telegram user ids (`TELEGRAM_OWNER_USER_IDS`, comma-separated; DEC-0062), each in a **private** chat with the bot. Group messages are dropped even if the group is the notification chat |
 | Request auth | `setWebhook` with `secret_token`; the function rejects any request without the matching `X-Telegram-Bot-Api-Secret-Token` header |
-| Callback auth | `callback_query.from.id` must equal the owner id; the pending action must have been created for that user, that chat, and that message id |
+| Callback auth | `callback_query.from.id` must be on the allowlist **and** equal the user who created the pending action; the action must also match that chat and message id |
 | Confirmation | Every state-changing action: echo → **[Confirm] [Cancel]** → callback → atomic claim → execute → record result |
 | v1 action list | `/help`, `/status`, `/prs`, `/rerun <workflow>` (allowlisted). Nothing else |
 | Sending | Unchanged. Workflows keep their `sendMessage` curl |
@@ -40,7 +41,7 @@ v1 than v1 of this document proposed.
 Telegram ──POST──► https://lionhour.com/api/telegram
   │  (deadline 8 s total; every outbound call ≤ 3 s; ack 200 on any handled outcome)
   ├─ 401 unless X-Telegram-Bot-Api-Secret-Token matches
-  ├─ 200 + drop unless chat.type === "private" and from.id === OWNER
+  ├─ 200 + drop unless chat.type === "private" and from.id ∈ OWNER_IDS
   ├─ 200 + drop if update_id already seen (Redis SET NX, 24 h TTL)   ← R5, R16
   │
   ├─ message starting with "/" → command table (§3)
@@ -70,7 +71,7 @@ Telegram ──POST──► https://lionhour.com/api/telegram
 | Variable | Notes |
 | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | same value as GitHub secret `LIONTIME_TELEGRAM_BOT_TOKEN` ← R17: names differ, document the mapping |
-| `TELEGRAM_OWNER_USER_ID` | Raymond's Telegram **user** id — not the chat id |
+| `TELEGRAM_OWNER_USER_IDS` | Allowlisted Telegram **user** ids, comma-separated — not chat ids. Adding a person is an env change, not a code change |
 | `TELEGRAM_WEBHOOK_SECRET` | random; passed to `setWebhook` |
 | `GITHUB_TOKEN` | fine-grained PAT, LionTime only, **`Actions: write` + `Pull requests: read`** in v1. No `Contents: write` until v2 |
 | `UPSTASH_REDIS_*` | already present |
@@ -150,7 +151,13 @@ compare-and-set for `/clear` (R11).
 
 ### 5.2 Supported targets are a registry, not "any venue"
 
-`lib/override-targets.js` lists exactly which venue ids can be overridden and which
+`lib/override-targets.js` is **generated at build time** from the `VENUES` array in
+`index.html` (DEC-0069): each venue's category selects its adapter, and venues with a
+`parentId`, a `sourceStatuses`-only schedule, or a category without an adapter are
+emitted as unsupported. The same build step (`scripts/build.mjs`, wired into Vercel's
+`buildCommand`) regenerates the SEO pages, the bot's venue alias table, and the seed-vote
+schedules, so adding a venue to `VENUES` is the only edit. `lib/override-targets.js`
+lists exactly which venue ids can be overridden and which
 adapter applies them. v2 ships with the venues whose live projection is straightforward;
 everything else is rejected *before* the confirm with "not supported yet" (R12).
 Excluded initially: the three Joe's (embedded fallbacks, not in the Dining snapshot),
@@ -191,11 +198,27 @@ defeat that (R10). Contract:
 - An override's `expiresAt` is enforced by the client too, so a cached response that
   outlives Redis cannot keep a stale closure on screen.
 
-### 5.6 Commands
+### 5.6 Second signal for closures (DEC-0064)
+
+A closure is visible to students the moment it lands, so one tap is not enough. The
+flow is:
+
+1. `/closed butler` → the bot replies with the describe() text **and a preview link**
+   (`https://lionhour.com/?preview=<pending id>`), which renders the site with that one
+   override applied and a banner "Preview — not live". The preview reads the pending
+   action from Redis; it is not itself an override.
+2. The message carries a single **[Looks right — apply]** button. Tapping it within
+   two minutes claims and executes the action. Nothing else on that message executes.
+3. After two minutes the button expires and the pending action is discarded.
+
+The second signal is looking at the actual card, not a second button on the same
+screen. `/clear` and `/rerun` keep the single confirm; they are reversible.
+
+### 5.7 Commands
 
 | Action | Confirm? | Notes |
 | --- | --- | --- |
-| `/closed <venue> [today\|tomorrow]` | yes | describe() shows canonical name, absolute date, current published hours → "Closed" |
+| `/closed <venue> [today\|tomorrow]` | preview + apply (§5.6) | describe() shows canonical name, absolute date, current published hours → "Closed" |
 | `/clear <venue> <date>` | yes | Compare-and-delete on the stored `revision`; a newer override is left alone and the user is told (R11) |
 | `/overrides` | no | Active overrides with expiry |
 
@@ -219,13 +242,18 @@ Only after v2 has run for a while. Constraints carried from the review:
 
 ## 7. Build order
 
-1. `api/telegram.js` skeleton: auth (secret + private + owner), `update_id` dedupe,
+0. **`scripts/build.mjs`** and `vercel.json` `buildCommand` (DEC-0069): move
+   `generate-seo` under it, add the venue alias table. Everything below consumes its
+   output.
+0b. **Fix the 14 failing tests** (DEC-0065). No quarantine list. This unblocks every
+   "checks green" gate in both plans.
+1. `api/telegram.js` skeleton: auth (secret + private + allowlist), `update_id` dedupe,
    `/help`, `/status`, `/prs`. Register webhook. Ship. Add the daily
    `telegram-webhook-check` workflow the same day.
 2. Pending-action store with atomic claim; `/rerun` with confirm. Tests for double-tap,
    forged callback, expired action.
-3. **Stop.** Use it for two weeks. Meanwhile, build the PR-checks workflow and quarantine
-   the baseline failures — that is independent work with its own value.
+3. **Stop.** Use it for two weeks. Meanwhile, add `.github/workflows/pr-checks.yml`
+   running the now-green suite on `pull_request`.
 4. v2 `/merge` once §4's four prerequisites are true.
 5. v2 overrides: registry → adapters (one category at a time, Library first) → freshness
    contract → commands.
@@ -244,8 +272,19 @@ Only after v2 has run for a while. Constraints carried from the review:
 | Dependency slow | Per-call deadline → reply "GitHub didn't answer in time; nothing was changed" |
 | Webhook silently unregistered or secret rotated on one side | Daily check alerts via the *send* path |
 
-## 9. Open questions
+## 9. Settled by the owner (2026-09-10)
+
+- Purpose: quick fixes of small issues from a phone (DEC-0066). Anything that needs a
+  diff read is a laptop action; the bot links to it.
+- Tokens in Vercel env are acceptable; Telegram is the only control plane and waiting
+  out a Telegram outage is acceptable; no audit log yet (DEC-0070).
+- Freshness target: a day (DEC-0068).
+
+## 10. Open questions
 
 - Should `/rerun` be limited to once per workflow per 30 minutes? (Leaning yes; the
   scrapers are not idempotent on the Mac runner.)
 - Is a weekly digest of expired-unused overrides worth it, or noise?
+- **Unanswered from the pre-implementation review:** is the Mac runner (laptop now,
+  Mac mini next month) acceptable as a host for *generated* code, and under what
+  isolation — a container, a separate unprivileged macOS user, or accepted residual risk?
