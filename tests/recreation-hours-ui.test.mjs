@@ -22,8 +22,9 @@ test('renders a collapsed Dodge space list with maintenance and access details',
   assert.match(output, /recreation-spaces/);
   assert.match(output, /View spaces/);
   assert.match(output, /aria-expanded="false"/);
-  assert.match(output, /Closed for maintenance/);
-  assert.match(output, /Court repair/);
+  assert.match(output, /recreation-space-status closed">Closed<br>/);
+  assert.match(output, /recreation-space-status-reason">\(Maintenance\)</);
+  assert.doesNotMatch(output, /Court repair/); // free-text reasons are no longer rendered
   assert.match(output, /Reservation required/);
 });
 
@@ -55,7 +56,7 @@ test('escapes source-derived room copy before it reaches the renderer output', (
 
   assert.doesNotMatch(output, /<img|<script|<b>/);
   assert.match(output, /&lt;img src=x onerror=alert\(1\)&gt;/);
-  assert.match(output, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(output, /alert\(1\)<\/script>/); // the reason field is not rendered at all
   assert.match(output, /&lt;b&gt;Reservation required&lt;\/b&gt;/);
 });
 
@@ -91,11 +92,14 @@ test('uses maintenance and reservation restrictions only while their Eastern-tim
     const during = LionHourRecreationView.renderSpaces([space], { mins: 780 });
     const after = LionHourRecreationView.renderSpaces([space], { mins: 900 });
 
-    assert.match(before, /recreation-space-status">Open</);
+    const duringStatus = status === 'Closed for maintenance'
+      ? /recreation-space-status closed">Closed<br><span class="recreation-space-status-reason">\(Maintenance\)</
+      : new RegExp(`recreation-space-status [a-z-]+">${status}<`);
+    assert.match(before, /recreation-space-status open">Open</);
     assert.doesNotMatch(before, new RegExp(reason));
-    assert.match(during, new RegExp(`recreation-space-status">${status}<`));
-    assert.match(during, new RegExp(reason));
-    assert.match(after, /recreation-space-status">Open</);
+    assert.match(during, duringStatus);
+    assert.doesNotMatch(during, new RegExp(reason)); // free-text reasons are no longer rendered
+    assert.match(after, /recreation-space-status open">Open</);
     assert.doesNotMatch(after, new RegExp(reason));
   }
 });
@@ -112,7 +116,7 @@ test('renders closing soon and human-readable availability labels', () => {
     restrictions: [],
   }], { mins: 1_050 });
 
-  assert.match(output, /recreation-space-status">Closing soon</);
-  assert.match(output, /Availability:\s*<\/span>Open recreation/);
+  assert.match(output, /recreation-space-status closing-soon">Closing soon</);
+  assert.match(output, /recreation-space-activity">Open recreation</);
   assert.doesNotMatch(output, /open-recreation/);
 });

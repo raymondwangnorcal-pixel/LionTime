@@ -79,7 +79,7 @@ test('renders embedded hours before guarded live hydration and exposes data stat
 });
 
 test('loads dining live data after static cards and identifies Barnard and Joe fallbacks', () => {
-  const venueData = indexHtml.match(/const VENUES = \[([\s\S]*?)\n\];/)?.[1] || '';
+  const venueData = indexHtml.match(/const VENUES = (?:window\.VENUES = )?\[([\s\S]*?)\n\];/)?.[1] || '';
   assert.match(indexHtml, /id="dining-hours-status"[^>]*data-kind="fallback"/);
   assert.match(indexHtml, /assets\/dining-hours\.js/);
   assert.match(indexHtml, /id:'facultyhouse-4'/);
