@@ -123,12 +123,13 @@ test('a slow dependency is cut off at the deadline instead of hanging the handle
   assert.match(replies[0].text, /unavailable \(timeout\)/);
 });
 
-test('a button tap is acknowledged but does nothing in v1', async () => {
+test('a button tap with no pending-action store is acknowledged and changes nothing', async () => {
   const s = service();
   const result = await s.handle({ secretHeader: SECRET, update: {
     update_id: 2,
-    callback_query: { id: 'cb1', from: { id: OWNER }, message: { chat: { id: OWNER, type: 'private' } }, data: 'confirm:xyz' },
+    callback_query: { id: 'cb1', from: { id: OWNER }, message: { message_id: 5, chat: { id: OWNER, type: 'private' } }, data: 'confirm:0123456789abcdef' },
   } });
   assert.deepEqual(result.replies, []);
   assert.equal(result.answerCallback.id, 'cb1');
+  assert.match(result.answerCallback.text, /store is unavailable/);
 });
