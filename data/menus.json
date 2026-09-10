@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-10",
-  "scrapedAt": "2026-09-10T08:57:36.986003-04:00",
+  "scrapedAt": "2026-09-10T13:43:31.651209-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -481,7 +481,7 @@
             {
               "name": "Lunch Service",
               "items": [
-                "Tandoori Chicken Bowl: Tandoori chicken served with saffron basmati rice, stewed eggplant, and cucumber raita served with caramelized onion naan bread",
+                "Tandoori Chicken Bowl: Tandoori chicken served with saffron basmati rice, stewed eggplant, and cucumber raita",
                 "Tandoori Tofu Bowl: Tandoori tofu served with saffron basmati rice, stewed eggplant, and cucumber sauce"
               ]
             }
@@ -660,7 +660,7 @@
                 "General Tso Chicken",
                 "Jasmine Rice",
                 "Farro",
-                "Bok Choy",
+                "Mixed Vegetables",
                 "Lentils"
               ]
             },
@@ -669,7 +669,7 @@
               "items": [
                 "General Tso Chicken",
                 "Jasmine Rice",
-                "Bok Choy"
+                "Mixed Vegetables"
               ]
             },
             {
@@ -677,7 +677,7 @@
               "items": [
                 "General Tso Chicken",
                 "Jasmine Rice",
-                "Bok Choy"
+                "Mixed Vegetables"
               ]
             },
             {
@@ -685,7 +685,7 @@
               "items": [
                 "General Tso Chicken",
                 "Jasmine Rice",
-                "Bok Choy"
+                "Mixed Vegetables"
               ]
             },
             {
@@ -698,7 +698,7 @@
               "name": "Soup Station",
               "items": [
                 "Chicken Tortilla",
-                "Tomato Bisque",
+                "Carrot Ginger",
                 "Strawberry Oatmeal"
               ]
             },
@@ -710,7 +710,7 @@
                 "Rosemary Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Bolognese",
+                "Tomato Lentl",
                 "Broccoli and Mushrooms",
                 "Garlic Rolls"
               ]
@@ -834,8 +834,8 @@
               "items": [
                 "Scrambled Eggs",
                 "French Toast Sticks",
-                "Chicken Sausage Link",
-                "Hash Brown Patty"
+                "Hash Brown Patty",
+                "Chicken Sausage Link"
               ]
             },
             {
@@ -858,23 +858,22 @@
               "items": [
                 "Scrambled Eggs",
                 "French Toast Sticks",
-                "Buttermilk Biscuit",
-                "Chicken Sausage Link",
                 "Hash Brown Patty",
+                "Chicken Sausage Link",
                 "Impossible Sausage Patty"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
-                "Vanilla Oat Pancakes",
+                "Oatmeal",
                 "Diced Potato, Pepper, and Onion Hash",
                 "Turkey Bacon",
-                "Steamed Carrots",
-                "Cubed Pineapple",
+                "Roasted Vegetables",
                 "Garden Salad",
-                "Fresh Fruit Salad",
-                "Pumpkin Spice Oat Milk Overnight Oats",
+                "Cubed Pineapple",
+                "Cubed Cantaloupe",
+                "Cubed Honeydew",
                 "Chia Pudding"
               ]
             },
@@ -930,6 +929,7 @@
               "items": [
                 "Cheese Pizza",
                 "Grilled Veggie Pizza",
+                "Chicken Pizza",
                 "2Mato's Vegan Veggie Pizza",
                 "Dried Oregano",
                 "Parmesan Cheese",
@@ -942,9 +942,8 @@
                 "California Beef Curry",
                 "Tandoori Chicken Tikka",
                 "Alu Chole",
-                "Palek Paneer",
-                "Basmati Rice",
-                "Cucumber-Tomato Raita"
+                "Fried Paneer Cheese",
+                "Basmati Rice"
               ]
             },
             {
@@ -964,24 +963,23 @@
             {
               "name": "Performance Kitchen",
               "items": [
-                "Bowtie Pasta",
+                "Rigatoni Pasta",
                 "Penne Pasta",
                 "Pomodoro Sauce",
                 "Alfredo Sauce",
-                "Vegan Meatballs"
+                "Garlic Bread"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
                 "BBQ Chicken",
-                "BBQ Baked Beans",
-                "Roasted Sweet Potatoes",
-                "Mixed Vegetables",
+                "Blanched Green Beans",
+                "Roasted Potatoes",
                 "Cucumber Salad",
                 "Garden Salad",
                 "Black Bean and Corn Salad",
-                "Oat Milk Chia Seed Pudding",
+                "Brussels Sprout Salad Lemon Tahini",
                 "Overnight Chia and Oats",
                 "Cinnamon Apples"
               ]
@@ -1055,7 +1053,7 @@
                 "Blackened Fish",
                 "Herb Crusted Tofu",
                 "Spanish Rice",
-                "Mexican Corn"
+                "Mixed Vegetables"
               ]
             },
             {
@@ -1077,19 +1075,19 @@
               "name": "Performance Kitchen",
               "items": [
                 "Macaroni and Cheese",
-                "Broccoli Cheddar Mac & Cheese",
                 "White Cheddar Macaroni and Cheese",
-                "Shepherd's Pie",
-                "Garlic Sticks"
+                "Garlic Sticks",
+                "Mexican Corn",
+                "Steamed Green Beans"
               ]
             },
             {
               "name": "Delicious Without",
               "items": [
                 "BBQ Chicken Wings",
-                "Herbed Quinoa",
+                "Seasoned Rice",
                 "Three Bean Vegetarian Chili",
-                "Steamed Cauliflower",
+                "Brussels Sprouts",
                 "Spinach Salad",
                 "Garden Salad",
                 "Quinoa Tabbouleh",
@@ -1193,15 +1191,15 @@
             {
               "name": "Cold Special - Cold Express Case",
               "items": [
-                "Fresh Mozzarella w/ Pesto: Fresh Mozzarella, Pesto, Arugula",
-                "Vegan Cheese w/ Pesto: Vegan Cheese, Arugula, Vegan Pesto"
+                "Italian Hero",
+                "Italian Tofu"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
                 "Chicken Parmigiana: Breaded Chicken, Mozzarella, Tomato Sauce",
-                "Vegan Chicken Parmigiana: Vegan Breaded Chicken, Vegan Mozzarella, Tomato Sauce"
+                "Vegan Meatball Parmigiana: Vegan Meatball Vegan Mozzarella, Tomato Sauce"
               ]
             }
           ],
@@ -1227,15 +1225,15 @@
             {
               "name": "Cold Special - Cold Express Case",
               "items": [
-                "Fresh Mozzarella w/ Pesto: Fresh Mozzarella, Pesto, Arugula",
-                "Vegan Cheese w/ Pesto: Vegan Cheese, Arugula, Vegan Pesto"
+                "Italian Hero",
+                "Italian Tofu"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
                 "Chicken Parmigiana: Breaded Chicken, Mozzarella, Tomato Sauce",
-                "Vegan Chicken Parmigiana: Vegan Breaded Chicken, Vegan Mozzarella, Tomato Sauce"
+                "Vegan Meatball: Vegan Meatball, Vegan Mozzarella, Tomato Sauce"
               ]
             }
           ],
