@@ -1,188 +1,139 @@
-# LionHour outreach — postal address + persuasion structure
+# LionHour outreach — messaging and templates
 
-Companion to `ad-sales-outreach-plan.md`. Not legal advice.
+Companion to [the outreach plan](ad-sales-outreach-plan.md). Revised 2026-09-10.
+These are drafts for individual human approval, not authorization to send.
 
-## 1. The CAN-SPAM postal address
+## 1. Core selling language
 
-The FTC permits exactly three forms of address in a commercial email:
+**20,000 impressions per week on the site.**
 
-1. Your current street address.
-2. A post office box you have registered with the USPS.
-3. A private mailbox you have registered with a commercial mail receiving
-   agency (CMRA) established under Postal Service regulations.
+This is the user-supplied positioning figure. Before external use, review its
+measurement definition, source, and reporting period as required by the plan.
+Use impressions consistently: do not substitute people, students, unique visitors,
+or guaranteed sponsor impressions. The weekly site figure is separate from
+campaign-specific delivered impressions and clicks.
 
-### Why the Columbia student mail center fails
+Keep the pitch direct: a Columbia student built a useful campus-hours site,
+local businesses can buy a clearly labeled sponsored placement, and the owner can
+review the placement and terms with one small next step. Do not invoke a Spectator
+role or imply university endorsement. Only describe the sender as a student while
+that remains accurate.
 
-**It is not on the list.** A student mailbox is campus mail provided by the
-university incident to enrollment. It is not a USPS-registered PO Box held in
-your name, and it is not a CMRA — CMRAs are commercial operators registered
-under USPS rules, and opening a box at one requires PS Form 1583 plus two forms
-of ID. Columbia's mail center is neither of those things, so it does not satisfy
-the requirement even though physical mail reaches you there.
+## 2. Claims and personalization
 
-**It expires while your obligations don't.** You must honor opt-outs for as long
-as you are sending, and the address in the message has to stay valid. A mailbox
-tied to enrollment dies when you graduate, take a leave, or move off the
-assignment. A dead address in a sent commercial email is a violation, and the
-messages are already out there.
+- Use the core claim once in the first email. Store its approved evidence snapshot
+  with the draft; changed or unsupported evidence requires review.
+- Include one true detail from the business's own site or a reviewed personal
+  observation. Never invent opening hours, customer behavior, or a prior visit.
+- Do not assert 10 PM traffic spikes, Sunday peaks, or a business's busiest hour
+  without specific supporting evidence. Site visits do not establish foot traffic.
+- Mention sponsors only when currently active and approved for public reference.
+  One active sponsor does not necessarily mean it is the first or recently joined.
+- State available placement capacity only from current dated campaign/reservation
+  records. Omit scarcity language when capacity is uncertain. No availability
+  means pause new offers and review pending drafts.
+- Treat claims about subject lines, plain text, or follow-up response rates as
+  hypotheses to evaluate in the pilot, not established performance guarantees.
 
-**It asserts a Columbia affiliation you don't have.** A footer reading
-`2920 Broadway, Lerner Hall, New York, NY` tells a business owner they are
-dealing with a Columbia entity. LionHour is your private venture. That runs at
-the accurate-identification requirement, it implies an endorsement Columbia has
-not given, and combined with a Columbia-adjacent product name it materially
-strengthens any trademark or affiliation complaint the university might raise.
+## 3. Email structure
 
-**It is very likely against Columbia policy.** Universities generally prohibit
-using a university address, mail service, or name for private commercial
-activity. Read Columbia's actual policy before assuming — but assume the answer
-is no.
+Aim for under 150 words in the first touch and under 80 in follow-ups, excluding
+the required footer. Use plain text, one clear ask, and an honest subject naming
+the sponsorship opportunity. Keep links minimal; the unsubscribe link is always
+included. Every touch must identify the solicitation and carry the postal address
+and opt-out footer. Do not manufacture reply-thread prefixes on first contact.
 
-### What to use instead
+The templates below assume a verified business name, specific observation,
+reviewed weekly claim, valid postal address, and functioning unsubscribe link.
+Missing required fields block draft generation. Use a verified first name only
+when available; otherwise the business-team greeting avoids guessing a person.
 
-| Option | Rough cost | Notes |
-| --- | --- | --- |
-| **CMRA / virtual mailbox** (iPostal1, Anytime Mailbox, PostScan, Stable) | ~$10–30/mo | **Recommended.** Explicitly permitted. Reads as a street address with a suite number, which looks far better in a B2B footer than a PO Box. Mail is scanned to an app. Needs PS Form 1583 + ID. |
-| **USPS PO Box** | ~$50–150 / 6 mo in Manhattan | Cheapest fully compliant option. Downside: "PO Box 1234" in a sales email signals a one-person operation. |
-| **Your home address** | Free | Compliant and honest, but it goes into hundreds of inboxes permanently and cannot be recalled. Bad trade for a student. |
-| **LLC registered agent address** | Varies | Only worth it if you form an entity anyway. Note NY's LLC publication requirement runs well over $1,000 in NYC counties — premature at this stage. |
+### Touch 1 — day 0
 
-Verify current prices; they move.
+```text
+Subject: A LionHour sponsorship for {{business_name}}
 
-## 2. Influence, applied — and where it turns into lying
+Hi {{business_name}} team,
 
-Cialdini's seven principles, mapped to what you can *actually* claim today.
+I'm Raymond, a Columbia student who built LionHour to help people check campus
+library and dining hours. LionHour gets 20,000 impressions per week on the site.
 
-### Available to you now
+{{specific_observation}}
 
-**Unity** — the strongest lever you have, and the most honest. You are a Columbia
-student emailing businesses whose customers are Columbia students. You are not a
-vendor calling from outside; you are inside the same community they sell to.
-Lead with this. It is true, it is unfakeable by your competitors, and it is the
-whole reason a shop owner reads past line one.
+I'm offering a sponsored placement for a local business. Would you like me to
+send the placement preview and monthly rate?
 
-**Authority** — not credentials, data. "3,400 students checked library hours here
-last month" is authority. Your Spectator role would also be authority, but per the
-earlier discussion it isn't yours to spend on this. The numbers are.
-
-**Reciprocity** — give before asking. A genuinely free two-week placement, or an
-unsolicited useful observation about their hours versus campus traffic patterns,
-creates real obligation. A "free consultation" does not; everyone recognizes that
-as a sales call.
-
-**Liking** — specificity and a human voice. One true detail proving you have been
-in their shop beats any amount of polish. Write like a person, not a media agency.
-
-**Commitment and consistency** — do not ask for the sale in email one. Ask for a
-micro-yes: "want me to send the one-page numbers?" A small yes makes the next one
-much likelier. This is why the three-touch sequence works.
-
-### Social proof and scarcity — make them true by construction
-
-Both are legitimate here: the ad unit has a fixed slot count, so scarcity is a
-real cap rather than a manufactured one, and the sponsor count becomes real as
-soon as sponsors sign. The risk isn't the claim, it's drift — a template that
-hardcodes a number keeps asserting it after it stops being accurate.
-
-So neither line is ever written by hand. Both render from live Redis state, and
-the generator omits the line rather than guessing when the data isn't there.
-
-**Sponsor count** — from `outreach:sponsors:active`:
-
-| Count | Rendered |
-| --- | --- |
-| 0 | line omitted entirely |
-| 1 | `{{sponsor_name}} just came on as the first sponsor` |
-| 2+ | `join {{n}} local businesses already on the site` |
-
-**Slot availability** — from `slots_total` and `slots_sold`:
-
-| State | Rendered |
-| --- | --- |
-| 0 sold | `I'm running {{slots_total}} spots this semester` |
-| 1+ sold, some left | `{{slots_left}} of {{slots_total}} spots left` |
-| 0 left | prospect is not contacted at all |
-
-The distinction in the first row is the one that matters. "3 slots left" carries
-an implicature that some were taken — if none have sold, it's literally true and
-still misleading, and it's the kind of thing a shop owner asks about on a call.
-"I'm running 4 spots this semester" makes the same scarcity point, is unambiguous,
-and costs you nothing.
-
-The general rule: a persuasion claim in the template must be backed by a field in
-the prospect store. If the field is empty, the line is dropped. That way the email
-cannot make a claim the system can't substantiate, and you never have to remember
-to go update copy after a sponsor signs or churns.
-
-## 3. Email skeleton
-
-```
-Subject:      lowercase, specific, no pitch, reads like a person wrote it
-Line 1:       UNITY      — who you are, same community, no preamble
-Line 2-3:     AUTHORITY  — the real number, stated plainly, once
-Line 4-5:     LIKING     — one true, specific observation about their business
-Line 6:       SCARCITY   — one placement, this semester (only if true)
-Line 7:       RECIPROCITY + CONSISTENCY — free trial, micro-yes ask
-Sign-off:     first name only
-Footer:       postal address + one-click unsubscribe
+Raymond
+LionHour · Sponsorship inquiry
+{{postal_address}}
+No more sponsorship emails: {{unsubscribe_link}}
 ```
 
-Hard limits: under 150 words, one ask, one link maximum, no images, no attachment,
-no HTML styling. Plain text from a Gmail address outperforms designed templates in
-cold B2B and is far less likely to be filtered.
+If the trial terms and capacity are approved, replace the offer paragraph with:
 
-### Subject lines
+```text
+I'm offering a two-week free trial of a sponsored placement, with no automatic
+billing. Would you like me to send the placement preview and trial details?
+```
 
-Good — specific, low-pressure, no claim:
-- `quick question about your sunday hours`
-- `students checking if you're open at 10pm`
-- `built a campus hours site — one question`
+Do not offer the trial when dates or capacity are unavailable. The preview and
+trial details must exist before offering to send them.
 
-Avoid — these are the ones that get filtered and ignored:
-- anything with `RE:` or `FWD:` on a first touch (deceptive under CAN-SPAM)
-- `Partnership Opportunity`, `Advertising Inquiry`, `Quick Question` (capitalized)
-- any subject containing a price, a percentage, or an exclamation mark
+### Touch 2 — nominal day 4
 
-### Touch 1 — example
+```text
+Subject: LionHour sponsorship for {{business_name}}
 
-> Subject: students checking if you're open at 10pm
->
-> Hi {{first_name}},
->
-> I'm a Columbia student. I built lionhour.com — it's the site people here use to
-> check whether Butler's still open or when Ferris stops serving. {{views_30d}}
-> people used it last month.
->
-> The pattern I keep seeing: traffic spikes around 10pm and Sunday afternoon,
-> which is exactly when someone's deciding where to go. Right now the site tells
-> them what's closed on campus. It doesn't tell them you're open.
->
-> {{specific_observation}}
->
-> I'm adding one sponsored spot this semester. Want to try two weeks free and see
-> what it does? If nothing comes of it, no cost and we both learned something.
->
-> Raymond
->
-> {{postal_address}} · {{unsubscribe_link}}
+Hi {{business_name}} team,
 
-`{{specific_observation}}` must come from stored data or your own note. If it's
-empty, the prospect is skipped — never sent with a generic filler line.
+Following up on the LionHour placement. Sponsors receive a report of their
+placement's measured impressions and clicks, so you can review what it delivered.
 
-### Touch 2 — day 4, reciprocity
+Would you like the preview and terms?
 
-Send something of value, don't re-ask. One line: here's what the traffic looked
-like this week, here's the hour your block is busiest. Then a single sentence
-returning to the offer. Under 60 words.
+Raymond
+LionHour · Sponsorship inquiry
+{{postal_address}}
+No more sponsorship emails: {{unsubscribe_link}}
+```
 
-### Touch 3 — day 10, graceful close
+Use the reporting sentence only after campaign reporting has been verified.
+Set real thread headers referencing the first sent message. Suppression and fresh
+human approval are required, even if the recipient has not replied.
 
-The highest-reply message in most sequences is the one that lets them off the
-hook. "Sounds like this isn't a fit right now — I'll stop here. If it changes,
-you know where to find me." No guilt, no final-notice framing. Genuinely stop.
+### Touch 3 — nominal day 10
 
-## 4. Suppression rules
+```text
+Subject: LionHour sponsorship for {{business_name}}
 
-Any reply, bounce, or auto-responder ends the sequence immediately. So does an
-unsubscribe click, permanently. A business that says no goes on the suppression
-list for the academic year — you have to live in this neighborhood.
+Hi {{business_name}} team,
+
+I'll leave it here after this email. If a LionHour sponsored placement becomes
+useful for {{business_name}}, you're welcome to reply whenever the timing fits.
+
+Thanks,
+Raymond
+LionHour · Sponsorship inquiry
+{{postal_address}}
+No more sponsorship emails: {{unsubscribe_link}}
+```
+
+Stop after this touch. Do not automatically restart the sequence in another
+campaign or academic year. Follow the plan's weekday and actual-send spacing rules.
+
+## 4. Postal address and opt-out
+
+Choose a valid current street address, registered USPS PO box, or qualifying
+registered private mailbox under the FTC guidance. Verify specific permission and
+eligibility before using a university or registered-agent address. This document
+does not establish whether a particular Columbia address qualifies or whether
+university policy permits commercial use. Mailbox pricing remains to be checked
+when selecting a provider.
+
+Every reply, bounce, auto-response, or unsubscribe stops the automated sequence.
+Explicit opt-outs remain suppressed while outreach operates; they do not expire
+at the academic-year boundary. Honor reply-based requests as well as link clicks.
+Keep the opt-out route working for at least 30 days after each message; apply
+suppression immediately in the system.
+
+[FTC commercial email guidance](https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business)
