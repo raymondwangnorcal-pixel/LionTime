@@ -1,7 +1,8 @@
 # Automated parser fixes — design (v2.1)
 
-Status: proposed, nothing built. v1 written 2026-09-10 after four parser breaks in one
-week (Barnard gym, Dining locations feed, Health, Mail), all caused by Columbia pages
+Status: shared groundwork done (build step, green test suite, PR check, two-way bot);
+nothing autofix-specific built yet — build order step 1 is next. v1 written 2026-09-10
+after four parser breaks in one week (Barnard gym, Dining locations feed, Health, Mail), all caused by Columbia pages
 rolling over to Fall 2026 wording. v2 the same day, after the adversarial review in
 `docs/telegram-bot-review-codex.md` (findings R1–R17); v2.1 after the owner's answers,
 recorded as DEC-0062 … DEC-0070 in `docs/decisions.md`.
@@ -190,20 +191,27 @@ never gets this far.
 
 ## 6. Build order
 
-1. **Manifest + evidence capture** in the four scrapers, written before any exit
+Progress legend: ✅ done · 🔜 next · ⬜ not started.
+
+1. 🔜 **Manifest + evidence capture** in the four scrapers, written before any exit
    decision. Useful alone: the next hand-fix starts from an artifact, not a browser
    session.
-2. **Fix the 14 baseline failures** (DEC-0065). No quarantine list; `npm test` must be
-   green before the propose job's gate means anything (R2).
-3. **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
+2. ✅ **Fix the 14 baseline failures** (DEC-0065). No quarantine list; `npm test` must be
+   green before the propose job's gate means anything (R2). *(2026-09-10: done, and
+   `.github/workflows/pr-checks.yml` now runs the suite on every PR and push.)*
+3. ⬜ **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
    run". Confirm it triggers on a green dining run with a `parse` entry and not on a
    `navigation` one.
-4. **Generate job** behind `AUTOFIX_ENABLED`, permissions as in §3.4.
-5. **Dry run** via `workflow_dispatch`: revert the Fall 2026 Health parser change on a
+4. ⬜ **Generate job** behind `AUTOFIX_ENABLED`, permissions as in §3.4.
+5. ⬜ **Dry run** via `workflow_dispatch`: revert the Fall 2026 Health parser change on a
    branch, feed the captured page, compare the PR to the hand-written fix. Then a
    second dry run with a fixture that contains an embedded instruction, to confirm the
    allowlist and the constraint checks catch what the model may produce.
-6. Enable.
+6. ⬜ Enable.
+
+Already in place from the Telegram plan that this one leans on: the two-way bot with
+`/rerun` (the "re-run after merge" nudge has somewhere to land), and the build-time
+venue catalog (DEC-0069) that the fixture sanitiser and alias table will read.
 
 ## 7. Cost and rate
 
