@@ -1,9 +1,11 @@
 # Two-way Telegram bot — design (v2.1)
 
-Status: proposed, nothing built. v1 written 2026-09-10; v2 the same day after the
-adversarial review in `docs/telegram-bot-review-codex.md`; v2.1 after the owner's answers
-to the pre-implementation questions (recorded as DEC-0062 … DEC-0070 in
-`docs/decisions.md`). Finding numbers (R1–R17) refer to the review.
+Status: build-order steps 0–2 are built and live (2026-09-10): the "Lion Hour" bot
+answers `/help`, `/status`, `/prs`, and `/rerun <workflow>` with a confirm button. v1
+written 2026-09-10; v2 the same day after the adversarial review in
+`docs/telegram-bot-review-codex.md`; v2.1 after the owner's answers to the
+pre-implementation questions (recorded as DEC-0062 … DEC-0070 in `docs/decisions.md`).
+Finding numbers (R1–R17) refer to the review.
 
 Today the bot (the NewsAgent token) only sends: each scrape workflow `curl`s
 `sendMessage`. Nothing listens. This plan makes the same bot receive messages from
@@ -61,8 +63,9 @@ Telegram ──POST──► https://lionhour.com/api/telegram
 | File | Purpose |
 | --- | --- |
 | `api/telegram.js` | Webhook handler: auth, dedupe, routing, replies, deadlines |
-| `lib/telegram-actions.js` | Action table: `name`, `parseArgs()`, `describe()`, `run()`; v1 has four entries |
-| `lib/telegram-pending-store.js` | Redis: pending actions with atomic claim, `update_id` dedupe |
+| `lib/telegram-service.js` | Pure handler: auth, routing, the propose → confirm → claim → run → record flow; no env, no network of its own |
+| `lib/telegram-actions.js` | Action table: `name`, `parseArgs()`, `scope()`, `describe()`, `run()`; v1 has one entry, `rerun` |
+| `lib/telegram-pending-store.js` | Redis: pending actions with atomic claim (SET NX on a sibling key), per-workflow cooldown; an in-memory twin for tests. `update_id` dedupe lives in `api/telegram.js` |
 | `scripts/telegram-webhook-check.mjs` | `getWebhookInfo`: URL matches, no `last_error_message`, `pending_update_count` small. Run daily from Actions; alert via `sendMessage` on mismatch ← R17 |
 | `tests/telegram-*.test.mjs` | Handler with fake Telegram payloads (private vs group, owner vs stranger, forged callback ids, duplicate `update_id`, double-tap), action table, deadline behaviour |
 
@@ -73,7 +76,7 @@ Telegram ──POST──► https://lionhour.com/api/telegram
 | `TELEGRAM_BOT_TOKEN` | same value as GitHub secret `LIONTIME_TELEGRAM_BOT_TOKEN` ← R17: names differ, document the mapping |
 | `TELEGRAM_OWNER_USER_IDS` | Allowlisted Telegram **user** ids, comma-separated — not chat ids. Adding a person is an env change, not a code change |
 | `TELEGRAM_WEBHOOK_SECRET` | random; passed to `setWebhook` |
-| `GITHUB_TOKEN` | fine-grained PAT, LionTime only, **`Actions: write` + `Pull requests: read`** in v1. No `Contents: write` until v2 |
+| `GITHUB_TOKEN` | fine-grained PAT, LionTime only, **`Actions: write` + `Pull requests: read`** in v1. No `Contents: write` until v2. Without it `/rerun` still asks for a confirm but the confirm reports "GITHUB_TOKEN is not configured" and changes nothing |
 | `UPSTASH_REDIS_*` | already present |
 
 `vercel.json`: `api/telegram.js` with `maxDuration: 10`. The handler's own deadline is 8 s
@@ -111,6 +114,16 @@ Pending actions: Redis key `lionhour:tg:pending:<random id>`, fields
 `{ action, args, ownerId, chatId, messageId, state: "pending", createdAt }`, TTL 10 min.
 A Confirm on an expired or already-claimed action edits the message to say so and does
 nothing.
+
+As built: `messageId` is `null` when the record is created and is bound by
+`api/telegram.js` from the `sendMessage` result, so a confirm message that never reached
+Telegram leaves an action that can never be claimed (fails closed). The claim is a
+`SET NX` on `lionhour:tg:pending:<id>:claim`; Confirm and Cancel both claim, so the first
+tap of either wins. Outcomes (`done | failed | cancelled`, plus the result text) are
+written back onto the record with a 24 h TTL and the confirm message is edited in place
+to show them. `/rerun` also holds a 30-minute per-workflow cooldown
+(`lionhour:tg:recent:rerun:<workflow>`), checked before the confirm is offered and taken
+atomically before the dispatch; a failed dispatch releases it.
 
 ## 4. v2 — `/merge`, gated
 
@@ -251,7 +264,8 @@ Only after v2 has run for a while. Constraints carried from the review:
    `/help`, `/status`, `/prs`. Register webhook. Ship. Add the daily
    `telegram-webhook-check` workflow the same day.
 2. Pending-action store with atomic claim; `/rerun` with confirm. Tests for double-tap,
-   forged callback, expired action.
+   forged callback, expired action. **Done 2026-09-10** (`tests/telegram-rerun.test.mjs`,
+   `tests/telegram-pending-store.test.mjs`).
 3. **Stop.** Use it for two weeks. Meanwhile, add `.github/workflows/pr-checks.yml`
    running the now-green suite on `pull_request`.
 4. v2 `/merge` once §4's four prerequisites are true.
@@ -282,8 +296,8 @@ Only after v2 has run for a while. Constraints carried from the review:
 
 ## 10. Open questions
 
-- Should `/rerun` be limited to once per workflow per 30 minutes? (Leaning yes; the
-  scrapers are not idempotent on the Mac runner.)
+- (Resolved in code 2026-09-10: `/rerun` is limited to once per workflow per 30 minutes;
+  a re-run whose dispatch fails does not consume the slot.)
 - Is a weekly digest of expired-unused overrides worth it, or noise?
 - (Resolved 2026-09-10, DEC-0071: generated code on the self-hosted runner is accepted
   for now on the strength of diff review; revisit at the Mac mini install.)
