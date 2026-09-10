@@ -1,74 +1,84 @@
-# Two-way Telegram bot — design
+# Two-way Telegram bot — design (v2)
 
-Status: proposed, nothing built. Written 2026-09-10.
+Status: proposed, nothing built. v1 written 2026-09-10; v2 the same day after the
+adversarial review in `docs/telegram-bot-review-codex.md`. Finding numbers below (R1–R17)
+refer to that file.
 
-Today the bot (the NewsAgent token) only sends: each scrape workflow ends by `curl`-ing
+Today the bot (the NewsAgent token) only sends: each scrape workflow `curl`s
 `sendMessage`. Nothing listens. This plan makes the same bot receive messages from
-Raymond and act on a short, fixed list of things — merging a LionHour PR, marking a
-building closed when the live data is wrong, re-running a scrape — with a confirmation
-tap before anything changes.
+Raymond and act on a short, fixed list of things — with the list deliberately smaller in
+v1 than v1 of this document proposed.
+
+## 0. What changed from v1
+
+| v1 said | v2 says | Why |
+| --- | --- | --- |
+| `/merge` in v1, confirm bound to PR number | **No merge from Telegram in v1.** Bot posts review links. `/merge` returns in v2, bound to a head SHA and gated on a real PR check | R2, R3, R4 — there is no PR CI today, and a PR can change under an open confirm |
+| Natural-language actions in v1 | Slash commands only in v1; free text gets a help reply. NL returns in v3 with mandatory clarification for ambiguous aliases | R13, R16 |
+| Overrides applied by "each hours API" as a simple overlay | Overrides need per-category adapters, parent/child propagation, a structured `Closed` status, and a cache contract. **Deferred to v2**, scoped to closures only | R7, R8, R9, R10, R11, R12 |
+| Auth = webhook secret + `message.chat.id` | Auth = webhook secret + **private chat** + **Raymond's user id** on both messages and callbacks; pending actions bound to user + chat + message | R6 |
+| Execute, then delete the pending action | Atomic claim before execution; `update_id` dedupe; result recorded, not deleted | R5 |
+| "Read-only commands still work if Redis is down" | They don't — every hours store is Redis. `/status` reports *unavailable* vs *cached* honestly | R17 |
+| Vercel `maxDuration: 10` | Deadlines on every dependency below the budget; ack fast, no inference in v1 | R16 |
+| "Anyone would notice if the bot stopped receiving" | A daily `getWebhookInfo` check from GitHub Actions, alerting through Telegram *send*, which is independent of receive | R17 |
 
 ## 1. Settled decisions
 
 | Decision | Choice |
 | --- | --- |
-| Transport | Telegram webhook → Vercel function `api/telegram.js` (no always-on process; the Mac is not one) |
-| Who may talk to it | Exactly one chat id (`TELEGRAM_CHAT_ID`); everything else is dropped silently |
-| Request auth | `setWebhook` with a `secret_token`; the function checks `X-Telegram-Bot-Api-Secret-Token` on every call |
-| Confirmation | Every action that changes anything is echoed back with **[Confirm] [Cancel]** inline buttons; only the callback executes it |
-| Parsing | Slash commands for the common cases; natural language via the Claude API for the rest, always producing a structured action, never executing |
-| Action list | Fixed and short (§3). The model chooses *among* them; it cannot invent new ones |
-| Overrides | Stored in Upstash Redis (already a dependency), applied by the hours APIs, and **self-expiring** |
-| Sending | Unchanged. The workflows keep their `sendMessage` curl; the same token now also receives |
-
-### Why the list of actions is fixed
-
-Every action the bot can take is an action a stolen phone can take. The chat-id check
-and the confirm tap limit *who* and *when*; the fixed list limits *what*. Adding an action
-is a code change and a conscious decision, not a prompt tweak.
+| Transport | Telegram webhook → Vercel function `api/telegram.js`. No polling; the Mac is not always-on |
+| Who may talk to it | One Telegram **user id** (`TELEGRAM_OWNER_USER_ID`), in a **private** chat (`chat.type === "private"`). Group messages are dropped even if the group is the notification chat |
+| Request auth | `setWebhook` with `secret_token`; the function rejects any request without the matching `X-Telegram-Bot-Api-Secret-Token` header |
+| Callback auth | `callback_query.from.id` must equal the owner id; the pending action must have been created for that user, that chat, and that message id |
+| Confirmation | Every state-changing action: echo → **[Confirm] [Cancel]** → callback → atomic claim → execute → record result |
+| v1 action list | `/help`, `/status`, `/prs`, `/rerun <workflow>` (allowlisted). Nothing else |
+| Sending | Unchanged. Workflows keep their `sendMessage` curl |
 
 ## 2. Architecture
 
 ```
 Telegram ──POST──► https://lionhour.com/api/telegram
-                      │
-                      ├─ reject unless secret header matches
-                      ├─ reject unless message.chat.id === TELEGRAM_CHAT_ID
-                      │
-                      ├─ callback_query (a button tap)
-                      │     └─ look up pending action by id in Redis → execute → reply with result
-                      │
-                      └─ message
-                            ├─ starts with "/"  → command table (§3)
-                            └─ anything else    → Claude API → { action, args } or { clarify }
-                                                  → store as pending in Redis (10-min TTL)
-                                                  → reply "Did you mean …?" [Confirm] [Cancel]
+  │  (deadline 8 s total; every outbound call ≤ 3 s; ack 200 on any handled outcome)
+  ├─ 401 unless X-Telegram-Bot-Api-Secret-Token matches
+  ├─ 200 + drop unless chat.type === "private" and from.id === OWNER
+  ├─ 200 + drop if update_id already seen (Redis SET NX, 24 h TTL)   ← R5, R16
+  │
+  ├─ message starting with "/" → command table (§3)
+  ├─ any other message         → /help reply (v1)
+  │
+  └─ callback_query
+        ├─ verify from.id, chat id, message id against the pending action   ← R6
+        ├─ atomic claim: SET lionhour:tg:pending:<id> state=claimed NX-style via Lua / GETDEL
+        │     (second tap sees "already running" and stops)                    ← R5
+        ├─ execute with a per-call deadline
+        └─ record { state: done|failed, result, at } on the same key (TTL 24 h); edit the
+           original message to show the outcome; never delete-before-execute
 ```
-
-Read-only actions (`/prs`, `/status`) reply immediately with no confirm step.
 
 ### 2.1 Files
 
 | File | Purpose |
 | --- | --- |
-| `api/telegram.js` | Webhook handler: auth, routing, replies |
-| `lib/telegram-actions.js` | The action table: name, args schema, `run()`, `describe()` for the confirm text |
-| `lib/telegram-intent.js` | Natural-language → action via the Claude API; the venue list and action list are the only context it gets |
-| `lib/hours-override-store.js` | Redis-backed overrides (§4) |
-| `api/overrides.js` | Read/write overrides (authenticated with the existing update secret; the bot calls it in-process) |
-| `tests/telegram-*.test.mjs` | Handler with a fake Telegram payload, action table, intent parsing with a stubbed model |
+| `api/telegram.js` | Webhook handler: auth, dedupe, routing, replies, deadlines |
+| `lib/telegram-actions.js` | Action table: `name`, `parseArgs()`, `describe()`, `run()`; v1 has four entries |
+| `lib/telegram-pending-store.js` | Redis: pending actions with atomic claim, `update_id` dedupe |
+| `scripts/telegram-webhook-check.mjs` | `getWebhookInfo`: URL matches, no `last_error_message`, `pending_update_count` small. Run daily from Actions; alert via `sendMessage` on mismatch ← R17 |
+| `tests/telegram-*.test.mjs` | Handler with fake Telegram payloads (private vs group, owner vs stranger, forged callback ids, duplicate `update_id`, double-tap), action table, deadline behaviour |
 
 ### 2.2 Env (Vercel)
 
 | Variable | Notes |
 | --- | --- |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | same values as the GitHub secrets |
-| `TELEGRAM_WEBHOOK_SECRET` | random string; passed to `setWebhook` |
-| `GITHUB_TOKEN` | fine-grained PAT, LionTime repo only: *Contents: write*, *Pull requests: write*, *Actions: write* |
-| `ANTHROPIC_API_KEY` | natural-language step only |
+| `TELEGRAM_BOT_TOKEN` | same value as GitHub secret `LIONTIME_TELEGRAM_BOT_TOKEN` ← R17: names differ, document the mapping |
+| `TELEGRAM_OWNER_USER_ID` | Raymond's Telegram **user** id — not the chat id |
+| `TELEGRAM_WEBHOOK_SECRET` | random; passed to `setWebhook` |
+| `GITHUB_TOKEN` | fine-grained PAT, LionTime only, **`Actions: write` + `Pull requests: read`** in v1. No `Contents: write` until v2 |
 | `UPSTASH_REDIS_*` | already present |
 
-The webhook is registered once, by hand:
+`vercel.json`: `api/telegram.js` with `maxDuration: 10`. The handler's own deadline is 8 s
+so it always answers inside the budget (R16).
+
+Register once, by hand:
 
 ```
 curl "https://api.telegram.org/bot$TOKEN/setWebhook" \
@@ -77,128 +87,165 @@ curl "https://api.telegram.org/bot$TOKEN/setWebhook" \
   --data-urlencode "allowed_updates=[\"message\",\"callback_query\"]"
 ```
 
-`vercel.json` gets an entry for `api/telegram.js` with `maxDuration: 10`; the Claude call
-is the only slow step and stays well inside that.
+## 3. Actions — v1
 
-## 3. Actions
+| Action | Confirm? | What it does |
+| --- | --- | --- |
+| `/help` | no | This list |
+| `/status` | no | Reads the four hours APIs and reports, per category: live / stale / unavailable, the snapshot time, and **whether the answer came from cache or the store** (R17). If Redis is down: "store unavailable; last cached view from HH:MM" |
+| `/prs` | no | Open PRs: number, title, head SHA (short), check state if any, and a link. **No merge** |
+| `/rerun <name>` | **yes** | `workflow_dispatch` on `main` for exactly one of: `dining`, `library`, `recreation`, `student-services`. Anything else is rejected before the confirm |
 
-| Action | Trigger | Confirm? | What it does |
-| --- | --- | --- | --- |
-| `prs` | `/prs` | no | Lists open PRs with number, title, and CI state |
-| `merge` | `/merge 14`, "merge the health fix" | **yes** | `PUT /repos/…/pulls/14/merge` (squash). Refuses if checks are failing |
-| `override` | "Butler is closed right now", "JJ's closes at midnight tonight" | **yes** | Writes an override (§4). Default expiry: end of today, Eastern |
-| `clear` | "Butler is open again", `/clear butler` | **yes** | Removes an override early |
-| `status` | `/status` | no | The four footer lines from the live site: what is live, stale, or unavailable |
-| `rerun` | `/rerun dining`, "re-run the recreation scrape" | **yes** | `POST …/actions/workflows/<file>/dispatches` |
-| `help` | `/help` or anything unparseable | no | The list above |
-
-Not on the list, on purpose: editing code, changing venue definitions, touching secrets,
-anything on a repo other than LionTime. The autofix plan (`docs/automated-fix.md`) adds one
-message type — an autofix PR notification with a [Merge] button — which is just `merge`
-with the number pre-filled.
+Deliberately absent in v1: merge, overrides, natural language, anything touching code,
+anything on another repo.
 
 ### 3.1 The confirm text is the contract
 
-Whatever the model inferred is rendered by the action's `describe()` and sent back before
-anything runs:
+`describe()` renders the *stored* action, never the user's text:
 
-> Mark **Butler Library** as *Closed* until **11:59 PM tonight**?
-> Reason: "actually closed right now"
+> Re-run **Update recreation hours** on `main` now?
 > [Confirm] [Cancel]
 
-If the model misread the venue or the time, this is where it shows. Pending actions live
-in Redis keyed by a random id, expire in 10 minutes, and are deleted on execute — a
-[Confirm] tap on a stale message does nothing.
+Pending actions: Redis key `lionhour:tg:pending:<random id>`, fields
+`{ action, args, ownerId, chatId, messageId, state: "pending", createdAt }`, TTL 10 min.
+A Confirm on an expired or already-claimed action edits the message to say so and does
+nothing.
 
-## 4. Overrides
+## 4. v2 — `/merge`, gated
 
-The one piece of new plumbing. Today manual overrides are hard-coded in
-`lib/recreation-hours-manual-overrides.js` and need a commit; the bot needs a store.
+Prerequisites, all of them, before this is built:
 
-### 4.1 Shape
+1. **A PR check exists.** `.github/workflows/pr-checks.yml` running `npm test` on
+   `pull_request`, with the 14 baseline failures either fixed or quarantined by name
+   (`node --test` with an explicit skip list checked into the repo, so a new failure is
+   visible). Until this exists, "checks green" cannot be evaluated (R2).
+2. **Confirm is bound to a commit.** The pending action stores `{ repo, number,
+   base, headSha }`; `describe()` shows the short SHA; `run()` calls the merge endpoint
+   with `sha: headSha` so GitHub refuses if the head moved (R3).
+3. **The PR has a completed, successful required check on that SHA.** Missing, pending,
+   or errored → refuse, and say which (R2). Fail closed.
+4. **GitHub review is still required for generated code.** The autofix plan's PR must
+   carry an approving review before `/merge` will act on it — Telegram is a convenience
+   for merging something already reviewed, not a substitute for review (R1, R4).
+
+`GITHUB_TOKEN` gains `Contents: write` and `Pull requests: write` only at this step.
+
+## 5. v2 — Overrides (closures only)
+
+The review found six problems with the v1 overlay (R7–R12). The v2 scope is narrowed to
+the one thing that is safe to express: **"venue X is closed on date D."** No hours
+replacement, no reopening early, no multi-access services.
+
+### 5.1 Shape
 
 ```json
-{
-  "venueId": "butler",
-  "date": "2026-09-10",
-  "status": "Closed",
-  "intervals": [],
-  "reason": "Marked closed via Telegram",
-  "createdAt": "2026-09-10T15:42:00Z",
-  "expiresAt": "2026-09-11T03:59:59Z"
-}
+{ "venueId": "butler", "date": "2026-09-10", "kind": "closed",
+  "reason": "Marked closed via Telegram", "createdAt": "…", "revision": 3,
+  "expiresAt": "2026-09-11T03:59:59-04:00" }
 ```
 
-Redis key `lionhour:override:<venueId>:<date>`, with the Redis TTL set to `expiresAt` so
-it disappears on its own. `intervals: []` means closed; a non-empty list replaces the day's
-hours (for "closes at midnight tonight").
+`expiresAt` is the next midnight in `America/New_York`, computed with a real timezone
+library, so 23- and 25-hour DST days are right (R11). `revision` supports
+compare-and-set for `/clear` (R11).
 
-### 4.2 Applying it
+### 5.2 Supported targets are a registry, not "any venue"
 
-Each hours API (`library`, `dining`, `recreation`, `student-services`) already builds a
-per-day structure. On GET, the service reads active overrides for its venues and, for a
-matching venue+date, replaces that day's `intervals` and sets `status` to the override
-reason, tagged `sourceId: "manual-override"`. The client's existing status rendering then
-shows it; the week view's `closedDayLabel()` already treats a status starting with
-"Closed" as a genuine closure, so **Closed** displays without further changes.
+`lib/override-targets.js` lists exactly which venue ids can be overridden and which
+adapter applies them. v2 ships with the venues whose live projection is straightforward;
+everything else is rejected *before* the confirm with "not supported yet" (R12).
+Excluded initially: the three Joe's (embedded fallbacks, not in the Dining snapshot),
+Hewitt/Diana/Liz's (served by the separate Barnard endpoint as a fallback path),
+Dodge and any venue with children (R8), and every Health service (multi-access).
 
-The footer line gains a count: "1 manual override active" — so a forgotten override is
-visible on the site itself, not only in Redis.
+### 5.3 Adapters, one per category
 
-### 4.3 Expiry default
+Each hours service applies overrides through a category adapter that produces output
+the *existing client validator* accepts (R7):
 
-End of the current Eastern day. An override for tomorrow ("Butler is closed tomorrow for
-the event") sets `date` to tomorrow and expires at the end of *that* day. Nothing persists
-past the day it was for without being re-issued; a wrong override costs at most one day.
+| Category | Adapter must… |
+| --- | --- |
+| Library | Map site venue id → scraper id (`butler` → `butler_24`), replace that day's intervals with `[]` |
+| Dining | Emit a `sourceId` the client already allows; set `status: "Closed"` exactly, with the reason in a separate `note` field (R9) |
+| Recreation | Go through the resolver so children inherit the closure; v2 rejects parents anyway (R8) |
+| Student services | Write into the `availabilities` structure the client expects, not `intervals`/`status` keys it rejects |
 
-## 5. Natural-language step
+The override response is validated with the same client-side schema functions before it
+is returned — the check is on the *final* overlaid payload, not the override record.
 
-A single Claude API call per free-text message. The prompt contains:
+### 5.4 Precedence over overnight carry-in
 
-- the action table from §3 (names and argument schemas — not the code);
-- the venue list from `index.html`'s `VENUES` (id + name + a few aliases: "JJ's",
-  "Ferris", "Dodge");
-- today's date and time in Eastern;
-- the user's message.
+A dated closure must win over the previous day's overnight interval (JJ's noon→10 AM),
+which the status engine otherwise considers first (R9). The engine gets an explicit
+"closed-today" check ahead of interval evaluation.
 
-The model returns JSON: `{ "action": "override", "args": { "venueId": "butler",
-"status": "Closed", "until": "end-of-day" } }`, or `{ "clarify": "Which Joe's — NoCo,
-Journalism, or Dodge?" }`. The handler validates the JSON against the schema before
-storing it as pending. Anything that doesn't validate becomes a `/help` reply.
+### 5.5 Freshness
 
-The model never sees a secret, never calls a tool, and never decides whether to execute.
+Overrides must reach the site inside a minute, and must *leave* inside a minute of
+expiry. The 5-minute `s-maxage` on the hours APIs and the page's one-time hydration both
+defeat that (R10). Contract:
 
-## 6. Build order
+- The four hours responses carry `overridesRevision` in the body; the page refetches
+  when the tab regains focus, when the Eastern date changes, and every 5 minutes while
+  visible.
+- Responses that include an active override are served with `s-maxage=30`.
+- An override's `expiresAt` is enforced by the client too, so a cached response that
+  outlives Redis cannot keep a stale closure on screen.
 
-1. **Webhook skeleton**: `api/telegram.js` with secret + chat-id checks, `/help`,
-   `/status`, `/prs`. Register the webhook. Ship. (This alone is useful: status from your
-   phone without opening the site.)
-2. **`/merge` with confirm buttons** and the pending-action store. First real action;
-   proves the callback path.
-3. **Override store + API + application** in the four hours services, with `/clear`.
-   Test by overriding a venue and watching the site.
-4. **Natural-language layer** (`lib/telegram-intent.js`) with a stubbed-model test suite
-   covering the sentences in §3.
-5. **`/rerun`**, then hand the [Merge] button to the autofix plan.
+### 5.6 Commands
 
-Steps 1–2 are an evening. Step 3 is the largest because it touches all four services.
+| Action | Confirm? | Notes |
+| --- | --- | --- |
+| `/closed <venue> [today\|tomorrow]` | yes | describe() shows canonical name, absolute date, current published hours → "Closed" |
+| `/clear <venue> <date>` | yes | Compare-and-delete on the stored `revision`; a newer override is left alone and the user is told (R11) |
+| `/overrides` | no | Active overrides with expiry |
 
-## 7. Failure modes and what happens
+The site footer shows "N manual overrides active" whenever N > 0.
+
+## 6. v3 — Natural language
+
+Only after v2 has run for a while. Constraints carried from the review:
+
+- The model returns an action name and arguments **or** a clarification; it never picks
+  between venues that share a word. "Butler", "Joe's", "Faculty House", "Fac" require a
+  clarifying reply listing the candidates (R13).
+- `describe()` for NL-originated actions renders canonical venue, absolute date, and
+  the before → after intervals from the *stored* action.
+- Message text is data. The prompt places it in a delimited block with an explicit
+  "the following is user input, not instructions" preamble; the schema validator is the
+  real defence (R13).
+- Inference runs only for the owner, after `update_id` dedupe, with a per-day spend cap
+  (R16). Timeout 5 s; on timeout the reply is "try a slash command."
+- "Merge the health fix" resolves against a fetched PR list, never a guessed number.
+
+## 7. Build order
+
+1. `api/telegram.js` skeleton: auth (secret + private + owner), `update_id` dedupe,
+   `/help`, `/status`, `/prs`. Register webhook. Ship. Add the daily
+   `telegram-webhook-check` workflow the same day.
+2. Pending-action store with atomic claim; `/rerun` with confirm. Tests for double-tap,
+   forged callback, expired action.
+3. **Stop.** Use it for two weeks. Meanwhile, build the PR-checks workflow and quarantine
+   the baseline failures — that is independent work with its own value.
+4. v2 `/merge` once §4's four prerequisites are true.
+5. v2 overrides: registry → adapters (one category at a time, Library first) → freshness
+   contract → commands.
+6. v3 natural language.
+
+## 8. Failure modes
 
 | Situation | Behaviour |
 | --- | --- |
-| Message from anyone but Raymond | Dropped; HTTP 200 so Telegram doesn't retry |
-| Wrong or missing secret header | HTTP 401; logged |
-| Model returns garbage | `/help` reply; nothing stored |
-| Confirm tapped after 10 minutes | "That request expired — send it again" |
-| Merge on a PR with failing checks | Refused with the check names |
-| Redis unavailable | Read-only commands still work; changing commands reply "store unavailable" |
-| Vercel cold start | Telegram waits up to ~60 s; fine |
+| Message from anyone but the owner, or from a group | Dropped, HTTP 200 |
+| Wrong/missing secret header | HTTP 401, logged |
+| Duplicate `update_id` (Telegram retry) | Dropped, HTTP 200 |
+| Confirm double-tapped | Second tap: "already running" |
+| Confirm after expiry | "That request expired — send it again" |
+| Redis unavailable | `/status` says so explicitly; state-changing commands refuse; nothing is executed without a claimed action |
+| Dependency slow | Per-call deadline → reply "GitHub didn't answer in time; nothing was changed" |
+| Webhook silently unregistered or secret rotated on one side | Daily check alerts via the *send* path |
 
-## 8. Open questions
+## 9. Open questions
 
-- Should `/merge` require the PR to carry an `autofix:` label, or is any open PR fair
-  game? (Leaning: any PR, since Raymond is the only author.)
-- Should overrides also post to the site's status footer as a dated note, or is the count
-  enough?
-- Is a weekly "you have N overrides that expired unused" digest worth it, or noise?
+- Should `/rerun` be limited to once per workflow per 30 minutes? (Leaning yes; the
+  scrapers are not idempotent on the Mac runner.)
+- Is a weekly digest of expired-unused overrides worth it, or noise?
