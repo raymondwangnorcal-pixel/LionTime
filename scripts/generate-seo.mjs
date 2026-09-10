@@ -18,6 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadVenues, hasWeeklyHours } from './lib/venues.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'https://lionhour.com';
@@ -27,22 +28,8 @@ const ORIGIN = 'https://lionhour.com';
    own page, not a student project. */
 const NOINDEX = new Set(['svr', 'caps', 'medical', 'alice-health']);
 
-/* ── 1. Pull the VENUES catalog out of index.html ─────────────────── */
-const html = readFileSync(join(ROOT, 'index.html'), 'utf8');
-
-const startMarker = 'const D = (mon, tue, wed, thu, fri, sat, sun)';
-const start = html.indexOf(startMarker);
-if (start === -1) throw new Error('Could not find the venue-data block in index.html');
-
-const venuesDecl = html.indexOf('const VENUES', start);
-if (venuesDecl === -1) throw new Error('Could not find `const VENUES` in index.html');
-
-// The array ends at the first line that is exactly "];" after the declaration.
-const endIdx = html.indexOf('\n];', venuesDecl);
-if (endIdx === -1) throw new Error('Could not find the end of the VENUES array');
-
-const src = html.slice(start, endIdx + 3);
-const VENUES = new Function('window', `${src}\nreturn VENUES;`)({});
+/* ── 1. The VENUES catalog, read from index.html ─────────────────── */
+const VENUES = loadVenues(ROOT);
 
 /* ── 2. Helpers ───────────────────────────────────────────────────── */
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -129,7 +116,7 @@ function openingHoursSpec(hours) {
   return spec;
 }
 
-const hasHours = v => Array.from({ length: 7 }, (_, d) => v.hours?.[d]).some(r => r && r.length);
+const hasHours = hasWeeklyHours;
 
 /** Collapse a week into "Mon–Thu 9 AM – 11 PM · Fri 9 AM – 8 PM · Sat–Sun Closed". */
 const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

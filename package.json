@@ -7,8 +7,9 @@
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "seo": "node scripts/generate-seo.mjs",
-    "test:setup": "playwright install chromium"
+    "seo": "node scripts/build.mjs",
+    "test:setup": "playwright install chromium",
+    "build": "node scripts/build.mjs"
   },
   "dependencies": {
     "@upstash/redis": "^1.35.0",

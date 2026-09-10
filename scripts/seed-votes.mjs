@@ -11,6 +11,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
+import { venuesWithHours } from '../lib/venue-catalog.generated.mjs';
 
 const API_URL = 'https://lionhour.com/api/dining-vote';
 const DRY_RUN = process.env.DRY_RUN === '1';
@@ -27,55 +28,14 @@ function votesForHour(hour) {
 }
 
 /* ── Schedule data ──────────────────────────────────────────────
-   Keyed by JS Date.getDay(): 0 = Sun, 1 = Mon, …, 6 = Sat.
-   Each day: array of [open, close] pairs (HH:MM, 24-h).
-   When close <= open the interval wraps past midnight.
-   Sourced from index.html VENUES (hewitt & diana approximated).
+   Derived from the VENUES array in index.html via the generated catalog
+   (DEC-0069) — dining venues that carry a fixed weekly schedule. Keyed by
+   JS Date.getDay(): 0 = Sun … 6 = Sat; each day is [[open, close], …]
+   in HH:MM, close <= open wrapping past midnight.
    ────────────────────────────────────────────────────────────── */
-const SCHEDULES = {
-  johnjay: {
-    0: [['09:30','21:00']], 1: [['09:30','21:00']], 2: [['09:30','21:00']],
-    3: [['09:30','21:00']], 4: [['09:30','21:00']], 5: null, 6: null,
-  },
-  ferris: {
-    0: [['10:00','14:00'],['16:00','20:00']], 1: [['07:30','20:00']],
-    2: [['07:30','20:00']], 3: [['07:30','20:00']], 4: [['07:30','20:00']],
-    5: [['07:30','20:00']], 6: [['09:00','20:00']],
-  },
-  jjs: {
-    0: [['12:00','10:00']], 1: [['12:00','10:00']], 2: [['12:00','10:00']],
-    3: [['12:00','10:00']], 4: [['12:00','10:00']], 5: [['12:00','10:00']],
-    6: [['12:00','10:00']],
-  },
-  chefmikes: {
-    0: [['11:00','02:00']], 1: [['11:00','02:00']], 2: [['11:00','02:00']],
-    3: [['11:00','02:00']], 4: [['11:00','02:00']], 5: [['11:00','02:00']],
-    6: [['11:00','02:00']],
-  },
-  chefdons: {
-    0: null, 1: [['08:00','19:00']], 2: [['08:00','19:00']],
-    3: [['08:00','19:00']], 4: [['08:00','19:00']], 5: [['08:00','19:00']], 6: null,
-  },
-  gracedodge: {
-    0: null, 1: [['11:00','19:30']], 2: [['11:00','19:30']],
-    3: [['11:00','19:30']], 4: [['11:00','19:30']], 5: null, 6: null,
-  },
-  facultyhouse: {
-    0: null,
-    1: [['07:30','14:30'],['17:00','21:00']], 2: [['07:30','14:30'],['17:00','21:00']],
-    3: [['07:30','14:30'],['17:00','21:00']], 4: [['07:30','14:30'],['17:00','21:00']],
-    5: null, 6: null,
-  },
-  facshack: {
-    0: [['15:00','20:00']], 1: [['12:00','20:00']], 2: [['12:00','20:00']],
-    3: [['12:00','20:00']], 4: [['12:00','20:00']], 5: null, 6: null,
-  },
-  johnnys: {
-    0: [['18:00','22:00']],
-    1: [['11:00','15:00']], 2: [['11:00','15:00']], 3: [['11:00','15:00']],
-    4: [['11:00','15:00'],['19:00','23:00']], 5: [['11:00','15:00'],['19:00','23:00']],
-    6: [['19:00','23:00']],
-  },
+/* Barnard halls load their hours live and have no fixed schedule in VENUES.
+   Approximate them here so they still receive a share of seeded votes. */
+const LIVE_ONLY_APPROXIMATIONS = {
   hewitt: {
     0: [['09:00','21:00']], 1: [['07:00','21:00']], 2: [['07:00','21:00']],
     3: [['07:00','21:00']], 4: [['07:00','21:00']], 5: [['07:00','21:00']],
@@ -85,6 +45,11 @@ const SCHEDULES = {
     0: null, 1: [['08:00','20:00']], 2: [['08:00','20:00']],
     3: [['08:00','20:00']], 4: [['08:00','20:00']], 5: [['08:00','17:00']], 6: null,
   },
+};
+
+const SCHEDULES = {
+  ...Object.fromEntries(venuesWithHours('dining').map(v => [v.id, v.weeklyHours])),
+  ...LIVE_ONLY_APPROXIMATIONS,
 };
 
 /** Per-hall weight multiplier (default 1.0) — a popularity prior.
