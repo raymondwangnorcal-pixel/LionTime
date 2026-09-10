@@ -34,6 +34,9 @@
     },
     "api/qr-stats.js": {
       "maxDuration": 10
+    },
+    "api/telegram.js": {
+      "maxDuration": 10
     }
   }
 }

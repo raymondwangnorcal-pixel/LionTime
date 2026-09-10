@@ -1,0 +1,26 @@
+name: Telegram webhook check
+
+on:
+  schedule:
+    - cron: '15 12 * * *'   # daily, 8:15 AM ET (7:15 during EST)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/telegram-webhook-check.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ask Telegram what it believes about the webhook
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
+        run: node scripts/telegram-webhook-check.mjs
