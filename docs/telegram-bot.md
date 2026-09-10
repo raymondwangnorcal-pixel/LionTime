@@ -285,6 +285,5 @@ Only after v2 has run for a while. Constraints carried from the review:
 - Should `/rerun` be limited to once per workflow per 30 minutes? (Leaning yes; the
   scrapers are not idempotent on the Mac runner.)
 - Is a weekly digest of expired-unused overrides worth it, or noise?
-- **Unanswered from the pre-implementation review:** is the Mac runner (laptop now,
-  Mac mini next month) acceptable as a host for *generated* code, and under what
-  isolation — a container, a separate unprivileged macOS user, or accepted residual risk?
+- (Resolved 2026-09-10, DEC-0071: generated code on the self-hosted runner is accepted
+  for now on the strength of diff review; revisit at the Mac mini install.)
