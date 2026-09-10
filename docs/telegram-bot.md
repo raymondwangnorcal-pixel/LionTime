@@ -7,10 +7,13 @@ written 2026-09-10; v2 the same day after the adversarial review in
 pre-implementation questions (recorded as DEC-0062 … DEC-0070 in `docs/decisions.md`).
 Finding numbers (R1–R17) refer to the review.
 
-Today the bot (the NewsAgent token) only sends: each scrape workflow `curl`s
-`sendMessage`. Nothing listens. This plan makes the same bot receive messages from
-Raymond and act on a short, fixed list of things — with the list deliberately smaller in
-v1 than v1 of this document proposed.
+When this was written the bot (the NewsAgent token) only sent: each scrape workflow
+`curl`ed `sendMessage`, nothing listened. As of 2026-09-10 a dedicated bot ("Lion Hour",
+its own token, no longer shared with NewsAgent) both sends the workflow notices and
+receives commands — with the command list deliberately smaller in v1 than v1 of this
+document proposed.
+
+Progress legend: ✅ done · 🔜 next · ⏸ deliberately waiting · ⬜ not started.
 
 ## 0. What changed from v1
 
@@ -25,7 +28,7 @@ v1 than v1 of this document proposed.
 | Vercel `maxDuration: 10` | Deadlines on every dependency below the budget; ack fast, no inference in v1 | R16 |
 | "Anyone would notice if the bot stopped receiving" | A daily `getWebhookInfo` check from GitHub Actions, alerting through Telegram *send*, which is independent of receive | R17 |
 
-## 1. Settled decisions
+## 1. Settled decisions ✅ (all built as listed)
 
 | Decision | Choice |
 | --- | --- |
@@ -37,7 +40,7 @@ v1 than v1 of this document proposed.
 | v1 action list | `/help`, `/status`, `/prs`, `/rerun <workflow>` (allowlisted). Nothing else |
 | Sending | Unchanged. Workflows keep their `sendMessage` curl |
 
-## 2. Architecture
+## 2. Architecture ✅ (built as drawn)
 
 ```
 Telegram ──POST──► https://lionhour.com/api/telegram
@@ -58,7 +61,7 @@ Telegram ──POST──► https://lionhour.com/api/telegram
            original message to show the outcome; never delete-before-execute
 ```
 
-### 2.1 Files
+### 2.1 Files ✅
 
 | File | Purpose |
 | --- | --- |
@@ -69,7 +72,7 @@ Telegram ──POST──► https://lionhour.com/api/telegram
 | `scripts/telegram-webhook-check.mjs` | `getWebhookInfo`: URL matches, no `last_error_message`, `pending_update_count` small. Run daily from Actions; alert via `sendMessage` on mismatch ← R17 |
 | `tests/telegram-*.test.mjs` | Handler with fake Telegram payloads (private vs group, owner vs stranger, forged callback ids, duplicate `update_id`, double-tap), action table, deadline behaviour |
 
-### 2.2 Env (Vercel)
+### 2.2 Env (Vercel) ✅ (all five set; webhook registered 2026-09-10)
 
 | Variable | Notes |
 | --- | --- |
@@ -91,7 +94,7 @@ curl "https://api.telegram.org/bot$TOKEN/setWebhook" \
   --data-urlencode "allowed_updates=[\"message\",\"callback_query\"]"
 ```
 
-## 3. Actions — v1
+## 3. Actions — v1 ✅ (all four live)
 
 | Action | Confirm? | What it does |
 | --- | --- | --- |
@@ -103,7 +106,7 @@ curl "https://api.telegram.org/bot$TOKEN/setWebhook" \
 Deliberately absent in v1: merge, overrides, natural language, anything touching code,
 anything on another repo.
 
-### 3.1 The confirm text is the contract
+### 3.1 The confirm text is the contract ✅
 
 `describe()` renders the *stored* action, never the user's text:
 
@@ -125,7 +128,7 @@ to show them. `/rerun` also holds a 30-minute per-workflow cooldown
 (`lionhour:tg:recent:rerun:<workflow>`), checked before the confirm is offered and taken
 atomically before the dispatch; a failed dispatch releases it.
 
-## 4. v2 — `/merge`, gated
+## 4. v2 — `/merge`, gated ⬜ (prerequisite 1, the PR check, exists: `pr-checks.yml`; 2–4 not started)
 
 Prerequisites, all of them, before this is built:
 
@@ -144,7 +147,7 @@ Prerequisites, all of them, before this is built:
 
 `GITHUB_TOKEN` gains `Contents: write` and `Pull requests: write` only at this step.
 
-## 5. v2 — Overrides (closures only)
+## 5. v2 — Overrides (closures only) ⬜
 
 The review found six problems with the v1 overlay (R7–R12). The v2 scope is narrowed to
 the one thing that is safe to express: **"venue X is closed on date D."** No hours
@@ -237,7 +240,7 @@ screen. `/clear` and `/rerun` keep the single confirm; they are reversible.
 
 The site footer shows "N manual overrides active" whenever N > 0.
 
-## 6. v3 — Natural language
+## 6. v3 — Natural language ⬜
 
 Only after v2 has run for a while. Constraints carried from the review:
 
@@ -255,23 +258,30 @@ Only after v2 has run for a while. Constraints carried from the review:
 
 ## 7. Build order
 
-0. **`scripts/build.mjs`** and `vercel.json` `buildCommand` (DEC-0069): move
+0. ✅ **`scripts/build.mjs`** and `vercel.json` `buildCommand` (DEC-0069): move
    `generate-seo` under it, add the venue alias table. Everything below consumes its
-   output.
-0b. **Fix the 14 failing tests** (DEC-0065). No quarantine list. This unblocks every
-   "checks green" gate in both plans.
-1. `api/telegram.js` skeleton: auth (secret + private + allowlist), `update_id` dedupe,
+   output. *(2026-09-10: `scripts/build.mjs` with `--check`, `lib/venue-catalog.generated.mjs`,
+   `tests/build-outputs.test.mjs`.)*
+0b. ✅ **Fix the 14 failing tests** (DEC-0065). No quarantine list. This unblocks every
+   "checks green" gate in both plans. *(2026-09-10: suite green; the only local failures
+   left are the four Chromium tests, which need `npm run test:setup` and pass in CI.)*
+1. ✅ `api/telegram.js` skeleton: auth (secret + private + allowlist), `update_id` dedupe,
    `/help`, `/status`, `/prs`. Register webhook. Ship. Add the daily
-   `telegram-webhook-check` workflow the same day.
-2. Pending-action store with atomic claim; `/rerun` with confirm. Tests for double-tap,
-   forged callback, expired action. **Done 2026-09-10** (`tests/telegram-rerun.test.mjs`,
-   `tests/telegram-pending-store.test.mjs`).
-3. **Stop.** Use it for two weeks. Meanwhile, add `.github/workflows/pr-checks.yml`
-   running the now-green suite on `pull_request`.
-4. v2 `/merge` once §4's four prerequisites are true.
-5. v2 overrides: registry → adapters (one category at a time, Library first) → freshness
+   `telegram-webhook-check` workflow the same day. *(2026-09-10: `lib/telegram-service.js`,
+   `tests/telegram-service.test.mjs`, `.github/workflows/telegram-webhook-check.yml`;
+   webhook live on the apex domain after making `lionhour.com` the primary Vercel domain.)*
+2. ✅ Pending-action store with atomic claim; `/rerun` with confirm. Tests for double-tap,
+   forged callback, expired action. *(2026-09-10: `lib/telegram-pending-store.js`,
+   `lib/telegram-actions.js`, `tests/telegram-rerun.test.mjs`,
+   `tests/telegram-pending-store.test.mjs`; first real `/rerun library` confirmed and
+   completed the same evening.)*
+3. ⏸ **Stop.** Use it for two weeks (from 2026-09-10 → revisit ~2026-09-24). The
+   `.github/workflows/pr-checks.yml` part is ✅ already done: it installs Chromium and runs
+   `npm test` on `pull_request` and `push`.
+4. ⬜ v2 `/merge` once §4's four prerequisites are true.
+5. ⬜ v2 overrides: registry → adapters (one category at a time, Library first) → freshness
    contract → commands.
-6. v3 natural language.
+6. ⬜ v3 natural language.
 
 ## 8. Failure modes
 
