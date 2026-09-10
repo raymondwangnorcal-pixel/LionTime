@@ -307,7 +307,9 @@ async function navigateToSource(page, sourceUrl, timeout = 90_000) {
     response = await page.goto(sourceUrl, { waitUntil: 'domcontentloaded', timeout });
   } catch (error) {
     const code = /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'navigation';
-    throw new SourceAcquisitionError(code, `${sourceUrl} navigation failed`);
+    const reason = String(error?.message || '').split('\n')[0].trim();
+    process.stderr.write(`  ${sourceUrl}: ${reason || 'navigation failed'}\n`);
+    throw new SourceAcquisitionError(code, `${sourceUrl} navigation failed${reason ? ` (${reason})` : ''}`);
   }
   try {
     assertOfficialPage(page, sourceUrl);
@@ -616,6 +618,10 @@ if (invokedPath === import.meta.url) {
         process.stdout.write(`- ${attempt.sourceId}: ${detail}\n`);
       }
       process.stdout.write(`Dining sources: ${successes}/${batch.attempts.length} succeeded\n`);
+      if (successes === 0) {
+        process.stderr.write('No dining source could be acquired — the runner most likely has no network. Failing the run so it is not reported as green.\n');
+        process.exitCode = 1;
+      }
     })
     .catch((error) => {
       process.stderr.write(`Dining scrape failed: ${error?.message || 'unknown error'}\n`);
