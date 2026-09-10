@@ -1255,3 +1255,143 @@
 - Superseded by: DEC-0060
 - Note: The 0.8-second hold is replaced by a 1-second hold while retaining the 0.3-second fade.
 - Privacy waivers: none
+
+## DEC-0061 — Use weekly site impressions as the sponsorship pitch
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: LionHour sponsorship outreach and its media kit will use the selling language “20,000 impressions per week on the site.”
+- Rationale: The user selected weekly site impressions as the core sales proposition.
+- Scope: Ad sales outreach plan, email templates, and planned media kit messaging; site audience figures remain separate from sponsor delivery guarantees.
+- Implementation: pending
+- Recorded against HEAD: `7af87ef3801061efc24e487b93cf72ac525d0687`
+- Supersedes: none
+- Evidence: docs/ad-sales-outreach-plan.md and docs/outreach-templates.md; user-directed messaging revision on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0062 — Bot owner allowlist is a list
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: The Telegram bot authorizes a list of Telegram user ids (`TELEGRAM_OWNER_USER_IDS`), not a single owner. Each pending action records which allowed user created it and only that user may confirm it.
+- Rationale: A co-editor or successor should be addable without redesigning authorization or the confirm flow.
+- Scope: docs/telegram-bot.md §1, §2, §3.1.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0063 — Dining scraper moves to a Mac mini within a month
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: The self-hosted `lionhour-dining` runner migrates from the laptop to an always-on Mac mini by 2026-10-10. Until then the laptop is a known-unreliable dependency and dining staleness is expected.
+- Rationale: Dining hours went stale for two days when the laptop slept; managed infrastructure everywhere else makes the laptop the only fragile component.
+- Scope: `.github/workflows/update-dining-hours.yml`, `scripts/install-dining-runner-macos.sh`.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0064 — Closure overrides require a second signal
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: Marking a venue closed from Telegram requires a second signal beyond the Confirm tap: the confirm message includes a preview link rendering the venue card as it will appear, and the action executes only after a second tap on that message within two minutes.
+- Rationale: A wrong closure on a finals night is a trust problem, not an annoyance; one tap is too little ceremony for a change students see immediately.
+- Scope: docs/telegram-bot.md §5.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0065 — Fix the 14 baseline test failures rather than quarantine them
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: The 14 tests failing in `npm test` are fixed before any PR check is relied upon. No quarantine list is introduced.
+- Rationale: A green check must mean green; a quarantine list would make the gate meaningless and tends to become permanent.
+- Scope: `tests/`, `.github/workflows/pr-checks.yml` (to be added).
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0066 — Mobile is a first-class control surface for small fixes
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: The bot's purpose is fixing small issues quickly from a phone: closures, re-runs, and merging already-reviewed PRs. Anything that needs reading a diff is not a mobile action.
+- Rationale: The realistic scenario is a parser or venue problem noticed away from a laptop, not full code review on a phone.
+- Scope: docs/telegram-bot.md §3–§5.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0067 — Scrape evidence is retained as artifacts only; committed fixtures are sanitised
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: Raw pages captured on scrape failure are uploaded as GitHub Actions artifacts with 14-day retention and are not committed. Any fixture that enters the repo is reduced to the elements the parser reads, with a header giving URL and capture date; contact details and unrelated page content are removed.
+- Rationale: Archiving dated copies of third-party pages into a public repository is not something to do by default.
+- Scope: docs/automated-fix.md §3.1, §4, §5; `tests/fixtures/`.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0068 — VENUES in index.html is the single source of truth
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: Every derived list — SEO pages, sitemap, override target registry, bot alias list, seed-vote schedules, natural-language venue table — is generated from the `VENUES` array in `index.html` by a build step (`npm run build`) that Vercel runs on deploy. Hand-maintained copies are removed as each consumer is migrated.
+- Rationale: Two venues were added this week and at least three separate lists had to be updated by hand; the override and bot plans would add three more.
+- Scope: `scripts/generate-seo.mjs` (existing), `scripts/build.mjs` (to be added), `vercel.json` `buildCommand`.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0069 — Freshness target is one day
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: Hours data may be up to one day stale before it is considered a problem requiring action. Telegram failure alerts have no response-time commitment. The autofix cooldown of 24 hours per source is consistent with this.
+- Rationale: Matches how the site is actually used; tighter targets would require infrastructure the project does not have.
+- Scope: docs/automated-fix.md §3.3; footer staleness messaging.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
+
+## DEC-0070 — Telegram is the only control plane, and Vercel env holds the tokens
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: There is no second door for bot actions when Telegram is unavailable; waiting is acceptable. The fine-grained GitHub PAT, Anthropic key, and webhook secret live in Vercel environment variables. A sponsor-facing audit log of bot actions is not built.
+- Rationale: The project is small enough that these are acceptable trade-offs; recorded so they are revisited deliberately rather than by accident.
+- Scope: docs/telegram-bot.md §2.2, §8.
+- Implementation: pending
+- Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
+- Privacy waivers: none
