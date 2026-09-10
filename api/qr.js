@@ -10,5 +10,6 @@ export default async function handler(req, res) {
 
   for (const [name, value] of Object.entries(result.headers)) res.setHeader(name, value);
   if (result.body === null) return res.status(result.status).end();
+  if (typeof result.body === 'string') return res.status(result.status).send(result.body);
   return res.status(result.status).json(result.body);
 }

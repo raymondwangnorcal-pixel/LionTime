@@ -1,6 +1,6 @@
 # QR poster tracking
 
-LionHour tracks aggregate visits from ten permanent poster URLs:
+LionHour tracks aggregate visits from eleven permanent poster URLs:
 
 | Poster | QR destination |
 | --- | --- |
@@ -14,16 +14,17 @@ LionHour tracks aggregate visits from ten permanent poster URLs:
 | Orientation | `https://lionhour.com/qr/orientation` |
 | Discord | `https://lionhour.com/qr/discord` |
 | Reddit | `https://lionhour.com/qr/reddit` |
+| Butler Closure | `https://lionhour.com/qr/butler-closure` |
 
-Each successful request increments an all-time hash and an Eastern-date daily hash in Upstash Redis, then returns an uncached `302` redirect to the LionHour home page. The daily hashes expire after 400 days; all-time totals do not expire. If Redis is temporarily unavailable, the visitor is still redirected and the failed scan is logged rather than counted.
+Each QR `GET` returns an uncached lightweight HTML landing page with LionHour's Open Graph and Twitter preview metadata. The page does not increment a counter when fetched, so ordinary link-preview crawlers do not inflate the totals. In a browser, the page sends a `POST` to the same QR URL, then redirects to the LionHour home page. A valid `POST` increments an all-time hash and an Eastern-date daily hash in Upstash Redis and returns `204`. The daily hashes expire after 400 days; all-time totals do not expire. If Redis is temporarily unavailable, the visitor is still redirected and the failed scan is logged rather than counted.
 
-Counts are aggregate route visits. Repeated scans, browser reloads, link previews, and automated requests that reach the route may each increment a total. No IP address or visitor identifier is stored by the QR tracker.
+Counts are aggregate browser visits that execute the tracking `POST`. Repeated scans and browser reloads may each increment a total; ordinary metadata-only link previews do not. No IP address or visitor identifier is stored by the QR tracker.
 
 ## Deployment
 
 The tracker uses the same Upstash Redis environment variables as LionHour's existing Dining voting feature. Add a strong `QR_STATS_SECRET` to the Vercel project for Production, and optionally Preview, before deploying. Add the same value as a GitHub Actions repository secret named `QR_STATS_SECRET` so the scheduled Telegram report can authenticate to the private statistics endpoint.
 
-After deployment, verify each printed destination returns a `302` whose `Location` is `/` and whose `Cache-Control` is `no-store`.
+After deployment, verify each printed destination returns `200`, `Content-Type: text/html`, `Cache-Control: no-store`, and the V7 preview metadata. Opening the URL in a browser should issue one `POST`, receive `204`, and redirect to `/`.
 
 ## Viewing results
 
@@ -35,7 +36,7 @@ curl --fail-with-body --silent --show-error \
   https://www.lionhour.com/api/qr-stats
 ```
 
-The response lists all ten posters in descending all-time order and includes both all-time and current-day totals:
+The response lists all eleven posters in descending all-time order and includes both all-time and current-day totals:
 
 ```json
 {

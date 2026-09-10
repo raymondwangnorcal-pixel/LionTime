@@ -3,6 +3,25 @@ import test from 'node:test';
 import { createQrTrackerService } from '../lib/qr-tracker-service.js';
 
 const FIXED_NOW = new Date('2026-08-27T16:00:00Z');
+const APPROVED_POSTERS = [
+  'dodge',
+  'butler',
+  'dining',
+  'ferris',
+  'hewitt',
+  'plug',
+  'feedback',
+  'orientation',
+  'discord',
+  'reddit',
+  'butler-closure',
+];
+
+function metaContent(html, attribute, value) {
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = html.match(new RegExp(`<meta\\s+${attribute}="${escaped}"\\s+content="([^"]+)"`));
+  return match?.[1];
+}
 
 function createMemoryStore(initial = {}) {
   const allTime = { ...(initial.allTime || {}) };
@@ -26,17 +45,42 @@ function createMemoryStore(initial = {}) {
   };
 }
 
-test('records each approved poster scan before redirecting without caching', async () => {
+test('serves preview metadata for every approved poster without counting the request', async () => {
   const store = createMemoryStore();
   const service = createQrTrackerService({ store, now: () => FIXED_NOW });
 
-  for (const poster of [
-    'dodge', 'butler', 'dining', 'ferris', 'hewitt', 'plug', 'feedback', 'orientation', 'discord', 'reddit',
-  ]) {
+  for (const poster of APPROVED_POSTERS) {
     const response = await service.handleScan({ method: 'GET', poster });
-    assert.equal(response.status, 302);
-    assert.equal(response.headers.Location, '/');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['Content-Type'], 'text/html; charset=utf-8');
     assert.equal(response.headers['Cache-Control'], 'no-store');
+    assert.equal(
+      metaContent(response.body, 'property', 'og:image'),
+      'https://lionhour.com/assets/lionhour-social-hero-v7.png',
+    );
+    assert.equal(
+      metaContent(response.body, 'name', 'twitter:image'),
+      'https://lionhour.com/assets/lionhour-social-hero-v7.png',
+    );
+    assert.equal(
+      metaContent(response.body, 'property', 'og:url'),
+      `https://lionhour.com/qr/${poster}`,
+    );
+    assert.match(response.body, /<a href="\/">Continue to LionHour<\/a>/);
+  }
+
+  assert.deepEqual(store.inspect(), { allTime: {}, daily: {} });
+});
+
+test('records each approved poster scan on POST and responds without content', async () => {
+  const store = createMemoryStore();
+  const service = createQrTrackerService({ store, now: () => FIXED_NOW });
+
+  for (const poster of APPROVED_POSTERS) {
+    const response = await service.handleScan({ method: 'POST', poster });
+    assert.equal(response.status, 204);
+    assert.equal(response.headers['Cache-Control'], 'no-store');
+    assert.equal(response.body, null);
   }
 
   assert.deepEqual(store.inspect(), {
@@ -51,6 +95,7 @@ test('records each approved poster scan before redirecting without caching', asy
       orientation: 1,
       discord: 1,
       reddit: 1,
+      'butler-closure': 1,
     },
     daily: {
       '2026-08-27': {
@@ -64,6 +109,7 @@ test('records each approved poster scan before redirecting without caching', asy
         orientation: 1,
         discord: 1,
         reddit: 1,
+        'butler-closure': 1,
       },
     },
   });
@@ -74,16 +120,16 @@ test('rejects unknown posters and unsupported methods without recording a scan',
   const service = createQrTrackerService({ store, now: () => FIXED_NOW });
 
   const unknown = await service.handleScan({ method: 'GET', poster: 'unknown' });
-  const unsupported = await service.handleScan({ method: 'POST', poster: 'dodge' });
+  const unsupported = await service.handleScan({ method: 'PUT', poster: 'dodge' });
 
   assert.equal(unknown.status, 404);
   assert.deepEqual(unknown.body, { error: 'Unknown QR poster' });
   assert.equal(unsupported.status, 405);
-  assert.equal(unsupported.headers.Allow, 'GET');
+  assert.equal(unsupported.headers.Allow, 'GET, POST');
   assert.deepEqual(store.inspect(), { allTime: {}, daily: {} });
 });
 
-test('redirects visitors even when recording fails', async () => {
+test('acknowledges the browser scan even when recording fails', async () => {
   const messages = [];
   const service = createQrTrackerService({
     store: {
@@ -94,10 +140,10 @@ test('redirects visitors even when recording fails', async () => {
     logger: { error(message) { messages.push(message); } },
   });
 
-  const response = await service.handleScan({ method: 'GET', poster: 'dodge' });
+  const response = await service.handleScan({ method: 'POST', poster: 'dodge' });
 
-  assert.equal(response.status, 302);
-  assert.equal(response.headers.Location, '/');
+  assert.equal(response.status, 204);
+  assert.equal(response.body, null);
   assert.deepEqual(messages, ['QR scan recording failed']);
 });
 
