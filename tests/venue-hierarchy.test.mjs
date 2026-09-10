@@ -70,14 +70,14 @@ test('uses the current weekend opening time for Joe\'s Coffee at NoCo', () => {
 
   assert.deepEqual(
     JSON.parse(JSON.stringify([noco.hours[0], noco.hours[6]])),
-    [[['08:00', '17:00']], [['08:00', '17:00']]],
+    [[['09:00', '17:00']], [['09:00', '17:00']]],
   );
 });
 
 test('only renders Student Life health services in the Student Life category', () => {
   assert.match(
     appScript,
-    /const hasHealthVenues = isStudent && all\.some\(v => HEALTH_SERVICE_IDS\.has\(v\.id\) && \(activeStatus === 'all' \|\| getStatus\(v, now\)\.status === activeStatus\)\);/,
+    /const hasHealthVenues = isStudent && all\.some\(v => HEALTH_SERVICE_IDS\.has\(v\.id\) && statusMatchesFilter\(getStatus\(v, now\)\.status, activeStatus\)\);/,
   );
 });
 

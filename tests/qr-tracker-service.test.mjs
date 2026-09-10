@@ -126,6 +126,7 @@ test('returns authenticated scan totals ranked by all-time performance', async (
       { id: 'dining', label: 'General Dining', allTime: 11, today: 4 },
       { id: 'dodge', label: 'Dodge', allTime: 8, today: 2 },
       { id: 'butler', label: 'Butler', allTime: 3, today: 0 },
+      { id: 'butler-closure', label: 'Butler Closure', allTime: 0, today: 0 },
       { id: 'discord', label: 'Discord', allTime: 0, today: 0 },
       { id: 'feedback', label: 'Feedback', allTime: 0, today: 0 },
       { id: 'hewitt', label: 'Hewitt', allTime: 0, today: 0 },

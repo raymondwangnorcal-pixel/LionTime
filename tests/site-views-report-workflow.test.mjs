@@ -53,7 +53,7 @@ test('adds authenticated QR totals without suppressing the site report on QR fai
   assert.match(workflow, /if qr_stats=.*curl/s);
 });
 
-test('QR report validation accepts all ten approved poster rows', () => {
+test('QR report validation accepts all eleven approved poster rows', () => {
   const workflow = fs.readFileSync(
     new URL('../.github/workflows/report-site-views.yml', import.meta.url),
     'utf8'
@@ -65,6 +65,7 @@ test('QR report validation accepts all ten approved poster rows', () => {
     posters: [
       { id: 'dodge', label: 'Dodge', allTime: 2, today: 1 },
       { id: 'butler', label: 'Butler', allTime: 1, today: 0 },
+      { id: 'butler-closure', label: 'Butler Closure', allTime: 0, today: 0 },
       { id: 'dining', label: 'General Dining', allTime: 1, today: 0 },
       { id: 'ferris', label: 'Ferris', allTime: 0, today: 0 },
       { id: 'hewitt', label: 'Hewitt', allTime: 0, today: 0 },
