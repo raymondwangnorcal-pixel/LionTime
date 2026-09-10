@@ -210,14 +210,14 @@ never gets this far.
 One generate job per attempt: a few minutes of hosted runner and a few dollars of model
 usage. §3.3 bounds it at three per day, one per source per day.
 
-## 7b. Where the code runs (DEC-0063, open question)
+## 7b. Where the code runs (DEC-0063, DEC-0071)
 
 Merged parser code for dining executes on the self-hosted runner: the laptop today, a
 Mac mini within a month. The allowlist and constraint scan in §3 reduce what generated
-code can do; they do not eliminate it. The owner has not yet chosen between running the
-dining scraper in a container on that machine, a separate unprivileged macOS user for
-the runner, or accepting the residual risk on the strength of diff review. The Mac mini
-migration is the natural moment to decide, since the runner is being installed fresh.
+code can do; they do not eliminate it. The owner has accepted the residual risk for now,
+on the strength of reading every generated diff before merge (DEC-0071). Revisit at the
+Mac mini install — a dedicated machine makes a separate unprivileged runner user cheap —
+or if the owner allowlist ever has more than one reviewer.
 
 ## 8. Known limits
 

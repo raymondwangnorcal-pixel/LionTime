@@ -1395,3 +1395,17 @@
 - Supersedes: none
 - Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.
 - Privacy waivers: none
+
+## DEC-0071 — Accept generated code on the self-hosted runner for now
+
+- Date: 2026-09-10
+- Owner: user
+- Status at record: active
+- Decision: Merged autofix code may run on the self-hosted dining runner (the laptop now, the Mac mini after migration) without container or separate-user isolation. The controls are the propose job's file allowlist and constraint scan plus human diff review on GitHub before merge.
+- Rationale: Residual risk judged acceptable for a single-owner student project where every generated diff is read before merge; revisit when the Mac mini is set up or if the reviewer list grows.
+- Scope: docs/automated-fix.md §7b; the runner install.
+- Implementation: n/a
+- Recorded against HEAD: `3619910fc7bd759dc5f56ba7723169c801899235`
+- Supersedes: none
+- Evidence: docs/telegram-bot-review-codex.md finding R1; owner's answer on 2026-09-10.
+- Privacy waivers: none
