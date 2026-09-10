@@ -105,6 +105,8 @@ function cleanStatus(value, maxLength = 160) {
 
 function normalizeTime(value, allow24 = false) {
   const raw = String(value ?? '').trim();
+  // Columbia Dining encodes midnight as a bare "0" (e.g. Butler's "8 a.m. - 12 a.m.").
+  if (/^0{1,4}$/.test(raw)) return allow24 ? '24:00' : '00:00';
   const compact = raw.match(/^(\d{1,2})(\d{2})$/);
   if (compact) {
     const hour = Number(compact[1]);

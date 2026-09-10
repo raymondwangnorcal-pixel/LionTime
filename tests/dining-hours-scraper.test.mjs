@@ -351,3 +351,18 @@ test('records source acquisition failures and closes Chromium', async () => {
   assert.ok(batch.attempts.every(attempt => attempt.failureCode === 'navigation'));
   assert.equal(closed, true);
 });
+
+test('reads a bare "0" closing time as midnight (Butler Blue Java, Fall 2026)', () => {
+  const dataset = completeDataset();
+  const butler = dataset.nodes.find((node) => String(node.nid) === '56');
+  butler.open_hours_fields = [{
+    date_from: '2026-09-08T04:00:00',
+    date_to: '2026-12-31T04:59:00',
+    days: [{ days_monday: [{ hours_from: '800', hours_to: '0' }] }],
+    displayed_hours: [{ title: 'Monday - Thursday, 8 a.m. - 12 a.m.' }],
+    excluded: [],
+  }];
+  const snapshot = buildDiningSnapshot(dataset, new Date('2026-09-14T14:00:00Z')); // a Monday
+  const location = snapshot.locations.find((item) => item.id === 'bj-butler');
+  assert.deepEqual(location.days[0].intervals, [['08:00', '24:00']]);
+});
