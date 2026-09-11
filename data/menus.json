@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-11",
-  "scrapedAt": "2026-09-11T12:34:24.292253-04:00",
+  "scrapedAt": "2026-09-11T17:02:02.015563-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -1007,11 +1007,11 @@
             {
               "name": "Fresh Juiced",
               "items": [
-                "Green Detox",
-                "B Cleansed",
                 "Ruby Red Surge",
                 "Antioxidant Power",
-                "C Clearly Carrot Orange"
+                "Green Detox",
+                "C Clearly Carrot Orange",
+                "B Cleansed"
               ]
             },
             {
