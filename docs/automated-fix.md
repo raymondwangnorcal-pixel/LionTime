@@ -1,11 +1,12 @@
 # Automated parser fixes — design (v2.1)
 
-Status: build-order steps 1–4 are done (2026-09-11). Every scrape run uploads a
-`scrape-manifest-<category>` artifact; `autofix-parser.yml` triages it after every run
-and, once the repository variable `AUTOFIX_ENABLED` is `true`, hands parser failures to
-an isolated generate job and a trusted propose job that opens the PR. Until it is armed,
-Telegram gets "would start" messages. Step 5 (the two dry runs) is next, then step 6
-(enable). v1 written 2026-09-10
+Status: **live** (2026-09-11). All six build-order steps are done. Every scrape run
+uploads a `scrape-manifest-<category>` artifact; `autofix-parser.yml` triages it after
+every run and, with `AUTOFIX_ENABLED=true`, hands parser failures to an isolated generate
+job and a trusted propose job that opens the PR. First real output: PR #6, a structural
+Health parser produced during the dry run, listed by the Telegram bot's `/prs` with
+checks passing. Costs and lessons from the six dry-run dispatches are in §6 step 5 and
+§7. v1 written 2026-09-10
 after four parser breaks in one week (Barnard gym, Dining locations feed, Health, Mail), all caused by Columbia pages
 rolling over to Fall 2026 wording. v2 the same day, after the adversarial review in
 `docs/telegram-bot-review-codex.md` (findings R1–R17); v2.1 after the owner's answers,
@@ -300,7 +301,12 @@ Progress legend: ✅ done · 🔜 next · ⬜ not started.
    `npm test` suite (thousands of TAP lines in context) and by the size of the rewrite.
    The prompt now forbids the full suite inside the model's turns. The second dry run
    (embedded instruction) is covered by `tests/autofix-propose.test.mjs`.*
-6. ⬜ Enable — set the repository variable `AUTOFIX_ENABLED` to `true` and leave it.
+6. ✅ Enable — set the repository variable `AUTOFIX_ENABLED` to `true` and leave it.
+   *(2026-09-11: on. `main` is healthy, so the workflow is idle until a Columbia page
+   changes shape. Open items: review/merge PR #6 (fix the "Monday, Tuesday, Thursday,
+   and Friday" list dropping Friday first); delete `autofix/health/fa4dc4ffe871`; watch
+   the next real attempt's cost against the $0.50 target now that the full suite is out
+   of the model's turns.)*
 
 Already in place from the Telegram plan that this one leans on: the two-way bot with
 `/rerun` (the "re-run after merge" nudge has somewhere to land), and the build-time
