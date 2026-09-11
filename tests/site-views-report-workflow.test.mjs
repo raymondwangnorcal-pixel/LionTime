@@ -44,13 +44,21 @@ test('adds authenticated QR totals without suppressing the site report on QR fai
   );
 
   assert.match(workflow, /QR_STATS_SECRET:\s*\$\{\{ secrets\.QR_STATS_SECRET \}\}/);
-  assert.match(workflow, /https:\/\/www\.lionhour\.com\/api\/qr-stats/);
-  assert.doesNotMatch(workflow, /qr_stats_api="https:\/\/lionhour\.com/);
+  // lionhour.com is the primary domain; www 308-redirects, and curl would not carry the
+  // Authorization header through a redirect even if it followed it.
+  assert.match(workflow, /qr_stats_api="https:\/\/lionhour\.com\/api\/qr-stats"/);
+  assert.doesNotMatch(workflow, /www\.lionhour\.com\/api\/qr-stats/);
+  assert.match(workflow, /qr_http_code.*== "200"/);
   assert.match(workflow, /Authorization: Bearer \$QR_STATS_SECRET/);
   assert.match(workflow, /QR Poster Scans/);
   assert.match(workflow, /allTime.*today/s);
   assert.match(workflow, /QR scan report unavailable/);
-  assert.match(workflow, /if qr_stats=.*curl/s);
+  // Each failure mode names its reason in the Telegram message, not only in the job log
+  assert.match(workflow, /QR scan report unavailable \(HTTP/);
+  assert.match(workflow, /QR scan report unavailable \(unexpected response shape/);
+  assert.match(workflow, /QR scan report unavailable \(QR_STATS_SECRET secret not set/);
+  assert.match(workflow, /qr_response=\$\(curl/);
+  assert.match(workflow, /if \[\[ "\$qr_http_code" == "200" \]\]; then/);
 });
 
 test('QR report validation accepts all eleven approved poster rows', () => {

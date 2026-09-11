@@ -23,7 +23,9 @@ jobs:
           set -euo pipefail
 
           api="https://api.vercel.com/v1/query/web-analytics/visits/count"
-          qr_stats_api="https://www.lionhour.com/api/qr-stats"
+          # Apex only: lionhour.com is the primary Vercel domain and www 308-redirects to it.
+          # curl does not follow redirects here and would drop the Authorization header if it did.
+          qr_stats_api="https://lionhour.com/api/qr-stats"
 
           fetch() {
             local response http_code body
@@ -65,10 +67,15 @@ jobs:
           # QR poster totals. Keep the normal site report available if this source fails.
           qr_section=$(printf '%s\n%s' "QR Poster Scans" "QR scan report unavailable")
           if [[ -n "$QR_STATS_SECRET" ]]; then
-            if qr_stats=$(curl --fail-with-body --silent --show-error \
+            # No --fail here on purpose: we want the status code in the Telegram message.
+            qr_response=$(curl --silent --show-error \
               --retry 3 --retry-all-errors \
+              -w '\n%{http_code}' \
               -H "Authorization: Bearer $QR_STATS_SECRET" \
-              "$qr_stats_api"); then
+              "$qr_stats_api") || qr_response=$'\nerror'
+            qr_http_code=$(tail -1 <<< "$qr_response")
+            qr_stats=$(sed '$d' <<< "$qr_response")
+            if [[ "$qr_http_code" == "200" ]]; then
               if qr_lines=$(jq -er '
                 if ((.posters | type) == "array")
                   and (([.posters[].id] | sort) == ["butler", "butler-closure", "dining", "discord", "dodge", "feedback", "ferris", "hewitt", "orientation", "plug", "reddit"])
@@ -87,12 +94,15 @@ jobs:
                 qr_section=$(printf '%s\n%s' "QR Poster Scans" "$qr_lines")
               else
                 echo "QR stats response failed validation; sending site report without QR totals" >&2
+                qr_section=$(printf '%s\n%s' "QR Poster Scans" "QR scan report unavailable (unexpected response shape from $qr_stats_api)")
               fi
             else
-              echo "QR stats request failed; sending site report without QR totals" >&2
+              echo "QR stats request failed (HTTP $qr_http_code); sending site report without QR totals" >&2
+              qr_section=$(printf '%s\n%s' "QR Poster Scans" "QR scan report unavailable (HTTP $qr_http_code from $qr_stats_api)")
             fi
           else
             echo "QR_STATS_SECRET is not configured; sending site report without QR totals" >&2
+            qr_section=$(printf '%s\n%s' "QR Poster Scans" "QR scan report unavailable (QR_STATS_SECRET secret not set in GitHub)")
           fi
 
           # Format report

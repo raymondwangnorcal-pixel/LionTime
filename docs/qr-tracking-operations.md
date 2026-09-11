@@ -33,7 +33,7 @@ Request the private report with the secret in the Authorization header:
 ```sh
 curl --fail-with-body --silent --show-error \
   -H "Authorization: Bearer $QR_STATS_SECRET" \
-  https://www.lionhour.com/api/qr-stats
+  https://lionhour.com/api/qr-stats
 ```
 
 The response lists all eleven posters in descending all-time order and includes both all-time and current-day totals:
@@ -50,4 +50,4 @@ The response lists all eleven posters in descending all-time order and includes 
 
 Unauthorized requests return `401` and never expose the counts.
 
-The `Report site views` GitHub Actions workflow includes these rankings in its existing Telegram message every six hours. A manual workflow dispatch sends the same report on demand. If the QR endpoint or secret is unavailable, the Telegram message still includes site views and marks the QR section unavailable.
+The `Report site views` GitHub Actions workflow includes these rankings in its existing Telegram message every six hours. A manual workflow dispatch sends the same report on demand. If the QR endpoint or secret is unavailable, the Telegram message still includes site views and marks the QR section unavailable, with the reason in parentheses (HTTP status, response shape, or missing secret). Always call the apex `lionhour.com`: `www.lionhour.com` redirects to it, and `curl` will not carry the `Authorization` header across a redirect.
