@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "date": "2026-09-10",
-  "scrapedAt": "2026-09-10T20:14:08.283937-04:00",
+  "date": "2026-09-11",
+  "scrapedAt": "2026-09-11T00:50:36.904021-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -329,71 +329,31 @@
       "meals": {
         "breakfast": {
           "name": "Faculty House",
-          "hours": {
-            "open": "7:30 AM",
-            "close": "11:00 AM"
-          },
+          "hours": null,
           "available": false,
           "stations": [],
-          "status": "No menu published"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Faculty House",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "2:30 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "2nd Floor",
-              "items": [
-                "Salmon Thursday",
-                "Mac & Cheese",
-                "Farro",
-                "Mashed Potatoes",
-                "Green Beans"
-              ]
-            },
-            {
-              "name": "4th Floor",
-              "items": [
-                "Lemongrass Curry Chicken",
-                "Tofu Kimchi Stew",
-                "Jasmine Rice",
-                "Stir-Fried Mustard Greens & Bok Choy"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Faculty House",
-          "hours": {
-            "open": "5:00 PM",
-            "close": "9:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "2nd Floor",
-              "items": [
-                "Greek Lemon Chicken",
-                "Tofu Shawarma",
-                "Chickpea Basmati",
-                "Lemon Roasted Potatoes",
-                "White Bean and Kale Stew"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Faculty House",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -404,60 +364,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for breakfast"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Grace Dodge",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "7:30 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Grill",
-              "items": [
-                "Buffalo Chicken Sandwich: buffalo chicken sandwich with lettuce tomato and onion on a sesame seed bun"
-              ]
-            },
-            {
-              "name": "Hot Station",
-              "items": [
-                "Mashed Potato Bowl: mashed potatoes, chicken tenders, roasted corn, scallions, crispy onion, shredded cheese, gravy"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Grace Dodge",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "7:30 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Grill",
-              "items": [
-                "Buffalo Chicken Sandwich: buffalo chicken sandwich with lettuce tomato and onion on a sesame seed bun"
-              ]
-            },
-            {
-              "name": "Hot Station",
-              "items": [
-                "Mashed Potato Bowl: mashed potatoes, chicken tenders, roasted corn, scallions, crispy onion, shredded cheese, gravy"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Grace Dodge",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -533,63 +461,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for breakfast"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Fac Shack",
-          "hours": {
-            "open": "12:00 PM",
-            "close": "4:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Daily Offerings",
-              "items": [
-                "Lemongrass Curry Chicken",
-                "Tofu Kimchi Stew",
-                "Jasmine Rice",
-                "Stir-Fried Mustard Greens & Bok Choy"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Fac Shack",
-          "hours": {
-            "open": "4:00 PM",
-            "close": "8:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Dinner Service",
-              "items": [
-                "Lemongrass Curry Chicken",
-                "Tofu Kimchi Stew",
-                "Jasmine Rice",
-                "Stir-Fried Mustard Greens & Bok Choy"
-              ]
-            },
-            {
-              "name": "Daily Offerings",
-              "items": [
-                "Lemongrass Curry Chicken",
-                "Tofu Kimchi Stew",
-                "Jasmine Rice",
-                "Stir-Fried Mustard Greens & Bok Choy"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Fac Shack",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -597,217 +490,31 @@
       "meals": {
         "breakfast": {
           "name": "John Jay",
-          "hours": {
-            "open": "9:30 AM",
-            "close": "11:00 AM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Main Line",
-              "items": [
-                "Scrambled Eggs",
-                "Egg White Scramble",
-                "Chocolate Pancakes",
-                "Vegetable Medley",
-                "Hashbrowns",
-                "Turkey Bacon"
-              ]
-            },
-            {
-              "name": "Vegan Station",
-              "items": [
-                "Vegan Egg Patty",
-                "Vegan Sausage",
-                "Vegetable Medley"
-              ]
-            },
-            {
-              "name": "Chef Mike's Kitchen",
-              "items": [
-                "Bubble Tea"
-              ]
-            },
-            {
-              "name": "Soup Station",
-              "items": [
-                "Oatmeal",
-                "Strawberry Oatmeal",
-                "Grits"
-              ]
-            },
-            {
-              "name": "Nook",
-              "items": [
-                "Chorizo Egg Empanada",
-                "Blueberry Filled Pancakes"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "lunch": {
           "name": "John Jay",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "4:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Main Line",
-              "items": [
-                "General Tso Chicken",
-                "Jasmine Rice",
-                "Farro",
-                "Mixed Vegetables",
-                "Lentils"
-              ]
-            },
-            {
-              "name": "Halal Station",
-              "items": [
-                "General Tso Chicken",
-                "Jasmine Rice",
-                "Mixed Vegetables"
-              ]
-            },
-            {
-              "name": "Gluten Free Station",
-              "items": [
-                "General Tso Chicken",
-                "Jasmine Rice",
-                "Mixed Vegetables"
-              ]
-            },
-            {
-              "name": "Vegan Station",
-              "items": [
-                "General Tso Chicken",
-                "Jasmine Rice",
-                "Mixed Vegetables"
-              ]
-            },
-            {
-              "name": "Chef Mike's Kitchen",
-              "items": [
-                "Bubble Tea"
-              ]
-            },
-            {
-              "name": "Soup Station",
-              "items": [
-                "Chicken Tortilla",
-                "Carrot Ginger",
-                "Strawberry Oatmeal"
-              ]
-            },
-            {
-              "name": "Pasta Station",
-              "items": [
-                "Marinara",
-                "Alfredo",
-                "Rosemary Oil",
-                "Pasta",
-                "Whole Wheat Pasta",
-                "Tomato Lentl",
-                "Broccoli and Mushrooms",
-                "Garlic Rolls"
-              ]
-            },
-            {
-              "name": "Action Station",
-              "items": [
-                "Bao Buns: teriyaki chicken, char siu bbq pork, sweet chili glazed tempeh"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "John Jay",
-          "hours": {
-            "open": "4:00 PM",
-            "close": "9:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Main Line",
-              "items": [
-                "Garlic Beef",
-                "Mixed Vegetables",
-                "Soba Noodles",
-                "Wheatberries",
-                "Edamame"
-              ]
-            },
-            {
-              "name": "Halal Station",
-              "items": [
-                "Garlic Beef",
-                "Mixed Vegetables",
-                "Soba Noodles"
-              ]
-            },
-            {
-              "name": "Gluten Free Station",
-              "items": [
-                "Garlic Beef",
-                "Mixed Vegetables",
-                "Jasmine Rice"
-              ]
-            },
-            {
-              "name": "Vegan Station",
-              "items": [
-                "Ratatouille",
-                "Mixed Vegetables",
-                "Jasmine Rice"
-              ]
-            },
-            {
-              "name": "Soup Station",
-              "items": [
-                "Chicken Tortilla",
-                "Carrot Ginger"
-              ]
-            },
-            {
-              "name": "Pasta Station",
-              "items": [
-                "Marinara",
-                "Alfredo",
-                "Rosemary Oil",
-                "Pasta",
-                "Whole Wheat Pasta",
-                "Tomato Lentil",
-                "Broccoli and Mushrooms",
-                "Garlic Rolls"
-              ]
-            },
-            {
-              "name": "Action Station",
-              "items": [
-                "Bao Buns: teriyaki chicken, char siu bbq pork, sweet chili glazed tempeh"
-              ]
-            },
-            {
-              "name": "Grill",
-              "items": [
-                "John Jay Burger",
-                "Vegan Burger"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "John Jay",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -1261,7 +968,7 @@
           "name": "Diana",
           "hours": {
             "open": "8:00 AM",
-            "close": "11:00 AM"
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
@@ -1343,8 +1050,8 @@
         "lunch": {
           "name": "Diana",
           "hours": {
-            "open": "11:30 AM",
-            "close": "5:00 PM"
+            "open": "8:00 AM",
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
@@ -1432,128 +1139,16 @@
         "dinner": {
           "name": "Diana",
           "hours": null,
-          "available": true,
-          "stations": [
-            {
-              "name": "Pizza",
-              "items": [
-                "Margherita Pizza",
-                "Shredded Mozzarella Cheese",
-                "Sliced Pepperoni",
-                "Grilled Chicken",
-                "Diced Ham",
-                "Plum Tomato",
-                "Sliced Mushrooms",
-                "Sliced Black Olives",
-                "Chopped Spinach",
-                "Roasted Red Peppers"
-              ]
-            },
-            {
-              "name": "Bowl life",
-              "items": [
-                "Popcorn Chicken Bowl",
-                "Grilled Chicken",
-                "Breaded Chicken Bites",
-                "Smoked BBQ Tofu",
-                "Mashed Potatoes",
-                "Brown Gravy",
-                "Roasted Corn and Peppers"
-              ]
-            },
-            {
-              "name": "Sono",
-              "items": [
-                "Chili Rub Chicken",
-                "Beef Taco Meat",
-                "Cilantro Pesto Tofu",
-                "Yellow Rice",
-                "Black Beans",
-                "Cheese Quesadillas",
-                "Chicken Quesadilla",
-                "CHE 19 Hard Shell Beef Taco"
-              ]
-            },
-            {
-              "name": "Sono Bar",
-              "items": [
-                "Guacamole",
-                "Mild Picante Salsa",
-                "Sliced Jalapeno",
-                "Sour Cream",
-                "Pico de Gallo",
-                "Cheddar Cheese",
-                "Diced Red Onions",
-                "Roasted Salsa Verde",
-                "Chipotle Sour Cream",
-                "Shredded Iceberg Lettuce"
-              ]
-            }
-          ],
-          "status": null
+          "available": false,
+          "stations": [],
+          "status": "Closed for dinner"
         },
         "late-night": {
           "name": "Diana",
           "hours": null,
-          "available": true,
-          "stations": [
-            {
-              "name": "Pizza",
-              "items": [
-                "Margherita Pizza",
-                "Shredded Mozzarella Cheese",
-                "Sliced Pepperoni",
-                "Grilled Chicken",
-                "Diced Ham",
-                "Plum Tomato",
-                "Sliced Mushrooms",
-                "Sliced Black Olives",
-                "Chopped Spinach",
-                "Roasted Red Peppers"
-              ]
-            },
-            {
-              "name": "Bowl life",
-              "items": [
-                "Popcorn Chicken Bowl",
-                "Grilled Chicken",
-                "Breaded Chicken Bites",
-                "Smoked BBQ Tofu",
-                "Mashed Potatoes",
-                "Brown Gravy",
-                "Roasted Corn and Peppers"
-              ]
-            },
-            {
-              "name": "Sono",
-              "items": [
-                "Chili Rub Chicken",
-                "Beef Taco Meat",
-                "Cilantro Pesto Tofu",
-                "Yellow Rice",
-                "Black Beans",
-                "Cheese Quesadillas",
-                "Chicken Quesadilla",
-                "CHE 19 Hard Shell Beef Taco"
-              ]
-            },
-            {
-              "name": "Sono Bar",
-              "items": [
-                "Guacamole",
-                "Mild Picante Salsa",
-                "Sliced Jalapeno",
-                "Sour Cream",
-                "Pico de Gallo",
-                "Cheddar Cheese",
-                "Diced Red Onions",
-                "Roasted Salsa Verde",
-                "Chipotle Sour Cream",
-                "Shredded Iceberg Lettuce"
-              ]
-            }
-          ],
-          "status": null
+          "available": false,
+          "stations": [],
+          "status": "Closed for latenight"
         }
       }
     },
@@ -1653,12 +1248,5 @@
       }
     }
   },
-  "unavailable": [
-    {
-      "venue": "facultyhouse",
-      "name": "Faculty House",
-      "meal": "breakfast",
-      "status": "No menu published"
-    }
-  ]
+  "unavailable": []
 }
