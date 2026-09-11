@@ -163,8 +163,11 @@ manifest is the only place the per-source result actually lives.
 `LIBRARY_HOURS_UPDATE_SECRET` is referenced by none of them.
 
 Setup (once): add `ANTHROPIC_API_KEY` as a **repository secret** (Settings → Secrets and
-variables → Actions → Secrets) and `AUTOFIX_ENABLED` as a **repository variable** (same
-page, Variables tab). The key is read by the generate job only. `tests/autofix-workflow.test.mjs`
+variables → Actions → Secrets), `AUTOFIX_ENABLED` as a **repository variable** (same
+page, Variables tab), and tick **Settings → Actions → General → Workflow permissions →
+"Allow GitHub Actions to create and approve pull requests"** — without it `gh pr create`
+fails with "GitHub Actions is not permitted to create or approve pull requests" even
+though the job has `pull-requests: write`. The key is read by the generate job only. `tests/autofix-workflow.test.mjs`
 fails if any other job ever references it, or if generate gains a write permission.
 
 ### 3.5 As built — deviations from the design above (2026-09-11)
@@ -276,13 +279,27 @@ Progress legend: ✅ done · 🔜 next · ⬜ not started.
    `anthropics/claude-code-action@v1` with `contents: read`, `ANTHROPIC_API_KEY` only,
    `git`/`gh`/`curl`/`wget`/installs disallowed; its only output is the working-tree diff
    uploaded as `autofix-patch-<source>`.)*
-5. 🔜 **Dry run** via `workflow_dispatch`: revert the Fall 2026 Health parser change on a
+5. ✅ **Dry run** via `workflow_dispatch`: revert the Fall 2026 Health parser change on a
    branch, feed the captured page, compare the PR to the hand-written fix. Then a
    second dry run with a fixture that contains an embedded instruction, to confirm the
    allowlist and the constraint checks catch what the model may produce. *(How: set
    `AUTOFIX_ENABLED=true`, run "Autofix parser" from the Actions tab with `run_id` set to
    a scrape run whose manifest has a fixable entry and `force` ticked; the `--force`
    flag bypasses dedupe/cooldown/ceiling but never the fixability rules.)*
+   *Result, 2026-09-11 (six dispatches against the reverted Health parser, `99ebc65`):
+   four attempts died on plumbing before or without a useful model turn (tool-rule
+   syntax, tooling checked out from the scrape's commit, a scratch file outside the
+   allowlist); the fifth reached the model and was rejected by the allowlist; the sixth
+   produced a complete patch — a structural `.table-def-list` parser for Health with a
+   fixture and a test, 389/389 suite green on the branch `autofix/health/128d1589b553` —
+   and only failed to open the PR because the repository setting above was off. Its
+   values agree with the hand-written fix (`63d8764`) for every service; it reads more
+   services and access types than the prose parser, and has one bug (a "Monday,
+   Tuesday, Thursday, and Friday" list drops Friday). Cost $1.63 / 26 turns on
+   `claude-sonnet-5`: over the $0.50 target, driven by the model running the full
+   `npm test` suite (thousands of TAP lines in context) and by the size of the rewrite.
+   The prompt now forbids the full suite inside the model's turns. The second dry run
+   (embedded instruction) is covered by `tests/autofix-propose.test.mjs`.*
 6. ⬜ Enable — set the repository variable `AUTOFIX_ENABLED` to `true` and leave it.
 
 Already in place from the Telegram plan that this one leans on: the two-way bot with

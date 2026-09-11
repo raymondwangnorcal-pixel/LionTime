@@ -216,7 +216,7 @@ jobs:
           claude_args: >-
             --model claude-sonnet-5
             --max-turns 25
-            --allowedTools "Read,Edit,Write,MultiEdit,Glob,Grep,Bash(node:*),Bash(npm test:*),Bash(npx:*),Bash(python:*),Bash(python3:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(grep:*),Bash(sed -n:*),Bash(diff:*),Bash(mkdir:*),Bash(cp:*),Bash(echo:*),Bash(git status:*),Bash(git diff:*)"
+            --allowedTools "Read,Edit,Write,MultiEdit,Glob,Grep,Bash(node:*),Bash(npm test:*),Bash(npm run:*),Bash(npx:*),Bash(python:*),Bash(python3:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(grep:*),Bash(rg:*),Bash(find:*),Bash(awk:*),Bash(cut:*),Bash(sort:*),Bash(uniq:*),Bash(sed -n:*),Bash(diff:*),Bash(mkdir:*),Bash(cp:*),Bash(echo:*),Bash(pwd),Bash(true),Bash(timeout:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"
             --disallowedTools "Bash(git push:*),Bash(git commit:*),Bash(git checkout:*),Bash(git branch:*),Bash(git remote:*),Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(npm install:*),Bash(npm i:*),Bash(npm add:*),Bash(pip:*),Bash(pip3:*),Bash(ssh:*),Bash(scp:*),WebFetch,WebSearch"
       # Both run even when the action failed (turn cap, timeout): a partial patch is
       # still judged by the propose job, and the execution log is what explains a miss.
@@ -348,14 +348,21 @@ jobs:
           DETAIL: "${{ matrix.failureCode }}: ${{ matrix.detail }}"
           EVIDENCE_URL: https://github.com/${{ github.repository }}/actions/runs/${{ needs.triage.outputs.source_run_id }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           node scripts/autofix-propose.mjs pr-body --source "$SOURCE_ID" --error "$DETAIL" \
             --evidence-url "$EVIDENCE_URL" --values-file "$RUNNER_TEMP/values.md" \
             --patch "$RUNNER_TEMP/patch/autofix.diff" > "$RUNNER_TEMP/pr-body.md"
-          url=$(gh pr create --base main --head "$BRANCH" \
+          # Needs Settings → Actions → General → "Allow GitHub Actions to create and approve
+          # pull requests". If it is off, gh fails with "GitHub Actions is not permitted to
+          # create or approve pull requests"; the branch is still pushed and Telegram says why.
+          if url=$(gh pr create --base main --head "$BRANCH" \
             --title "autofix($SOURCE_ID): parser update from captured page" \
-            --body-file "$RUNNER_TEMP/pr-body.md")
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+            --body-file "$RUNNER_TEMP/pr-body.md" 2> "$RUNNER_TEMP/pr-error.txt"); then
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+          else
+            echo "error=$(tr '\n' ' ' < "$RUNNER_TEMP/pr-error.txt" | cut -c1-300)" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
       - name: Tell Telegram the outcome (a link to review — no merge button)
         if: always()
         env:
@@ -364,6 +371,8 @@ jobs:
           REASON: ${{ steps.check.outputs.reason }}
           TESTS: ${{ steps.tests.outcome }}
           PR_URL: ${{ steps.pr.outputs.url }}
+          PR_ERROR: ${{ steps.pr.outputs.error }}
+          PR_OUTCOME: ${{ steps.pr.outcome }}
           BRANCH: ${{ matrix.branch }}
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
@@ -375,6 +384,8 @@ jobs:
           fi
           if [ -n "$PR_URL" ]; then
             message="Autofix for $SOURCE_ID is ready to review: $PR_URL"$'\n'"Read the values table, then the diff. Merge on GitHub; then /rerun the scrape.$cost"
+          elif [ "$VERDICT" = "accepted" ] && [ "$TESTS" = "success" ]; then
+            message="Autofix for $SOURCE_ID passed the checks and the full suite on $BRANCH, but the pull request could not be opened: ${PR_ERROR:-unknown error}. Open it from the branch on GitHub, or fix the setting and re-run.$cost $RUN_URL"
           elif [ "$VERDICT" = "accepted" ]; then
             message="Autofix for $SOURCE_ID was applied on $BRANCH but the test suite failed, so no PR was opened. Delete the branch to allow another attempt.$cost $RUN_URL"
           else
