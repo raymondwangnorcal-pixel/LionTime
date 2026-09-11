@@ -194,12 +194,18 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
           prompt: ${{ steps.prompt.outputs.text }}
+          # Tool rules use Claude Code's prefix syntax: `Bash(node:*)` allows any command
+          # starting with `node`. Denied tools waste turns, so the allow list is generous
+          # for local inspection and test runs and the deny list names the exits.
           claude_args: >-
-            --max-turns 40
-            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(node *),Bash(npm test*),Bash(npx node --test*),Bash(python *),Bash(python3 *),Bash(ls *),Bash(cat *),Bash(head *),Bash(wc *)"
-            --disallowedTools "Bash(git *),Bash(gh *),Bash(curl *),Bash(wget *),Bash(npm install*),Bash(pip *),WebFetch,WebSearch"
+            --max-turns 60
+            --allowedTools "Read,Edit,Write,MultiEdit,Glob,Grep,Bash(node:*),Bash(npm test:*),Bash(npx:*),Bash(python:*),Bash(python3:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(grep:*),Bash(sed -n:*),Bash(diff:*),Bash(mkdir:*),Bash(cp:*),Bash(echo:*),Bash(git status:*),Bash(git diff:*)"
+            --disallowedTools "Bash(git push:*),Bash(git commit:*),Bash(git checkout:*),Bash(git branch:*),Bash(git remote:*),Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(npm install:*),Bash(npm i:*),Bash(npm add:*),Bash(pip:*),Bash(pip3:*),Bash(ssh:*),Bash(scp:*),WebFetch,WebSearch"
+      # Both run even when the action failed (turn cap, timeout): a partial patch is
+      # still judged by the propose job, and the execution log is what explains a miss.
       - name: Capture the working-tree diff as the only output
         id: patch
+        if: always()
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/patch"
@@ -208,7 +214,9 @@ jobs:
           git status --short
           wc -c "$RUNNER_TEMP/patch/autofix.diff"
           [ -f .github/autofix/UNRESOLVED.md ] && cp .github/autofix/UNRESOLVED.md "$RUNNER_TEMP/patch/UNRESOLVED.md" || true
+          [ -f "$RUNNER_TEMP/claude-execution-output.json" ] && cp "$RUNNER_TEMP/claude-execution-output.json" "$RUNNER_TEMP/patch/execution-log.json" || true
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: autofix-patch-${{ matrix.sourceId }}
           path: ${{ runner.temp }}/patch

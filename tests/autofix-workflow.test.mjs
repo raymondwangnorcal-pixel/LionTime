@@ -34,10 +34,18 @@ test('generate is gated on AUTOFIX_ENABLED, holds only the model key, and cannot
   assert.doesNotMatch(generate, /contents: write|pull-requests: write/);
   assert.match(generate, /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/);
   assert.doesNotMatch(generate, /LIONTIME_TELEGRAM|LIBRARY_HOURS_UPDATE_SECRET|VERCEL_TOKEN|GH_TOKEN/);
-  assert.match(generate, /uses: anthropics\/claude-code-action@v1/);
-  assert.match(generate, /--disallowedTools "Bash\(git \*\),Bash\(gh \*\),Bash\(curl \*\),Bash\(wget \*\)/);
+  assert.match(generate, /uses: anthropics\/claude-code-action@v1\n        with:\n(?:          [^\n]*\n)*?          claude_args: >-/, 'claude_args is an input of the action, not a stray step key');
+  // Claude Code permission rules are `Tool(prefix:*)`; a bare `Bash(node *)` matches nothing.
+  assert.match(generate, /--allowedTools "[^"]*Bash\(node:\*\)[^"]*Bash\(npm test:\*\)/);
+  assert.doesNotMatch(generate, /Bash\([a-z]+ \*\)/, 'no space-wildcard tool rules');
+  assert.match(generate, /--disallowedTools "[^"]*Bash\(git push:\*\)[^"]*Bash\(gh:\*\)[^"]*Bash\(curl:\*\)[^"]*Bash\(wget:\*\)/);
+  assert.match(generate, /--disallowedTools "[^"]*WebFetch,WebSearch"/);
+  // Partial work and the execution log survive an action failure
+  assert.match(generate, /Capture the working-tree diff as the only output\n        id: patch\n        if: always\(\)/);
+  assert.match(generate, /execution-log\.json/);
   assert.match(generate, /git diff --binary > "\$RUNNER_TEMP\/patch\/autofix\.diff"/);
-  assert.doesNotMatch(generate, /git push|gh pr create/);
+  // `git push` may appear only inside the deny list, never as a step
+  assert.doesNotMatch(generate.replace(/--disallowedTools "[^"]*"/, ''), /git push|gh pr create/);
   assert.match(generate, /max-parallel: 1/);
   assert.match(generate, /ref: \$\{\{ needs\.triage\.outputs\.commit/);
 });
