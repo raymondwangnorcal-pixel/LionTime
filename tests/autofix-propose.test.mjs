@@ -181,9 +181,9 @@ test('values table renders real parser output for each shape', () => {
 });
 
 test('the values table CLI runs a real parser on a real fixture', () => {
-  const run = spawnSync('node', ['scripts/autofix-values-table.mjs', '--source', 'health', '--fixture', 'tests/fixtures/student-services-health-fall-2026.html'], { encoding: 'utf8' });
+  const run = spawnSync('node', ['scripts/autofix-values-table.mjs', '--source', 'health', '--fixture', 'tests/fixtures/student-services-health.html'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /\| alice-health \| office-hours \| Mon–Thu \| 09:00–18:00 \|/);
+  assert.match(run.stdout, /\| alice-health \| office-hours \| Mon–Fri \| 09:00–17:00 \|/);
   const library = spawnSync('node', ['scripts/autofix-values-table.mjs', '--source', 'butler_24', '--fixture', 'tests/fixtures/butler-august-2026.html'], { encoding: 'utf8' });
   assert.match(library.stdout, /Library parsers are Python/);
 });
