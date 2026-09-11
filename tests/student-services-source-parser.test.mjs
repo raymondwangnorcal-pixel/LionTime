@@ -73,6 +73,10 @@ test('parses the Drupal definition-list Health page shape', () => {
   assert.equal(immunization.type, 'virtual-only');
   assert.deepEqual(immunization.weekdays, [1, 2, 3, 4, 5]);
   assert.deepEqual(immunization.intervals, [['09:00', '17:00']]);
+  // SVR at CUIMC lists "Monday, Tuesday, Thursday, and Friday" — the Oxford comma must not drop Friday.
+  const svrOffice = evidence.filter(item => item.targetId === 'svr' && item.type === 'office-hours').map(item => item.weekdays);
+  assert.ok(svrOffice.some(days => days.join(',') === '1,2,4,5'), JSON.stringify(svrOffice));
+  assert.ok(!svrOffice.some(days => days.join(',') === '1,2,4'), 'Friday was dropped from the Oxford-comma list');
 });
 
 test('requires the exact official Bookstore identity and seven weekdays', () => {
