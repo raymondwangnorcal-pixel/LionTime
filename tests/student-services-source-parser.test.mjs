@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { parseBookstoreSource, parseHealthSource, parseLernerSource, parseMailSource } from '../lib/student-services-source-parser.js';
+import { buildStudentServicesAttempt } from '../lib/student-services-hours-resolver.js';
 
 const fixture = name => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 
@@ -55,6 +56,21 @@ test('Health Drupal parser ignores chrome headings that precede the schedule', (
   const withChrome = plain.replace('<main', '<header><h2>Main navigation expanded</h2></header><nav><h2>You are here:</h2></nav><main');
   assert.notEqual(withChrome, plain);
   assert.deepEqual(parseHealthSource(withChrome), parseHealthSource(plain));
+});
+
+test('Health Drupal records carry programme labels so the resolver can tell them apart', () => {
+  // CAPS lists several drop-in programmes on the same weekday with different hours; without
+  // distinct reasons the resolver rejects the day as ambiguous and the whole source fails.
+  const evidence = parseHealthSource(fixture('student-services-health-2026-09-11.html'));
+  const capsMondayWalkIns = evidence.filter(item => item.targetId === 'caps' && item.type === 'walk-in' && item.weekdays.includes(1));
+  assert.ok(capsMondayWalkIns.length >= 3);
+  assert.equal(new Set(capsMondayWalkIns.map(item => item.reason)).size, capsMondayWalkIns.length);
+  assert.deepEqual(capsMondayWalkIns.map(item => item.reason).sort(), ['Care Navigation', 'Student Athlete Concerns', 'Urgent Mental Health Concerns']);
+  assert.equal(evidence.find(item => item.targetId === 'caps' && item.type === 'office-hours').reason, 'Main Office');
+  assert.equal(evidence.find(item => item.targetId === 'caps' && item.type === 'phone-support').reason, 'After Hours');
+  assert.doesNotThrow(() => buildStudentServicesAttempt({
+    sourceId: 'health', sourceUrl: 'https://www.health.columbia.edu/content/hours-and-locations', evidence, generated: new Date('2026-09-11T19:00:00Z'),
+  }));
 });
 
 test('parses the Drupal definition-list Health page shape', () => {

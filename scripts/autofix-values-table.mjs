@@ -119,12 +119,35 @@ async function runParser(sourceId, fixturePath, root) {
   const parser = module[entry.parserExport];
   if (typeof parser !== 'function') throw new Error(`${entry.parserFile} does not export ${entry.parserExport}`);
   const raw = await readFile(fixturePath, 'utf8');
-  switch (entry.parserKind) {
-    case 'json-string': return parser(raw);
-    case 'json-or-text': return parser(raw.trimStart().startsWith('{') ? JSON.parse(raw) : raw);
-    case 'lerner': return parser(raw.trimStart().startsWith('{') ? JSON.parse(raw) : { homeHtml: raw, calendarHtml: raw });
-    case 'text': return parser(raw);
-    default: return parser(raw, { generated: new Date() });
+  const output = await (() => {
+    switch (entry.parserKind) {
+      case 'json-string': return parser(raw);
+      case 'json-or-text': return parser(raw.trimStart().startsWith('{') ? JSON.parse(raw) : raw);
+      case 'lerner': return parser(raw.trimStart().startsWith('{') ? JSON.parse(raw) : { homeHtml: raw, calendarHtml: raw });
+      case 'text': return parser(raw);
+      default: return parser(raw, { generated: new Date() });
+    }
+  })();
+  await checkDownstream(sourceId, entry, output, root);
+  return output;
+}
+
+/**
+ * Parsing is not the whole pipeline: Student Life evidence still has to survive the
+ * resolver, which rejects a day with two same-type records and different hours as
+ * ambiguous. A parser that "works" but fails there takes the source down just the same
+ * (that is what happened to Health on 2026-09-11), so reproduce that step here too.
+ */
+export async function checkDownstream(sourceId, entry, output, root) {
+  if (entry.category !== 'student-services' || !Array.isArray(output)) return;
+  const resolver = await import(pathToFileURL(path.join(root, 'lib/student-services-hours-resolver.js')).href);
+  const catalog = await import(pathToFileURL(path.join(root, 'lib/student-services-hours-catalog.js')).href);
+  try {
+    resolver.buildStudentServicesAttempt({
+      sourceId, sourceUrl: catalog.STUDENT_SERVICES_SOURCE_URLS?.[sourceId] || null, evidence: output, generated: new Date(),
+    });
+  } catch (error) {
+    throw new Error(`parsed, but the resolver rejected the evidence: ${error?.message || error}`);
   }
 }
 
