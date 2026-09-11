@@ -56,6 +56,7 @@ test('isolates one managed challenge and closes every page and browser', async (
     now: new Date('2026-08-23T12:00:00-04:00') });
   assert.equal(result.sources.length, 4);
   assert.equal(result.sources[0].failureCode, 'challenge');
+  assert.equal(result.sources[0].evidence?.body, '<main>Official content</main>', 'the challenged page is kept for the manifest');
   assert.equal(result.sources.filter(source => source.result === 'success').length, 3);
   assert.equal(fake.state.closedPages.length, 4);
   assert.equal(fake.state.browserClosed, true);
@@ -63,7 +64,12 @@ test('isolates one managed challenge and closes every page and browser', async (
 
 test('rejects an all-failure run after closing resources', async () => {
   const fake = chromiumFake({ allFail: true });
-  await assert.rejects(() => acquireStudentServicesSources({ chromiumImpl: fake.chromium }), /all Student Life sources failed/);
+  await assert.rejects(() => acquireStudentServicesSources({ chromiumImpl: fake.chromium }), (error) => {
+    assert.match(error.message, /all Student Life sources failed/);
+    assert.equal(error.sources.length, 4, 'per-source outcomes ride along on the error for the manifest');
+    assert.ok(error.sources.every(source => source.failureCode === 'navigation'), JSON.stringify(error.sources));
+    return true;
+  });
   assert.equal(fake.state.closedPages.length, 4);
   assert.equal(fake.state.browserClosed, true);
 });

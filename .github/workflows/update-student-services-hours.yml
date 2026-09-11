@@ -42,7 +42,21 @@ jobs:
           tests/student-services-hours-view.test.mjs
           tests/student-services-hours-ui.test.mjs
       - name: Scrape validated Student Life hours
+        id: scrape
+        env:
+          SCRAPE_EVIDENCE_DIR: ${{ runner.temp }}/scrape/student-services
         run: xvfb-run --auto-servernum node scripts/student-services-hours-scraper.mjs --json-out "$RUNNER_TEMP/student-services-hours.json"
+      # Evidence for the next parser fix (docs/automated-fix.md §3.1): the per-source
+      # manifest plus the raw page of any source that failed. Uploaded on every
+      # outcome, kept 14 days, never committed.
+      - name: Upload scrape manifest and evidence
+        if: ${{ always() && steps.scrape.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-manifest-student-services
+          path: ${{ runner.temp }}/scrape/student-services
+          retention-days: 14
+          if-no-files-found: warn
       - name: Format notification summary
         id: notification-summary
         env:

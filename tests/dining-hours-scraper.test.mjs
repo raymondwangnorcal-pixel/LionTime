@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
+import { createScrapeManifest } from '../lib/scrape-manifest.js';
+
 import {
   DINING_LOCATION_MAP,
   acquireBarnardHoursAttempt,
@@ -365,4 +367,76 @@ test('reads a bare "0" closing time as midnight (Butler Blue Java, Fall 2026)', 
   const snapshot = buildDiningSnapshot(dataset, new Date('2026-09-14T14:00:00Z')); // a Monday
   const location = snapshot.locations.find((item) => item.id === 'bj-butler');
   assert.deepEqual(location.days[0].intervals, [['08:00', '24:00']]);
+});
+
+test('writes a manifest naming all six sources, keeping the article body when one article stops parsing', async () => {
+  const cafeEast = readFileSync(new URL('./fixtures/cafe-east-live.txt', import.meta.url), 'utf8');
+  const articleByPath = new Map([
+    ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
+    ['/news/labor-day-2026-operating-hours', readFileSync(new URL('./fixtures/dining-labor-day-2026.html', import.meta.url), 'utf8')],
+    ['/news/fall-2026-operating-hours', '<div class="field"><p>Fall 2026 hours have moved to a new page.</p></div>'],
+  ]);
+  const barnardWeeks = ['2026-08-23', '2026-08-30', '2026-09-06']
+    .map(date => readFileSync(new URL(`./fixtures/barnard-dining-hours-week-${date}.html`, import.meta.url), 'utf8'));
+  let currentUrl = '';
+  let barnardWeek = 0;
+  const page = {
+    async goto(url) { currentUrl = url; return { status: () => 200 }; },
+    url() { return currentUrl; },
+    async title() { return 'Columbia Dining'; },
+    async waitForFunction() {},
+    async evaluate() { return currentUrl.includes('dineoncampus.com') ? `barnard-week-${barnardWeek}` : JSON.stringify(completeDataset()); },
+    async content() { return barnardWeeks[barnardWeek]; },
+    async waitForTimeout() {},
+    getByRole() {
+      return { first() { return { async count() { return 1; }, async isEnabled() { return barnardWeek < 2; }, async click() { barnardWeek += 1; } }; } };
+    },
+    locator(selector) {
+      return {
+        async innerText() { return selector === 'main' ? cafeEast : ''; },
+        async count() { return ['#main-article', 'main'].includes(selector) ? 1 : 0; },
+        async innerHTML() { return articleByPath.get(new URL(currentUrl).pathname); },
+      };
+    },
+  };
+  const chromiumImpl = { async launch() { return { async newPage() { return page; }, async close() {} }; } };
+  const manifest = createScrapeManifest({ category: 'dining', dir: null, env: {} });
+  const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-manifest-'));
+  const batch = await scrapeDiningHours({ outputPath: join(directory, 'attempts.json'), now: new Date('2026-08-21T12:00:00Z'), chromiumImpl, manifest });
+
+  assert.equal(batch.attempts.filter(attempt => attempt.result === 'success').length, 5);
+  const written = manifest.written;
+  assert.equal(written.category, 'dining');
+  assert.deepEqual(written.sources.map(s => s.sourceId), batch.attempts.map(a => a.sourceId));
+  const fall = written.sources.find(s => s.sourceId === 'fall-2026');
+  assert.equal(fall.result, 'failure');
+  assert.equal(fall.failureCode, 'parse');
+  assert.equal(fall.evidencePath, 'fall-2026.html');
+  assert.match(fall.detail, /fall-2026 article could not be parsed/);
+  assert.ok(written.sources.filter(s => s.result === 'success').every(s => s.evidencePath === null));
+  assert.deepEqual(written.summary.fixable, ['fall-2026']);
+  assert.equal(written.sources[0].attemptedAt, '2026-08-21T12:00:00.000Z');
+});
+
+test('navigation failures are in the manifest without evidence, and it is written even when nothing was acquired', async () => {
+  const chromiumImpl = {
+    async launch() {
+      return { async newPage() { return { async goto() { throw new Error('net::ERR_INTERNET_DISCONNECTED'); } }; }, async close() {} };
+    },
+  };
+  const manifest = createScrapeManifest({ category: 'dining', dir: null, env: {} });
+  const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-manifest-nav-'));
+  await scrapeDiningHours({ outputPath: join(directory, 'attempts.json'), chromiumImpl, manifest });
+  assert.equal(manifest.written.sources.length, 6);
+  assert.ok(manifest.written.sources.every(s => s.failureCode === 'navigation' && s.evidencePath === null));
+  assert.deepEqual(manifest.written.summary.fixable, []);
+});
+
+test('a browser that cannot launch still leaves a manifest behind', async () => {
+  const manifest = createScrapeManifest({ category: 'dining', dir: null, env: {} });
+  await assert.rejects(scrapeDiningHours({
+    outputPath: '/tmp/never-written.json', manifest,
+    chromiumImpl: { async launch() { throw new Error('browserType.launch: Executable does not exist'); } },
+  }), /Executable does not exist/);
+  assert.equal(manifest.written.sources.length, 6);
 });

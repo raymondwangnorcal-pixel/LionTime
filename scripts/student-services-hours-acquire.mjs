@@ -6,11 +6,20 @@ import {
 } from '../lib/student-services-hours-catalog.js';
 
 class SourceAcquisitionError extends Error {
-  constructor(code, message) {
+  /** `evidence` is the page body the failure was judged on, kept for the scrape manifest. */
+  constructor(code, message, evidence = null) {
     super(message);
     this.name = 'SourceAcquisitionError';
     this.code = code;
+    this.evidence = evidence;
   }
+}
+
+function classifyUnexpected(error) {
+  const text = `${error?.name || ''} ${error?.message || ''}`;
+  if (/timeout/i.test(text)) return 'timeout';
+  if (/net::|ERR_|navigat|goto|offline|ECONN|ENOTFOUND|EAI_AGAIN/i.test(text)) return 'navigation';
+  return 'unexpected';
 }
 
 function officialLocation(actualUrl, expectedUrl) {
@@ -29,8 +38,8 @@ async function acquireLerner(page, timeoutMs) {
   const entryUrl = STUDENT_SERVICES_SOURCE_URLS.lerner;
   await page.goto(entryUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
   if (!officialLocation(page.url(), entryUrl)) throw new SourceAcquisitionError('navigation', 'Lerner redirected off source');
-  if (await challenged(page)) throw new SourceAcquisitionError('challenge', 'Lerner managed challenge');
   const homeHtml = await page.content();
+  if (await challenged(page)) throw new SourceAcquisitionError('challenge', 'Lerner managed challenge', { body: homeHtml });
   const calendarUrl = await page.locator('a[href], iframe[src]').evaluateAll(elements => {
     const candidate = elements.map(element => element.href || element.src)
       .find(value => value && (/\/events(?:[/?#]|$)/i.test(value)
@@ -47,7 +56,7 @@ async function acquireLerner(page, timeoutMs) {
   if (resolved.hostname !== 'calendar.google.com' || resolved.pathname !== '/calendar/embed'
     || resolved.searchParams.get('title') !== 'Lerner Hall Operating Hours'
     || resolved.searchParams.getAll('src').length < 1) {
-    throw new SourceAcquisitionError('missing-content', 'Lerner calendar is not directly embedded official evidence');
+    throw new SourceAcquisitionError('missing-content', 'Lerner calendar is not directly embedded official evidence', { body: homeHtml });
   }
   await page.waitForTimeout(3_000);
   const frame = page.frames().find(candidate => {
@@ -57,10 +66,10 @@ async function acquireLerner(page, timeoutMs) {
         && url.searchParams.get('title') === 'Lerner Hall Operating Hours';
     } catch { return false; }
   });
-  if (!frame) throw new SourceAcquisitionError('missing-content', 'Lerner embedded calendar did not load');
+  if (!frame) throw new SourceAcquisitionError('missing-content', 'Lerner embedded calendar did not load', { body: homeHtml });
   const calendarText = await frame.locator('body').innerText();
   if (!/Calendar:\s*[^,]+.*\b2026\b/i.test(calendarText)) {
-    throw new SourceAcquisitionError('missing-content', 'Lerner embedded calendar hours are missing');
+    throw new SourceAcquisitionError('missing-content', 'Lerner embedded calendar hours are missing', { body: calendarText, extension: 'txt' });
   }
   return { homeHtml, calendarText, calendarUrl: resolved.href };
 }
@@ -69,10 +78,10 @@ async function acquireHtml(page, sourceId, timeoutMs) {
   const entryUrl = STUDENT_SERVICES_SOURCE_URLS[sourceId];
   await page.goto(entryUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
   if (!officialLocation(page.url(), entryUrl)) throw new SourceAcquisitionError('navigation', `${sourceId} redirected off source`);
-  if (await challenged(page)) throw new SourceAcquisitionError('challenge', `${sourceId} managed challenge`);
   const html = await page.content();
+  if (await challenged(page)) throw new SourceAcquisitionError('challenge', `${sourceId} managed challenge`, { body: html });
   if (!/<main\b|id=["']main-article["']/i.test(html)) {
-    throw new SourceAcquisitionError('missing-content', `${sourceId} official content is missing`);
+    throw new SourceAcquisitionError('missing-content', `${sourceId} official content is missing`, { body: html });
   }
   return { html };
 }
@@ -94,12 +103,12 @@ async function acquireBookstore(page, timeoutMs) {
   try {
     await page.goto(entryUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     if (!officialLocation(page.url(), entryUrl)) throw new SourceAcquisitionError('navigation', 'Bookstore redirected off source');
-    if (await challenged(page)) throw new SourceAcquisitionError('challenge', 'Bookstore managed challenge');
+    if (await challenged(page)) throw new SourceAcquisitionError('challenge', 'Bookstore managed challenge', { body: await page.content() });
     await page.waitForTimeout(1_000);
     if (candidates.length) return { data: candidates[0] };
     const visibleText = await page.locator('body').innerText();
     if (!/Columbia University in the City of New York[\s\S]*2922 Broadway[\s\S]*Lerner Hall\s*\|\s*Lower Level[\s\S]*STORE HOURS/i.test(visibleText)) {
-      throw new SourceAcquisitionError('missing-content', 'Bookstore official visible hours are missing');
+      throw new SourceAcquisitionError('missing-content', 'Bookstore official visible hours are missing', { body: visibleText, extension: 'txt' });
     }
     return { text: visibleText };
   } finally {
@@ -128,7 +137,9 @@ export async function acquireStudentServicesSources({
           sourceId,
           sourceUrl: STUDENT_SERVICES_SOURCE_URLS[sourceId],
           result: 'failure',
-          failureCode: error instanceof SourceAcquisitionError ? error.code : 'unexpected',
+          failureCode: error instanceof SourceAcquisitionError ? error.code : classifyUnexpected(error),
+          failureDetail: String(error?.message || 'acquisition failed').split('\n')[0],
+          evidence: error instanceof SourceAcquisitionError ? error.evidence : null,
         });
       } finally {
         await page.close();
@@ -137,6 +148,9 @@ export async function acquireStudentServicesSources({
   } finally {
     await browser.close();
   }
-  if (sources.every(source => source.result === 'failure')) throw new Error('all Student Life sources failed');
+  if (sources.every(source => source.result === 'failure')) {
+    // The per-source outcomes ride along so the scraper can still write its manifest.
+    throw Object.assign(new Error('all Student Life sources failed'), { sources, generated: now });
+  }
   return { generated: now, sources };
 }

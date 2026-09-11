@@ -5,6 +5,7 @@ import test from 'node:test';
 import { validateRecreationHoursSnapshot } from '../lib/recreation-hours-schema.js';
 import { parseBarnardHours } from '../lib/recreation-source-parser.js';
 import { runRecreationScraper } from '../scripts/recreation-hours-scraper.mjs';
+import { createScrapeManifest } from '../lib/scrape-manifest.js';
 
 test('acquires, parses, resolves, validates, and writes one snapshot', async () => {
   const writes = [];
@@ -211,6 +212,62 @@ test('produces a valid snapshot with accessDenied when all sources are denied', 
   const pool = snapshot.facilities.find(f => f.id === 'uris-pool');
   assert.ok(dodge.days.every(d => d.status === 'Hours need verification'));
   assert.ok(pool.days.every(d => d.status === 'Hours need verification'));
+});
+
+test('writes a scrape manifest naming every source, with evidence for the one that failed to parse', async () => {
+  const manifest = createScrapeManifest({ category: 'recreation', dir: null, env: {} });
+  await assert.rejects(runRecreationScraper({
+    acquire: async () => acquiredFixture(),
+    parsers: invalidParserFixture(),
+    writeJson: async () => {},
+    outputPath: '/tmp/recreation.json',
+    manifest,
+  }), /no usable barnardFitness evidence/);
+
+  const written = manifest.written;
+  assert.ok(written, 'manifest is written even though the scraper failed');
+  assert.deepEqual(written.sources.map(s => [s.sourceId, s.result, s.failureCode]), [
+    ['columbiaHours', 'success', null],
+    ['columbiaModifications', 'success', null],
+    ['barnardFitness', 'failure', 'parse'],
+  ]);
+  const barnard = written.sources[2];
+  assert.equal(barnard.evidencePath, 'barnardFitness.html');
+  assert.ok(barnard.evidenceSha256);
+  assert.deepEqual(written.summary.fixable, ['barnardFitness']);
+});
+
+test('a source the acquirer could not reach is a navigation failure in the manifest, not a parse failure', async () => {
+  const manifest = createScrapeManifest({ category: 'recreation', dir: null, env: {} });
+  const acquired = acquiredFixture();
+  acquired.pages.columbiaModifications = {
+    url: 'https://perec.columbia.edu/content/modified-hours-closures',
+    accessDenied: true, failureCode: 'timeout', failureDetail: 'page.goto: Timeout 60000ms exceeded',
+  };
+  const snapshot = await runRecreationScraper({
+    acquire: async () => acquired,
+    parsers: parserFixture(),
+    writeJson: async () => {},
+    outputPath: '/tmp/recreation.json',
+    manifest,
+  });
+  assert.equal(snapshot.facilities.length, 3);
+  const entry = manifest.written.sources.find(s => s.sourceId === 'columbiaModifications');
+  assert.equal(entry.failureCode, 'timeout');
+  assert.equal(entry.evidencePath, null);
+  assert.deepEqual(manifest.written.summary.fixable, []);
+});
+
+test('when acquisition itself throws, every source is recorded as a navigation failure before the error surfaces', async () => {
+  const manifest = createScrapeManifest({ category: 'recreation', dir: null, env: {} });
+  await assert.rejects(runRecreationScraper({
+    acquire: async () => { throw new Error('browserType.launch: Executable does not exist'); },
+    writeJson: async () => {},
+    outputPath: '/tmp/recreation.json',
+    manifest,
+  }), /Executable does not exist/);
+  assert.equal(manifest.written.sources.length, 3);
+  assert.ok(manifest.written.sources.every(s => s.failureCode === 'navigation'));
 });
 
 function acquiredFixture(generated = new Date('2026-08-21T16:00:00-04:00')) {

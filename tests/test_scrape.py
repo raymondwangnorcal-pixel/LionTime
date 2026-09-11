@@ -10,6 +10,7 @@ from scrape import (
     DISPLAYED_LIBRARIES,
     DISPLAYED_LIBRARY_IDS,
     ScheduleParseError,
+    ScrapeManifest,
     build_payload,
     dates_to_weekly_schedule,
     extract_barnard_holiday_closures,
@@ -351,6 +352,63 @@ class ScraperContractTests(unittest.TestCase):
             "schedules": [],
         })
         self.assertEqual(validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS), [])
+
+
+class ScrapeManifestTests(unittest.TestCase):
+    def test_records_every_library_and_keeps_the_page_only_for_failures(self):
+        good = (FIXTURES / "butler-august-2026-full.html").read_text()
+        holiday_html = (FIXTURES / "barnard-library-holidays.html").read_text()
+        broken = "<html><body><main><h1>Hours</h1><p>The calendar moved.</p></main></body></html>"
+
+        def fetcher(slug, date=None):
+            if slug == "avery":
+                return BeautifulSoup(broken, "html.parser")
+            if slug == "math":
+                return None
+            return BeautifulSoup(good, "html.parser")
+
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = ScrapeManifest("library", Path(directory), env={"GITHUB_SHA": "abc", "GITHUB_RUN_ID": "7", "GITHUB_RUN_ATTEMPT": "1"})
+            payload = build_payload(
+                datetime.fromisoformat("2026-08-20T12:00:00-04:00"),
+                fetcher=fetcher,
+                holiday_fetcher=lambda: BeautifulSoup(holiday_html, "html.parser"),
+                manifest=manifest,
+            )
+            self.assertEqual(len(payload["libraries"]), 7)
+            written = manifest.write()
+            on_disk = json.loads((Path(directory) / "manifest.json").read_text())
+            self.assertEqual(on_disk, written)
+
+            by_id = {item["sourceId"]: item for item in written["sources"]}
+            self.assertEqual(set(by_id), DISPLAYED_LIBRARY_IDS | {"barnard-holiday"})
+            self.assertEqual(by_id["butler_24"]["result"], "success")
+            self.assertIsNone(by_id["butler_24"]["evidencePath"])
+            self.assertEqual(by_id["avery"]["failureCode"], "parse")
+            self.assertEqual(by_id["avery"]["evidencePath"], "avery.html")
+            self.assertIn("no dated calendar cells", by_id["avery"]["detail"])
+            self.assertEqual((Path(directory) / "avery.html").read_text(), str(BeautifulSoup(broken, "html.parser")))
+            self.assertEqual(by_id["math"]["failureCode"], "navigation")
+            self.assertIsNone(by_id["math"]["evidencePath"])
+            self.assertEqual(by_id["barnard-holiday"]["result"], "success")
+            self.assertEqual(written["summary"], {"total": 8, "succeeded": 6, "failed": 2, "fixable": ["avery"]})
+            self.assertEqual(written["commit"], "abc")
+            self.assertEqual(written["runAttempt"], 1)
+            # The payload still publishes: failures become fallback entries, not a crash.
+            self.assertTrue(next(item for item in payload["libraries"] if item["id"] == "avery")["scrapeFailed"])
+
+    def test_main_writes_the_manifest_before_rejecting_an_invalid_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            evidence = Path(directory) / "evidence"
+            destination = Path(directory) / "hours.json"
+            invalid = make_complete_payload()
+            invalid["libraries"] = []
+            exit_code = main(["--json-out", str(destination), "--evidence-dir", str(evidence)], builder=lambda _: invalid)
+            self.assertEqual(exit_code, 1)
+            self.assertFalse(destination.exists())
+            manifest = json.loads((evidence / "manifest.json").read_text())
+            self.assertEqual(manifest["category"], "library")
+            self.assertEqual(manifest["schemaVersion"], 1)
 
 
 if __name__ == "__main__":
