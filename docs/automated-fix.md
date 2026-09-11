@@ -198,6 +198,18 @@ fails if any other job ever references it, or if generate gains a write permissi
 - **`claude-code-action` is given `github_token: ${{ github.token }}`** (read-only in that
   job) rather than the Claude GitHub App, so no app installation is needed and the model
   cannot acquire more than the job has.
+- **The values table also runs the resolver (Student Life).** PR #6 passed the
+  allowlist, the suite and the values table, then failed live twice: first because the
+  parser trusted the first `<h2>` (the sanitised fixture has no chrome headings; the
+  live page does), then because the resolver called the parsed CAPS drop-ins ambiguous.
+  `ambiguous` is not a routable code (§2), so that second failure was silent in
+  Telegram. `autofix-values-table.mjs` now feeds Student Life evidence through
+  `buildStudentServicesAttempt`, so the model's reproduction step and the PR body see
+  the same rejection the scrape would. A reviewer should still ask: does the fixture
+  look like the live page, chrome included?
+- **Same-day retries get a distinct fixture name** (`<fixture>-<date>-<hash6>.html`)
+  when the plain name is already committed; otherwise the trusted-side fixture writer
+  overwrites the earlier PR's fixture and the check rightly rejects the patch.
 
 ## 4. The prompt
 
