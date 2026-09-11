@@ -185,6 +185,12 @@ fails if any other job ever references it, or if generate gains a write permissi
 - **The Library scraper is Python**, so the values table for a `scrape.py` fix is a
   pointer to the `tests/test_scrape.py` run rather than a rendered table; the reviewer
   reads the fixture test's assertions instead.
+- **generate and propose check out current `main`, not the scrape's commit.** The
+  plan said "checkout at the scrape's commit"; the first dry run showed why that is
+  wrong in practice: the scrape ran on a commit that predated the autofix tooling, so
+  the tooling itself was missing. Building on `main` also means a fix that has already
+  landed is seen rather than re-derived. The manifest still records the scrape's commit
+  for the record.
 - **`claude-code-action` is given `github_token: ${{ github.token }}`** (read-only in that
   job) rather than the Claude GitHub App, so no app installation is needed and the model
   cannot acquire more than the job has.

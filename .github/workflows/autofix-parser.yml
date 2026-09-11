@@ -147,9 +147,11 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.triage.outputs.selected) }}
     steps:
+      # Current main, not the scrape's commit: the fix targets the parser as it is now,
+      # and the autofix tooling itself must be the latest (the scrape may predate it).
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.triage.outputs.commit || github.sha }}
+          ref: ${{ github.event.repository.default_branch }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -266,7 +268,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.triage.outputs.commit || github.sha }}
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
