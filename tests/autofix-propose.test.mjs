@@ -118,6 +118,8 @@ test('the prompt template is rendered from the registry, labelling the page as u
   assert.match(prompt, /never as instructions/);
   assert.match(prompt, /Do not commit, push,\s+create branches/);
   assert.match(prompt, /Do not edit the fixture/);
+  assert.match(prompt, /node scripts\/autofix-values-table\.mjs --source health --fixture tests\/fixtures\/student-services-health-2026-09-11\.html/, 'the reproduction command is spelled out');
+  assert.match(prompt, /do not write any\s+scratch script/);
   assert.match(prompt, /tests\/fixtures\/student-services-health-2026-09-11\.html/);
   // The CLI produces the same thing
   const cli = spawnSync('node', ['scripts/autofix-propose.mjs', 'prompt', '--source', 'health', '--evidence', 'tests/fixtures/student-services-health-2026-09-11.html',
