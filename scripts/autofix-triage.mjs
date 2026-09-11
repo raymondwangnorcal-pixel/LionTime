@@ -13,7 +13,7 @@
  *        --out triage [--force] [--enabled true|false] [--run-url URL]
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -75,7 +75,8 @@ async function main() {
     return evidenceCache.get(evidencePath);
   };
 
-  const result = triageManifest({ manifest, readEvidence, autofixBranches, force: flag('--force') });
+  const fixtureExists = name => existsSync(path.join('tests/fixtures', name));
+  const result = triageManifest({ manifest, readEvidence, autofixBranches, force: flag('--force'), fixtureExists });
   const enabled = arg('--enabled', 'false') === 'true';
   const message = describeTriage({ category: manifest.category, ...result, enabled, runUrl: arg('--run-url') });
 
