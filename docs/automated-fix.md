@@ -1,9 +1,11 @@
 # Automated parser fixes — design (v2.1)
 
-Status: build-order steps 1 and 2 are done (2026-09-11): every scrape run now uploads a
-`scrape-manifest-<category>` artifact with per-source results and the failing pages;
-the test suite is green and runs on every PR. Step 3 (`autofix-parser.yml` with triage
-and propose, generate stubbed) is next. v1 written 2026-09-10
+Status: build-order steps 1–4 are done (2026-09-11). Every scrape run uploads a
+`scrape-manifest-<category>` artifact; `autofix-parser.yml` triages it after every run
+and, once the repository variable `AUTOFIX_ENABLED` is `true`, hands parser failures to
+an isolated generate job and a trusted propose job that opens the PR. Until it is armed,
+Telegram gets "would start" messages. Step 5 (the two dry runs) is next, then step 6
+(enable). v1 written 2026-09-10
 after four parser breaks in one week (Barnard gym, Dining locations feed, Health, Mail), all caused by Columbia pages
 rolling over to Fall 2026 wording. v2 the same day, after the adversarial review in
 `docs/telegram-bot-review-codex.md` (findings R1–R17); v2.1 after the owner's answers,
@@ -154,10 +156,38 @@ manifest is the only place the per-source result actually lives.
 | Job | `permissions` | Secrets |
 | --- | --- | --- |
 | triage | `contents: read`, `actions: read`, `pull-requests: read` | none |
+| notify | none | `LIONTIME_TELEGRAM_BOT_TOKEN`, `LIONTIME_TELEGRAM_CHAT_ID` |
 | generate | `contents: read` (checkout only) | `ANTHROPIC_API_KEY` |
-| propose | `contents: write`, `pull-requests: write` | none beyond `GITHUB_TOKEN` |
+| propose | `contents: write`, `pull-requests: write` | Telegram secrets; otherwise `GITHUB_TOKEN` only |
 
 `LIBRARY_HOURS_UPDATE_SECRET` is referenced by none of them.
+
+Setup (once): add `ANTHROPIC_API_KEY` as a **repository secret** (Settings → Secrets and
+variables → Actions → Secrets) and `AUTOFIX_ENABLED` as a **repository variable** (same
+page, Variables tab). The key is read by the generate job only. `tests/autofix-workflow.test.mjs`
+fails if any other job ever references it, or if generate gains a write permission.
+
+### 3.5 As built — deviations from the design above (2026-09-11)
+
+- **Cooldown is measured on branches, not labels.** Creating labels needs `issues:
+  write`, which the propose job does not have. Instead, "one attempt per source per
+  24 h" looks at `autofix/<source>/*` branches whose tip commit is less than 24 h old,
+  and the daily ceiling counts autofix branches created today (UTC). The branch is
+  pushed *before* the test suite runs, so a page that produces a failing patch is still
+  never retried; deleting the branch is still the way to rearm.
+- **PRs opened with `GITHUB_TOKEN` do not trigger `pr-checks.yml`.** GitHub suppresses
+  workflow runs for events caused by the workflow token. The propose job runs the full
+  suite itself and only opens the PR when it is green, so the review is not blind — but
+  the PR page shows no check. When `/merge` (telegram-bot.md §4) is built, its "required
+  check on the head SHA" gate will need the PR to be opened with a fine-grained PAT
+  (`Contents: write`, `Pull requests: write`, LionTime only) stored as a repository
+  secret, so that `pr-checks.yml` runs. Not needed until then.
+- **The Library scraper is Python**, so the values table for a `scrape.py` fix is a
+  pointer to the `tests/test_scrape.py` run rather than a rendered table; the reviewer
+  reads the fixture test's assertions instead.
+- **`claude-code-action` is given `github_token: ${{ github.token }}`** (read-only in that
+  job) rather than the Claude GitHub App, so no app installation is needed and the model
+  cannot acquire more than the job has.
 
 ## 4. The prompt
 
@@ -228,15 +258,26 @@ Progress legend: ✅ done · 🔜 next · ⬜ not started.
 2. ✅ **Fix the 14 baseline failures** (DEC-0065). No quarantine list; `npm test` must be
    green before the propose job's gate means anything (R2). *(2026-09-10: done, and
    `.github/workflows/pr-checks.yml` now runs the suite on every PR and push.)*
-3. 🔜 **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
+3. ✅ **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
    run". Confirm it triggers on a green dining run with a `parse` entry and not on a
-   `navigation` one.
-4. ⬜ **Generate job** behind `AUTOFIX_ENABLED`, permissions as in §3.4.
-5. ⬜ **Dry run** via `workflow_dispatch`: revert the Fall 2026 Health parser change on a
+   `navigation` one. *(2026-09-11: `lib/autofix-triage.js` + `scripts/autofix-triage.mjs`
+   decide; `lib/autofix-propose.js` + `scripts/autofix-propose.mjs` check patches and
+   render the prompt and PR body; `scripts/autofix-values-table.mjs` renders the table;
+   `lib/autofix-sources.js` is the registry. With `AUTOFIX_ENABLED` unset the `notify`
+   job posts "would start …" and nothing else runs. The trigger check is still to be
+   observed on a real run — see step 5.)*
+4. ✅ **Generate job** behind `AUTOFIX_ENABLED`, permissions as in §3.4. *(2026-09-11:
+   `anthropics/claude-code-action@v1` with `contents: read`, `ANTHROPIC_API_KEY` only,
+   `git`/`gh`/`curl`/`wget`/installs disallowed; its only output is the working-tree diff
+   uploaded as `autofix-patch-<source>`.)*
+5. 🔜 **Dry run** via `workflow_dispatch`: revert the Fall 2026 Health parser change on a
    branch, feed the captured page, compare the PR to the hand-written fix. Then a
    second dry run with a fixture that contains an embedded instruction, to confirm the
-   allowlist and the constraint checks catch what the model may produce.
-6. ⬜ Enable.
+   allowlist and the constraint checks catch what the model may produce. *(How: set
+   `AUTOFIX_ENABLED=true`, run "Autofix parser" from the Actions tab with `run_id` set to
+   a scrape run whose manifest has a fixable entry and `force` ticked; the `--force`
+   flag bypasses dedupe/cooldown/ceiling but never the fixability rules.)*
+6. ⬜ Enable — set the repository variable `AUTOFIX_ENABLED` to `true` and leave it.
 
 Already in place from the Telegram plan that this one leans on: the two-way bot with
 `/rerun` (the "re-run after merge" nudge has somewhere to land), and the build-time
