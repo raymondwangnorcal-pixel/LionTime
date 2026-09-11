@@ -22,9 +22,11 @@ Then do exactly this, and nothing else:
    failure allows. Re-run the command above until it prints values.
 3. Add a test in `${TEST_FILE}` that parses `${EVIDENCE_PATH}` and asserts concrete
    weekdays and intervals — not merely "does not throw".
-4. Run `node --test ${TEST_FILE}`, then `npm test` once (or
-   `python -m unittest tests/test_scrape.py` for the Library scraper), and stop when
-   both pass. You have about 20 tool calls; do not spend them exploring.
+4. Run `node --test ${TEST_FILE} 2>&1 | tail -40` (or
+   `python -m unittest tests/test_scrape.py 2>&1 | tail -40` for the Library scraper)
+   and stop when it passes. Do NOT run the full `npm test` suite — a separate trusted
+   step runs it, and its output is far too long for your context. Pipe every test
+   command through `tail`. You have about 20 tool calls; do not spend them exploring.
 
 Constraints: modify only `${PARSER_FILE}` and `${TEST_FILE}`. Do not edit the fixture; it
 was written by a trusted step and is checked separately. Do not add dependencies,

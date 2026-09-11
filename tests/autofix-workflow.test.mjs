@@ -75,6 +75,9 @@ test('propose is the only job with write access and never runs the model', () =>
   assert.doesNotMatch(propose, /gh pr merge|--auto|--admin/);
   assert.match(propose, /Fail the job when nothing was proposed/);
   assert.match(propose, /Model cost: \$/, 'the outcome message carries the cost');
+  // A PR-creation failure is reported as such, not blamed on the tests
+  assert.match(propose, /pull request could not be opened: \$\{PR_ERROR/);
+  assert.match(propose, /Allow GitHub Actions to create and approve/);
 });
 
 test('the same-name workflows the trigger lists actually exist', () => {
