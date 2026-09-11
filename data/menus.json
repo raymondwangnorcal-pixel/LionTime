@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-10",
-  "scrapedAt": "2026-09-10T16:56:02.404874-04:00",
+  "scrapedAt": "2026-09-10T20:14:08.283937-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -500,7 +500,7 @@
               "name": "Dinner Service",
               "items": [
                 "Butter Chicken Burrito: Butter chicken, basmati rice, rajma kidney beans, shredded mozzarella, and cilantro chutney on a flour tortilla *gluten free option available upon request*",
-                "Chipotle Butternut Squash Burrito: Aloo gobi, basmati rice, cilantro chutney on a flour tortilla *gluten free option available upon request*"
+                "Aloo Gobi Burrito: Aloo gobi, basmati rice, cilantro chutney on a flour tortilla *gluten free option available upon request*"
               ]
             }
           ],
@@ -518,7 +518,7 @@
               "name": "Dinner Service",
               "items": [
                 "Butter Chicken Burrito: Butter chicken, basmati rice, rajma kidney beans, shredded mozzarella, and cilantro chutney on a flour tortilla *gluten free option available upon request*",
-                "Chipotle Butternut Squash Burrito: Aloo gobi, basmati rice, cilantro chutney on a flour tortilla *gluten free option available upon request*"
+                "Aloo Gobi Burrito: Aloo gobi, basmati rice, cilantro chutney on a flour tortilla *gluten free option available upon request*"
               ]
             }
           ],
@@ -781,7 +781,7 @@
                 "Rosemary Oil",
                 "Pasta",
                 "Whole Wheat Pasta",
-                "Bolognese",
+                "Tomato Lentil",
                 "Broccoli and Mushrooms",
                 "Garlic Rolls"
               ]
@@ -826,7 +826,9 @@
               "items": [
                 "Veggie Breakfast Pizza",
                 "Breakfast Pizza, Potato, Cracked Eggs",
-                "Margherita Pizza Vegan Cheese"
+                "Margherita Pizza Vegan Cheese",
+                "Cajun Lentil Stew",
+                "White Rice"
               ]
             },
             {
@@ -1046,7 +1048,10 @@
                 "2Mato's Vegan Veggie Pizza",
                 "Dried Oregano",
                 "Parmesan Cheese",
-                "Crushed Red Pepper"
+                "Crushed Red Pepper",
+                "Cajun Lentil Stew",
+                "White Rice",
+                "Roasted Asparagus"
               ]
             },
             {
