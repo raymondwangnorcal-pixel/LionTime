@@ -20,12 +20,27 @@ export async function acquireRecreationSources({
     for (const [sourceId, url] of Object.entries(RECREATION_SOURCE_URLS)) {
       const page = await browser.newPage();
       try {
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+        try {
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+        } catch (error) {
+          // A source that cannot be reached is recorded, not thrown: the other sources
+          // still run and the manifest gets a navigation/timeout entry (automated-fix.md §3).
+          const text = `${error?.name || ''} ${error?.message || ''}`;
+          pages[sourceId] = {
+            url,
+            accessDenied: true,
+            failureCode: /timeout/i.test(text) ? 'timeout' : 'navigation',
+            failureDetail: String(error?.message || 'navigation failed').split('\n')[0],
+          };
+          continue;
+        }
         await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});
         const title = await page.title();
         const html = await page.content();
-        if (/just a moment|attention required|access denied/i.test(title) || !/<main\b|<article\b/i.test(html)) {
-          pages[sourceId] = { url, accessDenied: true };
+        if (/just a moment|attention required|access denied/i.test(title)) {
+          pages[sourceId] = { url, accessDenied: true, failureCode: 'challenge', failureDetail: title, evidenceHtml: html };
+        } else if (!/<main\b|<article\b/i.test(html)) {
+          pages[sourceId] = { url, accessDenied: true, failureCode: 'missing-content', failureDetail: 'no <main> or <article> in page', evidenceHtml: html };
         } else {
           pages[sourceId] = { url, html };
           if (sourceId === 'columbiaHours') {

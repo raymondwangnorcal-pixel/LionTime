@@ -120,7 +120,40 @@ test('marks all pages as access-denied when server denies access', async () => {
   assert.ok(calls.includes('browser.close'));
 });
 
-function fakeChromium({ pages, calls }) {
+test('a source whose navigation fails is recorded with a failure code and does not abort the others', async () => {
+  const calls = [];
+  const pages = new Map([
+    ['https://perec.columbia.edu/hours-operation', '<main><h1>Hours of Operation</h1></main>'],
+    ['https://barnard.edu/lefrak-center/physical-well-being', '<main><h1>Physical Well-Being</h1></main>'],
+  ]);
+  const chromiumImpl = fakeChromium({ pages, calls, failing: new Map([
+    ['https://perec.columbia.edu/content/modified-hours-closures', Object.assign(new Error('page.goto: Timeout 1000ms exceeded.'), { name: 'TimeoutError' })],
+  ]) });
+  const result = await acquireRecreationSources({ chromiumImpl, timeoutMs: 1000, calendarsImpl: async () => activityCalendarResults() });
+  assert.equal(result.pages.columbiaHours.html, pages.get('https://perec.columbia.edu/hours-operation'));
+  assert.equal(result.pages.columbiaModifications.accessDenied, true);
+  assert.equal(result.pages.columbiaModifications.failureCode, 'timeout');
+  assert.match(result.pages.columbiaModifications.failureDetail, /Timeout 1000ms/);
+  assert.equal(result.pages.barnardFitness.accessDenied, undefined);
+  assert.ok(calls.includes('browser.close'));
+});
+
+test('a managed challenge keeps the page it saw as evidence without exposing it as html', async () => {
+  const calls = [];
+  const challenge = '<title>Just a moment...</title><main></main>';
+  const pages = new Map([
+    ['https://perec.columbia.edu/hours-operation', challenge],
+    ['https://perec.columbia.edu/content/modified-hours-closures', '<main><h1>Modified</h1></main>'],
+    ['https://barnard.edu/lefrak-center/physical-well-being', '<div>no main element</div>'],
+  ]);
+  const result = await acquireRecreationSources({ chromiumImpl: fakeChromium({ pages, calls }), timeoutMs: 1000, calendarsImpl: async () => activityCalendarResults() });
+  assert.equal(result.pages.columbiaHours.failureCode, 'challenge');
+  assert.equal(result.pages.columbiaHours.html, undefined);
+  assert.equal(result.pages.columbiaHours.evidenceHtml, challenge);
+  assert.equal(result.pages.barnardFitness.failureCode, 'missing-content');
+});
+
+function fakeChromium({ pages, calls, failing = new Map() }) {
   return {
     async launch(options) {
       calls.push(options);
@@ -128,7 +161,7 @@ function fakeChromium({ pages, calls }) {
         async newPage() {
           let currentUrl;
           return {
-            async goto(url) { currentUrl = url; },
+            async goto(url) { currentUrl = url; if (failing.has(url)) throw failing.get(url); },
             async waitForLoadState() {},
             async title() {
               const html = pages.get(currentUrl) || '';

@@ -1,7 +1,8 @@
 import { rename, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
-import { STUDENT_SERVICES_SOURCE_IDS } from '../lib/student-services-hours-catalog.js';
+import { createScrapeManifest } from '../lib/scrape-manifest.js';
+import { STUDENT_SERVICES_SOURCE_IDS, STUDENT_SERVICES_SOURCE_URLS } from '../lib/student-services-hours-catalog.js';
 import { buildStudentServicesAttempt } from '../lib/student-services-hours-resolver.js';
 import { validateStudentServicesAttemptBatch } from '../lib/student-services-hours-schema.js';
 import {
@@ -48,13 +49,48 @@ function parseFailureCode(error) {
   return /ambiguous/i.test(error?.message || '') ? 'ambiguous' : 'parse';
 }
 
+/** The raw body a parser was given, in the shape the manifest stores it. */
+function payloadEvidence(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  if (typeof payload.html === 'string') return { body: payload.html, extension: 'html' };
+  if (typeof payload.calendarHtml === 'string') return { body: payload.calendarHtml, extension: 'html' };
+  if (typeof payload.calendarText === 'string') return { body: payload.calendarText, extension: 'txt' };
+  if (typeof payload.homeHtml === 'string') return { body: payload.homeHtml, extension: 'html' };
+  if (typeof payload.text === 'string') return { body: payload.text, extension: 'txt' };
+  if (payload.data !== undefined) return { body: JSON.stringify(payload.data, null, 2), extension: 'json' };
+  return null;
+}
+
+function recordAcquisitionFailures(manifest, sources, detailFallback) {
+  const byId = new Map((sources || []).map(source => [source.sourceId, source]));
+  for (const sourceId of STUDENT_SERVICES_SOURCE_IDS) {
+    const source = byId.get(sourceId);
+    manifest.record({
+      sourceId,
+      sourceUrl: source?.sourceUrl || STUDENT_SERVICES_SOURCE_URLS[sourceId],
+      result: 'failure',
+      failureCode: source?.failureCode || 'navigation',
+      detail: source?.failureDetail || detailFallback,
+    }, source?.evidence || null);
+  }
+}
+
 export async function scrapeStudentServicesHours({
   acquireImpl = acquireStudentServicesSources,
   now = new Date(),
   outputPath = null,
   logger = console,
+  manifest = createScrapeManifest({ category: 'student-services' }),
 } = {}) {
-  const acquired = await acquireImpl({ now });
+  let acquired;
+  try {
+    acquired = await acquireImpl({ now });
+  } catch (error) {
+    // Total acquisition failure still produces a manifest (R14), then fails the run.
+    recordAcquisitionFailures(manifest, error?.sources, error?.message);
+    await writeManifestQuietly(manifest, logger);
+    throw error;
+  }
   const generated = acquired.generated instanceof Date ? acquired.generated : new Date(acquired.generated);
   if (Number.isNaN(generated.getTime())) throw new Error('Student Life acquisition timestamp is invalid');
 
@@ -62,25 +98,39 @@ export async function scrapeStudentServicesHours({
   const attempts = STUDENT_SERVICES_SOURCE_IDS.map(sourceId => {
     const source = byId.get(sourceId);
     if (!source || source.result !== 'success') {
+      const failureCode = source?.failureCode || 'unexpected';
+      manifest.record({
+        sourceId, sourceUrl: source?.sourceUrl || STUDENT_SERVICES_SOURCE_URLS[sourceId], result: 'failure',
+        failureCode, detail: source?.failureDetail || `${sourceId} was not acquired`,
+      }, source?.evidence || null);
       return failureAttempt(source || {
         sourceId,
         sourceUrl: null,
         failureCode: 'unexpected',
-      }, generated, source?.failureCode || 'unexpected');
+      }, generated, failureCode);
     }
     try {
       const evidence = PARSERS[sourceId](source.payload);
-      return buildStudentServicesAttempt({
+      const attempt = buildStudentServicesAttempt({
         sourceId,
         sourceUrl: source.sourceUrl,
         generated,
         evidence,
       });
+      manifest.record({ sourceId, sourceUrl: source.sourceUrl, result: 'success' });
+      return attempt;
     } catch (error) {
       logger.warn?.(`Student Life ${sourceId} parse failed: ${error?.message || 'unknown parse error'}`);
-      return failureAttempt(source, generated, parseFailureCode(error));
+      const failureCode = parseFailureCode(error);
+      manifest.record({
+        sourceId, sourceUrl: source.sourceUrl, result: 'failure', failureCode,
+        detail: `${sourceId} parse failed: ${error?.message || 'unknown parse error'}`,
+      }, payloadEvidence(source.payload));
+      return failureAttempt(source, generated, failureCode);
     }
   });
+  // Written before any exit decision below (R14): the old order threw first and wrote nothing.
+  await writeManifestQuietly(manifest, logger);
 
   const windowStart = easternDate(generated);
   const batch = {
@@ -101,6 +151,14 @@ export async function scrapeStudentServicesHours({
     await rename(temporaryPath, outputPath);
   }
   return batch;
+}
+
+async function writeManifestQuietly(manifest, logger) {
+  try {
+    await manifest.write();
+  } catch (error) {
+    logger.warn?.(`Student Life scrape manifest could not be written: ${error?.message || 'unknown error'}`);
+  }
 }
 
 function optionValue(argumentsList, option) {

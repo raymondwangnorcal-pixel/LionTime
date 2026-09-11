@@ -11,7 +11,8 @@ import {
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
 } from '../lib/recreation-source-parser.js';
-import { RECREATION_FACILITIES } from '../lib/recreation-hours-catalog.js';
+import { RECREATION_FACILITIES, RECREATION_SOURCE_URLS } from '../lib/recreation-hours-catalog.js';
+import { createScrapeManifest } from '../lib/scrape-manifest.js';
 import { acquireRecreationSources } from './recreation-hours-acquire.mjs';
 
 const PARSER_SOURCES = Object.freeze([
@@ -34,56 +35,112 @@ export async function runRecreationScraper({
   writeJson = writeFormattedJson,
   outputPath,
   manualOverrides = RECREATION_MANUAL_OVERRIDES,
+  manifest = createScrapeManifest({ category: 'recreation' }),
 } = {}) {
   if (typeof outputPath !== 'string' || !outputPath) throw new Error('missing --json-out path');
 
-  const acquired = await acquire();
-  const { evidence: parsedEvidence, deniedSourceIds } = parseAllSources(acquired, parsers);
-  const evidence = [...parsedEvidence, ...manualOverrides];
-  const deniedFacilities = new Set(deniedSourceIds.flatMap(id => SOURCE_PRIMARY_FACILITIES[id] || []));
-  if (!hasRequiredFacilities(evidence, deniedFacilities)) throw invalidSnapshotError('missing required facility evidence');
-
-  const snapshot = resolve({ evidence, generated: acquired.generated });
-  if (deniedFacilities.size > 0) {
-    snapshot.accessDenied = [...deniedFacilities].map(id => ({
-      id,
-      name: RECREATION_FACILITIES[id].name,
-    }));
+  let acquired;
+  try {
+    acquired = await acquire();
+  } catch (error) {
+    // Nothing came back at all (browser launch, no network). Every source is a
+    // navigation failure as far as the manifest is concerned; write it, then fail.
+    const text = `${error?.name || ''} ${error?.message || ''}`;
+    for (const [sourceId] of PARSER_SOURCES) {
+      manifest.record({
+        sourceId, sourceUrl: RECREATION_SOURCE_URLS[sourceId], result: 'failure',
+        failureCode: /timeout/i.test(text) ? 'timeout' : 'navigation', detail: error?.message,
+      });
+    }
+    await writeManifestQuietly(manifest);
+    throw error;
   }
-  const validation = validate(snapshot);
-  if (!validation.ok) throw invalidSnapshotError(validation.errors?.[0]);
 
-  await writeJson(outputPath, validation.value);
-  return validation.value;
+  try {
+    const { evidence: parsedEvidence, deniedSourceIds } = parseAllSources(acquired, parsers, manifest);
+    const evidence = [...parsedEvidence, ...manualOverrides];
+    const deniedFacilities = new Set(deniedSourceIds.flatMap(id => SOURCE_PRIMARY_FACILITIES[id] || []));
+    if (!hasRequiredFacilities(evidence, deniedFacilities)) throw invalidSnapshotError('missing required facility evidence');
+
+    const snapshot = resolve({ evidence, generated: acquired.generated });
+    if (deniedFacilities.size > 0) {
+      snapshot.accessDenied = [...deniedFacilities].map(id => ({
+        id,
+        name: RECREATION_FACILITIES[id].name,
+      }));
+    }
+    const validation = validate(snapshot);
+    if (!validation.ok) throw invalidSnapshotError(validation.errors?.[0]);
+
+    await writeJson(outputPath, validation.value);
+    return validation.value;
+  } finally {
+    // The manifest is written before the exit decision is visible to anyone (R14).
+    await writeManifestQuietly(manifest);
+  }
 }
 
-function parseAllSources(acquired, parsers) {
+async function writeManifestQuietly(manifest) {
+  try {
+    await manifest.write();
+  } catch (error) {
+    console.error(`Recreation scrape manifest could not be written: ${boundedText(error?.message)}`);
+  }
+}
+
+/**
+ * Parses every source and records each outcome in the manifest before throwing
+ * the first error, so one broken page does not hide the state of the others.
+ */
+function parseAllSources(acquired, parsers, manifest) {
   if (!acquired || !(acquired.generated instanceof Date) || !acquired.pages || typeof acquired.pages !== 'object') {
     throw invalidSnapshotError('acquisition returned incomplete data');
   }
 
   const deniedSourceIds = [];
+  let firstError = null;
   const evidence = PARSER_SOURCES.flatMap(([sourceId, parserName]) => {
     const page = acquired.pages[sourceId];
+    const sourceUrl = page?.url || RECREATION_SOURCE_URLS[sourceId];
     if (page?.accessDenied) {
       deniedSourceIds.push(sourceId);
+      manifest.record(
+        { sourceId, sourceUrl, result: 'failure', failureCode: page.failureCode || 'challenge', detail: page.failureDetail || 'access denied' },
+        typeof page.evidenceHtml === 'string' ? { body: page.evidenceHtml } : null,
+      );
       return [];
     }
     const html = page?.html;
     const parser = parsers?.[parserName];
     if (typeof html !== 'string' || typeof parser !== 'function') {
-      throw invalidSnapshotError(`missing ${sourceId} source or parser`);
+      const detail = `missing ${sourceId} source or parser`;
+      manifest.record({ sourceId, sourceUrl, result: 'failure', failureCode: 'missing-content', detail });
+      firstError ||= invalidSnapshotError(detail);
+      return [];
     }
-    const parsed = parser(html, { generated: acquired.generated });
+    let parsed;
+    try {
+      parsed = parser(html, { generated: acquired.generated });
+    } catch (error) {
+      const detail = `${sourceId} parser threw: ${error?.message || 'error'}`;
+      manifest.record({ sourceId, sourceUrl, result: 'failure', failureCode: 'parse', detail }, { body: html });
+      firstError ||= invalidSnapshotError(detail);
+      return [];
+    }
     const recognizedEmptyModifications = sourceId === 'columbiaModifications'
       && Array.isArray(parsed)
       && parsed.length === 0
       && isSafeEmptyColumbiaModificationsPage(html);
     if (!Array.isArray(parsed) || (parsed.length === 0 && !recognizedEmptyModifications)) {
-      throw invalidSnapshotError(`no usable ${sourceId} evidence`);
+      const detail = `no usable ${sourceId} evidence`;
+      manifest.record({ sourceId, sourceUrl, result: 'failure', failureCode: 'parse', detail }, { body: html });
+      firstError ||= invalidSnapshotError(detail);
+      return [];
     }
+    manifest.record({ sourceId, sourceUrl, result: 'success' });
     return parsed;
   });
+  if (firstError) throw firstError;
 
   const calendars = acquired.pages.columbiaHours?.activityCalendars;
   const calendarParser = parsers?.parseActivityCalendar;

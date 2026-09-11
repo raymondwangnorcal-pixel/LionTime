@@ -15,6 +15,7 @@ import {
   parseBarnardRenderedWeek,
 } from '../lib/barnard-dining-hours-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
+import { createScrapeManifest } from '../lib/scrape-manifest.js';
 import { DINING_SOURCE_CONTRACT } from '../lib/dining-hours-schema.js';
 import {
   DINING_SOURCE_IDS,
@@ -275,11 +276,32 @@ function assertOfficialPage(page, expectedUrl) {
 }
 
 class SourceAcquisitionError extends Error {
-  constructor(code, message) {
+  /** `evidence` is the page body the failure was judged on, kept for the scrape manifest. */
+  constructor(code, message, evidence = null) {
     super(message);
     this.name = 'SourceAcquisitionError';
     this.code = code;
+    this.evidence = evidence;
   }
+}
+
+/** Best-effort copy of what the browser is showing, for evidence on failures. */
+async function pageEvidence(page) {
+  if (typeof page?.content !== 'function') return null;
+  const html = await page.content().catch(() => null);
+  return typeof html === 'string' && html ? { body: html, extension: 'html' } : null;
+}
+
+function recordAttempt(manifest, attempt, { detail = null, evidence = null } = {}) {
+  manifest.record({
+    sourceId: attempt.sourceId,
+    sourceUrl: attempt.sourceUrl,
+    result: attempt.result,
+    failureCode: attempt.failureCode,
+    detail,
+    attemptedAt: new Date(attempt.attemptedAt),
+  }, evidence);
+  return attempt;
 }
 
 const MANAGED_CHALLENGE_GRACE_MS = 12_000;
@@ -322,7 +344,7 @@ async function navigateToSource(page, sourceUrl, timeout = 90_000) {
   const initialChallenge = initialStatus === 403 || initialStatus === 429
     || await managedChallenge(page, response);
   if (initialChallenge && await challengeRemainsAfterGrace(page, response)) {
-    throw new SourceAcquisitionError('challenge', `${sourceUrl} returned a managed security challenge`);
+    throw new SourceAcquisitionError('challenge', `${sourceUrl} returned a managed security challenge`, await pageEvidence(page));
   }
   const status = initialChallenge ? null : initialStatus;
   if (status !== null && status >= 400) {
@@ -357,9 +379,10 @@ function failureCode(error, fallback = 'unexpected') {
   return /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : fallback;
 }
 
-async function acquireLocationsAttempt(page, now) {
+async function acquireLocationsAttempt(page, now, manifest) {
   const sourceId = 'locations-feed';
   const attemptedAt = now.toISOString();
+  let raw = null;
   try {
     await navigateToSource(page, SOURCE_URL);
     try {
@@ -372,12 +395,16 @@ async function acquireLocationsAttempt(page, now) {
       throw new SourceAcquisitionError(
         /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'missing-content',
         'Dining locations payload is missing',
+        await pageEvidence(page),
       );
     }
-    const raw = await page.evaluate(() => globalThis.dining_nodes);
-    return successAttempt(sourceId, attemptedAt, buildDiningSnapshot(parseDiningNodes(raw), now));
+    raw = await page.evaluate(() => globalThis.dining_nodes);
+    const attempt = successAttempt(sourceId, attemptedAt, buildDiningSnapshot(parseDiningNodes(raw), now));
+    return recordAttempt(manifest, attempt);
   } catch (error) {
-    return failureAttempt(sourceId, attemptedAt, failureCode(error, 'parse'));
+    const attempt = failureAttempt(sourceId, attemptedAt, failureCode(error, 'parse'));
+    const evidence = error?.evidence || (typeof raw === 'string' ? { body: raw, extension: 'json' } : null);
+    return recordAttempt(manifest, attempt, { detail: error?.message, evidence });
   }
 }
 
@@ -387,36 +414,37 @@ const ARTICLE_PARSERS = Object.freeze({
   'fall-2026': parseFallArticle,
 });
 
-async function acquireArticleAttempt(page, sourceId, now) {
+async function acquireArticleAttempt(page, sourceId, now, manifest) {
   const attemptedAt = now.toISOString();
   const sourceUrl = DINING_SOURCE_CONTRACT[sourceId];
   try {
     await navigateToSource(page, sourceUrl);
     const article = page.locator('#main-article');
     if (typeof article.count === 'function' && await article.count() !== 1) {
-      throw new SourceAcquisitionError('missing-content', `${sourceId} article content is missing`);
+      throw new SourceAcquisitionError('missing-content', `${sourceId} article content is missing`, await pageEvidence(page));
     }
     const html = await article.innerHTML({ timeout: 5_000 });
     if (typeof html !== 'string' || !html.trim()) {
-      throw new SourceAcquisitionError('missing-content', `${sourceId} article content is empty`);
+      throw new SourceAcquisitionError('missing-content', `${sourceId} article content is empty`, await pageEvidence(page));
     }
     let payload;
     try {
       payload = ARTICLE_PARSERS[sourceId](html);
-    } catch {
-      throw new SourceAcquisitionError('parse', `${sourceId} article could not be parsed`);
+    } catch (error) {
+      throw new SourceAcquisitionError('parse', `${sourceId} article could not be parsed: ${error?.message || 'error'}`, { body: html, extension: 'html' });
     }
-    return successAttempt(sourceId, attemptedAt, payload);
+    return recordAttempt(manifest, successAttempt(sourceId, attemptedAt, payload));
   } catch (error) {
     const code = failureCode(error);
     if (sourceId === 'labor-day-2026' && code === 'challenge') {
-      return successAttempt(sourceId, attemptedAt, verifiedLaborDay2026Payload());
+      return recordAttempt(manifest, successAttempt(sourceId, attemptedAt, verifiedLaborDay2026Payload()),
+        { detail: 'challenge; used the verified Labor Day 2026 payload' });
     }
-    return failureAttempt(sourceId, attemptedAt, code);
+    return recordAttempt(manifest, failureAttempt(sourceId, attemptedAt, code), { detail: error?.message, evidence: error?.evidence || null });
   }
 }
 
-async function acquireCafeEastAttempt(page, now) {
+async function acquireCafeEastAttempt(page, now, manifest) {
   const sourceId = 'cafe-east';
   const attemptedAt = now.toISOString();
   const sourceUrl = DINING_SOURCE_CONTRACT[sourceId];
@@ -424,19 +452,19 @@ async function acquireCafeEastAttempt(page, now) {
     await navigateToSource(page, sourceUrl);
     const main = page.locator('main');
     if (typeof main.count === 'function' && await main.count() !== 1) {
-      throw new SourceAcquisitionError('missing-content', 'Café East main content is missing');
+      throw new SourceAcquisitionError('missing-content', 'Café East main content is missing', await pageEvidence(page));
     }
     const text = await main.innerText({ timeout: 5_000 });
     if (typeof text !== 'string' || !text.trim()) {
-      throw new SourceAcquisitionError('missing-content', 'Café East main content is empty');
+      throw new SourceAcquisitionError('missing-content', 'Café East main content is empty', await pageEvidence(page));
     }
     try {
-      return successAttempt(sourceId, attemptedAt, parseCafeEastPage(text));
-    } catch {
-      throw new SourceAcquisitionError('parse', 'Café East hours could not be parsed');
+      return recordAttempt(manifest, successAttempt(sourceId, attemptedAt, parseCafeEastPage(text)));
+    } catch (error) {
+      throw new SourceAcquisitionError('parse', `Café East hours could not be parsed: ${error?.message || 'error'}`, { body: text, extension: 'txt' });
     }
   } catch (error) {
-    return failureAttempt(sourceId, attemptedAt, failureCode(error));
+    return recordAttempt(manifest, failureAttempt(sourceId, attemptedAt, failureCode(error)), { detail: error?.message, evidence: error?.evidence || null });
   }
 }
 
@@ -527,7 +555,7 @@ async function nextBarnardWeek(page, weekStart, deadline, { optional = false } =
   return true;
 }
 
-async function acquireBarnardHoursAttempt(page, now) {
+async function acquireBarnardHoursAttempt(page, now, manifest = createScrapeManifest({ category: 'dining', dir: null })) {
   const sourceId = 'barnard-hours';
   const attemptedAt = now.toISOString();
   const sourceUrl = DINING_SOURCE_CONTRACT[sourceId];
@@ -551,35 +579,51 @@ async function acquireBarnardHoursAttempt(page, now) {
       }
     } catch {}
 
-    return successAttempt(sourceId, attemptedAt, combineBarnardDiningWeeks(weeks));
+    return recordAttempt(manifest, successAttempt(sourceId, attemptedAt, combineBarnardDiningWeeks(weeks)));
   } catch (error) {
-    return failureAttempt(sourceId, attemptedAt, failureCode(error, 'parse'));
+    const code = failureCode(error, 'parse');
+    // Parse failures keep the rendered page; navigation failures have nothing worth keeping.
+    const evidence = error?.evidence || (code === 'parse' || code === 'missing-content' ? await pageEvidence(page) : null);
+    return recordAttempt(manifest, failureAttempt(sourceId, attemptedAt, code), { detail: error?.message, evidence });
   }
 }
 
 export async function scrapeDiningHours({
   outputPath, now = new Date(), chromiumImpl, onSourceResult = () => {},
+  manifest = createScrapeManifest({ category: 'dining' }),
 } = {}) {
   if (typeof outputPath !== 'string' || !outputPath.trim()) {
     throw new Error('--json-out requires a path');
   }
   const chromium = chromiumImpl || (await import('playwright')).chromium;
-  const browser = await chromium.launch({ headless: false });
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: false });
+  } catch (error) {
+    // No browser at all: every source is unreachable. Record that, then fail.
+    for (const sourceId of DINING_SOURCE_IDS) {
+      manifest.record({ sourceId, sourceUrl: DINING_SOURCE_CONTRACT[sourceId], result: 'failure', failureCode: 'navigation', detail: error?.message });
+    }
+    await writeManifestQuietly(manifest);
+    throw error;
+  }
   try {
     const page = await browser.newPage({ timezoneId: 'America/New_York' });
-    const attempts = [await acquireLocationsAttempt(page, now)];
+    const attempts = [await acquireLocationsAttempt(page, now, manifest)];
     for (const sourceId of DINING_SOURCE_IDS.slice(1)) {
       if (sourceId === 'barnard-hours') {
         const startedAt = Date.now();
-        const attempt = await acquireBarnardHoursAttempt(page, now);
+        const attempt = await acquireBarnardHoursAttempt(page, now, manifest);
         attempts.push(attempt);
         onSourceResult({ sourceId, result: attempt.result, durationMs: Date.now() - startedAt });
       } else {
         attempts.push(sourceId === 'cafe-east'
-          ? await acquireCafeEastAttempt(page, now)
-          : await acquireArticleAttempt(page, sourceId, now));
+          ? await acquireCafeEastAttempt(page, now, manifest)
+          : await acquireArticleAttempt(page, sourceId, now, manifest));
       }
     }
+    // Every source has been recorded; write the manifest before validation or exit decisions (R14).
+    await writeManifestQuietly(manifest);
     const windowStart = easternDate(now);
     const batch = {
       schemaVersion: 3,
@@ -594,6 +638,14 @@ export async function scrapeDiningHours({
     return validation.value;
   } finally {
     await browser.close();
+  }
+}
+
+async function writeManifestQuietly(manifest) {
+  try {
+    await manifest.write();
+  } catch (error) {
+    process.stderr.write(`Dining scrape manifest could not be written: ${error?.message || 'unknown error'}\n`);
   }
 }
 

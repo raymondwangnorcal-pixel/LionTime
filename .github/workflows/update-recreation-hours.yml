@@ -39,7 +39,21 @@ jobs:
           tests/recreation-hours-scraper.test.mjs
           tests/recreation-hours-workflow.test.mjs
       - name: Scrape validated Recreation hours
+        id: scrape
+        env:
+          SCRAPE_EVIDENCE_DIR: ${{ runner.temp }}/scrape/recreation
         run: xvfb-run --auto-servernum node scripts/recreation-hours-scraper.mjs --json-out "$RUNNER_TEMP/recreation-hours.json"
+      # Evidence for the next parser fix (docs/automated-fix.md §3.1): the per-source
+      # manifest plus the raw page of any source that failed. Uploaded on every
+      # outcome, kept 14 days, never committed.
+      - name: Upload scrape manifest and evidence
+        if: ${{ always() && steps.scrape.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-manifest-recreation
+          path: ${{ runner.temp }}/scrape/recreation
+          retention-days: 14
+          if-no-files-found: warn
       - name: Format notification summary
         id: notification-summary
         env:

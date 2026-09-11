@@ -1,7 +1,9 @@
 # Automated parser fixes — design (v2.1)
 
-Status: shared groundwork done (build step, green test suite, PR check, two-way bot);
-nothing autofix-specific built yet — build order step 1 is next. v1 written 2026-09-10
+Status: build-order steps 1 and 2 are done (2026-09-11): every scrape run now uploads a
+`scrape-manifest-<category>` artifact with per-source results and the failing pages;
+the test suite is green and runs on every PR. Step 3 (`autofix-parser.yml` with triage
+and propose, generate stubbed) is next. v1 written 2026-09-10
 after four parser breaks in one week (Barnard gym, Dining locations feed, Health, Mail), all caused by Columbia pages
 rolling over to Fall 2026 wording. v2 the same day, after the adversarial review in
 `docs/telegram-bot-review-codex.md` (findings R1–R17); v2.1 after the owner's answers,
@@ -110,6 +112,25 @@ address, or a phone number, which forces the reduction to have happened. The man
 whether to exit non-zero (R14: the student-services scraper currently throws before
 writing anything on total failure — that ordering flips).
 
+As built (2026-09-11), `manifest.json` is:
+
+```json
+{ "schemaVersion": 1, "category": "student-services", "generated": "…",
+  "commit": "<GITHUB_SHA>", "runId": "<GITHUB_RUN_ID>", "runAttempt": 1,
+  "summary": { "total": 4, "succeeded": 3, "failed": 1, "fixable": ["health"] },
+  "sources": [
+    { "sourceId": "health", "sourceUrl": "https://www.health.columbia.edu/content/hours-and-locations",
+      "result": "failure", "failureCode": "parse", "detail": "health parse failed: …",
+      "attemptedAt": "…", "evidencePath": "health.html", "evidenceSha256": "…", "evidenceBytes": 48213 }
+  ] }
+```
+
+`summary.fixable` is exactly the list the triage job (§3) will read: sources whose
+`failureCode` is `parse` or `missing-content`. Evidence is kept only for failures, is
+capped at 8 MB (hash only above that), and lives beside the manifest under the file
+name in `evidencePath`. The Library manifest has eight entries: the seven libraries plus
+`barnard-holiday`, since Milstein depends on both pages.
+
 ### 3.2 Why a manifest and not job status (R14)
 
 `update-dining-hours` publishes on 5/6 and exits 0. `update-student-services-hours`
@@ -193,13 +214,21 @@ never gets this far.
 
 Progress legend: ✅ done · 🔜 next · ⬜ not started.
 
-1. 🔜 **Manifest + evidence capture** in the four scrapers, written before any exit
+1. ✅ **Manifest + evidence capture** in the four scrapers, written before any exit
    decision. Useful alone: the next hand-fix starts from an artifact, not a browser
-   session.
+   session. *(2026-09-11: `lib/scrape-manifest.js` and a `ScrapeManifest` class in
+   `scrape.py`; each scraper records every source and writes `manifest.json` plus
+   `<sourceId>.<html|json|txt>` for failures into `$SCRAPE_EVIDENCE_DIR`; the four
+   workflows set that to `$RUNNER_TEMP/scrape/<category>` and upload it as
+   `scrape-manifest-<category>` with `retention-days: 14`, `if: always()`. Acquisition
+   errors that used to abort a whole run — Recreation navigation, Student Life
+   all-failed — are now recorded per source first. Tests: `tests/scrape-manifest.test.mjs`,
+   `tests/scrape-manifest-workflow.test.mjs`, plus manifest cases in each scraper's
+   tests and `tests/test_scrape.py`.)*
 2. ✅ **Fix the 14 baseline failures** (DEC-0065). No quarantine list; `npm test` must be
    green before the propose job's gate means anything (R2). *(2026-09-10: done, and
    `.github/workflows/pr-checks.yml` now runs the suite on every PR and push.)*
-3. ⬜ **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
+3. 🔜 **`autofix-parser.yml`** with triage + propose and the generate job stubbed to "would
    run". Confirm it triggers on a green dining run with a `parse` entry and not on a
    `navigation` one.
 4. ⬜ **Generate job** behind `AUTOFIX_ENABLED`, permissions as in §3.4.

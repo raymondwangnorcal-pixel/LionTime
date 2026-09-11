@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import sys
 import tempfile
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Optional
 from zoneinfo import ZoneInfo
@@ -50,6 +52,118 @@ EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman", "business"}
 EMBEDDED_FALLBACK_REASON = "unapproved-overnight-hours"
 LEHMAN_MERIDIEM_ANOMALY = {"open": "21:00", "close": "17:00"}
 LEHMAN_CORRECTED_HOURS = {"open": "09:00", "close": "17:00"}
+
+MANIFEST_SCHEMA_VERSION = 1
+FIXABLE_FAILURE_CODES = ("parse", "missing-content")
+MAX_DETAIL_LENGTH = 400
+MAX_EVIDENCE_BYTES = 8 * 1024 * 1024
+
+
+class ScrapeManifest:
+    """Per-source outcomes plus the raw page for failures (docs/automated-fix.md §3.1).
+
+    Mirrors lib/scrape-manifest.js: one entry per source, evidence kept only for
+    failures, written to SCRAPE_EVIDENCE_DIR (or an explicit directory) before the
+    scraper decides its exit code. With no directory it is in-memory only.
+    """
+
+    def __init__(self, category: str = "library", directory: Optional[Path] = None, env: Optional[dict] = None):
+        self.category = category
+        self.directory = directory
+        self.env = os.environ if env is None else env
+        self.sources: list[dict] = []
+        self._pending: list[tuple[str, bytes]] = []
+        self.written: Optional[dict] = None
+
+    @staticmethod
+    def _detail(value) -> Optional[str]:
+        if value is None:
+            return None
+        text = re.sub(r"[\r\n\t]+", " ", str(value)).strip()[:MAX_DETAIL_LENGTH]
+        return text or None
+
+    @staticmethod
+    def _stem(source_id: str) -> str:
+        return re.sub(r"-+", "-", re.sub(r"[^A-Za-z0-9_-]+", "-", str(source_id))).strip("-") or "source"
+
+    def record(self, source_id: str, result: str, *, source_url: Optional[str] = None,
+               failure_code: Optional[str] = None, detail=None, evidence: Optional[str] = None,
+               extension: str = "html") -> dict:
+        failed = result != "success"
+        item = {
+            "sourceId": str(source_id),
+            "sourceUrl": source_url,
+            "result": "failure" if failed else "success",
+            "failureCode": (failure_code or "unexpected") if failed else None,
+            "detail": self._detail(detail),
+            "attemptedAt": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            "evidencePath": None,
+            "evidenceSha256": None,
+            "evidenceBytes": None,
+        }
+        if failed and evidence:
+            data = evidence.encode("utf-8")
+            item["evidenceSha256"] = hashlib.sha256(data).hexdigest()
+            item["evidenceBytes"] = len(data)
+            if len(data) <= MAX_EVIDENCE_BYTES:
+                filename = f"{self._stem(item['sourceId'])}.{extension.lstrip('.')}"
+                item["evidencePath"] = filename
+                if self.directory is not None:
+                    self._pending.append((filename, data))
+            else:
+                item["detail"] = self._detail(f"{item['detail'] or ''} (evidence {len(data)} bytes exceeds capture limit; hash only)")
+        self.sources.append(item)
+        return item
+
+    def to_dict(self) -> dict:
+        failed = [item for item in self.sources if item["result"] == "failure"]
+        attempt = self.env.get("GITHUB_RUN_ATTEMPT")
+        return {
+            "schemaVersion": MANIFEST_SCHEMA_VERSION,
+            "category": self.category,
+            "generated": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            "commit": self.env.get("GITHUB_SHA") or None,
+            "runId": self.env.get("GITHUB_RUN_ID") or None,
+            "runAttempt": int(attempt) if attempt and attempt.isdigit() else None,
+            "summary": {
+                "total": len(self.sources),
+                "succeeded": len(self.sources) - len(failed),
+                "failed": len(failed),
+                "fixable": [item["sourceId"] for item in failed if item["failureCode"] in FIXABLE_FAILURE_CODES],
+            },
+            "sources": [dict(item) for item in self.sources],
+        }
+
+    def write(self) -> dict:
+        manifest = self.to_dict()
+        if self.directory is not None:
+            self.directory.mkdir(parents=True, exist_ok=True)
+            for filename, data in self._pending:
+                (self.directory / filename).write_bytes(data)
+            self._pending.clear()
+            (self.directory / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        self.written = manifest
+        return manifest
+
+
+def manifest_from_env() -> ScrapeManifest:
+    directory = os.environ.get("SCRAPE_EVIDENCE_DIR")
+    return ScrapeManifest("library", Path(directory) if directory else None)
+
+
+# The most recent fetch failure per slug, so scrape_library can name the reason in the
+# manifest without changing the fetcher contract (fetchers return a soup or None).
+_FETCH_FAILURES: dict[str, tuple[str, str]] = {}
+
+
+def _classify_request_error(exc: Exception) -> str:
+    if isinstance(exc, requests.Timeout):
+        return "timeout"
+    if isinstance(exc, requests.HTTPError):
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        return "challenge" if status in (403, 429) else "navigation"
+    return "navigation"
+
 
 TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$")
 RANGE_RE = re.compile(
@@ -102,7 +216,9 @@ def fetch_library_page(slug: str, date_value: Optional[str] = None) -> Optional[
         response.raise_for_status()
     except requests.RequestException as exc:
         print(f"[ERROR] Failed to fetch {slug}: {exc}", file=sys.stderr)
+        _FETCH_FAILURES[slug] = (_classify_request_error(exc), str(exc))
         return None
+    _FETCH_FAILURES.pop(slug, None)
     return BeautifulSoup(response.text, "html.parser")
 
 
@@ -112,7 +228,9 @@ def fetch_barnard_holiday_page() -> Optional[BeautifulSoup]:
         response.raise_for_status()
     except requests.RequestException as exc:
         print(f"[ERROR] Failed to fetch Barnard holiday hours: {exc}", file=sys.stderr)
+        _FETCH_FAILURES["barnard-holiday"] = (_classify_request_error(exc), str(exc))
         return None
+    _FETCH_FAILURES.pop("barnard-holiday", None)
     return BeautifulSoup(response.text, "html.parser")
 
 
@@ -321,11 +439,26 @@ def scrape_library(
     reference_date: datetime,
     fetcher: Callable = fetch_library_page,
     holiday_fetcher: Callable = fetch_barnard_holiday_page,
+    manifest: Optional[ScrapeManifest] = None,
 ) -> dict:
-    """Fetch and parse one configured library without publishing guessed hours."""
+    """Fetch and parse one configured library without publishing guessed hours.
+
+    Every outcome — including the fallback entries that keep the payload publishable —
+    is recorded in the manifest so a silent 6/7 run is still visible (R14).
+    """
+    manifest = manifest if manifest is not None else ScrapeManifest("library")
+    source_id = definition["id"]
+    source_url = f"{BASE_URL}/{definition['slug']}"
+
+    def fail(code: str, detail: str, evidence: Optional[str] = None) -> dict:
+        manifest.record(source_id, "failure", source_url=source_url, failure_code=code, detail=detail, evidence=evidence)
+        return _fallback_entry(definition, reference_date)
+
     soup = fetcher(definition["slug"], reference_date.date().isoformat())
     if soup is None:
-        return _fallback_entry(definition, reference_date)
+        code, detail = _FETCH_FAILURES.get(definition["slug"], ("navigation", "fetch returned nothing"))
+        return fail(code, detail)
+    page_html = str(soup)
     page_text = soup.get_text(" ", strip=True).casefold()
     temporarily_closed = any(
         phrase in page_text
@@ -336,18 +469,23 @@ def scrape_library(
     except ScheduleParseError as exc:
         if not temporarily_closed:
             print(f"[ERROR] Failed to parse {definition['slug']}: {exc}", file=sys.stderr)
-            return _fallback_entry(definition, reference_date)
+            return fail("parse", f"{definition['slug']}: {exc}", page_html)
         date_hours = {}
     date_hours = _normalize_known_source_anomalies(definition["id"], date_hours)
     if definition.get("holiday_url"):
         holiday_soup = holiday_fetcher()
         if holiday_soup is None:
-            return _fallback_entry(definition, reference_date)
+            code, detail = _FETCH_FAILURES.get("barnard-holiday", ("navigation", "holiday fetch returned nothing"))
+            manifest.record("barnard-holiday", "failure", source_url=definition["holiday_url"], failure_code=code, detail=detail)
+            return fail(code, f"Barnard holiday source unavailable: {detail}")
         try:
             holiday_closures = extract_barnard_holiday_closures(holiday_soup, reference_date)
         except ScheduleParseError as exc:
             print(f"[ERROR] Failed to parse Barnard holiday hours: {exc}", file=sys.stderr)
-            return _fallback_entry(definition, reference_date)
+            manifest.record("barnard-holiday", "failure", source_url=definition["holiday_url"],
+                            failure_code="parse", detail=str(exc), evidence=str(holiday_soup))
+            return fail("parse", f"Barnard holiday hours: {exc}")
+        manifest.record("barnard-holiday", "success", source_url=definition["holiday_url"])
         date_hours = {
             date_value: None if date_value in holiday_closures else interval
             for date_value, interval in date_hours.items()
@@ -359,12 +497,15 @@ def scrape_library(
         else dates_to_weekly_schedule(date_hours, reference_date)
     )
     if not schedules:
-        return _fallback_entry(definition, reference_date)
+        return fail("missing-content", "page parsed but produced no weekly schedule", page_html)
     if (
         definition["id"] in EMBEDDED_FALLBACK_LIBRARY_IDS
         and _has_unapproved_overnight(definition["id"], schedules)
     ):
+        manifest.record(source_id, "failure", source_url=source_url, failure_code="parse",
+                        detail="unapproved overnight interval; embedded fallback schedule used", evidence=page_html)
         return _embedded_fallback_entry(definition)
+    manifest.record(source_id, "success", source_url=source_url)
     entry = {
         "id": definition["id"],
         "name": definition["name"],
@@ -382,6 +523,7 @@ def build_payload(
     reference_date: datetime,
     fetcher: Callable = fetch_library_page,
     holiday_fetcher: Callable = fetch_barnard_holiday_page,
+    manifest: Optional[ScrapeManifest] = None,
 ) -> dict:
     if reference_date.tzinfo is None:
         reference_date = reference_date.replace(tzinfo=EASTERN)
@@ -391,7 +533,7 @@ def build_payload(
         "generated": reference_date.isoformat(timespec="seconds"),
         "generatedDisplay": reference_date.strftime("%B %-d, %Y at %-I:%M %p"),
         "libraries": [
-            scrape_library(item, reference_date, fetcher, holiday_fetcher)
+            scrape_library(item, reference_date, fetcher, holiday_fetcher, manifest=manifest)
             for item in DISPLAYED_LIBRARIES
         ],
     }
@@ -517,12 +659,23 @@ def _atomic_write(destination: Path, content: str) -> None:
     temporary.replace(destination)
 
 
-def main(argv: Optional[list[str]] = None, builder: Callable[[datetime], dict] = build_payload) -> int:
+def main(argv: Optional[list[str]] = None, builder: Optional[Callable[[datetime], dict]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="print generated data.js")
     parser.add_argument("--json-out", type=Path, help="write the validated JSON snapshot")
+    parser.add_argument("--evidence-dir", type=Path, default=None,
+                        help="write manifest.json and failing pages here (default: $SCRAPE_EVIDENCE_DIR)")
     args = parser.parse_args(argv)
-    payload = builder(datetime.now(EASTERN))
+    manifest = ScrapeManifest("library", args.evidence_dir) if args.evidence_dir else manifest_from_env()
+    if builder is None:
+        payload = build_payload(datetime.now(EASTERN), manifest=manifest)
+    else:
+        payload = builder(datetime.now(EASTERN))
+    # The manifest is written before the exit decision (R14).
+    try:
+        manifest.write()
+    except OSError as exc:
+        print(f"[WARN] scrape manifest could not be written: {exc}", file=sys.stderr)
     errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
     if errors:
         for error in errors:

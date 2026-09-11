@@ -32,7 +32,21 @@ jobs:
       - name: Test dining pipeline
         run: node --test tests/dining-hours-*.test.mjs tests/barnard-dining-hours-*.test.mjs tests/verify-live-barnard-dining.test.mjs
       - name: Collect Dining source attempts
+        id: scrape
+        env:
+          SCRAPE_EVIDENCE_DIR: ${{ runner.temp }}/scrape/dining
         run: node scripts/dining-hours-scraper.mjs --json-out "$RUNNER_TEMP/dining-hours.json"
+      # Evidence for the next parser fix (docs/automated-fix.md §3.1): the per-source
+      # manifest plus the raw page of any source that failed. Uploaded on every
+      # outcome, kept 14 days, never committed.
+      - name: Upload scrape manifest and evidence
+        if: ${{ always() && steps.scrape.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-manifest-dining
+          path: ${{ runner.temp }}/scrape/dining
+          retention-days: 14
+          if-no-files-found: warn
       - name: Format notification summary
         id: notification-summary
         env:
