@@ -288,6 +288,28 @@ venue catalog (DEC-0069) that the fixture sanitiser and alias table will read.
 One generate job per attempt: a few minutes of hosted runner and a few dollars of model
 usage. §3.3 bounds it at three per day, one per source per day.
 
+**Target (owner, 2026-09-11): under $0.50 per attempt.** The first dry run cost $2.65
+on the default Opus-tier model — 41 turns, 10 of them denied tool calls from a mis-spelled
+permission rule, each carrying the whole 159 KB captured page. What keeps an attempt
+under the target, in order of effect:
+
+1. **The trusted side writes the fixture before the model runs.** `autofix-propose.mjs
+   fixture` reduces the page to the content block (`#main-article` → `main` → `article`),
+   strips chrome, scripts, forms, images, contact details, and framework class noise in
+   stages until it fits 32 KB, and writes it as the fixture. The model reads ~30 KB
+   instead of ~160 KB and never spends output tokens writing the fixture itself.
+2. **`claude-sonnet-5`** ($2 / $10 per MTok) instead of Opus ($5 / $25).
+3. **`--max-turns 25`** with a prompt that names the one reproduction command and says
+   not to explore. Tool rules use the `Bash(prefix:*)` form so nothing is denied.
+4. **The actual cost is reported.** The action's execution log is uploaded with the
+   patch; `cost.json` carries `total_cost_usd`, turns, and denied calls, and the Telegram
+   outcome message ends with "Model cost: $x.xx (n turns)".
+
+Expected: ~$0.20–0.35 per attempt, so under $1.10 on a day that hits the three-attempt
+ceiling and $0 on the usual day with nothing to fix. If the daily cap matters more than
+per-attempt latitude, `DAILY_CEILING` in `lib/autofix-triage.js` is the one number to
+lower.
+
 ## 7b. Where the code runs (DEC-0063, DEC-0071)
 
 Merged parser code for dining executes on the self-hosted runner: the laptop today, a

@@ -166,21 +166,35 @@ jobs:
         with:
           name: autofix-triage
           path: ${{ runner.temp }}/autofix
+      # The trusted side reduces the captured page to the block the parser reads and
+      # writes it as the fixture BEFORE the model runs. The model then reads a few KB
+      # instead of the whole page, and never has to write the fixture itself — the two
+      # largest token costs of an attempt (docs/automated-fix.md §7).
+      - name: Write the sanitised fixture from the captured page
+        id: fixture
+        env:
+          SOURCE_ID: ${{ matrix.sourceId }}
+          EVIDENCE_PATH: ${{ matrix.evidencePath }}
+          FIXTURE_NAME: ${{ matrix.fixtureName }}
+          SOURCE_URL: ${{ matrix.sourceUrl }}
+        run: |
+          set -euo pipefail
+          node scripts/autofix-propose.mjs fixture --source "$SOURCE_ID" \
+            --evidence "$RUNNER_TEMP/autofix/evidence/$EVIDENCE_PATH" \
+            --url "$SOURCE_URL" --date "$(date -u +%Y-%m-%d)" \
+            --out "tests/fixtures/$FIXTURE_NAME"
       - name: Render the prompt
         id: prompt
         env:
           SOURCE_ID: ${{ matrix.sourceId }}
           DETAIL: ${{ matrix.detail }}
           FAILURE_CODE: ${{ matrix.failureCode }}
-          EVIDENCE_PATH: ${{ matrix.evidencePath }}
           FIXTURE_NAME: ${{ matrix.fixtureName }}
           CATEGORY: ${{ matrix.category }}
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/autofix/input"
-          cp "$RUNNER_TEMP/autofix/evidence/$EVIDENCE_PATH" "$RUNNER_TEMP/autofix/input/$EVIDENCE_PATH"
           node scripts/autofix-propose.mjs prompt --source "$SOURCE_ID" \
-            --evidence "$RUNNER_TEMP/autofix/input/$EVIDENCE_PATH" \
+            --evidence "tests/fixtures/$FIXTURE_NAME" \
             --error "$FAILURE_CODE: ${DETAIL:-no detail}" \
             --workflow "update-$CATEGORY-hours" --fixture-name "$FIXTURE_NAME" > "$RUNNER_TEMP/autofix/prompt.md"
           {
@@ -198,7 +212,8 @@ jobs:
           # starting with `node`. Denied tools waste turns, so the allow list is generous
           # for local inspection and test runs and the deny list names the exits.
           claude_args: >-
-            --max-turns 60
+            --model claude-sonnet-5
+            --max-turns 25
             --allowedTools "Read,Edit,Write,MultiEdit,Glob,Grep,Bash(node:*),Bash(npm test:*),Bash(npx:*),Bash(python:*),Bash(python3:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(grep:*),Bash(sed -n:*),Bash(diff:*),Bash(mkdir:*),Bash(cp:*),Bash(echo:*),Bash(git status:*),Bash(git diff:*)"
             --disallowedTools "Bash(git push:*),Bash(git commit:*),Bash(git checkout:*),Bash(git branch:*),Bash(git remote:*),Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(npm install:*),Bash(npm i:*),Bash(npm add:*),Bash(pip:*),Bash(pip3:*),Bash(ssh:*),Bash(scp:*),WebFetch,WebSearch"
       # Both run even when the action failed (turn cap, timeout): a partial patch is
@@ -214,7 +229,19 @@ jobs:
           git status --short
           wc -c "$RUNNER_TEMP/patch/autofix.diff"
           [ -f .github/autofix/UNRESOLVED.md ] && cp .github/autofix/UNRESOLVED.md "$RUNNER_TEMP/patch/UNRESOLVED.md" || true
-          [ -f "$RUNNER_TEMP/claude-execution-output.json" ] && cp "$RUNNER_TEMP/claude-execution-output.json" "$RUNNER_TEMP/patch/execution-log.json" || true
+          if [ -f "$RUNNER_TEMP/claude-execution-output.json" ]; then
+            cp "$RUNNER_TEMP/claude-execution-output.json" "$RUNNER_TEMP/patch/execution-log.json"
+            # The action's log is an array of SDK messages; the last "result" carries cost and turns.
+            node -e '
+              const log = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+              const result = (Array.isArray(log) ? log : [log]).filter(m => m && m.type === "result").pop() || {};
+              require("fs").writeFileSync(process.argv[2], JSON.stringify({
+                costUsd: result.total_cost_usd ?? null, turns: result.num_turns ?? null,
+                subtype: result.subtype ?? null, denials: result.permission_denials_count ?? null,
+              }));
+            ' "$RUNNER_TEMP/patch/execution-log.json" "$RUNNER_TEMP/patch/cost.json" || true
+          fi
+          cat "$RUNNER_TEMP/patch/cost.json" 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -340,12 +367,16 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
         run: |
+          cost=""
+          if [ -f "$RUNNER_TEMP/patch/cost.json" ]; then
+            cost=$(node -p 'const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); c.costUsd == null ? "" : ` Model cost: $${c.costUsd.toFixed(2)} (${c.turns} turns${c.denials ? ", " + c.denials + " denied tool calls" : ""}).`' "$RUNNER_TEMP/patch/cost.json" 2>/dev/null || true)
+          fi
           if [ -n "$PR_URL" ]; then
-            message="Autofix for $SOURCE_ID is ready to review: $PR_URL"$'\n'"Read the values table, then the diff. Merge on GitHub; then /rerun the scrape."
+            message="Autofix for $SOURCE_ID is ready to review: $PR_URL"$'\n'"Read the values table, then the diff. Merge on GitHub; then /rerun the scrape.$cost"
           elif [ "$VERDICT" = "accepted" ]; then
-            message="Autofix for $SOURCE_ID was applied on $BRANCH but the test suite failed, so no PR was opened. Delete the branch to allow another attempt. $RUN_URL"
+            message="Autofix for $SOURCE_ID was applied on $BRANCH but the test suite failed, so no PR was opened. Delete the branch to allow another attempt.$cost $RUN_URL"
           else
-            message="Autofix for $SOURCE_ID was rejected before any branch was created: ${REASON:-no reason recorded}. $RUN_URL"
+            message="Autofix for $SOURCE_ID was rejected before any branch was created: ${REASON:-no reason recorded}.$cost $RUN_URL"
           fi
           curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
             -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \

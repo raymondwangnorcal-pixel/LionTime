@@ -12,12 +12,17 @@
  *
  *   pr-body --source <id> --error <text> --evidence-url <url> --values-file <path> --patch <file>
  *           Render the pull request body: error, evidence link, values table, checklist.
+ *
+ *   fixture --source <id> --evidence <path> --url <sourceUrl> --date <YYYY-MM-DD> --out <path>
+ *           Reduce the captured page to the block the parser reads and write it as the
+ *           fixture, before the model runs. Exit 1 if it cannot be brought under 32 KB.
  */
 
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { checkPatch, parsePatch } from '../lib/autofix-propose.js';
+import { checkPatch, parsePatch, sanitiseEvidence, sanitiseTextEvidence } from '../lib/autofix-propose.js';
 import { AUTOFIX_SOURCES } from '../lib/autofix-sources.js';
 
 function arg(name, fallback = null) {
@@ -102,6 +107,25 @@ async function main() {
     }
     return;
   }
+  if (command === 'fixture') {
+    const sourceId = arg('--source');
+    const entry = source(sourceId);
+    const evidencePath = arg('--evidence');
+    const out = arg('--out');
+    if (!evidencePath || !out) throw new Error('fixture needs --evidence and --out');
+    const extension = (arg('--extension') || entry.extension || path.extname(evidencePath).slice(1) || 'html').toLowerCase();
+    const body = await readFile(evidencePath, 'utf8');
+    const options = { sourceUrl: arg('--url'), capturedAt: arg('--date', new Date().toISOString().slice(0, 10)) };
+    const result = extension === 'html' ? sanitiseEvidence({ html: body, ...options }) : sanitiseTextEvidence({ body, extension, ...options });
+    await mkdir(path.dirname(out), { recursive: true });
+    await writeFile(out, result.html);
+    process.stdout.write(`${JSON.stringify({ out, bytes: result.bytes, ok: result.ok, root: result.root, originalBytes: Buffer.byteLength(body, 'utf8') })}\n`);
+    if (!result.ok) {
+      process.stderr.write(`fixture is ${result.bytes} bytes after reduction; over the 32 KB limit\n`);
+      process.exitCode = 1;
+    }
+    return;
+  }
   if (command === 'pr-body') {
     const sourceId = arg('--source');
     const entry = source(sourceId);
@@ -114,7 +138,7 @@ async function main() {
     }));
     return;
   }
-  throw new Error('usage: autofix-propose.mjs <prompt|check|pr-body> …');
+  throw new Error('usage: autofix-propose.mjs <prompt|check|pr-body|fixture> …');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
