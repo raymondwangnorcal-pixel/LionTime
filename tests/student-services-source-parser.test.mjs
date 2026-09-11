@@ -49,6 +49,32 @@ test('parses the live Drupal text shapes without relying on fixture data attribu
   assert.ok(healthEvidence.some(item => item.targetId === 'student-insurance' && item.type === 'walk-in'));
 });
 
+test('parses the Drupal definition-list Health page shape', () => {
+  const evidence = parseHealthSource(fixture('student-services-health-2026-09-11.html'));
+  assert.deepEqual([...new Set(evidence.map(item => item.targetId))].sort(), [
+    'alice-health', 'caps', 'disability', 'immunization', 'medical', 'student-insurance', 'svr',
+  ]);
+  const alice = evidence.find(item => item.targetId === 'alice-health' && item.type === 'office-hours'
+    && item.weekdays.includes(1));
+  assert.deepEqual(alice.weekdays, [1, 2, 3, 4]);
+  assert.deepEqual(alice.intervals, [['09:00', '18:00']]);
+  const aliceFriday = evidence.find(item => item.targetId === 'alice-health' && item.weekdays.includes(5)
+    && item.type === 'office-hours');
+  assert.deepEqual(aliceFriday.intervals, [['09:00', '17:00']]);
+  const capsPhone = evidence.find(item => item.targetId === 'caps' && item.type === 'phone-support');
+  assert.deepEqual(capsPhone.weekdays, [0, 1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(capsPhone.intervals, [['00:00', '24:00']]);
+  const medicalWeekend = evidence.find(item => item.targetId === 'medical' && item.status === 'Closed');
+  assert.deepEqual(medicalWeekend.weekdays, [0, 6]);
+  const insuranceMonday = evidence.find(item => item.targetId === 'student-insurance' && item.type === 'walk-in'
+    && item.weekdays.includes(1));
+  assert.deepEqual(insuranceMonday.intervals, [['14:00', '16:00']]);
+  const immunization = evidence.find(item => item.targetId === 'immunization');
+  assert.equal(immunization.type, 'virtual-only');
+  assert.deepEqual(immunization.weekdays, [1, 2, 3, 4, 5]);
+  assert.deepEqual(immunization.intervals, [['09:00', '17:00']]);
+});
+
 test('requires the exact official Bookstore identity and seven weekdays', () => {
   const data = fixture('student-services-bookstore.json');
   assert.equal(parseBookstoreSource(data).length, 7);
