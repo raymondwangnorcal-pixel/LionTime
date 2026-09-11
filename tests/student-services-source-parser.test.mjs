@@ -49,6 +49,14 @@ test('parses the live Drupal text shapes without relying on fixture data attribu
   assert.ok(healthEvidence.some(item => item.targetId === 'student-insurance' && item.type === 'walk-in'));
 });
 
+test('Health Drupal parser ignores chrome headings that precede the schedule', () => {
+  // The live page has hidden nav/breadcrumb h2s before "Fall 2026 Operating Hours".
+  const plain = fixture('student-services-health-2026-09-11.html');
+  const withChrome = plain.replace('<main', '<header><h2>Main navigation expanded</h2></header><nav><h2>You are here:</h2></nav><main');
+  assert.notEqual(withChrome, plain);
+  assert.deepEqual(parseHealthSource(withChrome), parseHealthSource(plain));
+});
+
 test('parses the Drupal definition-list Health page shape', () => {
   const evidence = parseHealthSource(fixture('student-services-health-2026-09-11.html'));
   assert.deepEqual([...new Set(evidence.map(item => item.targetId))].sort(), [

@@ -14,6 +14,15 @@ const failed = (sourceId, failureCode, extra = {}) => ({
   sourceId, result: 'failure', failureCode, detail: `${sourceId} broke`, evidencePath: `${sourceId}.html`, evidenceSha256: HASH, ...extra,
 });
 
+test('a same-day retry gets a fixture name that does not collide with a committed one', () => {
+  const result = triageManifest({
+    now: NOW,
+    manifest: manifest([failed('health', 'parse')]),
+    fixtureExists: name => name === 'student-services-health-2026-09-11.html',
+  });
+  assert.equal(result.selected[0].fixtureName, 'student-services-health-2026-09-11-aaaaaa.html');
+});
+
 test('routes parse and missing-content failures only, and only with evidence', () => {
   const result = triageManifest({
     now: NOW,
