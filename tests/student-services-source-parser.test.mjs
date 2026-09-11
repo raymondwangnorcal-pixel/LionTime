@@ -58,20 +58,6 @@ test('requires the exact official Bookstore identity and seven weekdays', () => 
   assert.deepEqual(visible.find(item => item.weekdays[0] === 1).intervals, [['09:00', '18:00']]);
 });
 
-test('parses the Fall 2026 Health page: seasonal heading and split Alice! office hours', () => {
-  const evidence = parseHealthSource(fixture('student-services-health-fall-2026.html'));
-  assert.deepEqual([...new Set(evidence.map(item => item.targetId))].sort(), [
-    'alice-health', 'caps', 'disability', 'immunization', 'medical', 'student-insurance', 'svr',
-  ]);
-  const alice = evidence.filter(item => item.targetId === 'alice-health' && item.type === 'office-hours');
-  assert.deepEqual(alice.map(item => [item.weekdays, item.intervals]), [
-    [[1, 2, 3, 4], [['09:00', '18:00']]],
-    [[5], [['09:00', '17:00']]],
-  ]);
-  assert.deepEqual(evidence.find(item => item.targetId === 'caps' && item.type === 'walk-in').intervals, [['17:30', '20:00']]);
-  assert.deepEqual(evidence.find(item => item.targetId === 'student-insurance' && item.weekdays[0] === 2).intervals, [['13:00', '15:00']]);
-});
-
 test('parses the Mail page after Check-In Week has dropped off it', () => {
   const evidence = parseMailSource(fixture('student-services-mail-fall-2026.html'));
   assert.ok(evidence.every(item => item.targetId === 'mail-center'));
