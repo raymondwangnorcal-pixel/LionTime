@@ -1,0 +1,9 @@
+{
+  "$comment": "Dated reminders sent to the LionHour Telegram chat by .github/workflows/reminders.yml at ~9 AM ET on the day. Dates are America/New_York. Delete an entry once it has served its purpose.",
+  "reminders": [
+    {
+      "date": "2026-09-24",
+      "text": "Telegram bot plan — the two-week observation period (docs/telegram-bot.md §7 step 3) ends today.\n\nTo implement next, in order:\n1. v2 /merge (§4) — prerequisites: pr-checks.yml ✓ exists; bind Confirm to the PR head SHA; refuse unless a completed, successful check exists on that SHA; require an approving review on autofix PRs. Autofix PRs must then be opened with a fine-grained PAT (Contents + Pull requests: write, LionTime only) so pr-checks runs on them.\n2. v2 overrides, closures only (§5): registry → adapters, Library first → freshness contract → commands.\n3. v3 natural language (§6).\n\nAlso check: autofix cost lines over the past two weeks stayed under $0.50/run (levers: DAILY_CEILING, --max-turns); and the old NewsAgent bot token still needs revoking in @BotFather."
+    }
+  ]
+}

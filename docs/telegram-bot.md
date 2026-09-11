@@ -278,6 +278,9 @@ Only after v2 has run for a while. Constraints carried from the review:
 3. ⏸ **Stop.** Use it for two weeks (from 2026-09-10 → revisit ~2026-09-24). The
    `.github/workflows/pr-checks.yml` part is ✅ already done: it installs Chromium and runs
    `npm test` on `pull_request` and `push`.
+   *A Telegram reminder for 2026-09-24 listing the next steps is scheduled in
+   `.github/reminders.json` (sent by `reminders.yml` at ~9 AM ET; entries are dated and
+   deleted once served).*
 4. ⬜ v2 `/merge` once §4's four prerequisites are true.
 5. ⬜ v2 overrides: registry → adapters (one category at a time, Library first) → freshness
    contract → commands.
