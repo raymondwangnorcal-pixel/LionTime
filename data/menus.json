@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-11",
-  "scrapedAt": "2026-09-11T07:30:24.125571-04:00",
+  "scrapedAt": "2026-09-11T12:34:24.292253-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -634,9 +634,12 @@
             {
               "name": "500 Degrees",
               "items": [
+                "Sliced Tofu",
+                "White Rice",
+                "Green Beans",
                 "Cheese Pizza",
                 "Grilled Veggie Pizza",
-                "2Mato's Vegan Veggie Pizza",
+                "PAOW Pepperoni Style Pizza, Vegan Cheese",
                 "Dried Oregano",
                 "Parmesan Cheese",
                 "Crushed Red Pepper"
@@ -649,7 +652,8 @@
                 "Vegetable Fried Rice",
                 "Stir Fry Marinated Tofu",
                 "Gingered Snow Peas",
-                "Vegetable Spring Roll"
+                "Vegetable Spring Roll",
+                "Baked Fish"
               ]
             },
             {
@@ -680,10 +684,11 @@
               "name": "Delicious Without",
               "items": [
                 "Herb Roasted Chicken",
-                "Garlic Thyme Garbanzo Beans",
+                "Dark Red Kidney Beans",
                 "White Rice",
                 "Brussels Sprouts",
-                "Garden Salad",
+                "Kale Salad",
+                "Quinoa & Corn Salad",
                 "Oat Milk Chia Seed Pudding",
                 "Overnight Chia and Oats"
               ]
@@ -896,14 +901,14 @@
             {
               "name": "Cold Special - Cold Express Case",
               "items": [
-                "Italian Sub: Ham, Hot Capicola, Genoa Salami, Fresh Mozz, Roasted Red Pepper, Shredded Lettuce, Tomato, Banana Peppers, Olive Oil, And Balsamic Vinegar",
-                "Italian Tofu: Baked Tofu, Vegan Mozzarella, Roasted Pepper, Shredded Lettuce, Tomato, Banana Peppers, Olive Oil, and Balsamic Vinegar"
+                "Fresh Mozzarella & Pesto: Fresh Mozzarella, Pesto, Red Onion, Arugula, Balsamic Vinegar",
+                "Vegan Mozzarella & Pesto: Vegan Mozzarella, Pesto, Red Onion, Arugula, Balsamic Vinegar"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
-                "Pulled Pork and Cabbage: Pulled Pork, Cabbage, Mozzarella, and Onions",
+                "Pulled Pork and Cabbage: Pulled Pork, Cabbage, Mozzarella, and Onions with Mayo and Ketchup",
                 "Seitan and Cabbage: Seitan, Cabbage, Vegan Mozzarella, and Onions"
               ]
             }
@@ -930,14 +935,14 @@
             {
               "name": "Cold Special - Cold Express Case",
               "items": [
-                "Italian Sub: Ham, Hot Capicola, Genoa Salami, Fresh Mozz, Roasted Red Pepper, Shredded Lettuce, Tomato, Banana Peppers, Olive Oil, And Balsamic Vinegar",
-                "Italian Tofu: Baked Tofu, Vegan Mozzarella, Roasted Pepper, Shredded Lettuce, Tomato, Banana Peppers, Olive Oil, and Balsamic Vinegar"
+                "Fresh Mozzarella & Pesto: Fresh Mozzarella, Pesto, Red Onion, Arugula, Balsamic Vinegar",
+                "Vegan Mozzarella & Pesto: Vegan Mozzarella, Pesto, Red Onion, Arugula, Balsamic Vinegar"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
-                "Pulled Pork and Cabbage: Pulled Pork, Cabbage, Mozzarella, and Onions",
+                "Pulled Pork and Cabbage: Pulled Pork, Cabbage, Mozzarella, and Onions with Mayo and Ketchup",
                 "Seitan and Cabbage: Seitan, Cabbage, Vegan Mozzarella, and Onions"
               ]
             }
@@ -1002,11 +1007,11 @@
             {
               "name": "Fresh Juiced",
               "items": [
+                "Green Detox",
+                "B Cleansed",
                 "Ruby Red Surge",
                 "Antioxidant Power",
-                "Green Detox",
-                "C Clearly Carrot Orange",
-                "B Cleansed"
+                "C Clearly Carrot Orange"
               ]
             },
             {
