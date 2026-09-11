@@ -56,7 +56,10 @@ test('generate is gated on AUTOFIX_ENABLED, holds only the model key, and cannot
   // `git push` may appear only inside the deny list, never as a step
   assert.doesNotMatch(generate.replace(/--disallowedTools "[^"]*"/, ''), /git push|gh pr create/);
   assert.match(generate, /max-parallel: 1/);
-  assert.match(generate, /ref: \$\{\{ needs\.triage\.outputs\.commit/);
+  // Both write-side jobs build on current main so the tooling is never older than the scrape.
+  assert.match(generate, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
+  assert.match(job('propose'), /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
+  assert.doesNotMatch(workflow, /needs\.triage\.outputs\.commit \|\|/);
 });
 
 test('propose is the only job with write access and never runs the model', () => {
