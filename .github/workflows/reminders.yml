@@ -1,0 +1,48 @@
+name: Send dated reminders
+
+# Reads .github/reminders.json every morning and posts anything due today to the
+# LionHour Telegram chat. Add an entry to schedule a reminder; delete it afterwards.
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 9 AM EDT / 8 AM EST
+  workflow_dispatch:
+    inputs:
+      today:
+        description: Pretend it is this date (YYYY-MM-DD) — for testing an entry
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Find reminders due today
+        id: due
+        env:
+          TODAY: ${{ inputs.today }}
+        run: |
+          if [ -n "$TODAY" ]; then
+            node scripts/reminders-due.mjs --today "$TODAY"
+          else
+            node scripts/reminders-due.mjs
+          fi
+      - name: Send to Telegram
+        if: steps.due.outputs.count != '0'
+        env:
+          MESSAGE: ${{ steps.due.outputs.message }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}"
