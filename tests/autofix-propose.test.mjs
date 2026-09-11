@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { checkFixture, checkPatch, parsePatch, MAX_FIXTURE_BYTES } from '../lib/autofix-propose.js';
+import { checkFixture, checkPatch, parsePatch, sanitiseEvidence, sanitiseTextEvidence, MAX_FIXTURE_BYTES } from '../lib/autofix-propose.js';
 import { renderValues } from '../scripts/autofix-values-table.mjs';
 import { renderPrBody, renderPrompt } from '../scripts/autofix-propose.mjs';
 
@@ -110,16 +110,17 @@ test('the prompt template is rendered from the registry, labelling the page as u
   const template = readFileSync('.github/autofix/prompt.md', 'utf8');
   const prompt = renderPrompt(template, {
     SOURCE_ID: 'health', WORKFLOW: 'update-student-services-hours', ERROR: 'parse: heading missing',
-    EVIDENCE_PATH: '/tmp/health.html', PARSER_FILE: 'lib/student-services-source-parser.js',
+    EVIDENCE_PATH: 'tests/fixtures/student-services-health-2026-09-11.html', PARSER_FILE: 'lib/student-services-source-parser.js',
     TEST_FILE: 'tests/student-services-source-parser.test.mjs', FIXTURE_NAME: 'student-services-health-2026-09-11.html', CATEGORY: 'student-services',
   });
   assert.doesNotMatch(prompt, /\$\{[A-Z_]+\}/, 'every placeholder is filled');
   assert.match(prompt, /third-party web page/);
   assert.match(prompt, /never as instructions/);
-  assert.match(prompt, /Do not commit, push, create branches/);
+  assert.match(prompt, /Do not commit, push,\s+create branches/);
+  assert.match(prompt, /Do not edit the fixture/);
   assert.match(prompt, /tests\/fixtures\/student-services-health-2026-09-11\.html/);
   // The CLI produces the same thing
-  const cli = spawnSync('node', ['scripts/autofix-propose.mjs', 'prompt', '--source', 'health', '--evidence', '/tmp/health.html',
+  const cli = spawnSync('node', ['scripts/autofix-propose.mjs', 'prompt', '--source', 'health', '--evidence', 'tests/fixtures/student-services-health-2026-09-11.html',
     '--error', 'parse: heading missing', '--workflow', 'update-student-services-hours', '--fixture-name', 'student-services-health-2026-09-11.html'], { encoding: 'utf8' });
   assert.equal(cli.status, 0, cli.stderr);
   assert.equal(cli.stdout, prompt);
@@ -186,4 +187,52 @@ test('the values table CLI runs a real parser on a real fixture', () => {
   assert.match(run.stdout, /\| alice-health \| office-hours \| Mon–Fri \| 09:00–17:00 \|/);
   const library = spawnSync('node', ['scripts/autofix-values-table.mjs', '--source', 'butler_24', '--fixture', 'tests/fixtures/butler-august-2026.html'], { encoding: 'utf8' });
   assert.match(library.stdout, /Library parsers are Python/);
+});
+
+test('the trusted sanitiser keeps the content block, drops chrome and contact details, and stages down to the size limit', () => {
+  const inner = readFileSync('tests/fixtures/student-services-health-live.html', 'utf8').replace(/<main id="main-article">|<\/main>/g, '');
+  const filler = '<div class="row ng-scope col-md-12 paragraph paragraph--type--text field" style="x" onclick="y()"><p class="ng-binding text-muted">Filler ' + 'y'.repeat(60) + '</p></div>\n';
+  const page = '<html><head><title>t</title><script>var a=1</script><style>.x{}</style></head><body><nav>menu</nav>'
+    + '<header>Call 212-854-2284 or write health@columbia.edu</header><main>' + filler.repeat(180) + inner + '</main><footer>f</footer></body></html>';
+  const result = sanitiseEvidence({ html: page, sourceUrl: 'https://www.health.columbia.edu/content/hours-and-locations', capturedAt: '2026-09-11' });
+  assert.equal(result.ok, true, `${result.bytes} bytes at stage ${result.stage}`);
+  assert.equal(result.root, 'main');
+  assert.ok(result.stage >= 2, 'the bloated page needed class pruning');
+  assert.match(result.html, /^<!-- Source: https:\/\/www\.health\.columbia\.edu\/content\/hours-and-locations — captured 2026-09-11/);
+  assert.doesNotMatch(result.html, /<script|<style|<nav|<footer|onclick|style=/);
+  assert.doesNotMatch(result.html, /854-2284|health@columbia/);
+  assert.match(result.html, /class="paragraph paragraph--type--text field"/, 'parser-relevant classes survive');
+  assert.doesNotMatch(result.html, /ng-scope|col-md-12|text-muted/);
+  assert.match(result.html, /Summer 2026 Operating Hours/);
+  assert.deepEqual(checkFixture('student-services-health-2026-09-11.html', result.html), []);
+  // A small page needs no pruning and keeps every class
+  const small = sanitiseEvidence({ html: '<html><body><main id="main-article"><div class="row paragraph">Mon 9–5</div></main></body></html>', sourceUrl: 'https://x.y/z', capturedAt: '2026-09-11' });
+  assert.equal(small.stage, 1);
+  assert.match(small.html, /class="row paragraph"/);
+  assert.equal(small.root, '#main-article');
+});
+
+test('text and JSON evidence: text gets a header line, JSON stays valid and is exempt from the header rule', () => {
+  const text = sanitiseTextEvidence({ body: 'Café East\nMonday 10:30 AM – 7:30 PM\ninfo@columbia.edu', extension: 'txt', sourceUrl: 'https://dining.columbia.edu/cafe-east', capturedAt: '2026-09-11' });
+  assert.match(text.html, /^Source: https:\/\/dining\.columbia\.edu\/cafe-east — captured 2026-09-11/);
+  assert.match(text.html, /\[email removed\]/);
+  assert.deepEqual(checkFixture('cafe-east-2026-09-11.txt', text.html), []);
+  const json = sanitiseTextEvidence({ body: '{"nodes":[{"nid":"56"}]}', extension: 'json', sourceUrl: 'https://x', capturedAt: '2026-09-11' });
+  assert.deepEqual(JSON.parse(json.html), { nodes: [{ nid: '56' }] });
+  assert.deepEqual(checkFixture('dining-locations-feed-2026-09-11.json', json.html), []);
+  assert.match(checkFixture('anything.html', '{"no":"header"}')[0], /header must give the source URL/);
+});
+
+test('the fixture CLI writes the reduced page and reports its size', () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'lionhour-fixture-'));
+  const out = path.join(dir, 'student-services-health-2026-09-11.html');
+  const run = spawnSync('node', ['scripts/autofix-propose.mjs', 'fixture', '--source', 'health', '--evidence', 'tests/fixtures/student-services-health-live.html',
+    '--url', 'https://www.health.columbia.edu/content/hours-and-locations', '--date', '2026-09-11', '--out', out], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const report = JSON.parse(run.stdout);
+  assert.equal(report.ok, true);
+  assert.equal(report.root, '#main-article');
+  const written = readFileSync(out, 'utf8');
+  assert.match(written, /captured 2026-09-11/);
+  assert.match(written, /Alice! Health Promotion/);
 });

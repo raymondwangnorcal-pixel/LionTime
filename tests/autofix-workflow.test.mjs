@@ -35,6 +35,15 @@ test('generate is gated on AUTOFIX_ENABLED, holds only the model key, and cannot
   assert.match(generate, /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/);
   assert.doesNotMatch(generate, /LIONTIME_TELEGRAM|LIBRARY_HOURS_UPDATE_SECRET|VERCEL_TOKEN|GH_TOKEN/);
   assert.match(generate, /uses: anthropics\/claude-code-action@v1\n        with:\n(?:          [^\n]*\n)*?          claude_args: >-/, 'claude_args is an input of the action, not a stray step key');
+  // Cost controls (docs §7): a mid-tier model, a tight turn cap, the fixture written by the
+  // trusted side before the model runs, and the actual cost recorded next to the patch.
+  assert.match(generate, /--model claude-sonnet-5/);
+  assert.match(generate, /--max-turns 25\b/);
+  assert.ok(generate.indexOf('Write the sanitised fixture from the captured page') < generate.indexOf('Render the prompt'));
+  assert.ok(generate.indexOf('Render the prompt') < generate.indexOf('claude-code-action'));
+  assert.match(generate, /autofix-propose\.mjs fixture --source/);
+  assert.match(generate, /--evidence "tests\/fixtures\/\$FIXTURE_NAME"/);
+  assert.match(generate, /cost\.json/);
   // Claude Code permission rules are `Tool(prefix:*)`; a bare `Bash(node *)` matches nothing.
   assert.match(generate, /--allowedTools "[^"]*Bash\(node:\*\)[^"]*Bash\(npm test:\*\)/);
   assert.doesNotMatch(generate, /Bash\([a-z]+ \*\)/, 'no space-wildcard tool rules');
@@ -62,6 +71,7 @@ test('propose is the only job with write access and never runs the model', () =>
   assert.match(propose, /node scripts\/autofix-values-table\.mjs --source/);
   assert.doesNotMatch(propose, /gh pr merge|--auto|--admin/);
   assert.match(propose, /Fail the job when nothing was proposed/);
+  assert.match(propose, /Model cost: \$/, 'the outcome message carries the cost');
 });
 
 test('the same-name workflows the trigger lists actually exist', () => {
