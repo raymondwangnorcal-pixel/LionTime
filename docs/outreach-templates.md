@@ -23,8 +23,12 @@ that remains accurate.
 
 - Use the core claim once in the first email. Store its approved evidence snapshot
   with the draft; changed or unsupported evidence requires review.
-- Include one true detail from the business's own site or a reviewed personal
-  observation. Never invent opening hours, customer behavior, or a prior visit.
+- **No per-business personalization.** Every draft is identical except the
+  business name and greeting. The generated observation line was removed on
+  2026-09-11; effort moved to prospect discovery instead. Re-adding any varying
+  sentence is a design change, tracked in
+  [outreach-personalization-v2.md](outreach-personalization-v2.md).
+- Never invent opening hours, customer behavior, or a prior visit.
 - Do not assert 10 PM traffic spikes, Sunday peaks, or a business's busiest hour
   without specific supporting evidence. Site visits do not establish foot traffic.
 - Mention sponsors only when currently active and approved for public reference.
@@ -37,52 +41,71 @@ that remains accurate.
 
 ## 3. Email structure
 
+Send every touch from `Raymond at LionHour <info@gaplesslabs.com>`. Replies go
+to the same mailbox, which the suppression checks must monitor.
+
 Aim for under 150 words in the first touch and under 80 in follow-ups, excluding
-the required footer. Use plain text, one clear ask, and an honest subject naming
-the sponsorship opportunity. Keep links minimal; the unsubscribe link is always
+the required footer. Use plain text and one clear ask. Every touch uses the same subject line,
+`{{business_name}} <> LionHour Ads`, which names the sponsorship opportunity
+honestly; do not vary it per touch. Keep links minimal; the unsubscribe link is always
 included. Every touch must identify the solicitation and carry the postal address
 and opt-out footer. Do not manufacture reply-thread prefixes on first contact.
 
-The templates below assume a verified business name, specific observation,
-reviewed weekly claim, valid postal address, and functioning unsubscribe link.
+The templates below assume a verified business name, reviewed weekly claim,
+stored student-reach figure, valid postal address, and functioning unsubscribe
+link.
 Missing required fields block draft generation. Use a verified first name only
 when available; otherwise the business-team greeting avoids guessing a person.
 
 ### Touch 1 — day 0
 
+Owner-supplied copy, adopted 2026-09-11. Two figures are bound to stored records
+rather than written into the template: see the notes below the block.
+
 ```text
-Subject: A LionHour sponsorship for {{business_name}}
+From: Raymond Wang <info@gaplesslabs.com>
+Subject: {{business_name}} <> LionHour Ads
 
-Hi {{business_name}} team,
+Hi {{greeting_name}},
 
-I'm Raymond, a Columbia student who built LionHour to help people check campus
-library and dining hours. LionHour gets 20,000 impressions per week on the site.
+I hope you're well! I'm Raymond Wang, a Sales Manager for LionHour, one of
+Columbia's most used websites, that gets over 20,000 impressions a week.
 
-{{specific_observation}}
+With the start of the semester, we're offering a limited-time discount on ad
+space at only $80 on our site. We reach over {{students_reached}} students, many
+of which are looking for restaurants around campus to try out, and we'd love to
+help you get in front of these potential customers. We're only accepting
+{{total_slots}} total businesses for partnerships{{booked_clause}} if you're
+interested in working with us. If you'd like more information or to set up a
+meeting, you can reach me anytime at info@gaplesslabs.com!
 
-I'm offering a sponsored placement for a local business. Would you like me to
-send the placement preview and monthly rate?
-
-Raymond
+Raymond Wang
 LionHour · Sponsorship inquiry
 {{postal_address}}
 No more sponsorship emails: {{unsubscribe_link}}
 ```
 
-If the trial terms and capacity are approved, replace the offer paragraph with:
+`{{greeting_name}}` is a verified first name where one exists, otherwise the
+`{{business_name}} team` form.
 
-```text
-I'm offering a two-week free trial of a sponsored placement, with no automatic
-billing. Would you like me to send the placement preview and trial details?
-```
+`{{students_reached}}` must come from a stored analytics figure with a named
+source and reporting period, the same evidence requirement as the weekly
+impressions claim. Unset means the draft does not generate. It is a distinct
+metric from site impressions and must not be derived from them.
 
-Do not offer the trial when dates or capacity are unavailable. The preview and
-trial details must exist before offering to send them.
+`{{booked_clause}}` renders as ` and {{slots_booked}} of the slots are already
+booked` only when at least one campaign or reservation record is currently
+active. With no active records the clause is omitted entirely and the sentence
+ends after `partnerships`. This is the existing capacity rule in §2: state
+bookings only from dated records.
+
+`{{total_slots}}` comes from the configured placement capacity, not the copy.
 
 ### Touch 2 — nominal day 4
 
 ```text
-Subject: LionHour sponsorship for {{business_name}}
+From: Raymond at LionHour <info@gaplesslabs.com>
+Subject: {{business_name}} <> LionHour Ads
 
 Hi {{business_name}} team,
 
@@ -104,7 +127,8 @@ human approval are required, even if the recipient has not replied.
 ### Touch 3 — nominal day 10
 
 ```text
-Subject: LionHour sponsorship for {{business_name}}
+From: Raymond at LionHour <info@gaplesslabs.com>
+Subject: {{business_name}} <> LionHour Ads
 
 Hi {{business_name}} team,
 

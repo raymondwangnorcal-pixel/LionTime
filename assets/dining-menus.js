@@ -44,6 +44,38 @@
     }
   }
 
+  /* ── Item shape ──────────────────────────────────
+     Most venues publish short item names ("Scrambled Eggs"). Food trucks and
+     sandwich counters publish "Dish: ingredients" in one string, which runs to
+     100+ characters and cannot fit the chip layout. A station containing any
+     such item renders as name + description rows instead of chips. */
+  var LONG_ITEM_CHARS = 45;
+
+  function splitItem(raw) {
+    var text = String(raw == null ? '' : raw).trim();
+    var out = { raw: text, name: text, desc: '', long: text.length > LONG_ITEM_CHARS };
+    var i = text.indexOf(':');
+    if (i > 0 && i < text.length - 1) {
+      var name = text.slice(0, i).trim();
+      var desc = text.slice(i + 1).trim();
+      if (name && desc) { out.name = name; out.desc = desc; }
+    }
+    return out;
+  }
+
+  function stationItemsHTML(items) {
+    var parsed = (items || []).map(splitItem);
+    var asList = parsed.some(function (p) { return p.long; });
+    var inner = parsed.map(function (p) {
+      if (!asList) return '<span class="menu-item">' + escHTML(p.raw) + '</span>';
+      return '<div class="menu-row">' +
+        '<span class="menu-row-name">' + escHTML(p.name) + '</span>' +
+        (p.desc ? '<span class="menu-row-desc">' + escHTML(p.desc) + '</span>' : '') +
+        '</div>';
+    }).join('');
+    return '<div class="menu-items' + (asList ? ' as-list' : '') + '">' + inner + '</div>';
+  }
+
   /* ── Data fetching ───────────────────────────────── */
   function hydrate() {
     fetch(MENU_DATA_URL)
@@ -109,9 +141,7 @@
             '<span class="station-name">' + escHTML(s.name) + '</span>' +
             '<span class="station-count">' + items.length + '</span>' +
           '</div>' +
-          '<div class="menu-items">' + items.map(function (it) {
-            return '<span class="menu-item">' + escHTML(it) + '</span>';
-          }).join('') + '</div></div>';
+          stationItemsHTML(items) + '</div>';
       }).join('') + '</div>';
     } else if (!isClosed && !meal.available) {
       body = '<div class="menu-empty">Menu not available</div>';
@@ -239,6 +269,8 @@
     toggleBarHTML:     toggleBarHTML,
     menusScreenHTML:   menusScreenHTML,
     switchView:       switchView,
+    splitItem:        splitItem,
+    stationItemsHTML: stationItemsHTML,
     get activeView()  { return activeView; },
     get menuData()    { return menuData; }
   };
