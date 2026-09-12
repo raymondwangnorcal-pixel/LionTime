@@ -911,6 +911,23 @@
     border-radius: 6px;
     padding: 0.22rem 0.55rem;
     white-space: nowrap; line-height: 1.4;
+    /* a long item without a colon can still appear: ellipsis, never clip */
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Stations whose items are "Dish: ingredients" render as rows, not chips. */
+  .menu-items.as-list { flex-direction: column; flex-wrap: nowrap; gap: 0.3rem; }
+  .menu-row {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    border-radius: 6px; padding: 0.3rem 0.6rem;
+    min-width: 0; max-width: 100%;
+  }
+  .menu-row-name {
+    display: block; font-size: 0.72rem; font-weight: 600;
+    color: var(--text); line-height: 1.35;
+  }
+  .menu-row-desc {
+    display: block; font-size: 0.68rem; color: var(--text-secondary);
+    line-height: 1.35; margin-top: 0.08rem; overflow-wrap: anywhere;
   }
   .menu-empty {
     font-size: 0.78rem; color: var(--muted);
@@ -927,6 +944,8 @@
     .menu-hall-body { padding: 0 0.85rem 0.6rem; }
     .menu-hall-hours { display: none; }
     .menu-item { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+    .menu-row-name { font-size: 0.7rem; }
+    .menu-row-desc { font-size: 0.66rem; }
   }
 </style>
 

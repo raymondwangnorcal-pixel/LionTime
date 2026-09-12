@@ -16,13 +16,13 @@ for review rather than silently changing approved copy or continuing a stale cla
 
 | Decision | Choice |
 | --- | --- |
-| Sender | Raymond's personal Gmail, SMTP + app password; verify account access before implementation |
+| Sender | `info@gaplesslabs.com`; confirm its mail provider and supported SMTP authentication before implementation |
 | Pilot | Five total messages/day maximum in week one, manually curated prospects |
 | Later volume | 20–30 total messages/day on weekdays, including follow-ups; increase only after pilot review |
 | Send window | Weekdays, 09:40–10:40 America/New_York |
 | Approval | Telegram; explicit human approval of every touch and exact draft version |
 | Scheduler | GitHub Actions with named timezone; delayed runs must respect the send window |
-| Prospects | Local businesses; start with reviewed first-party sources, automate discovery after pilot |
+| Prospects | Independent restaurants, cafes and bakeries with a verified address in Morningside Heights (W 110th–W 125th, Riverside–Morningside); no chains; other verticals and wider zones only after pilot review |
 | Email discovery | Business-owned contact pages with source provenance and manual qualification |
 | Sequence | Day 0, day 4, day 10, measured in calendar days from actual first send; weekend dates roll to Monday |
 | Pricing | Flat monthly sponsorship for pilot; CPM deferred until billable impression measurement is verified |
@@ -69,23 +69,88 @@ manual reviewed discovery -> first-party email discovery -> qualification
   -> 09:00 local draft generation -> Telegram review
   -> authenticated Vercel callback -> version-bound approval
   -> 09:40 local sender -> final eligibility checks -> atomic send claim
-  -> Gmail SMTP -> send ledger / reconciliation
+  -> sender mailbox SMTP -> send ledger / reconciliation
 ```
 
 ### 3.1 Discovery and qualification
 
-Pilot with a small, manually reviewed list of nearby cafes, restaurants,
-bookstores, gyms, salons, pharmacies, and print shops. Store business identity,
+**Target: independent restaurants in the Columbia area.** Both halves are
+qualification criteria, checked by hand during the pilot and enforced in code
+before discovery is automated.
+
+*Geography.* Primary zone is Morningside Heights: W 110th to W 125th Street,
+Riverside Drive to Morningside Drive, which is the walkable core for
+undergraduates and where the Broadway and Amsterdam commercial strips sit. The
+business must have a physical street address inside that zone, verified from the
+business's own site rather than a directory listing. Secondary zones — W 96th to
+W 110th, and the Manhattanville/West Harlem blocks around W 125th to W 135th —
+open only after the pilot review. Record the zone on the prospect so list
+composition stays auditable.
+
+*Vertical.* Restaurants first: sit-down restaurants, quick-service, cafes,
+bakeries, and delis. Bookstores, gyms, salons, pharmacies, and print shops are
+deferred to a later phase and should not be mixed into the pilot, because a
+single vertical makes the pilot's reply rate interpretable.
+
+*Exclusions.* Skip national and regional chains whose advertising is bought
+centrally; a corporate marketing inbox cannot authorize a campus sponsorship and
+should not receive sequence mail. Prefer owner-operated businesses with at most
+three locations and an identifiable local decision-maker. Skip businesses with no
+first-party website, permanently closed listings, and any address that cannot be
+confirmed as current. Delivery-platform pages and aggregator listings are not
+first-party sources.
+
+Note that a restaurant's relevance to a campus-hours audience is a hypothesis the
+pilot exists to test, not an established fact, and never a claim in an email.
+Students checking dining hall hours may or may not be deciding where to eat off
+campus; nothing in the site's data establishes it.
+
+Store business identity,
 canonical website, contact address, source URL, collection time, and qualification
-notes. Prefer a verified owner/marketing contact or relevant published role inbox;
+notes.
+Prefer a verified owner/marketing contact or relevant published role inbox;
 a named address alone is not evidence that the person handles advertising.
+
+Implemented in `scripts/discover_prospects.py` (tests in
+`tests/test_discover_prospects.py`): it seeds from OpenStreetMap via the Overpass
+API — free, keyless, and outside the Places terms questions below — bounded to the
+zone bbox, then enriches each candidate from its own site and writes
+`data/outreach/prospects.csv` sorted ready / review / excluded. It writes no
+Redis state and sends nothing; every row still needs manual qualification.
 
 For email discovery, fetch the homepage and linked contact/about pages. Respect
 robots.txt, identify the crawler, and limit requests to one per second per host.
 Bound redirects, response sizes, and timeouts; block private/local network targets
 on initial requests and redirects. No-email and uncertain matches require manual
-review. Deduplicate by business identity and normalized email before enrollment;
-shared inboxes must not receive parallel sequences from different location records.
+review.
+
+**Identity and normalization.** Deduplicate by business identity and normalized
+email before enrollment. Business identity is the pair (normalized name,
+normalized street address): lowercase, strip diacritics and punctuation, collapse
+whitespace, drop legal suffixes (llc, inc, corp, co, ltd) and a leading article,
+and expand or contract street abbreviations consistently (st/street, ave/avenue,
+w/west). Normalize email by trimming, lowercasing local and domain parts,
+converting IDN domains to punycode, and stripping plus-tags on providers that
+support them. Store both the raw and normalized forms; dedupe, suppression, and
+sequencing all key off the normalized value.
+
+Two records are the same business when the normalized street address matches and
+either the normalized name or the registrable domain matches. Anything weaker —
+same name at a different address, same domain with different names, a fuzzy name
+similarity — goes to manual review and is never auto-merged. A wrong silent merge
+loses a prospect; a wrong silent split mails someone twice, so neither is resolved
+by a similarity threshold alone.
+
+**One sequence per contact address.** The sequencing unit is the normalized email,
+not the business. The first qualified record to claim an address owns the
+sequence; other records resolving to the same address are linked to it as
+additional locations, marked blocked by shared contact, and never enrolled
+separately. This covers the common case of one owner running several restaurants
+in the zone behind a single role inbox. Treat a shared registrable domain with a
+generic role inbox (info@, hello@, contact@) as one contact. An address that has
+completed a sequence is not re-enrolled for a different location, campaign, or
+academic year; pitching a second location is a manual reply on the existing
+thread, not a new automated sequence.
 
 Do not assume Google Places results can be persisted as a prospect database.
 Before adding Places, verify the intended use, permitted fields, retention, and
@@ -103,25 +168,48 @@ before reusing the site's Redis credentials.
 
 | Record | Required information |
 | --- | --- |
-| Prospect | Business ID, normalized contact, provenance, qualification, sequence state |
+| Prospect | Business ID, normalized contact, provenance, qualification, vertical, street address, target zone, location count, sequence state |
 | Queue | Next eligible timestamp, prospect ID, touch number |
 | Draft | Immutable version, recipient, subject/body, claim snapshot, content hash, expiry |
 | Approval | Draft version/hash, approver user/chat IDs, verdict, timestamp |
 | Send attempt | Unique prospect/sequence/touch key, claimed state, attempt ID, Message-ID, outcome, timestamps |
 | Suppression | Normalized email and business scope, reason, source, timestamp |
+| Completed sequence | Normalized email, business ID, final touch sent, completion timestamp; blocks re-enrollment |
 | Claim | Exact wording, metric definition, evidence reference, reporting period, verification/review status |
 | Campaign | Creative, dates, capacity/reservations, payment/trial state, reporting definition |
 
-Define retention before rollout: expire unsent drafts and approvals after their
-send window; retain only the minimum audit data needed for operations. Retain
-minimal suppression identifiers while outreach remains active so rediscovery
-cannot re-enroll opted-out contacts. Do not let campaign or prospect deletion
-remove suppression protection.
+**Retention and eviction.** Duplicate prevention lives entirely in Redis keys, so
+a key that disappears is a safeguard that disappears silently. Configure the
+instance with a no-eviction policy; an LRU or volatile eviction policy can drop a
+send claim or a suppression entry under memory pressure and the system will then
+re-mail someone with no error anywhere. Verify the policy before launch and again
+after any plan or provider change.
+
+Retention floors, none of which may be shortened by a TTL on a key that enforces
+uniqueness:
+
+| Record | Retention |
+| --- | --- |
+| Suppression | No expiry while outreach operates |
+| Completed sequence | No expiry while outreach operates |
+| Send attempt / claim | At least 180 days, well beyond the 10-day sequence span |
+| Prospect | While the prospect remains in the pipeline |
+| Draft and approval | Expire after their send window — the only records that should |
+
+Do not let campaign or prospect deletion remove suppression or completed-sequence
+protection. The sender's preflight already refuses to send when Redis checks fail;
+extend that to confirming the eviction policy and that the suppression and ledger
+namespaces are readable. Restoring an older snapshot can resurrect a state where
+suppression has not yet been recorded, so a restore requires re-synchronizing
+replies, bounces, and opt-outs from the mailbox before sending resumes.
 
 ### 3.3 Draft generation and approval
 
 Generate from reviewed templates and verified stored fields. Use the core claim
-verbatim once its evidence record has been reviewed. Missing required fields or
+verbatim once its evidence record has been reviewed. Drafts carry no
+per-business personalization: every message is identical except the business name
+and greeting. Adding any varying sentence is a design change, deferred to
+[outreach-personalization-v2.md](outreach-personalization-v2.md). Missing required fields or
 unverified claims block the draft. Optional social proof and availability claims
 require current campaign evidence and must not be hardcoded.
 
@@ -151,8 +239,12 @@ form one transaction: a timeout or crash after possible SMTP acceptance becomes
 an uncertain attempt; a Message-ID alone does not make SMTP idempotent.
 
 Space messages 30–90 seconds apart within the window. This is pacing, not a
-promise of deliverability. Validate Gmail SMTP and IMAP access in a controlled
-mailbox test; account limits are ceilings, not a safe outreach-volume target.
+promise of deliverability. Send from `Raymond at LionHour <info@gaplesslabs.com>` and receive replies at
+`info@gaplesslabs.com`. Validate the actual provider's SMTP authentication and
+IMAP or supported mailbox API access in a controlled mailbox test. Do not assume
+Gmail hosting or app-password support. Confirm domain sender authentication
+(SPF, DKIM, and DMARC) before launch; provider limits are ceilings, not a safe
+outreach-volume target.
 
 Synchronize replies using stored Message-ID / In-Reply-To / References and mailbox
 identifiers. Parse delivery failures to identify the original recipient; uncertain
@@ -196,11 +288,13 @@ manual production runs obey the same approval and deduplication rules.
 1. Define placement, pilot price/trial terms, postal address, and evidence for
    “20,000 impressions per week on the site.” Build the slot and media kit.
 2. Build Redis state, durable suppression, unsubscribe, pause, and campaign state.
-3. Curate pilot prospects and verify first-party contact provenance by hand.
+3. Curate pilot prospects — independent Morningside Heights restaurants only —
+   and verify address, independence, and first-party contact provenance by hand.
 4. Build claim-aware templates and version-bound Telegram approval.
 5. Build send ledger, atomic claims/caps, mailbox synchronization, and reply/bounce
    handling before any real prospect send. Keep follow-up automation disabled.
-6. Exercise controlled test inboxes: edit-after-approval, duplicate callbacks,
+6. Exercise controlled test inboxes: edit-after-approval, duplicate callbacks, two locations behind one role inbox,
+   re-enrollment of a completed sequence, evicted or expired claim key,
    concurrent jobs, expired approval, opt-out after approval, failed mailbox sync,
    ambiguous SMTP outcome, reply/bounce suppression, and delayed schedules.
 7. Launch the approved pilot at at most five total messages/day. Review delivery,

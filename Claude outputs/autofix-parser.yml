@@ -1,0 +1,352 @@
+name: Autofix parser
+
+# docs/automated-fix.md §3. Runs after every scrape workflow, whatever its conclusion,
+# reads the scrape manifest that run uploaded, and — for sources whose failure is a
+# parser problem — hands the captured page to a model in an isolated job and lets a
+# trusted job turn the result into a pull request. Nothing here pushes to main.
+#
+# Arming: repository variable AUTOFIX_ENABLED == 'true'. Until then triage runs and
+# Telegram gets a "would start" message; generate and propose are skipped.
+#
+# Secrets used, by job:
+#   triage   — none (read-only GITHUB_TOKEN)
+#   notify   — LIONTIME_TELEGRAM_BOT_TOKEN, LIONTIME_TELEGRAM_CHAT_ID
+#   generate — ANTHROPIC_API_KEY only; contents: read; the model never sees a write token
+#   propose  — GITHUB_TOKEN with contents/pull-requests write; Telegram secrets; no model
+
+on:
+  workflow_run:
+    workflows:
+      - Update dining hours
+      - Update library hours
+      - Update recreation hours
+      - Update student services hours
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Scrape workflow run id whose scrape-manifest artifact to triage (dry runs, §6 step 5)
+        required: true
+        type: string
+      force:
+        description: Bypass the same-page, cooldown and daily-ceiling checks (dry runs only)
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: autofix-parser
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    if: github.repository == 'raymondwangnorcal-pixel/LionTime'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      count: ${{ steps.triage.outputs.count }}
+      selected: ${{ steps.triage.outputs.selected }}
+      message: ${{ steps.triage.outputs.message }}
+      notify: ${{ steps.triage.outputs.notify }}
+      commit: ${{ steps.triage.outputs.commit }}
+      category: ${{ steps.triage.outputs.category }}
+      source_run_id: ${{ steps.source.outputs.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            lib
+            scripts
+            package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify the scrape run
+        id: source
+        env:
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          INPUT_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          run_id="${EVENT_RUN_ID:-$INPUT_RUN_ID}"
+          if [ -z "$run_id" ]; then echo "no scrape run id" >&2; exit 1; fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+      - name: Download the scrape manifest and evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scrape-manifest-*
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/evidence
+          merge-multiple: true
+      - name: Decide which sources get a fix attempt
+        id: triage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AUTOFIX_ENABLED: ${{ vars.AUTOFIX_ENABLED }}
+          FORCE: ${{ inputs.force }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          manifest="$RUNNER_TEMP/evidence/manifest.json"
+          if [ ! -f "$manifest" ]; then
+            echo "The scrape run uploaded no manifest; nothing to triage." >&2
+            echo "count=0" >> "$GITHUB_OUTPUT"; echo "selected=[]" >> "$GITHUB_OUTPUT"; echo "notify=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          force_flag=""; [ "${FORCE:-false}" = "true" ] && force_flag="--force"
+          node scripts/autofix-triage.mjs --manifest "$manifest" --evidence-dir "$RUNNER_TEMP/evidence" \
+            --out "$RUNNER_TEMP/triage" --enabled "${AUTOFIX_ENABLED:-false}" --run-url "$RUN_URL" $force_flag
+          echo "commit=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).commit || ""' "$manifest")" >> "$GITHUB_OUTPUT"
+          echo "category=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).category' "$manifest")" >> "$GITHUB_OUTPUT"
+      - name: Keep triage result and evidence for the later jobs
+        if: steps.triage.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: autofix-triage
+          path: |
+            ${{ runner.temp }}/triage
+            ${{ runner.temp }}/evidence
+          retention-days: 14
+
+  notify:
+    needs: triage
+    if: needs.triage.outputs.notify == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Tell Telegram what triage decided
+        env:
+          MESSAGE: ${{ needs.triage.outputs.message }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}" \
+            --data-urlencode "disable_web_page_preview=true"
+
+  generate:
+    needs: triage
+    if: needs.triage.outputs.count != '0' && vars.AUTOFIX_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # R1: the model runs with a read-only token and no publish, Telegram, or PAT secret.
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include: ${{ fromJson(needs.triage.outputs.selected) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.triage.outputs.commit || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        if: matrix.category == 'library'
+        with:
+          python-version: '3.12'
+      - if: matrix.category == 'library'
+        run: pip install -r requirements.txt
+      - name: Fetch the captured page
+        uses: actions/download-artifact@v4
+        with:
+          name: autofix-triage
+          path: ${{ runner.temp }}/autofix
+      - name: Render the prompt
+        id: prompt
+        env:
+          SOURCE_ID: ${{ matrix.sourceId }}
+          DETAIL: ${{ matrix.detail }}
+          FAILURE_CODE: ${{ matrix.failureCode }}
+          EVIDENCE_PATH: ${{ matrix.evidencePath }}
+          FIXTURE_NAME: ${{ matrix.fixtureName }}
+          CATEGORY: ${{ matrix.category }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/autofix/input"
+          cp "$RUNNER_TEMP/autofix/evidence/$EVIDENCE_PATH" "$RUNNER_TEMP/autofix/input/$EVIDENCE_PATH"
+          node scripts/autofix-propose.mjs prompt --source "$SOURCE_ID" \
+            --evidence "$RUNNER_TEMP/autofix/input/$EVIDENCE_PATH" \
+            --error "$FAILURE_CODE: ${DETAIL:-no detail}" \
+            --workflow "update-$CATEGORY-hours" --fixture-name "$FIXTURE_NAME" > "$RUNNER_TEMP/autofix/prompt.md"
+          {
+            echo 'text<<PROMPT_EOF'
+            cat "$RUNNER_TEMP/autofix/prompt.md"
+            echo PROMPT_EOF
+          } >> "$GITHUB_OUTPUT"
+      - name: Let the model change the parser (no commit, no push, no network)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: ${{ steps.prompt.outputs.text }}
+          claude_args: >-
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(node *),Bash(npm test*),Bash(npx node --test*),Bash(python *),Bash(python3 *),Bash(ls *),Bash(cat *),Bash(head *),Bash(wc *)"
+            --disallowedTools "Bash(git *),Bash(gh *),Bash(curl *),Bash(wget *),Bash(npm install*),Bash(pip *),WebFetch,WebSearch"
+      - name: Capture the working-tree diff as the only output
+        id: patch
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/patch"
+          git add -A -N .
+          git diff --binary > "$RUNNER_TEMP/patch/autofix.diff"
+          git status --short
+          wc -c "$RUNNER_TEMP/patch/autofix.diff"
+          [ -f .github/autofix/UNRESOLVED.md ] && cp .github/autofix/UNRESOLVED.md "$RUNNER_TEMP/patch/UNRESOLVED.md" || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: autofix-patch-${{ matrix.sourceId }}
+          path: ${{ runner.temp }}/patch
+          retention-days: 14
+
+  propose:
+    needs: [triage, generate]
+    if: always() && needs.triage.outputs.count != '0' && vars.AUTOFIX_ENABLED == 'true' && needs.generate.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # The only job with write access, and it never runs the model.
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include: ${{ fromJson(needs.triage.outputs.selected) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.triage.outputs.commit || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Fetch the generated patch
+        id: fetch
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: autofix-patch-${{ matrix.sourceId }}
+          path: ${{ runner.temp }}/patch
+      - name: Check the patch against the allowlist and constraints
+        id: check
+        env:
+          SOURCE_ID: ${{ matrix.sourceId }}
+        run: |
+          set -uo pipefail
+          patch="$RUNNER_TEMP/patch/autofix.diff"
+          if [ ! -s "$patch" ]; then
+            echo "verdict=rejected" >> "$GITHUB_OUTPUT"
+            echo "reason=the generate job produced no patch$( [ -f "$RUNNER_TEMP/patch/UNRESOLVED.md" ] && echo ' (UNRESOLVED.md written)')" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if node scripts/autofix-propose.mjs check --patch "$patch" --source "$SOURCE_ID" > "$RUNNER_TEMP/check.json" 2> "$RUNNER_TEMP/check.err"; then
+            echo "verdict=accepted" >> "$GITHUB_OUTPUT"
+            echo "fixture=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).fixtures[0] || ""' "$RUNNER_TEMP/check.json")" >> "$GITHUB_OUTPUT"
+          else
+            echo "verdict=rejected" >> "$GITHUB_OUTPUT"
+            { echo 'reason<<REASON_EOF'; cat "$RUNNER_TEMP/check.err"; echo REASON_EOF; } >> "$GITHUB_OUTPUT"
+          fi
+      - name: Apply on the attempt branch and push it (so the same page is never retried)
+        id: branch
+        if: steps.check.outputs.verdict == 'accepted'
+        env:
+          BRANCH: ${{ matrix.branch }}
+          SOURCE_ID: ${{ matrix.sourceId }}
+        run: |
+          set -euo pipefail
+          git config user.name 'lionhour-autofix'
+          git config user.email 'autofix@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git apply --index --whitespace=nowarn "$RUNNER_TEMP/patch/autofix.diff"
+          git commit -q -m "autofix($SOURCE_ID): parser update from captured page
+
+Generated by autofix-parser.yml from the scrape manifest evidence.
+Not reviewed by a person yet; see the pull request checklist."
+          git push -u origin "$BRANCH"
+      - name: Run the whole suite on the patched tree
+        id: tests
+        if: steps.check.outputs.verdict == 'accepted'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+          npm test
+          python -m unittest tests/test_scrape.py
+      - name: Render the values table from the patched parser
+        id: values
+        if: steps.check.outputs.verdict == 'accepted' && steps.tests.outcome == 'success'
+        env:
+          SOURCE_ID: ${{ matrix.sourceId }}
+          FIXTURE: ${{ steps.check.outputs.fixture }}
+        run: |
+          node scripts/autofix-values-table.mjs --source "$SOURCE_ID" --fixture "$FIXTURE" > "$RUNNER_TEMP/values.md" || true
+          cat "$RUNNER_TEMP/values.md"
+      - name: Open the pull request
+        id: pr
+        if: steps.check.outputs.verdict == 'accepted' && steps.tests.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ matrix.branch }}
+          SOURCE_ID: ${{ matrix.sourceId }}
+          DETAIL: ${{ matrix.failureCode }}: ${{ matrix.detail }}
+          EVIDENCE_URL: https://github.com/${{ github.repository }}/actions/runs/${{ needs.triage.outputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          node scripts/autofix-propose.mjs pr-body --source "$SOURCE_ID" --error "$DETAIL" \
+            --evidence-url "$EVIDENCE_URL" --values-file "$RUNNER_TEMP/values.md" \
+            --patch "$RUNNER_TEMP/patch/autofix.diff" > "$RUNNER_TEMP/pr-body.md"
+          url=$(gh pr create --base main --head "$BRANCH" \
+            --title "autofix($SOURCE_ID): parser update from captured page" \
+            --body-file "$RUNNER_TEMP/pr-body.md")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Tell Telegram the outcome (a link to review — no merge button)
+        if: always()
+        env:
+          SOURCE_ID: ${{ matrix.sourceId }}
+          VERDICT: ${{ steps.check.outputs.verdict }}
+          REASON: ${{ steps.check.outputs.reason }}
+          TESTS: ${{ steps.tests.outcome }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          BRANCH: ${{ matrix.branch }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$PR_URL" ]; then
+            message="Autofix for $SOURCE_ID is ready to review: $PR_URL
+Read the values table, then the diff. Merge on GitHub; then /rerun the scrape."
+          elif [ "$VERDICT" = "accepted" ]; then
+            message="Autofix for $SOURCE_ID was applied on $BRANCH but the test suite failed, so no PR was opened. Delete the branch to allow another attempt. $RUN_URL"
+          else
+            message="Autofix for $SOURCE_ID was rejected before any branch was created: ${REASON:-no reason recorded}. $RUN_URL"
+          fi
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${message}" \
+            --data-urlencode "disable_web_page_preview=true"
+      - name: Fail the job when nothing was proposed
+        if: steps.check.outputs.verdict != 'accepted' || steps.tests.outcome != 'success'
+        run: exit 1
