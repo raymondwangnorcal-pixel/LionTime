@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-11",
-  "scrapedAt": "2026-09-11T17:02:02.015563-04:00",
+  "scrapedAt": "2026-09-11T20:21:53.372390-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -747,15 +747,15 @@
             {
               "name": "500 Degrees",
               "items": [
-                "Cheese Pizza",
-                "Grilled Veggie Pizza",
-                "2Mato's Vegan Veggie Pizza",
-                "Dried Oregano",
-                "Parmesan Cheese",
-                "Crushed Red Pepper",
                 "Grilled Tofu",
                 "White Rice",
-                "Steamed Green Beans"
+                "Steamed Green Beans",
+                "Cheese Pizza",
+                "Grilled Veggie Pizza",
+                "PAOW Pepperoni Style Pizza, Vegan Cheese",
+                "Dried Oregano",
+                "Parmesan Cheese",
+                "Crushed Red Pepper"
               ]
             },
             {
@@ -809,16 +809,8 @@
             {
               "name": "The Sweet Shoppe",
               "items": [
-                "Blueberry Muffin",
-                "Country Corn Muffin",
-                "Chocolate Chip Muffin",
-                "Oreo Brownie",
-                "Chocolate Chip Bread Pudding",
-                "M&M Blonde Brownies",
-                "Chocolate Brownie",
-                "Banana Iced Sheet Cake",
                 "Chocolate Cupcake",
-                "Vanilla Cupcake"
+                "Chocolate Brownie"
               ]
             },
             {
@@ -844,10 +836,10 @@
                 "Grape Tomatoes",
                 "Sliced Cucumber",
                 "Sliced Black Olives",
+                "Marinated Olives",
                 "Quinoa",
                 "Sliced Green Bell Pepper",
-                "Garbonzo Beans",
-                "Shredded Cheddar Cheese"
+                "Garbonzo Beans"
               ]
             },
             {
