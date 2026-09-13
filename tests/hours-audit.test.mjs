@@ -56,6 +56,22 @@ test('a venue unresolved across the whole window is reported, a venue merely clo
   assert.match(findings[0].detail, /no hours on any of the 14 published days/);
 });
 
+test('a dining status that admits there are no hours is not treated as an answer', () => {
+  const findings = audit('dining', {
+    generated: FRESH,
+    locations: [
+      { id: 'ferris', days: days(14, { intervals: [['07:30', '20:00']], status: null }) },
+      // "Closed" is an answer from the source; "Hours not published" is the absence of one.
+      { id: 'johnjay', days: days(14, { intervals: [], status: 'Closed' }) },
+      { id: 'smith-dining', days: days(14, { intervals: [], status: 'Hours not published' }) },
+      { id: 'mystery-cafe', days: days(14, { intervals: [], status: 'Hours not published' }) },
+    ],
+  });
+  // smith-dining is allowlisted with a reason; an unlisted venue in the same state is not.
+  assert.deepEqual(kinds(findings), ['unresolved:mystery-cafe']);
+  assert.match(EXPECTED_UNRESOLVED['dining:smith-dining'], /no operating period/);
+});
+
 test('an allowlisted venue stays quiet and carries its reason', () => {
   const findings = audit('recreation', {
     generated: FRESH,

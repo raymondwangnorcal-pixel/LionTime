@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   combineBarnardDiningWeeks,
+  normalizeIntervals,
   parseBarnardRenderedWeek,
   parseBarnardTimeRange,
 } from '../lib/barnard-dining-hours-parser.js';
@@ -22,6 +23,26 @@ test('normalizes Barnard 12-hour and 24-hour time ranges', () => {
   assert.deepEqual(parseBarnardTimeRange('08:15 - 14:45'), ['08:15', '14:45']);
   assert.throws(() => parseBarnardTimeRange('8:00a - 8:00a'), /zero-length/);
   assert.throws(() => parseBarnardTimeRange('25:00 - 26:00'), /invalid Barnard time/);
+});
+
+test('meal-period slots that touch become one interval; real breaks stay', () => {
+  // What Diana Center Cafe actually publishes: periods that end a minute before the next
+  // begins. Merging only strict overlaps left this as four ranges for a cafe that is open
+  // continuously from 11:30 to midnight.
+  assert.deepEqual(
+    normalizeIntervals(['11:30 AM - 2:59 PM', '3:00 PM - 4:59 PM', '5:00 PM - 12:00 AM']),
+    [['11:30', '00:00']],
+  );
+
+  // Diana's breakfast-to-lunch gap is thirty minutes and is not a slot boundary.
+  assert.deepEqual(
+    normalizeIntervals(['8:00 AM - 11:00 AM', '11:30 AM - 2:59 PM']),
+    [['08:00', '11:00'], ['11:30', '14:59']],
+  );
+
+  // Exactly touching also merges, and overlapping still does.
+  assert.deepEqual(normalizeIntervals(['9:00 AM - 12:00 PM', '12:00 PM - 3:00 PM']), [['09:00', '15:00']]);
+  assert.deepEqual(normalizeIntervals(['9:00 AM - 1:00 PM', '11:00 AM - 3:00 PM']), [['09:00', '15:00']]);
 });
 
 test('parses target rows across variable tables and ignores LeFrak and Kosher', () => {
