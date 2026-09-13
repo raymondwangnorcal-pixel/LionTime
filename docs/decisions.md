@@ -1409,3 +1409,19 @@
 - Supersedes: none
 - Evidence: docs/telegram-bot-review-codex.md finding R1; owner's answer on 2026-09-10.
 - Privacy waivers: none
+
+## DEC-0072 — A publish is not done until the site is serving it
+
+- Date: 2026-09-13
+- Owner: user
+- Status at record: active
+- Decision: Every hours workflow must (a) read the publish request's HTTP status and fail on anything that is not a 2xx, and (b) re-fetch the endpoint afterwards and fail unless the `generated` stamp it serves is the one the run just sent. A green publish step is no longer accepted as evidence that hours reached the site.
+- Rationale: On 2026-09-10 `lionhour.com` became the primary Vercel domain and `www.lionhour.com` began 308-redirecting to it. The four `*_API_URL` repository variables still named the www host. `curl` does not follow redirects and `--fail-with-body` does not fail on a 3xx, so every PUT stopped landing while all four workflows stayed green — for three days, across library, dining, recreation and Student Life. The scrapers were healthy throughout; nothing in the pipeline ever looked at what the site was actually serving. `0b218cd` had already fixed the same redirect for the QR stats report without anyone checking the publish URLs.
+- Scope: the publish and verification steps of `update-{library,dining,recreation,student-services}-hours.yml`; `lib/publish-verification.js`; `scripts/verify-published-snapshot.mjs`.
+- Implementation: done — `lib/publish-verification.js` with `tests/publish-verification.test.mjs`; each workflow test asserts the status-code check and the verification step.
+- Recorded against HEAD: `928136f2e6ca684ed1a64b6624797846415a66d6`
+- Supersedes: none
+- Evidence: the four snapshots frozen at 2026-09-10 15:06–15:35 ET while dining run #112 scraped Barnard successfully on 2026-09-12; `0b218cd` commit message.
+- Privacy waivers: none
+
+Note on what this does *not* cover: `scripts/verify-live-barnard-dining.mjs` checks schema and venue coverage, not freshness, and passed against the three-day-old snapshot throughout. Its `generated` comes from the Barnard source's `lastSuccessAt` rather than the batch, so it cannot use the equality check above; the generic verification is what guards it now.
