@@ -7,8 +7,8 @@ These are drafts for individual human approval, not authorization to send.
 
 **20,000 impressions per week on the site.**
 
-This is the user-supplied positioning figure. Before external use, review its
-measurement definition, source, and reporting period as required by the plan.
+Resolved 2026-09-12: the figure is reported by a third-party analytics platform.
+See the plan, section 1.
 Use impressions consistently: do not substitute people, students, unique visitors,
 or guaranteed sponsor impressions. The weekly site figure is separate from
 campaign-specific delivered impressions and clicks.
@@ -120,7 +120,8 @@ LionHour · Sponsorship inquiry
 No more sponsorship emails: {{unsubscribe_link}}
 ```
 
-Use the reporting sentence only after campaign reporting has been verified.
+Reporting is manual: the sentence promises a report the owner compiles and sends
+by hand, so only claim what the analytics platform can actually attribute.
 Set real thread headers referencing the first sent message. Suppression and fresh
 human approval are required, even if the recipient has not replied.
 
@@ -147,12 +148,27 @@ campaign or academic year. Follow the plan's weekday and actual-send spacing rul
 
 ## 4. Postal address and opt-out
 
-Choose a valid current street address, registered USPS PO box, or qualifying
-registered private mailbox under the FTC guidance. Verify specific permission and
-eligibility before using a university or registered-agent address. This document
-does not establish whether a particular Columbia address qualifies or whether
-university policy permits commercial use. Mailbox pricing remains to be checked
-when selecting a provider.
+**`{{postal_address}}` = `70 Morningside Dr, RZW2006 WBH, New York, NY 10027-7236`**
+(owner-supplied 2026-09-12). It renders on one line in every footer. Draft
+generation fails if the value is missing, as with any other required field.
+
+This is a Columbia mail address, which carries three conditions the owner has to
+settle rather than the system:
+
+1. *University policy.* Verify that Columbia permits a mail address assigned for
+   residential or student use to appear as the business address of a private
+   commercial venture. This document does not establish that it does.
+2. *Validity window.* Owner confirms the assignment runs through the end of next
+   year, which covers the pilot and the first full campaign season. A CAN-SPAM
+   address must be current when the message is sent and reachable while opt-out
+   obligations run, so re-verify before any send after that date or after a move,
+   and pause outreach if it lapses.
+3. *It is also a residence.* Every cold recipient receives the sender's home
+   address. Weigh that before the first send; a registered private mailbox costs
+   roughly $10-30/month and removes the exposure without changing anything else.
+
+Using this address never implies Columbia sponsorship or endorsement, and the
+footer must not present it as a university affiliation.
 
 Every reply, bounce, auto-response, or unsubscribe stops the automated sequence.
 Explicit opt-outs remain suppressed while outreach operates; they do not expire
