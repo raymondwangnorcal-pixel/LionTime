@@ -110,6 +110,26 @@ The workflow itself runs the focused Recreation acquisition, parser, resolver, s
 - A Dodge closure is inherited by Uris Pool and Dodge spaces; a Dodge maintenance closure is shown as `Closed for maintenance` for those children. Uris maintenance remains independent and Dodge being open never makes Uris or a room open.
 - Recreation failure affects neither Library nor Dining data or their scheduled updates.
 
+## Known source wording, and how it breaks quietly (2026-09-13)
+
+Columbia's Fall 2026 rewrite of `perec.columbia.edu/hours-operation` broke three things the
+parser keyed on, and none of them surfaced as a failure — the source reported `success`
+every run, so the manifest had nothing to route and the autofix was never offered the page:
+
+| Fall 2026 wording | Previously | Effect while unhandled |
+| --- | --- | --- |
+| `Fall Semester 2026 Facility Hours` | `Summer 2026 Facility Hours` | Seasonal heading unrecognised |
+| `Fall Semester Building Hours` | `Summer Session Building Hours` | Dodge's own table skipped; Dodge silently served the Blue Gym calendar envelope instead — visibly wrong (Sunday opened 11 AM instead of 8 AM, and every day closed 15 minutes early) |
+| `…academic semester schedule from Saturday, September 5 through Wednesday, December 23.` | `effective <Month D, YYYY> through <Month D, YYYY>` | No bounded range, so every table the parser *did* match was published as `Hours need verification` — which is what left Uris Pool unverified for the whole term |
+
+Dodge also closes at `12 AM` Sunday through Thursday, the first midnight close in this
+source; it is stored as `24:00` (`CLOSE_TIME` in `lib/recreation-hours-schema.js`).
+
+The lesson for the next rewrite: a wording change here does not fail loudly. Dodge falling
+back to a Blue Gym envelope and a venue stuck on `Hours need verification` are both
+*successful* runs. Check the published values against the official page after any Columbia
+seasonal rollover rather than waiting for an alert.
+
 ## Incident response
 
 1. Preserve the current API response and workflow job log; do not manually overwrite Redis with a partial snapshot.
