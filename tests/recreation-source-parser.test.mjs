@@ -451,6 +451,66 @@ test('rejects equal and backwards schedule intervals', () => {
   }
 });
 
+test('Fall 2026 wording: reads the building and pool tables the semester sentence bounds', async () => {
+  const html = await readFixture('recreation-columbia-hours-fall-2026.html');
+  const evidence = parseColumbiaHours(html, { generated: '2026-09-13T01:00:00.000Z' });
+
+  const dodge = find(evidence, 'dodge');
+  assert.equal(dodge.effectiveStart, '2026-09-05', 'the year comes from the "Fall Semester 2026" heading');
+  assert.equal(dodge.effectiveEnd, '2026-12-23');
+  assert.equal(dodge.priority, 3);
+  // Dodge closes at midnight Sunday through Thursday; 24:00 is how the schema spells it.
+  assert.deepEqual(dodge.weeklyIntervals, {
+    0: [['08:00', '24:00']],
+    1: [['06:00', '24:00']],
+    2: [['06:00', '24:00']],
+    3: [['06:00', '24:00']],
+    4: [['06:00', '24:00']],
+    5: [['06:00', '22:00']],
+    6: [['08:00', '22:00']],
+  });
+
+  const pool = find(evidence, 'uris-pool');
+  assert.equal(pool.effectiveStart, '2026-09-05');
+  assert.deepEqual(pool.weeklyIntervals[1], [['12:00', '14:00'], ['19:00', '21:30']]);
+  assert.deepEqual(pool.weeklyIntervals[6], [['13:00', '17:00'], ['19:00', '21:30']]);
+  assert.equal(pool.unavailableStatus, null, 'the pool publishes real times, not a verification placeholder');
+
+  assert.equal(find(evidence, 'squash-courts').unavailableStatus, 'Separate hours not published');
+});
+
+test('a semester sentence whose weekday does not match its date publishes nothing', async () => {
+  const html = (await readFixture('recreation-columbia-hours-fall-2026.html'))
+    .replace('Saturday, September 5', 'Sunday, September 5');
+  const evidence = parseColumbiaHours(html, { generated: '2026-09-13T01:00:00.000Z' });
+
+  // September 5 2026 is a Saturday. A mismatch means the sentence was misread, so the
+  // range is refused and the tables fall back to needing verification rather than
+  // publishing times against a range nobody confirmed.
+  assert.equal(find(evidence, 'dodge').unavailableStatus, 'Hours need verification');
+  assert.equal(find(evidence, 'uris-pool').unavailableStatus, 'Hours need verification');
+});
+
+test('two different semester sentences are ambiguous and publish nothing', async () => {
+  const html = (await readFixture('recreation-columbia-hours-fall-2026.html')).replace(
+    '</article>',
+    '<p>Dodge Fitness Center will operate on an academic semester schedule from Saturday, September 5 through Friday, December 18.</p></article>',
+  );
+  const evidence = parseColumbiaHours(html, { generated: '2026-09-13T01:00:00.000Z' });
+
+  assert.equal(find(evidence, 'dodge').unavailableStatus, 'Hours need verification');
+});
+
+test('a midnight close parses as the end of the day, and a midnight open still does not', async () => {
+  const withMidnightOpen = (await readFixture('recreation-columbia-hours-fall-2026.html'))
+    .replace('<td>Friday</td><td>6 AM - 10 PM</td>', '<td>Friday</td><td>12 AM - 12 AM</td>');
+  const evidence = parseColumbiaHours(withMidnightOpen, { generated: '2026-09-13T01:00:00.000Z' });
+
+  const dodge = find(evidence, 'dodge');
+  assert.deepEqual(dodge.weeklyIntervals[1], [['06:00', '24:00']]);
+  assert.equal(dodge.weeklyIntervals[5], undefined, 'a zero-length 12 AM - 12 AM row is still dropped');
+});
+
 const readFixture = name => readFile(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 
 function find(items, targetId, predicate = () => true) {
