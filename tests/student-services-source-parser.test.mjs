@@ -126,6 +126,47 @@ test('parses the Fall 2026 Health page: seasonal heading and split Alice! office
   assert.deepEqual(evidence.find(item => item.targetId === 'student-insurance' && item.weekdays[0] === 2).intervals, [['13:00', '15:00']]);
 });
 
+const RUSH_BLOCK = /<h3>Fall Rush: September 8 - 27<\/h3><p>[^<]*<\/p>\n/;
+
+test('Regular Fall Hours close the Mail Center at the weekend instead of leaving it blank', () => {
+  const evidence = parseMailSource(fixture('student-services-mail-fall-2026.html'));
+  const weekend = evidence.find(item => (
+    item.reason === 'Regular Fall Hours' && item.weekdays.includes(0) && item.weekdays.includes(6)
+  ));
+
+  // The page says "Saturday & Sunday: CLOSED" from 2026-09-28. With no record for it the
+  // weekend had no evidence at all and would have read as unverified from that date.
+  assert.ok(weekend, 'the regular period needs a weekend record');
+  assert.equal(weekend.status, 'Closed');
+  assert.deepEqual(weekend.intervals, []);
+  assert.equal(weekend.effectiveStart, '2026-09-28');
+  assert.equal(weekend.effectiveEnd, '2026-12-31');
+});
+
+test('the Mail page still parses once Fall Rush drops off it, as every past period does', () => {
+  const html = fixture('student-services-mail-fall-2026.html');
+  assert.match(html, RUSH_BLOCK, 'the fixture should still carry the block being removed');
+  const afterRush = html.replace(RUSH_BLOCK, '');
+
+  const evidence = parseMailSource(afterRush);
+  assert.ok(!evidence.some(item => item.reason === 'Fall Rush'));
+  assert.deepEqual(
+    evidence.find(item => item.reason === 'Regular Fall Hours' && item.weekdays.includes(1)).intervals,
+    [['11:00', '19:00']],
+  );
+  assert.equal(
+    evidence.find(item => item.reason === 'Regular Fall Hours' && item.weekdays.includes(6)).status,
+    'Closed',
+  );
+});
+
+test('a reworded weekend line fails loudly rather than dropping the weekend silently', () => {
+  const html = fixture('student-services-mail-fall-2026.html')
+    .replace('Friday: 11:00 AM - 6:00 PM Saturday &amp; Sunday: CLOSED', 'Friday: 11:00 AM - 6:00 PM');
+
+  assert.throws(() => parseMailSource(html), /live closure is missing: Regular Fall Hours/);
+});
+
 test('parses the Mail page after Check-In Week has dropped off it', () => {
   const evidence = parseMailSource(fixture('student-services-mail-fall-2026.html'));
   assert.ok(evidence.every(item => item.targetId === 'mail-center'));
