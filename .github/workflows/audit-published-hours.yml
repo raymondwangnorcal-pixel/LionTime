@@ -1,0 +1,68 @@
+name: Audit published hours
+
+# Every other check in this repo asks whether a job worked. This one asks whether the site
+# is serving anything good — the question that went unasked while a redirected publish URL
+# froze all five feeds for three days and a reworded Columbia page left Uris Pool blank for
+# a term, with every workflow green throughout. See lib/hours-audit.js.
+#
+# It reads only public endpoints, so it needs no secrets beyond Telegram.
+
+on:
+  schedule:
+    - cron: '7 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      max_age_hours:
+        description: Freshness budget in hours (default 24, per DEC-0069)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-published-hours
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.repository == 'raymondwangnorcal-pixel/LionTime'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      summary: ${{ steps.audit.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read every published snapshot
+        id: audit
+        env:
+          MAX_AGE_HOURS: ${{ inputs.max_age_hours }}
+        run: |
+          set -uo pipefail
+          args=(--base-url https://lionhour.com)
+          [ -n "${MAX_AGE_HOURS:-}" ] && args+=(--max-age-hours "$MAX_AGE_HOURS")
+          summary="$(node scripts/audit-published-hours.mjs "${args[@]}")"
+          status=$?
+          echo "$summary"
+          {
+            echo 'summary<<EOF'
+            echo "$summary"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+          exit $status
+  notify:
+    needs: audit
+    # Quiet when everything is fine; this runs four times a day.
+    if: ${{ always() && needs.audit.result != 'success' }}
+    uses: ./.github/workflows/send-telegram-update.yml
+    with:
+      source_label: Hours audit
+      conclusion: ${{ needs.audit.result }}
+      summary: ${{ needs.audit.outputs.summary }}
+      run_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    secrets:
+      telegram_bot_token: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
+      telegram_chat_id: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}

@@ -1425,3 +1425,24 @@
 - Privacy waivers: none
 
 Note on what this does *not* cover: `scripts/verify-live-barnard-dining.mjs` checks schema and venue coverage, not freshness, and passed against the three-day-old snapshot throughout. Its `generated` comes from the Barnard source's `lastSuccessAt` rather than the batch, so it cannot use the equality check above; the generic verification is what guards it now.
+
+## DEC-0073 — Audit what the site serves, not whether the job ran
+
+- Date: 2026-09-13
+- Owner: user
+- Status at record: active
+- Decision: A scheduled job reads all five published hours endpoints four times a day and fails — with a Telegram message — when a snapshot is older than the freshness budget (24 h, per DEC-0069) or when a venue carries no usable hours on **any** day of its published window. Venues that are legitimately unresolved live in a named allowlist with a reason, in `EXPECTED_UNRESOLVED`.
+- Rationale: Both September incidents were invisible to every existing check because each one asked whether a job had worked, and the answer was always yes. The publish URL redirect (DEC-0072) left five feeds frozen for three days with green runs; Columbia's Fall 2026 rewrite left Uris Pool blank for a term while `columbiaHours` reported success on every run, so the manifest had nothing fixable and the autofix was never offered the page. "No hours on any of fourteen days" needs no history to detect, which keeps the check stateless — a venue closed today is normal, a venue empty for a fortnight is a pipeline that cannot see it.
+- Scope: `lib/hours-audit.js`, `scripts/audit-published-hours.mjs`, `.github/workflows/audit-published-hours.yml`, `tests/hours-audit.test.mjs`.
+- Implementation: done. Dry-run against the live site on 2026-09-13 reported exactly the two known faults — `uris-pool` unresolved and dining/barnard-dining stale at 55 h — and nothing else; `squash-courts` was correctly silent via the allowlist.
+- Recorded against HEAD: `b844624`
+- Supersedes: none
+- Evidence: the frozen 2026-09-10 snapshots; `columbiaHours` success on every run through the Fall 2026 rewrite.
+- Privacy waivers: none
+
+Known limit, recorded deliberately: this does not catch hours that are present, plausible and
+wrong. Dodge spent a week serving the Blue Gym calendar's envelope — full days, sensible
+times, the wrong schedule — and no check that reads only the published snapshot can tell.
+Catching that class needs the parser to declare which targets a source is expected to yield
+and record a `missing-content` manifest entry when one disappears, which would also hand the
+page to the autofix. That is the next step, not this one.
