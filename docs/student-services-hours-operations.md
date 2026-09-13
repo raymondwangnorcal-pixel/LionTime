@@ -68,3 +68,22 @@ If publication itself is unhealthy, set `STUDENT_SERVICES_HOURS_PUBLISH_ENABLED=
 - Invalid first seed: keep publication disabled. The API returns 422 without replacing storage.
 
 Never roll back by weakening source allowlists, venue completeness, provenance, access-mode, date-window, freshness, or exact-key validation.
+
+## Dated source periods (2026-09-13)
+
+Mail Services publishes the Student Mail Center as a series of dated blocks and deletes each
+one as it passes — Summer Hours, then Check-In Week, then Fall Rush (September 8–27), then
+Regular Fall Hours (from September 28). Two things follow, both found by reading the page
+against what the site was publishing:
+
+- **Every block must be optional.** Fall Rush was required by the signature check, so the
+  source would have thrown on the day Columbia removed it. Only the Student Mail Center
+  heading and the current/upcoming block are required now.
+- **"CLOSED" is a schedule, not an absence.** Regular Fall Hours say "Saturday & Sunday:
+  CLOSED" and no record was built for it, so from September 28 the weekend would have had no
+  evidence and read as unverified rather than closed. The record now exists and its absence
+  is asserted: if that line is reworded the parser fails loudly instead of dropping the
+  weekend quietly.
+
+The general shape to watch for in this source: a period ending is a scheduled parser change,
+and the date is known in advance. When a block's dates are in the past, expect it to vanish.
