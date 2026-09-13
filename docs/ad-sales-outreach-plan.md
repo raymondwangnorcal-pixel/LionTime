@@ -6,12 +6,16 @@ Status: revised 2026-09-10; planning only, outreach not built or enabled.
 
 **Core selling language: “20,000 impressions per week on the site.”**
 
-Use this wording consistently in outreach and the media kit. This is the
-user-supplied site audience figure, not a count of unique people or verified
-students and not a guarantee that one sponsor receives 20,000 ad impressions.
-Before first use externally, attach the measurement source, definition, and
-reporting period to the claim record. The repository review did not independently
-verify the figure. If later evidence no longer supports it, pause affected drafts
+Use this wording consistently in outreach and the media kit. This is a site
+audience figure, not a count of unique people or verified students and not a
+guarantee that one sponsor receives 20,000 ad impressions.
+
+**Status: resolved 2026-09-12 (owner).** The figure comes from a third-party
+analytics platform, not from server logs or hand counting. State the claim as
+impressions, and never convert it to people, students, or unique visitors.
+
+Re-check at the start of each term, and whenever the platform changes how it
+counts. If later evidence no longer supports the figure, pause affected drafts
 for review rather than silently changing approved copy or continuing a stale claim.
 
 | Decision | Choice |
@@ -27,6 +31,7 @@ for review rather than silently changing approved copy or continuing a stale cla
 | Sequence | Day 0, day 4, day 10, measured in calendar days from actual first send; weekend dates roll to Monday |
 | Pricing | Flat monthly sponsorship for pilot; CPM deferred until billable impression measurement is verified |
 | Inventory | Build and verify the on-site ad slot and media kit before outreach |
+| Postal address | `70 Morningside Dr, RZW2006 WBH, New York, NY 10027-7236` (Columbia mail address; confirm university policy permits commercial use, and re-verify each term) |
 
 ## 2. Inventory, measurement, and fulfillment
 
@@ -34,29 +39,26 @@ The reviewed site has no sponsor unit. Before outreach ships, build:
 
 - A clearly labeled sponsored placement; choose the position and fixed capacity.
 - `/advertise` with the core selling language, placement preview, trial terms,
-  reporting description, and contact path.
-- Campaign-specific impression and click reporting using the existing Upstash
-  integration where suitable. The QR counter is a storage pattern, not a complete
-  advertising measurement system.
+  and contact path.
 
 Maintain separate site-audience and sponsor-delivery metrics. Define the site
 impression metric and its source explicitly; do not rename pageviews as unique
 visitors or infer student identity. The existing `report-site-views.yml` exposes
 pageviews and visitors separately, but does not establish business foot traffic.
 
-Proposed sponsor measurement: count a placement after at least 50% of its area is
-visible for one continuous second in a visible browser tab; count once per
-campaign/placement/page load. Validate campaign IDs and dates, deduplicate event
-retries, rate-limit ingestion, exclude known bots and test traffic, and disclose
-remaining measurement limitations. Store bounded aggregate reporting without
-unnecessary personal data. Validate this before making CPM commitments; do not
-claim audited or certified measurement.
+**Sponsor reporting is manual (owner, 2026-09-12).** No campaign measurement
+system is built: the owner compiles and sends each sponsor's report by hand from
+the third-party analytics platform. Nothing in the product counts per-campaign
+impressions or clicks, so reports carry whatever that platform can attribute and
+must say plainly what they are measuring. Do not describe reporting as automatic,
+audited, or certified. CPM stays off the table while this holds, since there is no
+billable event to count.
 
 For the pilot, define the flat fee and any two-week free trial before offering it.
 Record trial start/end, paid start/end, approved creative and destination, placement
 capacity, payment status, cancellation terms, and the person responsible for
 activation and removal. A trial ends without automatic billing unless separately
-agreed. Report delivered impressions and clicks; do not promise sales or visits.
+agreed. Do not promise sales or visits.
 
 Before CPM sales, additionally agree on billable event definition, reporting
 period, invalid-traffic exclusions, delivery target, and underdelivery remedy.
@@ -176,7 +178,7 @@ before reusing the site's Redis credentials.
 | Suppression | Normalized email and business scope, reason, source, timestamp |
 | Completed sequence | Normalized email, business ID, final touch sent, completion timestamp; blocks re-enrollment |
 | Claim | Exact wording, metric definition, evidence reference, reporting period, verification/review status |
-| Campaign | Creative, dates, capacity/reservations, payment/trial state, reporting definition |
+| Campaign | Creative, dates, capacity/reservations, payment/trial state |
 
 **Retention and eviction.** Duplicate prevention lives entirely in Redis keys, so
 a key that disappears is a safeguard that disappears silently. Configure the
@@ -285,8 +287,9 @@ manual production runs obey the same approval and deduplication rules.
 
 ## 6. Build order and verification gates
 
-1. Define placement, pilot price/trial terms, postal address, and evidence for
-   “20,000 impressions per week on the site.” Build the slot and media kit.
+1. Define placement and pilot price/trial terms. Evidence for
+   “20,000 impressions per week on the site.” is resolved (section 1); record the
+   platform, metric name, and period in the claim record. Build the slot and media kit.
 2. Build Redis state, durable suppression, unsubscribe, pause, and campaign state.
 3. Curate pilot prospects — independent Morningside Heights restaurants only —
    and verify address, independence, and first-party contact provenance by hand.
@@ -306,8 +309,6 @@ No real prospect sends until gates 1–6 pass. No automatic volume increase.
 
 ## 7. Open questions
 
-- What source, event definition, and reporting period substantiate the weekly figure?
-- Which valid postal address will be used?
 - Where does the sponsored placement sit, and how many campaigns can run at once?
 - What are the flat fee, trial capacity, and campaign/cancellation terms?
 - Are there applicable Columbia or Spectator policies affecting this private venture?
