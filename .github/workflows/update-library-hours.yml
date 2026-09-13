@@ -59,18 +59,38 @@ jobs:
             echo "$summary"
             echo EOF
           } >> "$GITHUB_OUTPUT"
+      # `--fail-with-body` does not fail on a 3xx and curl does not follow one, so when
+      # www.lionhour.com began 308-redirecting to the apex on 2026-09-10 every PUT became a
+      # silent no-op that still went green. Read the status code; accept nothing but a 2xx.
       - name: Publish validated snapshot
         if: vars.LIBRARY_HOURS_PUBLISH_ENABLED == 'true'
         env:
           UPDATE_SECRET: ${{ secrets.LIBRARY_HOURS_UPDATE_SECRET }}
           API_URL: ${{ vars.LIBRARY_HOURS_API_URL }}
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/publish-response.txt"
+          code=$(curl --silent --show-error --retry 3 --retry-all-errors \
+            -o "$body" -w '%{http_code}' \
+            -X PUT "$API_URL" \
+            -H "Authorization: Bearer $UPDATE_SECRET" \
+            -H "Content-Type: application/json" \
+            --data-binary "@$RUNNER_TEMP/library-hours.json") || code=transport-error
+          case "$code" in
+            2??) echo "Published: HTTP $code" ;;
+            3??) echo "::error::$API_URL answered HTTP $code. curl does not follow redirects, so nothing was published — point LIBRARY_HOURS_API_URL at the apex domain."; exit 1 ;;
+            *) echo "::error::Publish failed: HTTP $code from $API_URL"; cat "$body" || true; exit 1 ;;
+          esac
+      # The publish step proves the request was accepted; this proves the site is serving it.
+      - name: Verify the site is serving this run's snapshot
+        if: vars.LIBRARY_HOURS_PUBLISH_ENABLED == 'true'
+        env:
+          API_URL: ${{ vars.LIBRARY_HOURS_API_URL }}
         run: >-
-          curl --fail-with-body --silent --show-error
-          --retry 3 --retry-all-errors
-          -X PUT "$API_URL"
-          -H "Authorization: Bearer $UPDATE_SECRET"
-          -H "Content-Type: application/json"
-          --data-binary "@$RUNNER_TEMP/library-hours.json"
+          node scripts/verify-published-snapshot.mjs
+          --kind library
+          --local "$RUNNER_TEMP/library-hours.json"
+          --api-url "$API_URL"
   notify:
     needs: scrape-and-publish
     if: ${{ always() }}
