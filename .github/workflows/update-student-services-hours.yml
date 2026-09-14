@@ -19,8 +19,8 @@ jobs:
     outputs:
       notification_summary: ${{ steps.notification-summary.outputs.summary }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -51,7 +51,7 @@ jobs:
       # outcome, kept 14 days, never committed.
       - name: Upload scrape manifest and evidence
         if: ${{ always() && steps.scrape.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: scrape-manifest-student-services
           path: ${{ runner.temp }}/scrape/student-services
