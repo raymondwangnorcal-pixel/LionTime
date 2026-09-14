@@ -1155,6 +1155,11 @@ const VENUES = window.VENUES = [
     hours: ALL(null), sourceStatuses: ALL('Hours pending first live update'),
     note:'Live Barnard Dining schedule loads when available.' },
 
+  /* Listed under Dining and Cafes both: it is a dining venue whose hours come
+     from the dining scraper, and students look for it among the cafes. */
+  { id:'cafe-east', name:'Cafe East', cat:'dining', alsoIn:['cafe'], loc:'Lerner Hall, Room 2E',
+    hours: WEEKDAYS([['10:30','19:30']], [['11:00','19:30']], [['11:00','19:30']]) },
+
   /* ── CAFES ──────────────────────────────────────── */
   { id:'bj-butler', name:'Butler Cafe', cat:'cafe', loc:'Butler Library, 1st fl',
     hours: D([['08:00','24:00']],[['08:00','24:00']],[['08:00','24:00']],[['08:00','24:00']],
@@ -1163,9 +1168,6 @@ const VENUES = window.VENUES = [
   { id:'joe-noco', name:"Joe's Coffee (NoCo)", cat:'cafe', loc:'Northwest Corner Building, 550 W 120th St',
     hours: WEEKDAYS([['07:00','19:00']], [['09:00','17:00']], [['09:00','17:00']]),
     note:'Columbia ID required for entry.' },
-
-  { id:'cafe-east', name:'Cafe East', cat:'cafe', loc:'Lerner Hall, Room 2E',
-    hours: WEEKDAYS([['10:30','19:30']], [['11:00','19:30']], [['11:00','19:30']]) },
 
   { id:'lizs-place', name:"Liz's Place", cat:'cafe', loc:'Diana Center, 1st floor',
     hours: ALL(null), sourceStatuses: ALL('Hours pending first live update'),
@@ -1538,7 +1540,7 @@ function statusMatchesFilter(status, filter) {
 }
 
 function matchesFilters(v, now, ignoreStatus) {
-  if (activeCat !== 'all' && v.cat !== activeCat) return false;
+  if (activeCat !== 'all' && !venueInCat(v, activeCat)) return false;
   if (!venueMatchesSearch(v, searchTerm)) return false;
   if (!ignoreStatus && !statusMatchesFilter(getStatus(v, now).status, activeStatus)) return false;
   return true;
@@ -1549,8 +1551,20 @@ function venueMatchesSearch(venue, term) {
   if (!normalized) return true;
   const children = VENUES.filter(candidate => candidate.parentId === venue.id)
     .flatMap(candidate => [candidate.name, candidate.loc]);
-  return [venue.name, venue.loc, CAT_MAP[venue.cat].label, ...children]
+  return [venue.name, venue.loc, ...venueCats(venue).map(c => CAT_MAP[c]?.label).filter(Boolean), ...children]
     .join(' ').toLowerCase().includes(normalized);
+}
+
+/* Every category a venue lists under: its primary `cat`, plus any secondary
+   categories in `alsoIn`. `cat` stays the venue's home — it decides the
+   /hours/ page, the breadcrumb and the official-source link — while `alsoIn`
+   only adds extra places the venue shows up in the tabs and sections. */
+function venueCats(venue) {
+  return [venue.cat, ...(venue.alsoIn || [])];
+}
+
+function venueInCat(venue, catId) {
+  return venue.cat === catId || (venue.alsoIn || []).includes(catId);
 }
 
 function topLevelVenues(venues = VENUES) {
@@ -1713,8 +1727,12 @@ function render() {
   renderCatTabs();
 
   const stage = document.getElementById('stage');
-  const sections = CATEGORIES.filter(c => c.id !== 'all').map(c => {
-    const all = venues.filter(v => v.cat === c.id && matchesFilters(v, now, true));
+  /* On a single-category tab, render only that category's section. Without
+     this a venue with `alsoIn` would surface twice — once under its primary
+     section and once under the secondary one — even though the tab names
+     just the one category. On "All" both sections are wanted. */
+  const sections = CATEGORIES.filter(c => c.id !== 'all' && (activeCat === 'all' || c.id === activeCat)).map(c => {
+    const all = venues.filter(v => venueInCat(v, c.id) && matchesFilters(v, now, true));
     const shown = all.filter(v => statusMatchesFilter(getStatus(v, now).status, activeStatus));
 
     const isStudent = c.id === 'student';

@@ -37,6 +37,7 @@ export function buildCatalog(venues = loadVenues(ROOT)) {
     id: v.id,
     name: v.name,
     cat: v.cat,
+    ...(v.alsoIn ? { alsoIn: [...v.alsoIn] } : {}),
     loc: v.loc ?? null,
     parentId: v.parentId ?? null,
     weeklyHours: hasWeeklyHours(v) ? v.hours : null,
@@ -53,9 +54,10 @@ export const VENUE_CATALOG = Object.freeze(${body});
 
 export const VENUE_BY_ID = Object.freeze(Object.fromEntries(VENUE_CATALOG.map(v => [v.id, v])));
 
-/** Venues in a category that have a fixed weekly schedule (live-only ones are excluded). */
+/** Venues in a category that have a fixed weekly schedule (live-only ones are excluded).
+ *  Category membership matches the page: the primary \`cat\` plus any \`alsoIn\`. */
 export function venuesWithHours(cat) {
-  return VENUE_CATALOG.filter(v => v.cat === cat && v.weeklyHours);
+  return VENUE_CATALOG.filter(v => (v.cat === cat || (v.alsoIn || []).includes(cat)) && v.weeklyHours);
 }
 
 /** Case-insensitive lookup by name, alias, or id. Returns every match. */

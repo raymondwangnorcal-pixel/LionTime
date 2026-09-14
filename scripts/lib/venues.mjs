@@ -28,6 +28,12 @@ export function loadVenues(root) {
     if (!v.id || !v.name || !v.cat) throw new Error(`venue missing id/name/cat: ${JSON.stringify(v)}`);
     if (ids.has(v.id)) throw new Error(`duplicate venue id: ${v.id}`);
     ids.add(v.id);
+    if (v.alsoIn !== undefined) {
+      if (!Array.isArray(v.alsoIn) || !v.alsoIn.length) throw new Error(`${v.id}: alsoIn must be a non-empty array`);
+      if (v.alsoIn.some(c => typeof c !== 'string' || !c)) throw new Error(`${v.id}: alsoIn entries must be category ids`);
+      if (v.alsoIn.includes(v.cat)) throw new Error(`${v.id}: alsoIn repeats the primary cat '${v.cat}'`);
+      if (new Set(v.alsoIn).size !== v.alsoIn.length) throw new Error(`${v.id}: alsoIn has duplicates`);
+    }
   }
   return venues;
 }
