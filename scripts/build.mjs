@@ -5,6 +5,7 @@
  *
  *   lib/venue-catalog.generated.mjs   scripts/generate-venue-catalog.mjs
  *   hours/*.html, sitemap.xml, robots.txt   scripts/generate-seo.mjs
+ *   lib/preview-summary.generated.mjs   scripts/generate-preview-summary.mjs
  *
  * Usage:
  *   npm run build            regenerate in place
@@ -26,10 +27,11 @@ const CHECK = process.argv.includes('--check');
 const GENERATORS = [
   'scripts/generate-venue-catalog.mjs',
   'scripts/generate-seo.mjs',
+  'scripts/generate-preview-summary.mjs',
 ];
 
 /** Files and directories the generators own. */
-const OUTPUTS = ['lib/venue-catalog.generated.mjs', 'hours', 'sitemap.xml', 'robots.txt'];
+const OUTPUTS = ['lib/venue-catalog.generated.mjs', 'lib/preview-summary.generated.mjs', 'hours', 'sitemap.xml', 'robots.txt'];
 
 function snapshot() {
   const files = new Map();

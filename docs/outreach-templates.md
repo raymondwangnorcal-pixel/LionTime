@@ -71,8 +71,8 @@ Hi {{greeting_name}},
 I hope you're well! I'm Raymond Wang, a Sales Manager for LionHour, one of
 Columbia's most used websites, that gets over 20,000 impressions a week.
 
-With the start of the semester, we're offering a limited-time discount on ad
-space at only $80 on our site. We reach over {{students_reached}} students, many
+With the start of the semester, we're offering a limited-time rate on ad
+space at only $100 on our site. We reach over {{students_reached}} students, many
 of which are looking for restaurants around campus to try out, and we'd love to
 help you get in front of these potential customers. We're only accepting
 {{total_slots}} total businesses for partnerships{{booked_clause}} if you're
@@ -82,7 +82,7 @@ meeting, you can reach me anytime at info@gaplesslabs.com!
 Raymond Wang
 LionHour · Sponsorship inquiry
 {{postal_address}}
-No more sponsorship emails: {{unsubscribe_link}}
+Reply STOP and I won't email you again.
 ```
 
 `{{greeting_name}}` is a verified first name where one exists, otherwise the
@@ -117,7 +117,7 @@ Would you like the preview and terms?
 Raymond
 LionHour · Sponsorship inquiry
 {{postal_address}}
-No more sponsorship emails: {{unsubscribe_link}}
+Reply STOP and I won't email you again.
 ```
 
 Reporting is manual: the sentence promises a report the owner compiles and sends
@@ -140,7 +140,7 @@ Thanks,
 Raymond
 LionHour · Sponsorship inquiry
 {{postal_address}}
-No more sponsorship emails: {{unsubscribe_link}}
+Reply STOP and I won't email you again.
 ```
 
 Stop after this touch. Do not automatically restart the sequence in another
@@ -152,28 +152,28 @@ campaign or academic year. Follow the plan's weekday and actual-send spacing rul
 (owner-supplied 2026-09-12). It renders on one line in every footer. Draft
 generation fails if the value is missing, as with any other required field.
 
-This is a Columbia mail address, which carries three conditions the owner has to
-settle rather than the system:
+This is a Columbia mail address. Owner confirms the assignment runs through the
+end of next year, which covers the pilot and the first full campaign season. A
+CAN-SPAM address must be current when the message is sent and reachable while
+opt-out obligations run, so re-verify before any send after that date or after a
+move, and pause outreach if it lapses. Verify that Columbia permits a mail address
+assigned for residential or student use to appear as the business address of a
+private commercial venture; this document does not establish that it does. Using
+this address never implies Columbia sponsorship or endorsement.
 
-1. *University policy.* Verify that Columbia permits a mail address assigned for
-   residential or student use to appear as the business address of a private
-   commercial venture. This document does not establish that it does.
-2. *Validity window.* Owner confirms the assignment runs through the end of next
-   year, which covers the pilot and the first full campaign season. A CAN-SPAM
-   address must be current when the message is sent and reachable while opt-out
-   obligations run, so re-verify before any send after that date or after a move,
-   and pause outreach if it lapses.
-3. *It is also a residence.* Every cold recipient receives the sender's home
-   address. Weigh that before the first send; a registered private mailbox costs
-   roughly $10-30/month and removes the exposure without changing anything else.
+**Opt-out is reply-based (owner, 2026-09-13).** No unsubscribe endpoint, token, or
+link is built. Every footer instead carries `Reply STOP and I won't email you
+again.` Commercial email still requires a working opt-out, so this line is the
+mechanism and it only works if it is honored:
 
-Using this address never implies Columbia sponsorship or endorsement, and the
-footer must not present it as a university affiliation.
+- Any reply asking to stop — "STOP", "unsubscribe", "remove me", or a sentence
+  saying so — suppresses that contact immediately and cancels pending drafts.
+- The sender mailbox must be monitored while outreach runs; an opt-out sitting
+  unread in an inbox is not an honored opt-out.
+- Suppression is permanent while outreach operates and survives campaign or
+  prospect deletion, as in the plan.
+- Opting out must never require anything of the recipient beyond that reply.
 
-Every reply, bounce, auto-response, or unsubscribe stops the automated sequence.
-Explicit opt-outs remain suppressed while outreach operates; they do not expire
-at the academic-year boundary. Honor reply-based requests as well as link clicks.
-Keep the opt-out route working for at least 30 days after each message; apply
-suppression immediately in the system.
+Every reply, bounce, or auto-response also stops the automated sequence.
 
 [FTC commercial email guidance](https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business)

@@ -29,7 +29,15 @@ for review rather than silently changing approved copy or continuing a stale cla
 | Prospects | Independent restaurants, cafes and bakeries with a verified address in Morningside Heights (W 110th–W 125th, Riverside–Morningside); no chains; other verticals and wider zones only after pilot review |
 | Email discovery | Business-owned contact pages with source provenance and manual qualification |
 | Sequence | Day 0, day 4, day 10, measured in calendar days from actual first send; weekend dates roll to Monday |
-| Pricing | Flat monthly sponsorship for pilot; CPM deferred until billable impression measurement is verified |
+| Pricing | Flat $100, no trial (owner, 2026-09-13). CPM stays off the table while no billable event is measured |
+| Payment | Stripe invoices, issued by Gapless Labs |
+| Seller of record | Gapless Labs; email copy is unchanged per owner instruction |
+| Capacity | One sponsor at a time, one week per sponsor |
+| Creative | 728x90 px supplied by the sponsor; owner resizes anything that arrives at the wrong size |
+| Empty slot | Owner-supplied preview creative runs when no campaign is active |
+| Opt-out | Reply-based ("Reply STOP..."); no unsubscribe endpoint or token is built |
+| Placement | Single slot above the site header: native 728x90 on desktop, full content width on mobile, labeled "Sponsored" (mockups in `Mockups/ad-slot-*.png`) |
+| Sponsor reporting | Manual — compiled and sent by the owner; no campaign measurement is built |
 | Inventory | Build and verify the on-site ad slot and media kit before outreach |
 | Postal address | `70 Morningside Dr, RZW2006 WBH, New York, NY 10027-7236` (Columbia mail address; confirm university policy permits commercial use, and re-verify each term) |
 
@@ -37,7 +45,9 @@ for review rather than silently changing approved copy or continuing a stale cla
 
 The reviewed site has no sponsor unit. Before outreach ships, build:
 
-- A clearly labeled sponsored placement; choose the position and fixed capacity.
+- A clearly labeled sponsored placement above the header: 728x90 on desktop, full
+  content width on mobile, one sponsor per week, owner-supplied preview creative
+  when no campaign is active.
 - `/advertise` with the core selling language, placement preview, trial terms,
   and contact path.
 
@@ -54,14 +64,14 @@ must say plainly what they are measuring. Do not describe reporting as automatic
 audited, or certified. CPM stays off the table while this holds, since there is no
 billable event to count.
 
-For the pilot, define the flat fee and any two-week free trial before offering it.
-Record trial start/end, paid start/end, approved creative and destination, placement
-capacity, payment status, cancellation terms, and the person responsible for
-activation and removal. A trial ends without automatic billing unless separately
-agreed. Do not promise sales or visits.
+Pricing is a flat $100 with no trial. Record for each campaign: the sponsor, the
+week it runs, the approved creative and its destination URL, and Stripe invoice
+status. Formal written terms are deliberately out of scope for now (owner,
+2026-09-13). Do not promise sales or visits.
 
-Before CPM sales, additionally agree on billable event definition, reporting
-period, invalid-traffic exclusions, delivery target, and underdelivery remedy.
+Before any CPM sale, agree on billable event definition, reporting period,
+invalid-traffic exclusions, delivery target, and underdelivery remedy — none of
+which exist today.
 
 ## 3. Pipeline and state
 
@@ -267,9 +277,11 @@ valid physical postal address, and an easy opt-out. Keep the opt-out mechanism
 working for at least 30 days after each send and honor requests within 10 business
 days; this system should suppress immediately.
 
-Use an opaque, unguessable unsubscribe token with no raw email in the URL. Opt-out
-must not require login, payment, or extra personal information. Repeated requests
-are safe. Honor opt-outs received by reply as well as the unsubscribe route.
+No unsubscribe endpoint or token is built (owner, 2026-09-13). Opt-out is the
+footer line `Reply STOP and I won't email you again.`, honored by monitoring the
+sender mailbox and suppressing on any reply that asks to stop. Opt-out must not
+require login, payment, or extra personal information, and repeated requests are
+safe. This only works while the mailbox is actually read.
 
 Choose an address meeting the FTC's criteria: current street address, registered
 USPS PO box, or qualifying registered private mailbox. Verify actual eligibility
@@ -290,7 +302,7 @@ manual production runs obey the same approval and deduplication rules.
 1. Define placement and pilot price/trial terms. Evidence for
    “20,000 impressions per week on the site.” is resolved (section 1); record the
    platform, metric name, and period in the claim record. Build the slot and media kit.
-2. Build Redis state, durable suppression, unsubscribe, pause, and campaign state.
+2. Build Redis state, durable suppression, pause flag, and campaign state.
 3. Curate pilot prospects — independent Morningside Heights restaurants only —
    and verify address, independence, and first-party contact provenance by hand.
 4. Build claim-aware templates and version-bound Telegram approval.
@@ -309,8 +321,6 @@ No real prospect sends until gates 1–6 pass. No automatic volume increase.
 
 ## 7. Open questions
 
-- Where does the sponsored placement sit, and how many campaigns can run at once?
-- What are the flat fee, trial capacity, and campaign/cancellation terms?
 - Are there applicable Columbia or Spectator policies affecting this private venture?
 - What retention periods and access scopes are appropriate for prospect and audit data?
 
