@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-14",
-  "scrapedAt": "2026-09-14T16:48:46.101427-04:00",
+  "scrapedAt": "2026-09-14T19:11:39.946608-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -757,8 +757,8 @@
             {
               "name": "Pasta Station",
               "items": [
+                "Blush Sauce",
                 "Carbonara",
-                "Chicken Alfredo",
                 "Garlic Rolls",
                 "Marinara",
                 "Pasta",
@@ -779,7 +779,7 @@
               "items": [
                 "Jasmine Rice",
                 "Seitan Saag",
-                "Stir Fry Vegetable"
+                "Stir Fry Vegetables"
               ]
             }
           ],
