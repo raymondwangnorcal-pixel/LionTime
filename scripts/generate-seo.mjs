@@ -145,8 +145,11 @@ const pages = VENUES.map(v => ({
   catLabel: CATEGORY[v.cat]?.label ?? 'Building',
 }));
 
+/* A venue is listed under its primary category and under any secondary ones
+   in `alsoIn`, so it appears on both category pages and in both hub columns.
+   Its own /hours/ page and breadcrumb still follow the primary `cat`. */
 const byCat = {};
-for (const p of pages) (byCat[p.cat] ||= []).push(p);
+for (const p of pages) for (const c of [p.cat, ...(p.alsoIn || [])]) (byCat[c] ||= []).push(p);
 
 /* ── 4. Shared chrome ─────────────────────────────────────────────── */
 const STYLE = `
