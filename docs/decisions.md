@@ -1446,3 +1446,23 @@ times, the wrong schedule — and no check that reads only the published snapsho
 Catching that class needs the parser to declare which targets a source is expected to yield
 and record a `missing-content` manifest entry when one disappears, which would also hand the
 page to the autofix. That is the next step, not this one.
+
+## DEC-0074 — /api/preview publishes schedules, not status
+
+- Date: 2026-09-13
+- Owner: user
+- Status at record: active
+- Decision: A public, CORS-open `GET /api/preview` serves a compact read model — the five categories, the venues in each, and each venue's weekly hours — so an outside surface can draw LionHour's state in its own hand. Status is deliberately **not** computed server-side: the consumer compares the schedules against its own clock. First consumer is the Gapless Labs studio site (`~/PersonalProjects/Gapless-Labs`, Plate I, Fig. 1.2).
+- Rationale: The alternative was an iframe of lionhour.com on the studio site, which drags the whole product UI into a page with a different aesthetic and no control over the interaction. Serving data instead keeps LionHour the source of truth without making it the renderer. Shipping schedules rather than status is what makes the response cacheable: a CDN can hold it for two minutes and the consumer's panel still flips open/closed at the right minute and counts down between refreshes, which a baked-in status could not. It also keeps the endpoint honest about what it is — an overlay of the same precedence the site uses, not a second implementation of `getStatus` drifting away from the one in `index.html`.
+- Scope: `api/preview.js`, `lib/preview-service.js`, `scripts/generate-preview-summary.mjs`, `lib/preview-summary.generated.mjs`, `tests/preview-service.test.mjs`, `vercel.json`.
+- Implementation: done. Baseline is generated from `VENUE_CATALOG` at build time, so `index.html`'s VENUES stays the single source of truth (DEC-0069). The live library snapshot is laid over it; anything the scraper flagged — failed, temporarily closed, told to use the embedded fallback — falls through to the baseline, matching the precedence the site itself applies. A venue with no published baseline is marked `published: false` so a consumer says "hours not published" rather than the flatly wrong "closed". Every source is best-effort: a dead store still serves the baseline with `live: false` on the category. Cached `s-maxage=120, stale-while-revalidate=600`.
+- Recorded against HEAD: (uncommitted)
+- Supersedes: none
+- Evidence: `tests/preview-service.test.mjs` covers the overlay, the three fall-through paths, the unreachable store, and the preflight.
+- Privacy waivers: none
+
+Known limit, recorded deliberately: only the library overlay is applied. Dining, cafes,
+fitness and student services serve their embedded baseline, which is what the site shows
+when those live feeds are unavailable but not what it shows when they are working. Adding
+their overlays means reading four more stores here and mirroring their resolvers' precedence
+— worth doing when a consumer needs same-day dining accuracy, not before.

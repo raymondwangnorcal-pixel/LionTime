@@ -30,6 +30,10 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Scrape dining menus
+        id: scrape
+        # Exits non-zero (leaving data/menus.json untouched) when LionDine
+        # returns nothing usable, so a markup change fails the job loudly
+        # instead of quietly committing an empty file.
         run: python scrape_menus.py --out data/menus.json
 
       - name: Commit menu data
@@ -47,8 +51,12 @@ jobs:
 
       - name: Build notification summary
         id: summary
+        if: always()
         run: |
-          unavailable=$(python3 -c "
+          if [ "${{ steps.scrape.outcome }}" != "success" ]; then
+            summary="Menu scrape produced no usable data. data/menus.json was left unchanged, so the site is serving stale menus. LionDine has most likely changed its URLs or markup again - check https://liondine.com/meals/lunch."
+          else
+            summary=$(python3 -c "
           import json, sys
           with open('data/menus.json') as f:
             data = json.load(f)
@@ -61,14 +69,15 @@ jobs:
             lines.append(f'  - {u[\"name\"]} ({u[\"meal\"]}): {u[\"status\"]}')
           print('\n'.join(lines))
           ")
+          fi
           {
             echo 'summary<<EOF'
-            echo "$unavailable"
+            echo "$summary"
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
       - name: Alert on unavailable menus
-        if: always()
+        if: steps.scrape.outcome == 'success'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
