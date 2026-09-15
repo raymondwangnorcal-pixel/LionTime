@@ -125,6 +125,27 @@ test('parses open recreation and explicit closures from each official activity c
   }
 });
 
+test('reads Blue Gym under the Fall 2026 calendar name and activity-style titles', async () => {
+  // Columbia renamed the calendar on 2026-09-14 and now titles events by activity
+  // ("Basketball - Open Recreation"); both still have to read as open recreation.
+  const calendarText = await readFixture('recreation-blue-gym-calendar-fall-2026.txt');
+  const evidence = parseActivityCalendar({
+    targetId: 'blue-gym',
+    calendarUrl: blueGymCalendarUrl(),
+    weeks: [calendarText],
+  }, { generated: new Date('2026-09-13T09:00:00-04:00') });
+
+  assert.deepEqual(find(evidence, 'blue-gym', item => item.effectiveStart === '2026-09-13').dateIntervals, [
+    ['11:00', '18:00'],
+    ['22:30', '23:45'],
+  ]);
+  assert.deepEqual(find(evidence, 'dodge', item => item.effectiveStart === '2026-09-13').dateIntervals, [['11:00', '23:45']]);
+  assert.deepEqual(find(evidence, 'blue-gym', item => item.effectiveStart === '2026-09-14').dateIntervals, [
+    ['06:00', '08:45'],
+    ['12:00', '13:00'],
+  ]);
+});
+
 test('rejects mismatched calendar URLs and event identities', async () => {
   const calendarText = await readFixture('recreation-blue-gym-calendar.txt');
 
