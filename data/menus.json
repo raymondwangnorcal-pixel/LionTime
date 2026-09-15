@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-15",
-  "scrapedAt": "2026-09-15T13:05:58.913213-04:00",
+  "scrapedAt": "2026-09-15T17:27:24.785104-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -966,9 +966,9 @@
               "name": "Homestyle",
               "items": [
                 "Chicken Lemongrass Potsticker",
+                "Green Peas",
                 "Homestyle Beef Stew",
                 "Sriracha Spiced PAOW",
-                "Steamed Green Beans",
                 "White Rice"
               ]
             },
@@ -978,6 +978,7 @@
                 "Alfredo Sauce",
                 "Bowtie Pasta",
                 "Impossible Meatballs",
+                "Italian Style Meatloaf",
                 "Pomodoro Sauce",
                 "Ziti Pasta"
               ]
@@ -1076,11 +1077,11 @@
             {
               "name": "Homestyle",
               "items": [
-                "BBQ Chicken",
-                "Green Bean Saute",
+                "Baked Ziti",
+                "Chicken Parmesan",
+                "Green Peas",
                 "Grilled Tofu",
-                "Macaroni and Cheese",
-                "Sweet Corn Bread"
+                "Parmesan Herbed Garlic Bread"
               ]
             },
             {
