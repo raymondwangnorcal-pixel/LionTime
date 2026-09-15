@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-15",
-  "scrapedAt": "2026-09-15T07:51:58.220799-04:00",
+  "scrapedAt": "2026-09-15T13:05:58.913213-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -663,8 +663,8 @@
             {
               "name": "Halal Station",
               "items": [
+                "Chipotle Chicken",
                 "Roasted Butternut Squash",
-                "Roasted Garlic Fish",
                 "Yellow Rice"
               ]
             },
@@ -829,11 +829,11 @@
               "name": "Delicious Without",
               "items": [
                 "Cubed Pineapple",
-                "Fresh Cauliflower",
+                "Diced Potato, Pepper, and Onion Hash",
                 "Garden Salad",
                 "Oatmeal",
                 "Rainbow Fruit Salad",
-                "Shredded Steamed potatoes",
+                "Steamed Carrots",
                 "Turkey Bacon"
               ]
             },
@@ -915,8 +915,11 @@
                 "Cheese Pizza",
                 "Crushed Red Pepper",
                 "Dried Oregano",
+                "Grilled Tofu",
                 "Grilled Veggie Pizza",
-                "Parmesan Cheese"
+                "Parmesan Cheese",
+                "Roasted Yellow Squash",
+                "White Rice"
               ]
             },
             {
@@ -964,7 +967,7 @@
               "items": [
                 "Chicken Lemongrass Potsticker",
                 "Homestyle Beef Stew",
-                "Red Chili Miso Tofu Yakisoba Noodles",
+                "Sriracha Spiced PAOW",
                 "Steamed Green Beans",
                 "White Rice"
               ]
@@ -975,8 +978,8 @@
                 "Alfredo Sauce",
                 "Bowtie Pasta",
                 "Impossible Meatballs",
-                "Penne Pasta",
-                "Pomodoro Sauce"
+                "Pomodoro Sauce",
+                "Ziti Pasta"
               ]
             },
             {
