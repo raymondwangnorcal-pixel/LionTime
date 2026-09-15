@@ -41,6 +41,11 @@ jobs:
         env:
           MAX_AGE_HOURS: ${{ inputs.max_age_hours }}
         run: |
+          # GitHub runs `run:` steps under `bash -e`. The audit exits 1 whenever it has
+          # something to say, and under -e that aborts the step at the assignment below —
+          # before the summary is echoed or written to the job output. Runs #5–#9 failed
+          # with an empty log and an empty Telegram message for exactly that reason.
+          set +e
           set -uo pipefail
           args=(--base-url https://lionhour.com)
           [ -n "${MAX_AGE_HOURS:-}" ] && args+=(--max-age-hours "$MAX_AGE_HOURS")
