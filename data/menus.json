@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "date": "2026-09-15",
-  "scrapedAt": "2026-09-15T20:27:11.372239-04:00",
+  "date": "2026-09-16",
+  "scrapedAt": "2026-09-16T03:45:03.313805-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -17,26 +17,26 @@
             {
               "name": "Made-to-Order Station",
               "items": [
-                "Omelet: assorted toppings"
+                "Omelette: assorted toppings"
               ]
             },
             {
               "name": "Main Line",
               "items": [
-                "Chicken Sausage",
+                "Biscuits and Sausage Gravy",
+                "Breakfast Potatoes",
                 "Egg White Scramble",
-                "French Toast",
-                "Hashbrown",
-                "Maple Sausage",
-                "Roasted Brussels",
-                "Scrambled Eggs"
+                "Roasted Cauliflower",
+                "Scrambled Eggs",
+                "Sliced Ham",
+                "Turkey Sausage"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Hashbrown Patty",
-                "Just Egg",
+                "Breakfast Potatoes",
+                "Tofu Scramble",
                 "Vegan Sausage"
               ]
             }
@@ -54,33 +54,33 @@
             {
               "name": "Action Station",
               "items": [
-                "Walking Tacos"
+                "Grilled Cheese: the prosciutto, the basic, the vegan"
               ]
             },
             {
               "name": "Made-to-Order Station",
               "items": [
-                "Pasta"
+                "Quesadillas: chicken, cheese, vegan chorizo"
               ]
             },
             {
               "name": "Main Line",
               "items": [
-                "Chicken Sausage",
+                "Biscuits and Sausage Gravy",
+                "Breakfast Potatoes",
                 "Egg White Scramble",
-                "French Toast",
-                "Hashbrown",
-                "Maple Sausage",
-                "Roasted Brussels",
-                "Scrambled Eggs"
+                "Roasted Cauliflower",
+                "Scrambled Eggs",
+                "Sliced Ham",
+                "Turkey Sausage"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Baked Sweet Potatoes",
-                "Chimichurri Cauliflower Steaks",
-                "Spinach and Cherry Tomatoes"
+                "Chickpea Stew",
+                "Roasted Broccoli",
+                "Stuffed Peppers"
               ]
             }
           ],
@@ -97,31 +97,31 @@
             {
               "name": "Action Station",
               "items": [
-                "Chinese Takeout"
+                "Fish Cake Panzanella"
               ]
             },
             {
               "name": "Made-to-Order Station",
               "items": [
-                "Pasta"
+                "Quesadillas: chicken, cheese, vegan chorizo"
               ]
             },
             {
               "name": "Main Line",
               "items": [
-                "Basmati Rice",
-                "Chicken Tikka Masala",
-                "Curry Cauliflower",
-                "Lentil Dahl",
-                "Naan Dippers"
+                "Bok Choy",
+                "Jasmine Rice",
+                "Lo Mein",
+                "Orange Chicken",
+                "Spring Rolls"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Basmati Rice",
-                "Curry Cauliflower",
-                "Eggplant Chana Masala"
+                "Bok Choy",
+                "Orange Tofu",
+                "White Rice"
               ]
             }
           ],
@@ -166,6 +166,16 @@
             "open": "12:00 PM",
             "close": "10:00 AM"
           },
+          "available": false,
+          "stations": [],
+          "status": "No menu published"
+        },
+        "dinner": {
+          "name": "JJ's",
+          "hours": {
+            "open": "12:00 PM",
+            "close": "10:00 AM"
+          },
           "available": true,
           "stations": [
             {
@@ -183,7 +193,6 @@
                 "Black Bean Burger",
                 "Cheeseburger",
                 "Crispy Chicken",
-                "Double Stuffed Oreo Pancakes",
                 "French Toast",
                 "Grilled Chicken",
                 "Hamburger",
@@ -195,75 +204,7 @@
             {
               "name": "Main Line",
               "items": [
-                "Bacon Habanero Burger",
-                "Crispy Chicken Tikka Masala Sandwich",
-                "Hummus Avocado Sandwich",
-                "Loaded Sweet Plantains",
-                "Tomato Avocado Mozzarella Wrap"
-              ]
-            },
-            {
-              "name": "Salad",
-              "items": [
-                "Black Beans",
-                "Cheddar Cheese",
-                "Chipotle Chicken",
-                "Guacamole",
-                "Pico de Gallo",
-                "Roasted Corn",
-                "Romaine Lettuce"
-              ]
-            }
-          ],
-          "status": null
-        },
-        "dinner": {
-          "name": "JJ's",
-          "hours": {
-            "open": "12:00 PM",
-            "close": "10:00 AM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Fry Station",
-              "items": [
-                "Chicken Nuggets",
-                "Curly Fries",
-                "Onion Rings"
-              ]
-            },
-            {
-              "name": "Grill",
-              "items": [
-                "Beyond Burger",
-                "Black Bean Burger",
-                "Cheeseburger",
-                "Crispy Chicken",
-                "French Toast",
-                "Grilled Chicken",
-                "Hamburger",
-                "Omelet",
-                "Pancakes",
-                "Quesadilla"
-              ]
-            },
-            {
-              "name": "Main Line",
-              "items": [
-                "Vegetable Spring Rolls"
-              ]
-            },
-            {
-              "name": "Salad",
-              "items": [
-                "Black Beans",
-                "Cheddar Cheese",
-                "Chipotle Chicken",
-                "Guacamole",
-                "Pico de Gallo",
-                "Roasted Corn",
-                "Romaine Lettuce"
+                "Buffalo Chicken Taco"
               ]
             }
           ],
@@ -280,9 +221,9 @@
             {
               "name": "Fry Station",
               "items": [
-                "Chicken Nuggets",
-                "Curly Fries",
-                "Onion Rings"
+                "Boneless Wings",
+                "Mozzarella Sticks",
+                "Steak Fries"
               ]
             },
             {
@@ -303,19 +244,7 @@
             {
               "name": "Main Line",
               "items": [
-                "Vegetable Spring Rolls"
-              ]
-            },
-            {
-              "name": "Salad",
-              "items": [
-                "Black Beans",
-                "Cheddar Cheese",
-                "Chipotle Chicken",
-                "Guacamole",
-                "Pico de Gallo",
-                "Roasted Corn",
-                "Romaine Lettuce"
+                "Buffalo Chicken Taco"
               ]
             }
           ],
@@ -359,12 +288,11 @@
             {
               "name": "2nd Floor",
               "items": [
-                "Assorted Taco Toppings: Lettuce, Pico de Gallo, Jalapenos, Guacamole, Salsa, Sour Cream",
-                "Beyond Carnitas",
-                "Chicken Taco",
-                "Corn Tortillas",
-                "Flour Tortillas",
-                "Mexican rice"
+                "Braised Kale & Caramelized Onions",
+                "Chicken & Waffles",
+                "Dirty Rice",
+                "Hoppin' John",
+                "Smothered Tempeh"
               ]
             }
           ],
@@ -381,11 +309,11 @@
             {
               "name": "2nd Floor",
               "items": [
-                "Chicken Teriyaki",
-                "Garlic-Soy Edamame",
-                "Jasmine Rice",
-                "Roasted Miso Sweet Potato",
-                "Soy Ginger Tofu"
+                "Aloo Baingan",
+                "Chana Masala",
+                "Chicken Vindaloo",
+                "Saffron Rice",
+                "Seitan Curry"
               ]
             }
           ],
@@ -420,16 +348,16 @@
             {
               "name": "Grill",
               "items": [
-                "Beef Fajitas: beef fajitas, pico de gallo, sour cream, cotija cheese, white rice, refried beans"
+                "Blackened Salmon"
               ]
             },
             {
               "name": "Hot Station",
               "items": [
-                "Fried Rice",
-                "General Tso Chicken",
-                "Steamed Broccoli",
-                "Sweet Chili Tofu"
+                "Broth",
+                "Ginger Soy Chicken",
+                "Marinated Egg",
+                "Ramen Noodles"
               ]
             }
           ],
@@ -446,16 +374,16 @@
             {
               "name": "Grill",
               "items": [
-                "Beef Fajitas: beef fajitas, pico de gallo, sour cream, cotija cheese, white rice, refried beans"
+                "Blackened Salmon"
               ]
             },
             {
               "name": "Hot Station",
               "items": [
-                "Fried Rice",
-                "General Tso Chicken",
-                "Steamed Broccoli",
-                "Sweet Chili Tofu"
+                "Broth",
+                "Ginger Soy Chicken",
+                "Marinated Egg",
+                "Ramen Noodles"
               ]
             }
           ],
@@ -490,8 +418,8 @@
             {
               "name": "Lunch Service",
               "items": [
-                "Chana Masala Bowl: Chickpea chana masala served with basmati rice, peas, carrots, stewed eggplant, and cilantro chutney",
-                "Chicken Tikka Masala Bowl: chicken tikka masala served with basmati rice, peas, carrots, stewed eggplant, and cilantro chutney"
+                "Italian Sandwich: Roasted pork, provolone cheese, roasted broccoli rabe and peppers with garlic aioli on a hero",
+                "Vegan Italian Sandwich: Roasted portabella mushroom, vegan cheese, roasted broccoli rabe and peppers with garlic aioli on a hero"
               ]
             }
           ],
@@ -533,10 +461,10 @@
             {
               "name": "Daily Offerings",
               "items": [
-                "Herbed Farro",
-                "Rosemary Garlic Chicken",
-                "Seasonal Greens with Garlic, Chili & Lemon",
-                "Vegan Melanzane al Forne"
+                "Jasmine Rice",
+                "Soy Ginger Tofu",
+                "Steamed Cabbage",
+                "Teriyaki Chicken"
               ]
             }
           ],
@@ -553,19 +481,19 @@
             {
               "name": "Daily Offerings",
               "items": [
-                "Herbed Farro",
-                "Rosemary Garlic Chicken",
-                "Seasonal Greens with Garlic, Chili & Lemon",
-                "Vegan Melanzane al Forne"
+                "Jasmine Rice",
+                "Soy Ginger Tofu",
+                "Steamed Cabbage",
+                "Teriyaki Chicken"
               ]
             },
             {
               "name": "Dinner Service",
               "items": [
-                "Herbed Farro",
-                "Rosemary Garlic Chicken",
-                "Seasonal Greens with Garlic, Chili & Lemon",
-                "Vegan Melanzane al Forne"
+                "Jasmine Rice",
+                "Soy Ginger Tofu",
+                "Steamed Cabbage",
+                "Teriyaki Chicken"
               ]
             }
           ],
@@ -593,41 +521,41 @@
             {
               "name": "Chef Mike's Kitchen",
               "items": [
-                "Berry Passionfruit Smoothie"
+                "Frozen Pineapple Lemonade"
               ]
             },
             {
               "name": "Main Line",
               "items": [
-                "Bacon",
+                "Corned Beef Hash",
                 "Egg White Scramble",
+                "Garlic Potatoes",
                 "Pancakes",
-                "Potato Pancake",
                 "Scrambled Eggs",
-                "Vegetable Medley"
+                "Spinach and Peppers"
               ]
             },
             {
               "name": "Nook",
               "items": [
-                "Beignet",
-                "Scones"
+                "Hawaiian Roll",
+                "Mini Quiche"
               ]
             },
             {
               "name": "Soup Station",
               "items": [
-                "Cream of Wheat",
+                "Farina",
                 "Oatmeal",
-                "Pineapple Oatmeal"
+                "Strawberries and Cream Oatmeal"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
+                "Spinach and Peppers",
                 "Tofu Scramble",
-                "Vegan Sausage",
-                "Vegetable Medley"
+                "Vegan Sausage"
               ]
             }
           ],
@@ -650,61 +578,62 @@
             {
               "name": "Chef Mike's Kitchen",
               "items": [
-                "Berry Passionfruit Smoothie"
+                "Frosted Pineapple Lemonade"
               ]
             },
             {
               "name": "Gluten Free Station",
               "items": [
-                "Roasted Butternut Squash",
-                "Seafood Paella"
+                "Lemon Oregano Roasted Chicken",
+                "Roasted Potatoes",
+                "Zucchini"
               ]
             },
             {
               "name": "Halal Station",
               "items": [
-                "Chipotle Chicken",
-                "Roasted Butternut Squash",
-                "Yellow Rice"
+                "Lemon Oregano Roasted Chicken",
+                "Roasted Potatoes",
+                "Zucchini"
               ]
             },
             {
               "name": "Main Line",
               "items": [
-                "Bulgar",
-                "Naan Dippers",
-                "Roasted Butternut Squash",
-                "Seafood Paella",
-                "White Beans"
+                "Farro",
+                "Lemon Oregano Roasted Chicken",
+                "Roasted Potatoes",
+                "White Beans",
+                "Zucchini"
               ]
             },
             {
               "name": "Pasta Station",
               "items": [
-                "Basil Oil",
-                "Eggplant",
+                "Bolognese",
                 "Fra Diavolo",
+                "Garlic Oil",
                 "Garlic Rolls",
                 "Marinara",
                 "Pasta",
-                "Puttancesca",
+                "Spinach and Sundried Tomatoes",
                 "Whole Wheat Pasta"
               ]
             },
             {
               "name": "Soup Station",
               "items": [
-                "Beef and Barley",
-                "Chipotle Sweet Potato",
-                "Pineapple Oatmeal"
+                "Broccoli Cheddar",
+                "Chicken Noodle",
+                "Strawberries and Cream Oatmeal"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Roasted Butternut Squash",
-                "Spanish Butter Beans",
-                "Yellow Rice"
+                "Chickpea Stew",
+                "Roasted Potatoes",
+                "Zucchini"
               ]
             }
           ],
@@ -727,62 +656,61 @@
             {
               "name": "Gluten Free Station",
               "items": [
-                "Peruvian Chicken",
-                "Rice Pilaf",
-                "Vegetable Medley"
+                "Carolina Golden Chicken",
+                "Roasted Corn",
+                "Southwest Rice"
               ]
             },
             {
               "name": "Grill",
               "items": [
-                "Beef and Lamb Gyro",
-                "Vegan Hotdog"
+                "BBQ Burger"
               ]
             },
             {
               "name": "Halal Station",
               "items": [
-                "Peruvian Chicken",
-                "Rice Pilaf",
-                "Vegetable Medley"
+                "Carolina Golden Chicken",
+                "Corn Bread",
+                "Roasted Corn"
               ]
             },
             {
               "name": "Main Line",
               "items": [
-                "Black Beans",
-                "Farro",
-                "Peruvian Chicken",
-                "Rice Pilaf",
-                "Vegetable Medley"
+                "BBQ Pulled Pork",
+                "Baked Beans",
+                "Corn Bread",
+                "Mac and Cheese",
+                "Roasted Corn"
               ]
             },
             {
               "name": "Pasta Station",
               "items": [
-                "Basil Oil",
-                "Eggplant",
+                "Bolognese",
                 "Fra Diavolo",
+                "Garlic Oil",
                 "Garlic Rolls",
                 "Marinara",
                 "Pasta",
-                "Puttanesca",
+                "Spinach and Sundried Tomatoes",
                 "Whole Wheat Pasta"
               ]
             },
             {
               "name": "Soup Station",
               "items": [
-                "Beef and Barley",
-                "Chipotle Sweet Potato"
+                "Broccoli Cheddar",
+                "Chicken Noodle"
               ]
             },
             {
               "name": "Vegan Station",
               "items": [
-                "Chorizo and Potatoes",
-                "Rice Pilaf",
-                "Vegetable Medley"
+                "BBQ Jackfruit",
+                "Roasted Corn",
+                "Southwest Rice"
               ]
             }
           ],
@@ -828,13 +756,13 @@
             {
               "name": "Delicious Without",
               "items": [
+                "Beef Breakfast Sausage",
                 "Cubed Pineapple",
-                "Diced Potato, Pepper, and Onion Hash",
                 "Garden Salad",
                 "Oatmeal",
                 "Rainbow Fruit Salad",
-                "Steamed Carrots",
-                "Turkey Bacon"
+                "Shredded Steamed potatoes",
+                "Steamed Green Beans"
               ]
             },
             {
@@ -867,21 +795,21 @@
             {
               "name": "Homestyle",
               "items": [
-                "Buttermilk Biscuit",
-                "Hash Brown Patty",
+                "Beef Breakfast Sausage",
+                "French Toast Sticks",
+                "Home Fries with Onions & Peppers",
                 "Scrambled Eggs",
-                "Tofu Scramble",
-                "Turkey Bacon"
+                "Veggie Sausage Patty"
               ]
             },
             {
               "name": "Performance Kitchen",
               "items": [
-                "Buttermilk Biscuit",
-                "Hash Brown Patty",
+                "Beef Breakfast Sausage",
+                "French Toast Sticks",
+                "Home Fries with Onions & Peppers",
                 "Scrambled Eggs",
-                "Tofu Scramble",
-                "Turkey Bacon"
+                "Veggie Sausage Patty"
               ]
             },
             {
@@ -915,11 +843,8 @@
                 "Cheese Pizza",
                 "Crushed Red Pepper",
                 "Dried Oregano",
-                "Grilled Tofu",
                 "Grilled Veggie Pizza",
-                "Parmesan Cheese",
-                "Roasted Yellow Squash",
-                "White Rice"
+                "Parmesan Cheese"
               ]
             },
             {
@@ -935,15 +860,15 @@
             {
               "name": "Delicious Without",
               "items": [
-                "Black Beans",
-                "Cinnamon Apples",
-                "Garden Salad",
-                "Garlic Basil Roasted Chicken",
-                "Gingered Snow Peas",
+                "Garbanzo Bean Salad",
+                "Grilled Steak",
+                "Mixed Vegetable Blend",
                 "Oat Milk Chia Seed Pudding",
                 "Overnight Chia and Oats",
-                "Quinoa Cranberry Squash Salad",
-                "Shaved Brussels Salad",
+                "Roasted Squash",
+                "Shaved Brussel Sprouts & Kale Salad",
+                "Spinach Salad",
+                "Three Bean Chili",
                 "White Rice"
               ]
             },
@@ -965,11 +890,14 @@
             {
               "name": "Homestyle",
               "items": [
-                "Chicken Lemongrass Potsticker",
-                "Green Peas",
-                "Homestyle Beef Stew",
-                "Sriracha Spiced PAOW",
-                "White Rice"
+                "Cheese Tortellini",
+                "Chicken Fried Chicken",
+                "Grilled Salmon",
+                "Mixed Vegetables",
+                "Potato Wedges",
+                "Rice Pilaf",
+                "Roasted Chicken",
+                "Wild Rice Salad, Cranberries"
               ]
             },
             {
@@ -977,10 +905,9 @@
               "items": [
                 "Alfredo Sauce",
                 "Bowtie Pasta",
-                "Impossible Meatballs",
-                "Italian Style Meatloaf",
-                "Pomodoro Sauce",
-                "Ziti Pasta"
+                "Gemelli Pasta",
+                "Macaroni and Cheese",
+                "Pomodoro Sauce"
               ]
             },
             {
@@ -1048,15 +975,16 @@
             {
               "name": "Delicious Without",
               "items": [
-                "Balsamic Grilled Chicken with Relish",
+                "Cinnamon Apples",
                 "Garbanzo Bean Salad",
                 "Garden Salad",
+                "Kale Salad",
+                "Lemon Thyme Chicken",
+                "Long Grain & Wild Rice Mushroom Pilaf",
                 "Oat Milk Chia Seed Pudding",
                 "Overnight Chia and Oats",
-                "Peas and Carrots",
-                "Spinach Salad",
-                "Vegetarian Chili",
-                "White Rice"
+                "Roasted Brussels Sprouts",
+                "Three Bean Chili"
               ]
             },
             {
@@ -1077,11 +1005,11 @@
             {
               "name": "Homestyle",
               "items": [
-                "Baked Ziti",
-                "Chicken Parmesan",
-                "Green Peas",
+                "BBQ Chicken",
+                "Corn Bread",
                 "Grilled Tofu",
-                "Parmesan Herbed Garlic Bread"
+                "Roasted Corn",
+                "Yellow Rice"
               ]
             },
             {
@@ -1089,8 +1017,8 @@
               "items": [
                 "Alfredo Sauce",
                 "Bowtie Pasta",
-                "Gemelli Pasta",
                 "Macaroni and Cheese",
+                "Penne Pasta",
                 "Pomodoro Sauce"
               ]
             },
@@ -1179,15 +1107,15 @@
             {
               "name": "Cold Special - Cold Express Case",
               "items": [
-                "Fresh Mozzarella & Grilled Veggies: Fresh Mozzarella, Roasted Red Pepper, Pesto, Arugula, Olive Oil & Balsamic",
-                "Hummus and Veggies: Hummus, Spinach, Red Peppers, Jalapenos, Beets, & Banana Peppers"
+                "Roasted Cauliflower: Roasted Cauliflower, Red Onion, Mango, Arugula & Guacamole",
+                "Smoked Turkey & Bacon: Smoked Turkey, Swiss, Bacon, Lettuce, Mayo & Tomato"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
-                "Buffalo Vegan Meatballs: Vegan Meatball, Vegan Provolone & Franks Hot Sauce",
-                "Hot Honey Chicken: Breaded Chicken, Mike’s Hot Honey & Fresh Mozzarella"
+                "BBQ Jackfruit: Jackfruit, Vegan Provolone, Cilantro, Arugula, Cabbage, Pickles, Vegan Mayo & Sweet Baby Rays",
+                "BBQ Pulled Pork: Pulled Pork, Coleslaw, Sweet Baby Rays & Cheddar Cheese"
               ]
             }
           ],
@@ -1213,15 +1141,15 @@
             {
               "name": "Cold Special - Cold Express Case",
               "items": [
-                "Fresh Mozzarella & Grilled Veggies: Fresh Mozzarella, Roasted Red Pepper, Pesto, Arugula, Olive Oil & Balsamic",
-                "Hummus and Veggie Sub: Hummus, Spinach, Red Peppers, Jalapenos, Beets, & Banana Peppers"
+                "Roasted Cauliflower: Roasted Cauliflower, Red Onion, Mango, Arugula & Guacamole",
+                "Smoked Turkey & Bacon: Smoked Turkey, Swiss Cheese, Bacon, Lettuce, Mayo & Tomato"
               ]
             },
             {
               "name": "Hot Special - Hot Express Case",
               "items": [
-                "Buffalo Vegan Meatballs: Vegan Meatball, Vegan Provolone & Franks Hot Sauce",
-                "Hot Honey Chicken: Breaded Chicken, Mike’s Hot Honey & Fresh Mozzarella"
+                "BBQ Jackfruit: Jackfruit, Vegan Provolone, Cilantro, Arugula, Cabbage, Pickles, Vegan Mayo & Sweet Baby Rays",
+                "BBQ Pulled Pork: Pulled Pork, Coleslaw, Sweet Baby Rays & Cheddar Cheese"
               ]
             }
           ],
@@ -1631,5 +1559,12 @@
       }
     }
   },
-  "unavailable": []
+  "unavailable": [
+    {
+      "venue": "jjs",
+      "name": "JJ's",
+      "meal": "lunch",
+      "status": "No menu published"
+    }
+  ]
 }
