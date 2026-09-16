@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-16",
-  "scrapedAt": "2026-09-16T14:13:34.197324-04:00",
+  "scrapedAt": "2026-09-16T17:24:35.900488-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -109,9 +109,9 @@
             {
               "name": "Main Line",
               "items": [
-                "Bok Choy",
                 "Jasmine Rice",
                 "Lo Mein",
+                "Mixed Vegetables",
                 "Orange Chicken",
                 "Spring Rolls"
               ]
@@ -119,7 +119,7 @@
             {
               "name": "Vegan Station",
               "items": [
-                "Bok Choy",
+                "Mixed Vegeteables",
                 "Orange Tofu",
                 "White Rice"
               ]
@@ -166,9 +166,56 @@
             "open": "12:00 PM",
             "close": "10:00 AM"
           },
-          "available": false,
-          "stations": [],
-          "status": "No menu published"
+          "available": true,
+          "stations": [
+            {
+              "name": "Fry Station",
+              "items": [
+                "Chicken Wings",
+                "Steak Fries",
+                "Sweet Potato Fries"
+              ]
+            },
+            {
+              "name": "Grill",
+              "items": [
+                "Beyond Burger",
+                "Black Bean Burger",
+                "Cheeseburger",
+                "Crispy Chicken",
+                "French Toast",
+                "Grilled Chicken",
+                "Hamburger",
+                "Omelet",
+                "Pancakes",
+                "Pork Quesadilla with Spicy Mayo",
+                "Quesadilla"
+              ]
+            },
+            {
+              "name": "Main Line",
+              "items": [
+                "Chicken Bacon Avocado",
+                "Chimi Burger",
+                "Curry Chickpea Wrap",
+                "Eggplant Parm",
+                "Old Bay Shrimp"
+              ]
+            },
+            {
+              "name": "Salad",
+              "items": [
+                "Black Beans",
+                "Guacamole",
+                "Pico de Gallo",
+                "Roasted Corn",
+                "Romaine Lettuce",
+                "Santa Fe Chipotle Chicken",
+                "Shredded Cheddar Cheese"
+              ]
+            }
+          ],
+          "status": null
         },
         "dinner": {
           "name": "JJ's",
@@ -205,6 +252,18 @@
               "name": "Main Line",
               "items": [
                 "Buffalo Chicken Taco"
+              ]
+            },
+            {
+              "name": "Salad",
+              "items": [
+                "Black Beans",
+                "Guacamole",
+                "Pico de Gallo",
+                "Roasted Corn",
+                "Romaine Lettuce",
+                "Santa Fe Chipotle Chicken",
+                "Shredded Cheddar Cheese"
               ]
             }
           ],
@@ -245,6 +304,18 @@
               "name": "Main Line",
               "items": [
                 "Buffalo Chicken Taco"
+              ]
+            },
+            {
+              "name": "Salad",
+              "items": [
+                "Black Beans",
+                "Guacamole",
+                "Pico de Gallo",
+                "Roasted Corn",
+                "Romaine Lettuce",
+                "Santa Fe Chipotle Chicken",
+                "Shredded Cheddar Cheese"
               ]
             }
           ],
@@ -348,7 +419,7 @@
             {
               "name": "Grill",
               "items": [
-                "Blackened Salmon"
+                "Grilled Cheese"
               ]
             },
             {
@@ -374,7 +445,7 @@
             {
               "name": "Grill",
               "items": [
-                "Blackened Salmon"
+                "Grilled Cheese"
               ]
             },
             {
@@ -656,7 +727,7 @@
             {
               "name": "Gluten Free Station",
               "items": [
-                "Carolina Golden Chicken",
+                "Golden BBQ Chicken",
                 "Roasted Corn",
                 "Southwest Rice"
               ]
@@ -664,14 +735,14 @@
             {
               "name": "Grill",
               "items": [
-                "BBQ Burger"
+                "Fried Shrimp Po' Boy"
               ]
             },
             {
               "name": "Halal Station",
               "items": [
-                "Carolina Golden Chicken",
                 "Corn Bread",
+                "Golden BBQ Chicken",
                 "Roasted Corn"
               ]
             },
@@ -679,16 +750,16 @@
               "name": "Main Line",
               "items": [
                 "BBQ Pulled Pork",
-                "Baked Beans",
                 "Corn Bread",
                 "Mac and Cheese",
+                "Pinto Beans",
                 "Roasted Corn"
               ]
             },
             {
               "name": "Pasta Station",
               "items": [
-                "Bolognese",
+                "Butternut Squash Sauce",
                 "Fra Diavolo",
                 "Garlic Oil",
                 "Garlic Rolls",
@@ -845,8 +916,8 @@
                 "Cheese Pizza",
                 "Crushed Red Pepper",
                 "Dried Oregano",
-                "Grilled Veggie Pizza",
-                "Parmesan Cheese"
+                "Parmesan Cheese",
+                "Veggie Pizza"
               ]
             },
             {
@@ -867,9 +938,7 @@
                 "Mixed Vegetable Blend",
                 "Oat Milk Chia Seed Pudding",
                 "Overnight Chia and Oats",
-                "Roasted Squash",
                 "Shaved Brussel Sprouts & Kale Salad",
-                "Spinach Salad",
                 "Three Bean Chili",
                 "White Rice"
               ]
@@ -892,14 +961,11 @@
             {
               "name": "Homestyle",
               "items": [
-                "Cheese Tortellini",
                 "Chicken Fried Chicken",
-                "Grilled Salmon",
+                "Cranberry Apricot Brown Rice Pilaf",
+                "Lemon Parsley Salmon",
                 "Mixed Vegetables",
-                "Potato Wedges",
-                "Rice Pilaf",
-                "Roasted Chicken",
-                "Wild Rice Salad, Cranberries"
+                "Potato Wedges"
               ]
             },
             {
@@ -982,11 +1048,11 @@
                 "Garden Salad",
                 "Kale Salad",
                 "Lemon Thyme Chicken",
-                "Long Grain & Wild Rice Mushroom Pilaf",
                 "Oat Milk Chia Seed Pudding",
                 "Overnight Chia and Oats",
-                "Roasted Brussels Sprouts",
-                "Three Bean Chili"
+                "Peas and Carrots",
+                "Three Bean Chili",
+                "White Rice"
               ]
             },
             {
@@ -1009,19 +1075,19 @@
               "items": [
                 "BBQ Chicken",
                 "Corn Bread",
+                "Green Peas",
                 "Grilled Tofu",
-                "Roasted Corn",
                 "Yellow Rice"
               ]
             },
             {
               "name": "Performance Kitchen",
               "items": [
-                "Alfredo Sauce",
                 "Bowtie Pasta",
                 "Macaroni and Cheese",
                 "Penne Pasta",
-                "Pomodoro Sauce"
+                "Pomodoro Sauce",
+                "Tomato Alfredo Blush Sauce"
               ]
             },
             {
@@ -1561,12 +1627,5 @@
       }
     }
   },
-  "unavailable": [
-    {
-      "venue": "jjs",
-      "name": "JJ's",
-      "meal": "lunch",
-      "status": "No menu published"
-    }
-  ]
+  "unavailable": []
 }
