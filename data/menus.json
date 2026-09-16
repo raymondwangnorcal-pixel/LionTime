@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-15",
-  "scrapedAt": "2026-09-15T17:27:24.785104-04:00",
+  "scrapedAt": "2026-09-15T20:27:11.372239-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -1088,9 +1088,9 @@
               "name": "Performance Kitchen",
               "items": [
                 "Alfredo Sauce",
-                "Baked Ziti",
                 "Bowtie Pasta",
                 "Gemelli Pasta",
+                "Macaroni and Cheese",
                 "Pomodoro Sauce"
               ]
             },
