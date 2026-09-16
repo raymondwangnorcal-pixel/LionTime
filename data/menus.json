@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-16",
-  "scrapedAt": "2026-09-16T09:33:35.580235-04:00",
+  "scrapedAt": "2026-09-16T14:13:34.197324-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -97,7 +97,7 @@
             {
               "name": "Action Station",
               "items": [
-                "Fish Cake Panzanella"
+                "Fried Fish Po' Boy"
               ]
             },
             {
@@ -600,7 +600,7 @@
             {
               "name": "Main Line",
               "items": [
-                "Farro",
+                "Couscous",
                 "Lemon Oregano Roasted Chicken",
                 "Roasted Potatoes",
                 "White Beans",
@@ -610,7 +610,7 @@
             {
               "name": "Pasta Station",
               "items": [
-                "Bolognese",
+                "Butternut Squash Sauce",
                 "Fra Diavolo",
                 "Garlic Oil",
                 "Garlic Rolls",
@@ -815,14 +815,16 @@
             {
               "name": "The Sweet Shoppe",
               "items": [
-                "Black and White Cookies",
+                "Assorted Donuts",
                 "Blueberry Muffin",
+                "Chocolate Chip Chocolate Muffin",
                 "Corn Muffin",
                 "Cranberry Muffin",
                 "Croissant",
                 "Double Chocolate Chip Muffin",
                 "Lemon Pound Cake",
-                "Oreo Blonde Brownies"
+                "Marble Yogurt Pound Cake",
+                "Pumpkin Swirl Cake"
               ]
             }
           ],
@@ -928,16 +930,16 @@
             {
               "name": "The Sweet Shoppe",
               "items": [
+                "Assorted Donuts",
                 "Banana Iced Sheet Cake",
+                "Blonde Brownies",
                 "Blueberry Muffin",
                 "Chocolate Brownie",
-                "Chocolate Chip Bread Pudding",
                 "Chocolate Chip Muffin",
                 "Chocolate Cupcake",
                 "Country Corn Muffin",
-                "M&M Blonde Brownies",
-                "Oreo Brownie",
-                "Vanilla Cupcake"
+                "Cranberry Muffin",
+                "Double Chocolate Chip Muffin"
               ]
             }
           ],
