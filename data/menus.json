@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-16",
-  "scrapedAt": "2026-09-16T03:45:03.313805-04:00",
+  "scrapedAt": "2026-09-16T09:33:35.580235-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -756,7 +756,7 @@
             {
               "name": "Delicious Without",
               "items": [
-                "Beef Breakfast Sausage",
+                "Chicken Sausage Link",
                 "Cubed Pineapple",
                 "Garden Salad",
                 "Oatmeal",
@@ -795,8 +795,8 @@
             {
               "name": "Homestyle",
               "items": [
-                "Beef Breakfast Sausage",
-                "French Toast Sticks",
+                "Buttermilk Pancakes",
+                "Chicken Sausage Link",
                 "Home Fries with Onions & Peppers",
                 "Scrambled Eggs",
                 "Veggie Sausage Patty"
