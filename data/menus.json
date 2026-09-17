@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-17",
-  "scrapedAt": "2026-09-17T14:19:19.172994-04:00",
+  "scrapedAt": "2026-09-17T18:52:51.784148-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -194,11 +194,11 @@
             {
               "name": "Main Line",
               "items": [
-                "Al Pastor Taco",
-                "Caprese Burger",
-                "Falafel Bowl",
-                "Paneer Tikka over Rice",
-                "Spicy Bulgogi Beef Sandwich"
+                "Beyond Sausage and Peppers Hero",
+                "Candied Bacon Cheeseburger",
+                "Corn Dogs",
+                "Elote Corn on the Cob",
+                "Loaded Nachos"
               ]
             },
             {
