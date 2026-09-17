@@ -19,12 +19,12 @@ jobs:
     outputs:
       notification_summary: ${{ steps.notification-summary.outputs.summary }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: pip
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -42,7 +42,7 @@ jobs:
       # outcome, kept 14 days, never committed.
       - name: Upload scrape manifest and evidence
         if: ${{ always() && steps.scrape.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: scrape-manifest-library
           path: ${{ runner.temp }}/scrape/library
