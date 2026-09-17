@@ -20,7 +20,7 @@
   /* ── State ───────────────────────────────────────── */
   var menuData   = null;
   var activeMeal = null;   // auto-detected or user-selected
-  var activeView = 'hours'; // 'hours' | 'menus'
+  var activeView = 'menus'; // 'hours' | 'menus'
 
   /* ── Helpers ─────────────────────────────────────── */
   function escHTML(s) {
