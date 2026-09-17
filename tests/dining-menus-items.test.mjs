@@ -19,6 +19,10 @@ const LONG = [
   'Baja Steak Burrito: Baja steak, refried black beans, yellow rice, shredded cheese, pico de gallo, on a flour tortilla',
 ];
 
+test('defaults dining halls to the menus view', () => {
+  assert.equal(api.activeView, 'menus');
+});
+
 test('splitItem leaves a short plain item alone', () => {
   const p = api.splitItem('Scrambled Eggs');
   assert.equal(p.name, 'Scrambled Eggs');
