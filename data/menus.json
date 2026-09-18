@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "date": "2026-09-17",
-  "scrapedAt": "2026-09-17T18:52:51.784148-04:00",
+  "date": "2026-09-18",
+  "scrapedAt": "2026-09-18T00:51:42.107748-04:00",
   "source": "liondine.com",
   "venues": {
     "ferris": {
@@ -170,15 +170,14 @@
             {
               "name": "Fry Station",
               "items": [
-                "Chicken Nuggets",
-                "Mozzarella Sticks",
-                "Waffle Fries"
+                "Curly Fries",
+                "Fried Pickles",
+                "Spicy Wings"
               ]
             },
             {
               "name": "Grill",
               "items": [
-                "Banana Pudding Pancakes",
                 "Beyond Burger",
                 "Black Bean Burger",
                 "Cheeseburger",
@@ -187,6 +186,7 @@
                 "Grilled Chicken",
                 "Hamburger",
                 "Omelet",
+                "Oreo Pancakes",
                 "Pancakes",
                 "Quesadilla"
               ]
@@ -326,75 +326,31 @@
       "meals": {
         "breakfast": {
           "name": "Faculty House",
-          "hours": {
-            "open": "7:30 AM",
-            "close": "11:00 AM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "2nd Floor",
-              "items": [
-                "Boiled Eggs",
-                "French Toast",
-                "Fruit Cup",
-                "Home Fries",
-                "Scrambled Eggs",
-                "Scrambled Eggs with Cheese",
-                "Yogurt Parfait"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Faculty House",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "2:30 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "2nd Floor",
-              "items": [
-                "Baby Broccoli With Roasted Garlic",
-                "Bean & Mushroom Stew",
-                "Mac & Cheese",
-                "Roasted Potatoes",
-                "Salmon Thursday"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Faculty House",
-          "hours": {
-            "open": "5:00 PM",
-            "close": "9:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "2nd Floor",
-              "items": [
-                "Garlic Ginger Edamame",
-                "General Tso's Chicken",
-                "Green Curry Tofu",
-                "Stir-Fried Vegetables",
-                "Vegetable Lo Mein"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Faculty House",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -405,64 +361,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for breakfast"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Grace Dodge",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "7:30 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Grill",
-              "items": [
-                "Josie's Snack Wrap"
-              ]
-            },
-            {
-              "name": "Hot Station",
-              "items": [
-                "Collard Greens",
-                "Lemon Pepper Chicken",
-                "White Rice"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Grace Dodge",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "7:30 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Grill",
-              "items": [
-                "Josie's Snack Wrap"
-              ]
-            },
-            {
-              "name": "Hot Station",
-              "items": [
-                "Collard Greens",
-                "Lemon Pepper Chicken",
-                "White Rice"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Grace Dodge",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -538,66 +458,28 @@
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for breakfast"
+          "status": "Closed today"
         },
         "lunch": {
           "name": "Fac Shack",
-          "hours": {
-            "open": "12:00 PM",
-            "close": "4:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Daily Offerings",
-              "items": [
-                "Baby Broccoli With Roasted Garlic",
-                "Bean & Mushroom Stew",
-                "Mac & Cheese",
-                "Roasted Potatoes",
-                "Salmon Thursday"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "Fac Shack",
-          "hours": {
-            "open": "4:00 PM",
-            "close": "8:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Daily Offerings",
-              "items": [
-                "Baby Broccoli With Roasted Garlic",
-                "Bean & Mushroom Stew",
-                "Mac & Cheese",
-                "Roasted Potatoes",
-                "Salmon Thursday"
-              ]
-            },
-            {
-              "name": "Dinner Service",
-              "items": [
-                "Baby Broccoli With Roasted Garlic",
-                "Bean & Mushroom Stew",
-                "Mac & Cheese",
-                "Roasted Potatoes",
-                "Salmon Thursday"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "Fac Shack",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -605,217 +487,31 @@
       "meals": {
         "breakfast": {
           "name": "John Jay",
-          "hours": {
-            "open": "9:30 AM",
-            "close": "11:00 AM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Chef Mike's Kitchen",
-              "items": [
-                "Iced Coffee Bar"
-              ]
-            },
-            {
-              "name": "Main Line",
-              "items": [
-                "Chicken Sausage",
-                "Egg White Scramble",
-                "Hashbrowns",
-                "Pancakes",
-                "Scrambled Eggs",
-                "Vegetable Medley"
-              ]
-            },
-            {
-              "name": "Nook",
-              "items": [
-                "Apple Filled Pancakes",
-                "Ham and Cheese Croissant"
-              ]
-            },
-            {
-              "name": "Soup Station",
-              "items": [
-                "Blueberry Oatmeal",
-                "Grits",
-                "Oatmeal"
-              ]
-            },
-            {
-              "name": "Vegan Station",
-              "items": [
-                "Tofu Scramble",
-                "Vegan Sausage",
-                "Vegetable Medley"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "lunch": {
           "name": "John Jay",
-          "hours": {
-            "open": "11:00 AM",
-            "close": "4:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Action Station",
-              "items": [
-                "Tacos"
-              ]
-            },
-            {
-              "name": "Chef Mike's Kitchen",
-              "items": [
-                "Iced Coffee Bar"
-              ]
-            },
-            {
-              "name": "Gluten Free Station",
-              "items": [
-                "Bok Choy",
-                "Chili Garlic Chicken",
-                "Jasmine Rice"
-              ]
-            },
-            {
-              "name": "Halal Station",
-              "items": [
-                "Bok Choy",
-                "Chili Garlic Chicken",
-                "Vegetable Lo Mein"
-              ]
-            },
-            {
-              "name": "Main Line",
-              "items": [
-                "Barley",
-                "Bok Choy",
-                "Edamame",
-                "Sweet Chili Chicken",
-                "Vegetable Lo Mein"
-              ]
-            },
-            {
-              "name": "Pasta Station",
-              "items": [
-                "Broccoli and Mushrooms",
-                "Garlic Rolls",
-                "Marinara",
-                "Pasta",
-                "Pomodoro",
-                "Roasted Tomato and Feta",
-                "Rosemary Oil",
-                "Whole Wheat Pasta"
-              ]
-            },
-            {
-              "name": "Soup Station",
-              "items": [
-                "Blueberry Oatmeal",
-                "Chicken Cous Cous",
-                "Miso Soup"
-              ]
-            },
-            {
-              "name": "Vegan Station",
-              "items": [
-                "Bok Choy",
-                "Chili Garlic Tofu",
-                "Jasmine Rice"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "dinner": {
           "name": "John Jay",
-          "hours": {
-            "open": "4:00 PM",
-            "close": "9:00 PM"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Action Station",
-              "items": [
-                "Tacos"
-              ]
-            },
-            {
-              "name": "Gluten Free Station",
-              "items": [
-                "Apple Cider Glazed Pork",
-                "Braised Cabbage",
-                "Roasted Potatoes"
-              ]
-            },
-            {
-              "name": "Grill",
-              "items": [
-                "John Jay Burger",
-                "Vegan Burger"
-              ]
-            },
-            {
-              "name": "Halal Station",
-              "items": [
-                "Apple Cider Glazed Chicken",
-                "Braised Cabbage",
-                "Cheesy Spaetzle"
-              ]
-            },
-            {
-              "name": "Main Line",
-              "items": [
-                "Apple Cider Glazed Pork",
-                "Black Eyed Peas",
-                "Braised Cabbage",
-                "Bulgar",
-                "Cheesy Spaetzle"
-              ]
-            },
-            {
-              "name": "Pasta Station",
-              "items": [
-                "Broccoli and Mushrooms",
-                "Garlic Rolls",
-                "Marinara",
-                "Pasta",
-                "Pomodoro",
-                "Roasted Tomato and Feta",
-                "Rosemary Oil",
-                "Whole Wheat Pasta"
-              ]
-            },
-            {
-              "name": "Soup Station",
-              "items": [
-                "Chicken Cous Cous",
-                "Miso Soup"
-              ]
-            },
-            {
-              "name": "Vegan Station",
-              "items": [
-                "Chickpea Stew",
-                "Jasmine Rice",
-                "Mixed Vegetables"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed today"
         },
         "late-night": {
           "name": "John Jay",
           "hours": null,
           "available": false,
           "stations": [],
-          "status": "Closed for latenight"
+          "status": "Closed today"
         }
       }
     },
@@ -1260,7 +956,7 @@
           "name": "Diana",
           "hours": {
             "open": "8:00 AM",
-            "close": "11:00 AM"
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
@@ -1341,8 +1037,8 @@
         "lunch": {
           "name": "Diana",
           "hours": {
-            "open": "11:30 AM",
-            "close": "5:00 PM"
+            "open": "8:00 AM",
+            "close": "3:00 PM"
           },
           "available": true,
           "stations": [
@@ -1421,135 +1117,17 @@
         },
         "dinner": {
           "name": "Diana",
-          "hours": {
-            "open": "5:00 PM",
-            "close": "midnight"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Bowl life",
-              "items": [
-                "Brown Rice",
-                "Crispy Baked Tofu",
-                "Orange Chicken",
-                "Steamed Broccoli Florets",
-                "Sweet Thai Chili Sauce",
-                "Vegetable Spring Roll",
-                "Zesty Orange Sauce"
-              ]
-            },
-            {
-              "name": "Pizza",
-              "items": [
-                "Chopped Spinach",
-                "Diced Ham",
-                "Grilled Chicken",
-                "Margherita Pizza",
-                "Plum Tomato",
-                "Sausage Pork Crumbles",
-                "Shredded Mozzarella Cheese",
-                "Sliced Black Olives",
-                "Sliced Mushrooms",
-                "Sliced Pepperoni"
-              ]
-            },
-            {
-              "name": "Sono",
-              "items": [
-                "Beef Taco Meat",
-                "Black Beans",
-                "CHE 19 Hard Shell Beef Taco",
-                "Cheese Quesadillas",
-                "Chicken Quesadilla",
-                "Cilantro Pesto Tofu",
-                "Pulled Chicken",
-                "Yellow Rice"
-              ]
-            },
-            {
-              "name": "Sono Bar",
-              "items": [
-                "Cheddar Cheese",
-                "Chipotle Sour Cream",
-                "Diced Red Onions",
-                "Guacamole",
-                "Mild Picante Salsa",
-                "Pico de Gallo",
-                "Roasted Salsa Verde",
-                "Shredded Iceberg Lettuce",
-                "Sliced Jalapeno",
-                "Sour Cream"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed for dinner"
         },
         "late-night": {
           "name": "Diana",
-          "hours": {
-            "open": "5:00 PM",
-            "close": "midnight"
-          },
-          "available": true,
-          "stations": [
-            {
-              "name": "Bowl life",
-              "items": [
-                "Brown Rice",
-                "Crispy Baked Tofu",
-                "Orange Chicken",
-                "Steamed Broccoli Florets",
-                "Sweet Thai Chili Sauce",
-                "Vegetable Spring Roll",
-                "Zesty Orange Sauce"
-              ]
-            },
-            {
-              "name": "Pizza",
-              "items": [
-                "Chopped Spinach",
-                "Diced Ham",
-                "Grilled Chicken",
-                "Margherita Pizza",
-                "Plum Tomato",
-                "Sausage Pork Crumbles",
-                "Shredded Mozzarella Cheese",
-                "Sliced Black Olives",
-                "Sliced Mushrooms",
-                "Sliced Pepperoni"
-              ]
-            },
-            {
-              "name": "Sono",
-              "items": [
-                "Beef Taco Meat",
-                "Black Beans",
-                "CHE 19 Hard Shell Beef Taco",
-                "Cheese Quesadillas",
-                "Chicken Quesadilla",
-                "Cilantro Pesto Tofu",
-                "Pulled Chicken",
-                "Yellow Rice"
-              ]
-            },
-            {
-              "name": "Sono Bar",
-              "items": [
-                "Cheddar Cheese",
-                "Chipotle Sour Cream",
-                "Diced Red Onions",
-                "Guacamole",
-                "Mild Picante Salsa",
-                "Pico de Gallo",
-                "Roasted Salsa Verde",
-                "Shredded Iceberg Lettuce",
-                "Sliced Jalapeno",
-                "Sour Cream"
-              ]
-            }
-          ],
-          "status": null
+          "hours": null,
+          "available": false,
+          "stations": [],
+          "status": "Closed for latenight"
         }
       }
     },
