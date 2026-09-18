@@ -1,3 +1,21 @@
+# Vercel CLI uploads everything in this folder that isn't listed here (it does not
+# read .gitignore). The runner workspace, worktrees and dependency folders alone are
+# ~40k files, far past the CLI's 15,000-file limit. Vercel installs dependencies
+# itself, so node_modules must not be uploaded either.
+.git
+.github-runner
+.worktrees
+node_modules
+.venv
+__pycache__
+*.pyc
+tests
+coverage
+Claude outputs
+*.bundle
+.DS_Store
+.env
+.env.*
 scrape.py
-requirements.txt
 scrape.log
+requirements.txt
