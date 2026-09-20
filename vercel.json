@@ -14,6 +14,9 @@
     "api/dining-hours.js": {
       "maxDuration": 10
     },
+    "api/dining-menus.js": {
+      "maxDuration": 10
+    },
     "api/barnard-dining-hours.js": {
       "maxDuration": 10
     },
