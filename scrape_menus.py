@@ -296,6 +296,9 @@ def scrape_all_menus():
     payload = {
         'schemaVersion': 1,
         'date': date_str,
+        # `generated` is the stamp scripts/verify-published-snapshot.mjs compares against
+        # after the PUT; `scrapedAt` is kept for anything still reading the old file.
+        'generated': now.isoformat(),
         'scrapedAt': now.isoformat(),
         'source': 'liondine.com',
         'venues': {},

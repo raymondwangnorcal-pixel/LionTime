@@ -12,6 +12,10 @@
   'use strict';
 
   /* ── Config ──────────────────────────────────────── */
+  // The workflow publishes to the API (a repository ruleset made its `git push` fail
+  // for two days in September 2026 while every scrape succeeded). data/menus.json is the
+  // last copy that was ever committed, kept only as a fallback if the API is unreachable.
+  var MENU_API_URL  = '/api/dining-menus';
   var MENU_DATA_URL = 'data/menus.json';
   var MEAL_SLUGS    = ['breakfast', 'lunch', 'dinner', 'late-night'];
   var MEAL_LABELS   = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', 'late-night': 'Late Night' };
@@ -77,11 +81,18 @@
   }
 
   /* ── Data fetching ───────────────────────────────── */
+  function fetchMenus(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
   function hydrate() {
-    fetch(MENU_DATA_URL)
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
+    fetchMenus(MENU_API_URL)
+      .catch(function (e) {
+        console.warn('[DiningMenus] API unavailable, falling back to the committed copy:', e);
+        return fetchMenus(MENU_DATA_URL);
       })
       .then(function (data) {
         menuData = data;
