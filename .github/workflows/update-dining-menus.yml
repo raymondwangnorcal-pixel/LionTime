@@ -1,19 +1,25 @@
 name: Update dining menus
 
+# Menus used to be committed to data/menus.json. On 2026-09-18 a repository ruleset
+# requiring pull requests on main started rejecting that push (GH013), and because the
+# scrape itself kept succeeding the site quietly served the same menus for two days.
+# Menus now publish to the API exactly like the five hours feeds: no commit, no bypass,
+# and scripts/verify-published-snapshot.mjs proves afterwards that the site took it.
+
 on:
   schedule:
     - cron: '17 */2 * * *'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: update-dining-menus
   cancel-in-progress: false
 
 jobs:
-  scrape-and-commit:
+  scrape-and-publish:
     if: github.repository == 'raymondwangnorcal-pixel/LionTime' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -31,34 +37,54 @@ jobs:
 
       - name: Scrape dining menus
         id: scrape
-        # Exits non-zero (leaving data/menus.json untouched) when LionDine
-        # returns nothing usable, so a markup change fails the job loudly
-        # instead of quietly committing an empty file.
-        run: python scrape_menus.py --out data/menus.json
+        # Exits non-zero when LionDine returns nothing usable, so a markup change fails the
+        # job loudly instead of publishing an empty snapshot over a good one.
+        run: python scrape_menus.py --out "$RUNNER_TEMP/dining-menus.json"
 
-      - name: Commit menu data
+      # `--fail-with-body` does not fail on a 3xx and curl does not follow one, so a
+      # redirecting host would make every PUT a silent no-op. Read the status code; accept
+      # nothing but a 2xx. (Same lesson as the hours feeds, DEC-0072.)
+      - name: Publish validated menus
+        if: ${{ steps.scrape.outcome == 'success' && vars.DINING_MENUS_PUBLISH_ENABLED == 'true' && vars.DINING_MENUS_API_URL != '' }}
+        env:
+          UPDATE_SECRET: ${{ secrets.LIBRARY_HOURS_UPDATE_SECRET }}
+          API_URL: ${{ vars.DINING_MENUS_API_URL }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p data
-          git add data/menus.json
-          if git diff --cached --quiet; then
-            echo "No menu changes to commit"
-          else
-            git commit -m "Update dining menus $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            git push
-          fi
+          set -euo pipefail
+          body="$RUNNER_TEMP/publish-response.txt"
+          code=$(curl --silent --show-error --retry 3 --retry-all-errors \
+            -o "$body" -w '%{http_code}' \
+            -X PUT "$API_URL" \
+            -H "Authorization: Bearer $UPDATE_SECRET" \
+            -H "Content-Type: application/json" \
+            --data-binary "@$RUNNER_TEMP/dining-menus.json") || code=transport-error
+          case "$code" in
+            2??) echo "Published: HTTP $code" ;;
+            3??) echo "::error::$API_URL answered HTTP $code. curl does not follow redirects, so nothing was published — point DINING_MENUS_API_URL at the apex domain."; exit 1 ;;
+            *) echo "::error::Publish failed: HTTP $code from $API_URL"; cat "$body" || true; exit 1 ;;
+          esac
+
+      # The publish step proves the request was accepted; this proves the site is serving it.
+      - name: Verify the site is serving this run's menus
+        if: ${{ steps.scrape.outcome == 'success' && vars.DINING_MENUS_PUBLISH_ENABLED == 'true' && vars.DINING_MENUS_API_URL != '' }}
+        env:
+          API_URL: ${{ vars.DINING_MENUS_API_URL }}
+        run: >-
+          node scripts/verify-published-snapshot.mjs
+          --kind dining-menus
+          --local "$RUNNER_TEMP/dining-menus.json"
+          --api-url "$API_URL"
 
       - name: Build notification summary
         id: summary
         if: always()
         run: |
           if [ "${{ steps.scrape.outcome }}" != "success" ]; then
-            summary="Menu scrape produced no usable data. data/menus.json was left unchanged, so the site is serving stale menus. LionDine has most likely changed its URLs or markup again - check https://liondine.com/meals/lunch."
+            summary="Menu scrape produced no usable data. Nothing was published, so the site is serving the last good menus. LionDine has most likely changed its URLs or markup again - check https://liondine.com/meals/lunch."
           else
             summary=$(python3 -c "
-          import json, sys
-          with open('data/menus.json') as f:
+          import json, os, sys
+          with open(os.environ['RUNNER_TEMP'] + '/dining-menus.json') as f:
             data = json.load(f)
           items = data.get('unavailable', [])
           if not items:
@@ -83,8 +109,8 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.LIONTIME_TELEGRAM_CHAT_ID }}
         run: |
           unavailable=$(python3 -c "
-          import json
-          with open('data/menus.json') as f:
+          import json, os
+          with open(os.environ['RUNNER_TEMP'] + '/dining-menus.json') as f:
             data = json.load(f)
           items = data.get('unavailable', [])
           if not items:
@@ -105,13 +131,13 @@ jobs:
           fi
 
   notify:
-    needs: scrape-and-commit
-    if: ${{ always() && needs.scrape-and-commit.result != 'success' }}
+    needs: scrape-and-publish
+    if: ${{ always() && needs.scrape-and-publish.result != 'success' }}
     uses: ./.github/workflows/send-telegram-update.yml
     with:
       source_label: Dining Menus
-      conclusion: ${{ needs.scrape-and-commit.result }}
-      summary: ${{ needs.scrape-and-commit.outputs.notification_summary }}
+      conclusion: ${{ needs.scrape-and-publish.result }}
+      summary: ${{ needs.scrape-and-publish.outputs.notification_summary }}
       run_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
     secrets:
       telegram_bot_token: ${{ secrets.LIONTIME_TELEGRAM_BOT_TOKEN }}
