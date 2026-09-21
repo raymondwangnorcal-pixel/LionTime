@@ -19,3 +19,5 @@ Claude outputs
 scrape.py
 scrape.log
 requirements.txt
+# Parked files awaiting manual deletion must never be uploaded by the CLI.
+_to_delete
