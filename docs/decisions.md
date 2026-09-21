@@ -1593,3 +1593,11 @@
 - Superseded by: DEC-0079
 - Note: The fixed 728 by 90 desktop rendering is replaced by a smaller fluid rendering that preserves the same aspect ratio.
 - Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0079
+
+- Type: implementation
+- Implementation commit: `4f71ab4e55bd686458dd1fbdd611eb04f11b98a9` — fix: scale desktop ad responsively
+- Superseded by: none
+- Note: The header advertisement now scales from 320 to 520 pixels at the fixed creative aspect ratio and remains hidden below the desktop breakpoint.
+- Privacy waivers: none
