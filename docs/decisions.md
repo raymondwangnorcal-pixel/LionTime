@@ -1563,3 +1563,11 @@
 - Supersedes: none
 - Evidence: User-provided desktop reference image and `docs/ad-sales-outreach-plan.md`.
 - Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0078
+
+- Type: implementation
+- Implementation commit: `47f48a4a4d46a1f1462beb307c2686dc9ed0763e` — feat: add desktop leaderboard ad slot
+- Superseded by: none
+- Note: The wide-desktop header now renders the exact 728 by 90 pixel owner-supplied Gapless Labs placeholder creative without changing narrower layouts.
+- Privacy waivers: none
