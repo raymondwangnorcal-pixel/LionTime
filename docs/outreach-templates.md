@@ -5,12 +5,14 @@ These are drafts for individual human approval, not authorization to send.
 
 ## 1. Core selling language
 
-**20,000 impressions per week on the site.**
+**20,000 views per week on the site.**
 
 Resolved 2026-09-12: the figure is reported by a third-party analytics platform.
 See the plan, section 1.
-Use impressions consistently: do not substitute people, students, unique visitors,
-or guaranteed sponsor impressions. The weekly site figure is separate from
+Outreach copy says "views" (owner, 2026-09-20); the underlying metric is the
+analytics platform's weekly site impressions figure — page views, not individual
+students. If a prospect asks what "views" counts, say so plainly. Do not
+substitute people, students, unique visitors, or guaranteed sponsor impressions. The weekly site figure is separate from
 campaign-specific delivered impressions and clicks.
 
 Keep the pitch direct: a Columbia student built a useful campus-hours site,
@@ -28,7 +30,10 @@ that remains accurate.
   2026-09-11; effort moved to prospect discovery instead. Re-adding any varying
   sentence is a design change, tracked in
   [outreach-personalization-v2.md](outreach-personalization-v2.md).
-- Never invent opening hours, customer behavior, or a prior visit.
+- Never invent opening hours, customer behavior, or a prior visit. The one
+  exception is touch 1's approved sentence that students are "looking for
+  restaurants around campus" (owner, 2026-09-19); use it verbatim, and make no
+  other claim about the recipient's customers or foot traffic.
 - Do not assert 10 PM traffic spikes, Sunday peaks, or a business's busiest hour
   without specific supporting evidence. Site visits do not establish foot traffic.
 - Mention sponsors only when currently active and approved for public reference.
@@ -41,19 +46,21 @@ that remains accurate.
 
 ## 3. Email structure
 
-Send every touch from `Raymond at LionHour <info@gaplesslabs.com>`. Replies go
+Send every touch from `Raymond Wang <info@gaplesslabs.com>` (owner, 2026-09-19). Replies go
 to the same mailbox, which the suppression checks must monitor.
 
 Aim for under 150 words in the first touch and under 80 in follow-ups, excluding
-the required footer. Use plain text and one clear ask. Every touch uses the same subject line,
-`{{business_name}} <> LionHour Ads`, which names the sponsorship opportunity
-honestly; do not vary it per touch. Keep links minimal; the unsubscribe link is always
-included. Every touch must identify the solicitation and carry the postal address
+the required footer. Every message is plain text only (owner, 2026-09-20): a
+single text/plain body, no HTML alternative, no styling, no images and no
+tracking pixels, so open and click tracking are deliberately unavailable. Use one
+clear ask. Every touch uses the same subject line,
+`{{business_name}} + LionHour` (owner, 2026-09-20), which names the sponsorship opportunity
+honestly; do not vary it per touch. Keep links minimal. Every touch must identify the solicitation and carry the postal address
 and opt-out footer. Do not manufacture reply-thread prefixes on first contact.
 
 The templates below assume a verified business name, reviewed weekly claim,
-stored student-reach figure, valid postal address, and functioning unsubscribe
-link.
+stored student-reach figure, valid postal address, and the reply-based opt-out
+footer.
 Missing required fields block draft generation. Use a verified first name only
 when available; otherwise the business-team greeting avoids guessing a person.
 
@@ -64,48 +71,51 @@ rather than written into the template: see the notes below the block.
 
 ```text
 From: Raymond Wang <info@gaplesslabs.com>
-Subject: {{business_name}} <> LionHour Ads
+Subject: {{business_name}} + LionHour
 
-Hi {{greeting_name}},
+Hi {{greeting_name}}!
 
-I hope you're well! I'm Raymond Wang, a Sales Manager for LionHour, one of
-Columbia's most used websites, that gets over 20,000 impressions a week.
+I hope you're doing well! I'm Raymond Wang, a sales manager at Gapless Labs,
+which runs LionHour, one of Columbia's most used websites that gets over 20,000
+views a week.
 
-With the start of the semester, we're offering a limited-time rate on ad
-space at only $100 on our site. We reach over {{students_reached}} students, many
-of which are looking for restaurants around campus to try out, and we'd love to
-help you get in front of these potential customers. We're only accepting
-{{total_slots}} total businesses for partnerships{{booked_clause}} if you're
-interested in working with us. If you'd like more information or to set up a
-meeting, you can reach me anytime at info@gaplesslabs.com!
+We reach over {{students_reached}} students who would love {{business_name}}!
+I'd love to help you get in front of them, and with the start of the semester,
+we're offering ads for only $100 for a limited time. Two out of our four
+allocated slots are already filled, and I'd love if {{business_name}} was the
+third or fourth.
 
+If you'd like more information or to set up a meeting, you can reach me anytime
+at info@gaplesslabs.com!
+
+Sincerely,
 Raymond Wang
-LionHour · Sponsorship inquiry
 {{postal_address}}
-Reply STOP and I won't email you again.
+If you'd rather not hear from me, just reply and let me know.
 ```
 
 `{{greeting_name}}` is a verified first name where one exists, otherwise the
-`{{business_name}} team` form.
+`{{business_name}} team` form, and the greeting ends with `!` (owner,
+2026-09-20).
 
-`{{students_reached}}` must come from a stored analytics figure with a named
-source and reporting period, the same evidence requirement as the weekly
+`{{students_reached}}` is 5,000 students (owner, 2026-09-20); record its analytics
+source and reporting period before first send. It must come from a stored
+analytics figure with a named source and reporting period, the same evidence requirement as the weekly
 impressions claim. Unset means the draft does not generate. It is a distinct
 metric from site impressions and must not be derived from them.
 
-`{{booked_clause}}` renders as ` and {{slots_booked}} of the slots are already
-booked` only when at least one campaign or reservation record is currently
-active. With no active records the clause is omitted entirely and the sentence
-ends after `partnerships`. This is the existing capacity rule in §2: state
-bookings only from dated records.
+The slots sentence is fixed copy (owner, 2026-09-20): it is not generated from
+campaign records and does not vary per draft. Two of four booked is the stated
+position; revisit the wording by hand if that changes.
 
-`{{total_slots}}` comes from the configured placement capacity, not the copy.
+`{{total_slots}}` is 4 (owner, 2026-09-20) and comes from the configured placement
+capacity, not the copy.
 
 ### Touch 2 — nominal day 4
 
 ```text
-From: Raymond at LionHour <info@gaplesslabs.com>
-Subject: {{business_name}} <> LionHour Ads
+From: Raymond Wang <info@gaplesslabs.com>
+Subject: {{business_name}} + LionHour
 
 Hi {{business_name}} team,
 
@@ -115,9 +125,8 @@ placement's measured impressions and clicks, so you can review what it delivered
 Would you like the preview and terms?
 
 Raymond
-LionHour · Sponsorship inquiry
 {{postal_address}}
-Reply STOP and I won't email you again.
+If you'd rather not hear from me, just reply and let me know.
 ```
 
 Reporting is manual: the sentence promises a report the owner compiles and sends
@@ -128,8 +137,8 @@ human approval are required, even if the recipient has not replied.
 ### Touch 3 — nominal day 10
 
 ```text
-From: Raymond at LionHour <info@gaplesslabs.com>
-Subject: {{business_name}} <> LionHour Ads
+From: Raymond Wang <info@gaplesslabs.com>
+Subject: {{business_name}} + LionHour
 
 Hi {{business_name}} team,
 
@@ -138,9 +147,8 @@ useful for {{business_name}}, you're welcome to reply whenever the timing fits.
 
 Thanks,
 Raymond
-LionHour · Sponsorship inquiry
 {{postal_address}}
-Reply STOP and I won't email you again.
+If you'd rather not hear from me, just reply and let me know.
 ```
 
 Stop after this touch. Do not automatically restart the sequence in another
@@ -158,12 +166,12 @@ CAN-SPAM address must be current when the message is sent and reachable while
 opt-out obligations run, so re-verify before any send after that date or after a
 move, and pause outreach if it lapses. Verify that Columbia permits a mail address
 assigned for residential or student use to appear as the business address of a
-private commercial venture; this document does not establish that it does. Using
+private commercial venture — owner confirmed this is fine (2026-09-19). Using
 this address never implies Columbia sponsorship or endorsement.
 
 **Opt-out is reply-based (owner, 2026-09-13).** No unsubscribe endpoint, token, or
-link is built. Every footer instead carries `Reply STOP and I won't email you
-again.` Commercial email still requires a working opt-out, so this line is the
+link is built. Every footer instead carries `If you'd rather not hear from me,
+just reply and let me know.` (owner, 2026-09-20) Commercial email still requires a working opt-out, so this line is the
 mechanism and it only works if it is honored:
 
 - Any reply asking to stop — "STOP", "unsubscribe", "remove me", or a sentence

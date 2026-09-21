@@ -4,15 +4,18 @@ Status: revised 2026-09-10; planning only, outreach not built or enabled.
 
 ## 1. Decisions and selling proposition
 
-**Core selling language: “20,000 impressions per week on the site.”**
+**Core selling language: “20,000 views per week on the site.” (owner, 2026-09-20;
+previously worded as impressions, DEC-0061)**
 
 Use this wording consistently in outreach and the media kit. This is a site
 audience figure, not a count of unique people or verified students and not a
 guarantee that one sponsor receives 20,000 ad impressions.
 
 **Status: resolved 2026-09-12 (owner).** The figure comes from a third-party
-analytics platform, not from server logs or hand counting. State the claim as
-impressions, and never convert it to people, students, or unique visitors.
+analytics platform, not from server logs or hand counting. The metric is the platform's weekly site
+impressions; outreach copy calls it views, which means page views, not individual
+students, and is answered that way if a prospect asks. Never convert it to people, students,
+or unique visitors.
 
 Re-check at the start of each term, and whenever the platform changes how it
 counts. If later evidence no longer supports the figure, pause affected drafts
@@ -20,7 +23,7 @@ for review rather than silently changing approved copy or continuing a stale cla
 
 | Decision | Choice |
 | --- | --- |
-| Sender | `info@gaplesslabs.com`; confirm its mail provider and supported SMTP authentication before implementation |
+| Sender | `info@gaplesslabs.com` on Google Workspace; SMTP (smtp.gmail.com:587, STARTTLS) and IMAP (imap.gmail.com) both verified with an app password on 2026-09-20 via `scripts/check_mailbox_access.py` |
 | Pilot | Five total messages/day maximum in week one, manually curated prospects |
 | Later volume | 20–30 total messages/day on weekdays, including follow-ups; increase only after pilot review |
 | Send window | Weekdays, 09:40–10:40 America/New_York |
@@ -31,15 +34,15 @@ for review rather than silently changing approved copy or continuing a stale cla
 | Sequence | Day 0, day 4, day 10, measured in calendar days from actual first send; weekend dates roll to Monday |
 | Pricing | Flat $100, no trial (owner, 2026-09-13). CPM stays off the table while no billable event is measured |
 | Payment | Stripe invoices, issued by Gapless Labs |
-| Seller of record | Gapless Labs; email copy is unchanged per owner instruction |
-| Capacity | One sponsor at a time, one week per sponsor |
+| Seller of record | Gapless Labs; touch 1 introduces the sender as "Raymond Wang, a sales manager at Gapless Labs" (owner, 2026-09-19) |
+| Capacity | One sponsor at a time, one week per sponsor; 4 partnership slots offered (owner, 2026-09-20) |
 | Creative | 728x90 px supplied by the sponsor; owner resizes anything that arrives at the wrong size |
 | Empty slot | Owner-supplied preview creative runs when no campaign is active |
-| Opt-out | Reply-based ("Reply STOP..."); no unsubscribe endpoint or token is built |
+| Opt-out | Reply-based ("If you'd rather not hear from me, just reply and let me know.", owner 2026-09-20); no unsubscribe endpoint or token is built |
 | Placement | Single slot above the site header: native 728x90 on desktop, full content width on mobile, labeled "Sponsored" (mockups in `Mockups/ad-slot-*.png`) |
 | Sponsor reporting | Manual — compiled and sent by the owner; no campaign measurement is built |
 | Inventory | Build and verify the on-site ad slot and media kit before outreach |
-| Postal address | `70 Morningside Dr, RZW2006 WBH, New York, NY 10027-7236` (Columbia mail address; confirm university policy permits commercial use, and re-verify each term) |
+| Postal address | `70 Morningside Dr, RZW2006 WBH, New York, NY 10027-7236` (Columbia mail address; owner confirmed commercial use is fine, 2026-09-19; re-verify each term) |
 
 ## 2. Inventory, measurement, and fulfillment
 
@@ -48,7 +51,7 @@ The reviewed site has no sponsor unit. Before outreach ships, build:
 - A clearly labeled sponsored placement above the header: 728x90 on desktop, full
   content width on mobile, one sponsor per week, owner-supplied preview creative
   when no campaign is active.
-- `/advertise` with the core selling language, placement preview, trial terms,
+- `/advertise` with the core selling language, placement preview, pricing ($100 flat, one week),
   and contact path.
 
 Maintain separate site-audience and sponsor-delivery metrics. Define the site
@@ -112,10 +115,11 @@ first-party website, permanently closed listings, and any address that cannot be
 confirmed as current. Delivery-platform pages and aggregator listings are not
 first-party sources.
 
-Note that a restaurant's relevance to a campus-hours audience is a hypothesis the
-pilot exists to test, not an established fact, and never a claim in an email.
-Students checking dining hall hours may or may not be deciding where to eat off
-campus; nothing in the site's data establishes it.
+Touch 1 states that many students are "looking for restaurants around campus"
+(owner, 2026-09-19). That approved sentence is the only audience-interest claim;
+use it verbatim and make no other claim about the recipient's customers, foot
+traffic, or visits. Whether that interest turns into sponsor value is what the
+pilot tests.
 
 Store business identity,
 canonical website, contact address, source URL, collection time, and qualification
@@ -175,8 +179,8 @@ per-SKU free usage thresholds replaced the old monthly credit.
 ### 3.2 Redis model
 
 Use a dedicated outreach namespace. Keep credentials server-side and avoid
-logging email bodies, addresses, tokens, or mailbox contents. Review access scope
-before reusing the site's Redis credentials.
+logging email bodies, addresses, tokens, or mailbox contents. Outreach state lives
+in the site's existing Redis instance under that namespace (owner, 2026-09-19).
 
 | Record | Required information |
 | --- | --- |
@@ -188,7 +192,7 @@ before reusing the site's Redis credentials.
 | Suppression | Normalized email and business scope, reason, source, timestamp |
 | Completed sequence | Normalized email, business ID, final touch sent, completion timestamp; blocks re-enrollment |
 | Claim | Exact wording, metric definition, evidence reference, reporting period, verification/review status |
-| Campaign | Creative, dates, capacity/reservations, payment/trial state |
+| Campaign | Creative, dates, capacity/reservations, payment state |
 
 **Retention and eviction.** Duplicate prevention lives entirely in Redis keys, so
 a key that disappears is a safeguard that disappears silently. Configure the
@@ -204,8 +208,8 @@ uniqueness:
 | --- | --- |
 | Suppression | No expiry while outreach operates |
 | Completed sequence | No expiry while outreach operates |
-| Send attempt / claim | At least 180 days, well beyond the 10-day sequence span |
-| Prospect | While the prospect remains in the pipeline |
+| Send attempt / claim | 30 days, beyond the 10-day sequence span (owner, 2026-09-19) |
+| Prospect | 30 days after it leaves the pipeline (owner, 2026-09-19) |
 | Draft and approval | Expire after their send window — the only records that should |
 
 Do not let campaign or prospect deletion remove suppression or completed-sequence
@@ -250,12 +254,19 @@ form one transaction: a timeout or crash after possible SMTP acceptance becomes
 `unknown`, requiring reconciliation before any retry. Never automatically resend
 an uncertain attempt; a Message-ID alone does not make SMTP idempotent.
 
-Space messages 30–90 seconds apart within the window. This is pacing, not a
-promise of deliverability. Send from `Raymond at LionHour <info@gaplesslabs.com>` and receive replies at
-`info@gaplesslabs.com`. Validate the actual provider's SMTP authentication and
-IMAP or supported mailbox API access in a controlled mailbox test. Do not assume
-Gmail hosting or app-password support. Confirm domain sender authentication
-(SPF, DKIM, and DMARC) before launch; provider limits are ceilings, not a safe
+Send every message as plain text only — one text/plain part, no HTML
+alternative, no images and no tracking pixels (owner, 2026-09-20). Space messages
+30–90 seconds apart within the window. This is pacing, not a
+promise of deliverability. Send from `Raymond Wang <info@gaplesslabs.com>` and receive replies at
+`info@gaplesslabs.com`. Verified 2026-09-20 with `scripts/check_mailbox_access.py`:
+the mailbox is Google Workspace, app-password auth works for SMTP
+(smtp.gmail.com:587, STARTTLS) and for IMAP (imap.gmail.com), so replies,
+bounces and opt-outs are readable. The app password used for that test was
+exposed in a screenshot and must be revoked; the sender runs on a fresh app
+password held in GitHub repository secrets, never in the repo. Re-run the check
+after any password rotation or Workspace policy change. Domain sender
+authentication is confirmed: SPF, DKIM (selector `google`) and DMARC (`p=none`)
+all pass on a live message, 2026-09-19. Provider limits are ceilings, not a safe
 outreach-volume target.
 
 Synchronize replies using stored Message-ID / In-Reply-To / References and mailbox
@@ -278,7 +289,8 @@ working for at least 30 days after each send and honor requests within 10 busine
 days; this system should suppress immediately.
 
 No unsubscribe endpoint or token is built (owner, 2026-09-13). Opt-out is the
-footer line `Reply STOP and I won't email you again.`, honored by monitoring the
+footer line `If you'd rather not hear from me, just reply and let me know.`
+(owner, 2026-09-20), honored by monitoring the
 sender mailbox and suppressing on any reply that asks to stop. Opt-out must not
 require login, payment, or extra personal information, and repeated requests are
 safe. This only works while the mailbox is actually read.
@@ -299,8 +311,8 @@ manual production runs obey the same approval and deduplication rules.
 
 ## 6. Build order and verification gates
 
-1. Define placement and pilot price/trial terms. Evidence for
-   “20,000 impressions per week on the site.” is resolved (section 1); record the
+1. Define placement and pilot price. Evidence for
+   “20,000 views per week on the site.” is resolved (section 1); record the
    platform, metric name, and period in the claim record. Build the slot and media kit.
 2. Build Redis state, durable suppression, pause flag, and campaign state.
 3. Curate pilot prospects — independent Morningside Heights restaurants only —
@@ -313,7 +325,7 @@ manual production runs obey the same approval and deduplication rules.
    concurrent jobs, expired approval, opt-out after approval, failed mailbox sync,
    ambiguous SMTP outcome, reply/bounce suppression, and delayed schedules.
 7. Launch the approved pilot at at most five total messages/day. Review delivery,
-   replies, opt-outs, trial uptake, paid conversion, and operator effort.
+   replies, opt-outs, paid conversion, and operator effort.
 8. Enable follow-up scheduling only after suppression and timing tests pass;
    increase volume or automate discovery only after pilot review.
 
@@ -321,8 +333,10 @@ No real prospect sends until gates 1–6 pass. No automatic volume increase.
 
 ## 7. Open questions
 
-- Are there applicable Columbia or Spectator policies affecting this private venture?
-- What retention periods and access scopes are appropriate for prospect and audit data?
+None. Resolved 2026-09-19 (owner): Columbia/Spectator policy is not a blocker;
+prospect and audit data are kept for one month (section 3.2). Suppression and
+completed-sequence records are the exception and never expire, so an opt-out
+is always honored.
 
 ## 8. References checked during review
 
