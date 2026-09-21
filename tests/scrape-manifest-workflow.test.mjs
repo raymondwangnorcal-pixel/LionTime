@@ -20,7 +20,9 @@ for (const [category, file] of Object.entries(WORKFLOWS)) {
     assert.match(scrapeStep[2], /scrape\.py|-scraper\.mjs/);
 
     // Upload runs even when the scrape failed (that is the point), for exactly 14 days.
-    const upload = workflow.match(/      - name: Upload scrape manifest and evidence\n        if: \$\{\{ always\(\) && steps\.scrape\.outcome != 'skipped' \}\}\n        uses: actions\/upload-artifact@v4\n        with:\n          name: scrape-manifest-([a-z-]+)\n          path: \$\{\{ runner\.temp \}\}\/scrape\/([a-z-]+)\n          retention-days: 14\n/);
+    // The action's major version is not pinned here: pinning it to v4 turned the routine
+    // bump to upload-artifact@v7 into four red tests that said nothing about evidence.
+    const upload = workflow.match(/      - name: Upload scrape manifest and evidence\n        if: \$\{\{ always\(\) && steps\.scrape\.outcome != 'skipped' \}\}\n        uses: actions\/upload-artifact@v\d+\n        with:\n          name: scrape-manifest-([a-z-]+)\n          path: \$\{\{ runner\.temp \}\}\/scrape\/([a-z-]+)\n          retention-days: 14\n/);
     assert.ok(upload, 'upload-artifact step for the evidence directory');
     assert.equal(upload[1], category);
     assert.equal(upload[2], category);
