@@ -10,3 +10,7 @@ __pycache__/
 .env.local
 .vercel
 .env*
+.DS_Store
+*.bak
+_to_delete/
+Claude outputs/
