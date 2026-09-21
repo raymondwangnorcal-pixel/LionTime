@@ -69,7 +69,7 @@ test('closes About when the visitor scrolls or presses outside it', () => {
 
 test('renders embedded hours before guarded live hydration and exposes data status', () => {
   assert.match(indexHtml, /id="library-hours-status"[^>]*data-kind="fallback"/);
-  const initialRender = indexHtml.lastIndexOf('updateClock();\nrender();');
+  const initialRender = indexHtml.lastIndexOf('render();');
   const hydration = indexHtml.lastIndexOf('LionHourLibraryHours.hydrate');
   assert.ok(initialRender >= 0 && hydration > initialRender);
   assert.match(indexHtml, /if \(window\.LionHourLibraryHours\)/);

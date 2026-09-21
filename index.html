@@ -135,12 +135,6 @@
   .site-title { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.5px; }
   .site-title span { color: var(--columbia-pale); font-weight: 400; }
   .subtitle { font-size: 0.88rem; opacity: 0.85; margin-top: 0.15rem; }
-  .clock {
-    font-size: 0.95rem; font-weight: 500; margin-top: 0.7rem;
-    background: rgba(255,255,255,0.13); display: inline-block;
-    padding: 0.34rem 0.95rem; border-radius: 20px;
-    font-variant-numeric: tabular-nums;
-  }
 
   /* ── Sticky control bar ────────────────────────── */
   .controls {
@@ -692,7 +686,6 @@
     .site-title { font-size: 2rem; }
     .logo { gap: 0.4rem; margin-bottom: 0.15rem; }
     .subtitle { font-size: 0.78rem; }
-    .clock { font-size: 0.82rem; margin-top: 0.45rem; padding: 0.25rem 0.75rem; }
     /* one scrollable row of chips instead of three wrapped rows —
        keeps the sticky bar from eating a fifth of a phone screen */
     .chips {
@@ -973,7 +966,6 @@
   </div>
   <div class="header-content">
     <div class="logo"><img class="lion-icon" src="assets/lionhour-mascot.png" alt="LionHour mascot"><h1 class="site-title">Lion<span>Hour</span></h1></div>
-    <div class="clock" id="clock">—</div>
   </div>
 </header>
 
@@ -1829,13 +1821,6 @@ function syncStickyOffset() {
   document.documentElement.style.setProperty('--controls-h', h + 'px');
 }
 
-function updateClock() {
-  const d = new Date();
-  const t = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true }).format(d);
-  const day = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', weekday:'long', month:'long', day:'numeric' }).format(d);
-  document.getElementById('clock').textContent = `${day} · ${t} ET`;
-}
-
 /* ── Events ─────────────────────────────────────── */
 document.getElementById('chips').addEventListener('click', e => {
   /* "All Buildings" chip */
@@ -2052,7 +2037,6 @@ function easternISODate() {
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
-updateClock();
 render();
 if (window.LionHourLibraryHours) {
   LionHourLibraryHours.hydrate({
