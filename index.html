@@ -84,7 +84,7 @@
   /* ── Header ────────────────────────────────────── */
   .header {
     background: linear-gradient(135deg, var(--columbia-blue) 0%, #163d70 100%);
-    color: white; padding: 1rem 1.5rem 0.8rem;
+    color: white; padding: 0.9rem 1.5rem;
     text-align: left; position: relative; overflow: visible; z-index: 40;
   }
   /* The decorative circles get their own clipped layer, so they can never
@@ -103,6 +103,24 @@
     width: 280px; height: 280px; background: rgba(255,255,255,0.03); border-radius: 50%;
   }
   .header-content { position: relative; z-index: 1; display: flex; align-items: center; }
+
+  .desktop-ad-slot {
+    display: none; width: 728px; height: 90px;
+    align-items: center; justify-content: center;
+    background: #171717; overflow: hidden; z-index: 1;
+  }
+  .desktop-ad-slot img { display: block; width: 728px; height: 90px; object-fit: cover; }
+
+  @media (min-width: 1200px) {
+    .header { min-height: calc(90px + 1.8rem); }
+    .header-content {
+      position: absolute; top: 50%; left: 1.5rem; transform: translateY(-50%);
+    }
+    .desktop-ad-slot {
+      display: flex; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
 
 
 
@@ -678,7 +696,7 @@
     .stat { font-size: 0.75rem; }
     .search-input { flex: 1 1 100%; font-size: 0.82rem; }
     .chip { font-size: 0.72rem; padding: 0.3rem 0.7rem; }
-    .header { padding: 0.8rem 1rem 0.6rem; }
+    .header { padding: 0.7rem 1rem; }
     .header-actions { top: 50%; right: 0.8rem; gap: 0.2rem; }
     .header-link { font-size: 0.82rem; }
     .site-title { font-size: 2rem; }
@@ -962,6 +980,9 @@
       <p class="about-copy">LionHour is an aggregator for building times at Columbia University. I created this because I was tired of parsing through all the random building links lol</p>
     </details>
   </div>
+  <aside class="desktop-ad-slot" aria-label="Advertisement slot">
+    <img src="assets/gapless-leaderboard-1456x180.png" width="728" height="90" alt="Gapless Labs — Real Problems. Simple Solutions. gaplesslabs.com">
+  </aside>
   <div class="header-content">
     <div class="logo"><h1 class="site-title">Lion<span>Hour</span></h1></div>
   </div>

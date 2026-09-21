@@ -1404,7 +1404,7 @@
 - Decision: Merged autofix code may run on the self-hosted dining runner (the laptop now, the Mac mini after migration) without container or separate-user isolation. The controls are the propose job's file allowlist and constraint scan plus human diff review on GitHub before merge.
 - Rationale: Residual risk judged acceptable for a single-owner student project where every generated diff is read before merge; revisit when the Mac mini is set up or if the reviewer list grows.
 - Scope: docs/automated-fix.md §7b; the runner install.
-- Implementation: n/a
+- Implementation: pending
 - Recorded against HEAD: `3619910fc7bd759dc5f56ba7723169c801899235`
 - Supersedes: none
 - Evidence: docs/telegram-bot-review-codex.md finding R1; owner's answer on 2026-09-10.
@@ -1418,13 +1418,11 @@
 - Decision: Every hours workflow must (a) read the publish request's HTTP status and fail on anything that is not a 2xx, and (b) re-fetch the endpoint afterwards and fail unless the `generated` stamp it serves is the one the run just sent. A green publish step is no longer accepted as evidence that hours reached the site.
 - Rationale: On 2026-09-10 `lionhour.com` became the primary Vercel domain and `www.lionhour.com` began 308-redirecting to it. The four `*_API_URL` repository variables still named the www host. `curl` does not follow redirects and `--fail-with-body` does not fail on a 3xx, so every PUT stopped landing while all four workflows stayed green — for three days, across library, dining, recreation and Student Life. The scrapers were healthy throughout; nothing in the pipeline ever looked at what the site was actually serving. `0b218cd` had already fixed the same redirect for the QR stats report without anyone checking the publish URLs.
 - Scope: the publish and verification steps of `update-{library,dining,recreation,student-services}-hours.yml`; `lib/publish-verification.js`; `scripts/verify-published-snapshot.mjs`.
-- Implementation: done — `lib/publish-verification.js` with `tests/publish-verification.test.mjs`; each workflow test asserts the status-code check and the verification step.
+- Implementation: recorded in update event below
 - Recorded against HEAD: `928136f2e6ca684ed1a64b6624797846415a66d6`
 - Supersedes: none
-- Evidence: the four snapshots frozen at 2026-09-10 15:06–15:35 ET while dining run #112 scraped Barnard successfully on 2026-09-12; `0b218cd` commit message.
+- Evidence: The four snapshots frozen at 2026-09-10 15:06–15:35 ET while dining run #112 scraped Barnard successfully on 2026-09-12; `0b218cd` commit message. Known limit: `scripts/verify-live-barnard-dining.mjs` checks schema and venue coverage rather than freshness, and its source-specific `generated` value cannot use the generic equality check.
 - Privacy waivers: none
-
-Note on what this does *not* cover: `scripts/verify-live-barnard-dining.mjs` checks schema and venue coverage, not freshness, and passed against the three-day-old snapshot throughout. Its `generated` comes from the Barnard source's `lastSuccessAt` rather than the batch, so it cannot use the equality check above; the generic verification is what guards it now.
 
 ## DEC-0073 — Audit what the site serves, not whether the job ran
 
@@ -1434,18 +1432,11 @@ Note on what this does *not* cover: `scripts/verify-live-barnard-dining.mjs` che
 - Decision: A scheduled job reads all five published hours endpoints four times a day and fails — with a Telegram message — when a snapshot is older than the freshness budget (24 h, per DEC-0069) or when a venue carries no usable hours on **any** day of its published window. Venues that are legitimately unresolved live in a named allowlist with a reason, in `EXPECTED_UNRESOLVED`.
 - Rationale: Both September incidents were invisible to every existing check because each one asked whether a job had worked, and the answer was always yes. The publish URL redirect (DEC-0072) left five feeds frozen for three days with green runs; Columbia's Fall 2026 rewrite left Uris Pool blank for a term while `columbiaHours` reported success on every run, so the manifest had nothing fixable and the autofix was never offered the page. "No hours on any of fourteen days" needs no history to detect, which keeps the check stateless — a venue closed today is normal, a venue empty for a fortnight is a pipeline that cannot see it.
 - Scope: `lib/hours-audit.js`, `scripts/audit-published-hours.mjs`, `.github/workflows/audit-published-hours.yml`, `tests/hours-audit.test.mjs`.
-- Implementation: done. Dry-run against the live site on 2026-09-13 reported exactly the two known faults — `uris-pool` unresolved and dining/barnard-dining stale at 55 h — and nothing else; `squash-courts` was correctly silent via the allowlist.
-- Recorded against HEAD: `b844624`
+- Implementation: recorded in update event below
+- Recorded against HEAD: `26123e4ce6ba69482e14124405a9f81888f649dc`
 - Supersedes: none
-- Evidence: the frozen 2026-09-10 snapshots; `columbiaHours` success on every run through the Fall 2026 rewrite.
+- Evidence: The frozen 2026-09-10 snapshots and `columbiaHours` success on every run through the Fall 2026 rewrite. The original abbreviated context hash `b844624` maps to the verified rewritten implementation commit. Known limit: the audit cannot identify schedules that are present and plausible but wrong; that requires source-target completeness declarations and `missing-content` manifest entries.
 - Privacy waivers: none
-
-Known limit, recorded deliberately: this does not catch hours that are present, plausible and
-wrong. Dodge spent a week serving the Blue Gym calendar's envelope — full days, sensible
-times, the wrong schedule — and no check that reads only the published snapshot can tell.
-Catching that class needs the parser to declare which targets a source is expected to yield
-and record a `missing-content` manifest entry when one disappears, which would also hand the
-page to the autofix. That is the next step, not this one.
 
 ## DEC-0074 — /api/preview publishes schedules, not status
 
@@ -1455,14 +1446,128 @@ page to the autofix. That is the next step, not this one.
 - Decision: A public, CORS-open `GET /api/preview` serves a compact read model — the five categories, the venues in each, and each venue's weekly hours — so an outside surface can draw LionHour's state in its own hand. Status is deliberately **not** computed server-side: the consumer compares the schedules against its own clock. First consumer is the Gapless Labs studio site (`~/PersonalProjects/Gapless-Labs`, Plate I, Fig. 1.2).
 - Rationale: The alternative was an iframe of lionhour.com on the studio site, which drags the whole product UI into a page with a different aesthetic and no control over the interaction. Serving data instead keeps LionHour the source of truth without making it the renderer. Shipping schedules rather than status is what makes the response cacheable: a CDN can hold it for two minutes and the consumer's panel still flips open/closed at the right minute and counts down between refreshes, which a baked-in status could not. It also keeps the endpoint honest about what it is — an overlay of the same precedence the site uses, not a second implementation of `getStatus` drifting away from the one in `index.html`.
 - Scope: `api/preview.js`, `lib/preview-service.js`, `scripts/generate-preview-summary.mjs`, `lib/preview-summary.generated.mjs`, `tests/preview-service.test.mjs`, `vercel.json`.
-- Implementation: done. Baseline is generated from `VENUE_CATALOG` at build time, so `index.html`'s VENUES stays the single source of truth (DEC-0069). The live library snapshot is laid over it; anything the scraper flagged — failed, temporarily closed, told to use the embedded fallback — falls through to the baseline, matching the precedence the site itself applies. A venue with no published baseline is marked `published: false` so a consumer says "hours not published" rather than the flatly wrong "closed". Every source is best-effort: a dead store still serves the baseline with `live: false` on the category. Cached `s-maxage=120, stale-while-revalidate=600`.
-- Recorded against HEAD: (uncommitted)
+- Implementation: recorded in update event below
+- Recorded against HEAD: not applicable
 - Supersedes: none
-- Evidence: `tests/preview-service.test.mjs` covers the overlay, the three fall-through paths, the unreachable store, and the preflight.
+- Evidence: `tests/preview-service.test.mjs` covers the overlay, the three fall-through paths, the unreachable store, and the preflight. The implementation was uncommitted when this decision was recorded. Known limit: only the library overlay is applied; the remaining category overlays should be added when a consumer requires same-day accuracy.
 - Privacy waivers: none
 
-Known limit, recorded deliberately: only the library overlay is applied. Dining, cafes,
-fitness and student services serve their embedded baseline, which is what the site shows
-when those live feeds are unavailable but not what it shows when they are working. Adding
-their overlays means reading four more stores here and mirroring their resolvers' precedence
-— worth doing when a consumer needs same-day dining accuracy, not before.
+## Update — 2026-09-21 — DEC-0072
+
+- Type: implementation
+- Implementation commit: `9da803a5f2b7766eb6c1a1db5e58fe9ef3f8084b` — ops: fail a scrape run whose publish never reached the site
+- Superseded by: none
+- Note: The rewritten reachable commit enforces 2xx-only publishing and verifies the served snapshot after every publish.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0073
+
+- Type: implementation
+- Implementation commit: `26123e4ce6ba69482e14124405a9f81888f649dc` — feat(ops): audit what the site serves, not whether the job ran
+- Superseded by: none
+- Note: The rewritten reachable commit implements the scheduled freshness and usable-hours audit with alerting.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0074
+
+- Type: implementation
+- Implementation commit: `eee236756cbb12089d55ef2751404fe000821efb` — UI Fix
+- Superseded by: none
+- Note: The rewritten reachable commit contains the public schedule preview endpoint and its supporting read model.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0061
+
+- Type: implementation
+- Implementation commit: `16669e90ba6267d4ff3fa1cd3e59030d2ad1c801` — docs(outreach): finalize pilot copy and mailbox checks
+- Superseded by: none
+- Note: The outreach plan, pilot messaging, templates, and mailbox-access checker now implement the approved sponsorship proposition.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0065
+
+- Type: implementation
+- Implementation commit: `c179a4bebbbbd688908fb529651c23bbc494270c` — Make npm test green: fix eleven stale tests, drop two, add PR checks
+- Superseded by: none
+- Note: The baseline test failures were repaired without quarantine, and pull requests now run the green test gate.
+- Privacy waivers: none
+
+## DEC-0075 — Publish dining menus through the API
+
+- Date: 2026-09-20
+- Owner: agent
+- Status at record: active
+- Decision: The scheduled dining-menu workflow publishes a validated snapshot through the API and verifies the served result instead of committing generated menu data to `main`.
+- Rationale: Repository rules reject direct scheduled pushes, while API publication preserves the existing pull-request policy and provides end-to-end verification.
+- Scope: Dining-menu workflow permissions, snapshot publishing, verification, and generated menu storage.
+- Implementation: recorded in update event below
+- Recorded against HEAD: `005220d0eb5b30497e9a6ca4aef08d64d6be5e25`
+- Supersedes: none
+- Evidence: `.github/workflows/update-dining-menus.yml` and `docs/open-issues-2026-09-20.md`.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0075
+
+- Type: implementation
+- Implementation commit: `a4e6fe51c1a5f28dc136bf43f5a4b87534a9159f` — Publish dining menus through the API instead of pushing to main
+- Superseded by: none
+- Note: The reachable feature commit implements API publication, strict response handling, and served-snapshot verification.
+- Privacy waivers: none
+
+## DEC-0076 — List Cafe East under Dining and Cafes
+
+- Date: 2026-09-20
+- Owner: user
+- Status at record: active
+- Decision: Cafe East appears in both Dining and Cafes while Dining remains its home category.
+- Rationale: The venue serves both discovery contexts without duplicating its underlying catalog identity.
+- Scope: Venue catalog metadata, category filters, generated pages, tests, and the live site.
+- Implementation: recorded in update event below
+- Recorded against HEAD: `005220d0eb5b30497e9a6ca4aef08d64d6be5e25`
+- Supersedes: none
+- Evidence: `docs/open-issues-2026-09-20.md` and the user-approved dual-category behavior.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0076
+
+- Type: implementation
+- Implementation commit: `2b77d11ec654ffd9db68426e96874ba54fb751ab` — feat(venues): list Cafe East under Dining and Cafes
+- Superseded by: none
+- Note: The rewritten reachable commit implements and tests the dual-category venue metadata.
+- Privacy waivers: none
+
+## DEC-0077 — Purge the personal document from GitHub history
+
+- Date: 2026-09-20
+- Owner: user
+- Status at record: active
+- Decision: Remove the personal résumé from all reachable repository history and ask GitHub Support to purge stale pull-request refs even though PRs #14–#17 will permanently lose their diff views; the public fork is handled separately with its owner.
+- Rationale: Removing the exposed personal document takes priority over retaining historical review diffs that still reference it.
+- Scope: Public branch history, cached pull-request refs, GitHub-hosted objects, and coordination with the public fork owner.
+- Implementation: pending
+- Recorded against HEAD: `005220d0eb5b30497e9a6ca4aef08d64d6be5e25`
+- Supersedes: none
+- Evidence: `docs/open-issues-2026-09-20.md` and GitHub Support ticket #4776343.
+- Privacy waivers: none
+
+## DEC-0078 — Center the desktop advertisement inside the site header
+
+- Date: 2026-09-20
+- Owner: user
+- Status at record: active
+- Decision: LionHour reserves an exact 728 by 90 pixel advertisement slot centered inside the blue header at viewport widths of 1200 pixels and above, and hides the slot below that breakpoint to prevent collisions with the title and header actions.
+- Rationale: This matches the approved desktop placement reference while preserving the established LionHour, Feedback, and About layout at narrower widths.
+- Scope: Main-page header layout, responsive advertising behavior, header regression tests, and the advertising sales plan.
+- Implementation: pending
+- Recorded against HEAD: `aadbe2a8de975a55b6cc928e3f6cedc7be6a85ef`
+- Supersedes: none
+- Evidence: User-provided desktop reference image and `docs/ad-sales-outreach-plan.md`.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0078
+
+- Type: implementation
+- Implementation commit: `47f48a4a4d46a1f1462beb307c2686dc9ed0763e` — feat: add desktop leaderboard ad slot
+- Superseded by: none
+- Note: The wide-desktop header now renders the exact 728 by 90 pixel owner-supplied Gapless Labs placeholder creative without changing narrower layouts.
+- Privacy waivers: none

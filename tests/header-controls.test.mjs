@@ -41,9 +41,19 @@ test('keeps the title left-aligned without a mascot at every breakpoint', () => 
 });
 
 test('vertically centers the title and the combined header action group', () => {
+  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.9rem 1\.5rem;/);
   assert.match(indexHtml, /\.site-title\s*\{[^}]*margin:\s*0;/);
   assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*display:\s*grid;[^}]*justify-items:\s*end;[^}]*gap:\s*0\.3rem;[^}]*text-align:\s*right;[^}]*transform:\s*translateY\(-50%\)/);
+  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.7rem 1rem;/);
   assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*right:\s*0\.8rem;[^}]*gap:\s*0\.2rem;/);
+});
+
+test('reserves an exact centered leaderboard slot on wide desktop only', () => {
+  assert.match(indexHtml, /<aside class="desktop-ad-slot" aria-label="Advertisement slot">/);
+  assert.match(indexHtml, /<img src="assets\/gapless-leaderboard-1456x180\.png" width="728" height="90" alt="Gapless Labs — Real Problems\. Simple Solutions\. gaplesslabs\.com">/);
+  assert.match(indexHtml, /\.desktop-ad-slot\s*\{[^}]*display:\s*none;[^}]*width:\s*728px;[^}]*height:\s*90px;/);
+  assert.match(indexHtml, /\.desktop-ad-slot img\s*\{[^}]*width:\s*728px;[^}]*height:\s*90px;[^}]*object-fit:\s*cover;/);
+  assert.match(indexHtml, /@media \(min-width:\s*1200px\)\s*\{[\s\S]*?\.desktop-ad-slot\s*\{[^}]*display:\s*flex;[^}]*top:\s*50%;[^}]*left:\s*50%;[^}]*transform:\s*translate\(-50%,\s*-50%\)/);
 });
 
 test('does not render the mockup banner', () => {

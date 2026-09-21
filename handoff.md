@@ -29,8 +29,9 @@ state verified.
 - Outreach documentation and mailbox-access checker (committed as `e32177b`)
 - Repository cleanup, README, ignore rules, archived historical documents,
   generated sitemap, issue-resolution record, and this handoff (uncommitted)
-- `docs/decisions.md` is intentionally unchanged until after the authorized
-  history rewrite, when final reachable commit hashes are known
+- `docs/decisions.md` contains the owner-approved DEC-0071–DEC-0074 schema
+  normalization plus trusted records for the menu API, Cafe East, test gate,
+  outreach work, and privacy purge.
 
 ## 5. Important implementation decisions
 
@@ -40,21 +41,24 @@ state verified.
   comparison artifact. The redundant local and remote branch was deleted.
 - The root `handoff.md` remains canonical per repository instructions. The newer
   but stale duplicate was preserved as `docs/archive/handoff-2026-09-20.md`.
-- Merged branches and clean worktrees were removed. Four unmerged superseded
-  branches remain until the history rewrite preserves and rewrites them safely.
+- Merged branches, clean worktrees, and the four explicitly approved superseded
+  local branches were removed. Only `main` and the active reconciliation branch remain.
 - The repository ruleset does require pull requests, but administrators have an
   always-on bypass; ordinary delivery will continue through a PR.
 
 ## 6. Current state of the code
 
-- Branch: `fix/branchiss-remediation`, based on current `origin/main`.
+- Branch: `fix/post-purge-reconciliation`, based on rewritten `origin/main`.
 - Cafe East changes are committed and pass the full test suite.
 - Recreation is live and populated at the apex and www endpoints from snapshot
   `2026-09-21T01:57:47.063Z`.
 - Outreach changes are committed; the previously malformed manual decision-ledger
   edit was discarded so it can be re-recorded through the validator.
-- Current-tree junk and the résumé are staged for removal; history still contains
-  the résumé until the final rewrite.
+- PR #17 merged, production serves Cafe East under Dining and Cafes, and the
+  rewritten public `main` and `feat/menus-api` branches no longer contain the résumé.
+- GitHub Support ticket #4776343 is open to remove the read-only PR refs and
+  cached views for #14–#17. The public fork `leemon888/lionhour` still retains
+  pre-rewrite history and requires its owner's cleanup.
 
 ## 7. Tests run and results
 
@@ -62,27 +66,26 @@ state verified.
 - `npm test`: 474 passed, 0 failed.
 - Recreation workflow run `35552503053`: passed publish and verification; live
   Dodge, Uris, and child-space hours confirmed after edge propagation.
-- Final full validation, the scheduled menus-run check, PR checks, and post-rewrite
-  history scan remain to be completed.
+- PR #17 checks passed, rewritten-main push checks passed, and local object-level
+  verification passed. The scheduled menus-run check remains outstanding.
+- The history-independent decision-ledger schema, lifecycle, and privacy audit
+  passes. Full Git attribution still reports unreachable legacy hashes because
+  the authorized résumé purge rewrote repository history.
 
 ## 8. Known bugs, gaps, or risks
 
-- A compromised Gmail app password still requires revocation in the Google account.
-- The old shared Telegram bot token still requires rotation through BotFather.
-- Credential rotation is an external destructive/security action and needs explicit
-  confirmation immediately before it is performed.
-- A full history rewrite changes commit IDs and requires a coordinated force-push;
-  a temporary local bundle must be destroyed after verification because it contains
-  the removed personal document.
+- The owner reports that the exposed Gmail app password and old Telegram bot
+  token have both been rotated; no secret values were recorded in the repository.
+- GitHub Support ticket #4776343 requests removal of cached views and hidden refs
+  for PRs #14–#17. The user approved permanent loss of those PR diff views.
+- The public fork owner must remove or rewrite their fork; the source repository
+  cannot do that unilaterally.
+- Full Git attribution for the append-only decision ledger cannot verify legacy
+  pre-purge commit hashes after the authorized history rewrite; the independent
+  schema, lifecycle, and privacy audit passes.
 
 ## 9. Exact next steps
 
-1. Finish repository cleanup documentation and commit it.
-2. Confirm the first scheduled dining-menu API run published and verified.
-3. Run the complete test/build/ledger checks, push the remediation branch, open a
-   PR, wait for checks, and merge it.
-4. Rewrite all reachable refs to remove the résumé, force-update the remote, and
-   prove the path and blob are unreachable.
-5. Append validated decision-ledger records using the rewritten commit hashes.
-6. Ask for final confirmation, then revoke/rotate the exposed credentials if the
-   required account sessions are available.
+1. Confirm the first scheduled dining-menu API run published and verified.
+2. Monitor GitHub Support ticket #4776343 and coordinate the fork cleanup.
+3. Commit and merge the final reconciliation documentation.
