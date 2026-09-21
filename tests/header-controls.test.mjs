@@ -41,8 +41,10 @@ test('keeps the title left-aligned without a mascot at every breakpoint', () => 
 });
 
 test('vertically centers the title and the combined header action group', () => {
+  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.9rem 1\.5rem;/);
   assert.match(indexHtml, /\.site-title\s*\{[^}]*margin:\s*0;/);
   assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*display:\s*grid;[^}]*justify-items:\s*end;[^}]*gap:\s*0\.3rem;[^}]*text-align:\s*right;[^}]*transform:\s*translateY\(-50%\)/);
+  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.7rem 1rem;/);
   assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*right:\s*0\.8rem;[^}]*gap:\s*0\.2rem;/);
 });
 
