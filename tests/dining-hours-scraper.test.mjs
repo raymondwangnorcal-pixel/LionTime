@@ -59,11 +59,13 @@ test('builds fourteen Eastern dates and preserves statuses, exclusions, and spli
 
   const johnJay = snapshot.locations.find(({ id }) => id === 'johnjay');
   assert.equal(johnJay.days.length, 14);
+  // A schedule that names other weekdays but not this one means closed, and says so. The
+  // season label ("Summer Hours", "Fall 2026 hours") named the source, never the answer.
   assert.deepEqual(johnJay.days[0], {
-    date: '2026-08-21', intervals: [], status: 'Summer Hours',
+    date: '2026-08-21', intervals: [], status: 'Closed',
   });
   assert.deepEqual(johnJay.days[2], {
-    date: '2026-08-23', intervals: [], status: 'Summer Hours',
+    date: '2026-08-23', intervals: [], status: 'Closed',
   });
 
   const ferris = snapshot.locations.find(({ id }) => id === 'ferris');

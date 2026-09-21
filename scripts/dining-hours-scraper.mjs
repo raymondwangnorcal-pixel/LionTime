@@ -193,13 +193,73 @@ function intervalsFor(period, date) {
   });
 }
 
-function periodForDate(periods, date) {
-  return periods.find((period) => {
+/**
+ * Columbia publishes several hours periods per location and lets them overlap. Reading only
+ * the first one that covers a date got three things wrong at once on 2026-09-20:
+ *
+ *  - Faculty House 2nd Floor runs breakfast, lunch and dinner as three concurrent periods.
+ *    Only breakfast was published, so the site said "closed" through lunch and dinner.
+ *  - The Fac Shack excludes 2026-09-17..10-01 from its normal period and carries a second
+ *    period for those dates ("Meals available for pick-up on the first floor of Faculty
+ *    House"). The excluded period won, so the truck showed no hours on any of the 14 days.
+ *  - A short override period (a holiday schedule, a private-event closure) sits on top of
+ *    the semester one. Reading either one alone is wrong in one of the two directions.
+ *
+ * So: drop periods that exclude the date, keep the narrowest ones that remain, and union
+ * those. Concurrent meal periods share a date range (give or take a day, as Columbia's own
+ * data does) and union; a genuinely shorter period is an override and wins alone.
+ */
+const PERIOD_TIER_TOLERANCE_DAYS = 7;
+
+function periodBounds(period) {
+  return {
+    start: sourceDate(period.date_from ?? period.dateFrom, 'date_from'),
+    end: sourceDate(period.date_to ?? period.dateTo, 'date_to'),
+  };
+}
+
+function spanDays({ start, end }) {
+  return Math.round((Date.parse(`${end}T12:00:00Z`) - Date.parse(`${start}T12:00:00Z`)) / 86_400_000);
+}
+
+function excludedDates(period) {
+  return normalizeExcluded(period.excluded ?? period.excluded_dates ?? period.excludedDates);
+}
+
+/** True when a period publishes no hours on any weekday — a closure notice, not a schedule. */
+function publishesNoHours(period) {
+  const dayObjects = Array.isArray(period.days) ? period.days : [period.days];
+  return !dayObjects.some((item) => isRecord(item)
+    && DAY_KEYS.some((key) => Array.isArray(item[key]) && item[key].length > 0));
+}
+
+export function periodsCovering(periods, date) {
+  return periods.filter((period) => {
     if (!isRecord(period)) return false;
-    const start = sourceDate(period.date_from ?? period.dateFrom, 'date_from');
-    const end = sourceDate(period.date_to ?? period.dateTo, 'date_to');
+    const { start, end } = periodBounds(period);
     return start <= date && date <= end;
   });
+}
+
+/** The periods that actually decide a date: see the comment above for why it is a tier. */
+export function periodsForDate(periods, date) {
+  const usable = periodsCovering(periods, date).filter((period) => !excludedDates(period).has(date));
+  if (!usable.length) return [];
+  const narrowest = Math.min(...usable.map((period) => spanDays(periodBounds(period))));
+  return usable.filter((period) => spanDays(periodBounds(period)) - narrowest <= PERIOD_TIER_TOLERANCE_DAYS);
+}
+
+/** Union the day's intervals. Overnight spans (12 p.m. - 10 a.m.) are left alone. */
+function mergeIntervals(intervals) {
+  if (intervals.some(([open, close]) => close <= open)) return intervals;
+  const sorted = [...intervals].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  const merged = [];
+  for (const [open, close] of sorted) {
+    const last = merged.at(-1);
+    if (last && open <= last[1]) last[1] = close > last[1] ? close : last[1];
+    else merged.push([open, close]);
+  }
+  return merged;
 }
 
 export function parseDiningNodes(raw) {
@@ -225,15 +285,22 @@ export function buildDiningSnapshot(dataset, generated = new Date()) {
     if (!node) throw new Error(`missing source location: ${sourceId}`);
     const periods = periodsFor(node);
     const days = dates.map((date) => {
-      const period = periodForDate(periods, date);
-      if (!period) return { date, intervals: [], status: 'Hours not published' };
-      const status = cleanStatus(period.displayed_hours ?? period.displayedHours);
-      const excluded = normalizeExcluded(period.excluded ?? period.excluded_dates ?? period.excludedDates);
-      return {
-        date,
-        intervals: excluded.has(date) ? [] : intervalsFor(period, date),
-        status,
-      };
+      if (!periodsCovering(periods, date).length) {
+        return { date, intervals: [], status: 'Hours not published' };
+      }
+      const selected = periodsForDate(periods, date);
+      // Every period covering this date excludes it: a holiday closure, nothing else to read.
+      if (!selected.length) return { date, intervals: [], status: 'Closed' };
+
+      const intervals = mergeIntervals(selected.flatMap((period) => intervalsFor(period, date)));
+      const status = cleanStatus(selected.map((period) => period.displayed_hours ?? period.displayedHours));
+      // A schedule that lists other weekdays but not this one means closed today. Saying so
+      // beats repeating the schedule sentence ("Monday - Friday, 8 a.m. - 9 p.m.") on a
+      // Sunday, which reads like opening hours. A pure closure notice keeps its own wording.
+      if (!intervals.length && !selected.every(publishesNoHours)) {
+        return { date, intervals: [], status: 'Closed' };
+      }
+      return { date, intervals, status };
     });
     return {
       id: mapping.id,
