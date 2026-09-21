@@ -33,10 +33,8 @@ test('restores the Feedback and About controls in the redesigned header', () => 
   assert.match(html, /\.header-actions\s*\{[^}]*top:\s*1\.9rem;\s*right:\s*1\.8rem;/);
 });
 
-test('keeps the title left-aligned without a mascot above the phone breakpoint', () => {
-  // The plushie is a phone-only CSS background: hidden by default, never an <img>.
-  assert.doesNotMatch(indexHtml, /<img[^>]*lionhour-mascot\.png/);
-  assert.match(indexHtml, /\.lion-icon\s*\{\s*display:\s*none;\s*\}/);
+test('keeps the title left-aligned without a mascot at every breakpoint', () => {
+  assert.doesNotMatch(indexHtml, /lionhour-mascot\.png|lion-icon/);
   assert.match(indexHtml, /\.header\s*\{[^}]*text-align:\s*left;/);
   assert.match(indexHtml, /\.header-content\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;/);
   assert.match(indexHtml, /\.logo\s*\{[^}]*justify-content:\s*flex-start;/);
@@ -62,18 +60,15 @@ test('keeps the leaderboard visible and only shrinks it when the header runs out
   assert.match(indexHtml, /@media \(min-width:\s*621px\) and \(max-width:\s*855px\)\s*\{[\s\S]*?\.site-title\s*\{[^}]*font-size:\s*calc\(41\.6 \* var\(--u\)\);[\s\S]*?\.header-link\s*\{[^}]*font-size:\s*calc\(16 \* var\(--u\)\);/);
 });
 
-test('phones stack the banner above a centred plushie + title with the links pinned right', () => {
+test('phones stack the banner above a compact title row with the links side by side', () => {
   const phone = indexHtml.match(/@media \(max-width:\s*620px\)\s*\{\s*\.header\s*\{[\s\S]*?\.header-link\s*\{[^}]*\}\s*\}/);
   assert.ok(phone, 'phone header block exists');
-  assert.match(phone[0], /grid-template-columns:\s*minmax\(0,1fr\) auto minmax\(0,1fr\);/);
-  assert.match(phone[0], /grid-template-areas:\s*"ad ad ad" "\. title actions";/);
+  assert.match(phone[0], /grid-template-columns:\s*minmax\(0,1fr\) auto;/);
+  assert.match(phone[0], /grid-template-areas:\s*"ad ad" "title actions";/);
   assert.match(phone[0], /padding:\s*0\.7rem 1rem;/);
-  assert.match(phone[0], /\.logo\s*\{[^}]*justify-content:\s*center;[^}]*gap:\s*0\.4rem;/);
-  assert.match(phone[0], /\.lion-icon\s*\{[^}]*display:\s*block;[^}]*width:\s*2\.4rem;[^}]*height:\s*2\.4rem;[^}]*lionhour-mascot\.png/);
-  assert.match(phone[0], /\.site-title\s*\{\s*font-size:\s*2rem;/);
-  assert.match(phone[0], /\.header-actions\s*\{\s*gap:\s*0\.2rem;\s*justify-self:\s*end;/);
+  assert.match(phone[0], /\.site-title\s*\{\s*font-size:\s*1\.25rem;/);
+  assert.match(phone[0], /\.header-actions\s*\{\s*grid-auto-flow:\s*column;[^}]*gap:\s*0\.9rem;/);
   assert.match(phone[0], /\.header-link\s*\{\s*font-size:\s*0\.82rem;/);
-  assert.match(indexHtml, /<div class="logo"><span class="lion-icon" aria-hidden="true"><\/span><h1 class="site-title">/);
 });
 
 test('does not render the mockup banner', () => {
