@@ -1571,3 +1571,33 @@
 - Superseded by: none
 - Note: The wide-desktop header now renders the exact 728 by 90 pixel owner-supplied Gapless Labs placeholder creative without changing narrower layouts.
 - Privacy waivers: none
+
+## DEC-0079 — Scale the desktop advertisement responsively
+
+- Date: 2026-09-20
+- Owner: user
+- Status at record: active
+- Decision: LionHour displays the header advertisement at the supplied 728 to 90 aspect ratio with a fluid width of 34 percent of the desktop viewport, bounded from 320 to 520 pixels, and hides it below 1024 pixels.
+- Rationale: The advertisement should match the smaller visual footprint in the approved reference and shrink proportionally as the browser window narrows without colliding with the title or header actions.
+- Scope: Main-page header layout, responsive advertising behavior, header regression tests, and the advertising sales plan.
+- Implementation: pending
+- Recorded against HEAD: `a5883e44a6511afedc76e02bec188a14df07bc9b`
+- Supersedes: DEC-0078
+- Evidence: User-provided desktop reference image and follow-up sizing request on 2026-09-20.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0078
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0079
+- Note: The fixed 728 by 90 desktop rendering is replaced by a smaller fluid rendering that preserves the same aspect ratio.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0079
+
+- Type: implementation
+- Implementation commit: `4f71ab4e55bd686458dd1fbdd611eb04f11b98a9` — fix: scale desktop ad responsively
+- Superseded by: none
+- Note: The header advertisement now scales from 320 to 520 pixels at the fixed creative aspect ratio and remains hidden below the desktop breakpoint.
+- Privacy waivers: none
