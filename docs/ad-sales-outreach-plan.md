@@ -39,7 +39,7 @@ for review rather than silently changing approved copy or continuing a stale cla
 | Creative | 728x90 px supplied by the sponsor; owner resizes anything that arrives at the wrong size |
 | Empty slot | Owner-supplied preview creative runs when no campaign is active |
 | Opt-out | Reply-based ("If you'd rather not hear from me, just reply and let me know.", owner 2026-09-20); no unsubscribe endpoint or token is built |
-| Placement | Single 728:90 slot centered inside the blue site header on desktop; displayed at roughly 34% of the viewport with a 320–520px width range, hidden below 1024px, and visibly identified as an advertisement |
+| Placement | Single 728:90 slot centered inside the blue site header; it remains 520px wide until the title and actions need the space, then the center grid column shrinks it proportionally; at 620px and below it moves to a second header row instead of disappearing |
 | Sponsor reporting | Manual — compiled and sent by the owner; no campaign measurement is built |
 | Inventory | Build and verify the on-site ad slot and media kit before outreach |
 | Postal address | `70 Morningside Dr, RZW2006 WBH, New York, NY 10027-7236` (Columbia mail address; owner confirmed commercial use is fine, 2026-09-19; re-verify each term) |
@@ -48,9 +48,11 @@ for review rather than silently changing approved copy or continuing a stale cla
 
 The reviewed site has no sponsor unit. Before outreach ships, build:
 
-- A clearly labeled 728:90 sponsored placement centered inside the blue header on
-  desktop, fluidly sized from 320–520px and hidden below 1024px, one sponsor per
-  week, with owner-supplied preview creative when no campaign is active.
+- A clearly labeled 728:90 sponsored placement centered inside the blue header,
+  held at 520px until adjacent header content needs the space, then proportionally
+  reduced; at 620px and below it moves to a second row rather than disappearing.
+  Run one sponsor per week, with owner-supplied preview creative when no campaign
+  is active.
 - `/advertise` with the core selling language, placement preview, pricing ($100 flat, one week),
   and contact path.
 
