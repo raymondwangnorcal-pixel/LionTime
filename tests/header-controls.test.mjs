@@ -40,6 +40,13 @@ test('keeps the title left-aligned without a mascot at every breakpoint', () => 
   assert.match(indexHtml, /\.logo\s*\{[^}]*justify-content:\s*flex-start;/);
 });
 
+test('vertically centers the title and the combined header action group', () => {
+  assert.match(indexHtml, /\.site-title\s*\{[^}]*margin:\s*0;/);
+  assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*transform:\s*translateY\(-50%\)/);
+  assert.match(indexHtml, /\.header-actions\s*\{[^}]*gap:\s*0\.75rem;/);
+  assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*right:\s*0\.8rem;[^}]*gap:\s*0\.5rem;/);
+});
+
 test('does not render the mockup banner', () => {
   assert.doesNotMatch(html, /class="mockup-banner"/);
 });
