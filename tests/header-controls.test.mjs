@@ -45,8 +45,10 @@ test('vertically centers the title and the combined header action group', () => 
   assert.match(indexHtml, /\.site-title\s*\{[^}]*margin:\s*0;/);
   assert.match(indexHtml, /\.header-content\s*\{[^}]*grid-area:\s*title;[^}]*display:\s*flex;[^}]*align-items:\s*center;/);
   assert.match(indexHtml, /\.header-actions\s*\{[^}]*grid-area:\s*actions;[^}]*position:\s*relative;[^}]*display:\s*grid;[^}]*justify-items:\s*end;[^}]*gap:\s*0\.3rem;[^}]*text-align:\s*right;/);
-  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.7rem 1rem;/);
-  assert.match(indexHtml, /\.header-actions\s*\{[^}]*gap:\s*0\.2rem;/);
+  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.45rem 1\.5rem;/);
+  // Phones no longer get their own header sizes; the scaled block handles them.
+  assert.doesNotMatch(indexHtml, /\.header\s*\{\s*padding:\s*0\.7rem 1rem;\s*\}/);
+  assert.doesNotMatch(indexHtml, /\.site-title\s*\{\s*font-size:\s*2rem;\s*\}/);
 });
 
 test('keeps the leaderboard visible and only shrinks it when the header runs out of room', () => {
@@ -55,8 +57,13 @@ test('keeps the leaderboard visible and only shrinks it when the header runs out
   assert.match(indexHtml, /\.desktop-ad-slot\s*\{[^}]*grid-area:\s*ad;[^}]*display:\s*block;[^}]*width:\s*min\(100%,\s*520px\);[^}]*height:\s*auto;[^}]*aspect-ratio:\s*728\s*\/\s*90;/);
   assert.match(indexHtml, /\.desktop-ad-slot img\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/);
   assert.doesNotMatch(indexHtml, /\.desktop-ad-slot\s*\{[^}]*display:\s*none/);
-  assert.match(indexHtml, /@media \(min-width:\s*621px\)\s*\{[\s\S]*?\.header\s*\{[^}]*grid-template-columns:\s*minmax\(10\.5rem,1fr\) minmax\(0,520px\) minmax\(10\.5rem,1fr\);[^}]*grid-template-areas:\s*"title ad actions"/);
-  assert.match(indexHtml, /@media \(min-width:\s*621px\)\s*\{[\s\S]*?\.desktop-ad-slot\s*\{[^}]*width:\s*100%;/);
+  assert.match(indexHtml, /\.header\s*\{[^}]*grid-template-columns:\s*minmax\(max-content,1fr\) minmax\(0,520px\) minmax\(max-content,1fr\);[^}]*grid-template-areas:\s*"title ad actions";/);
+  // The ad never gets its own row, at any width.
+  assert.doesNotMatch(indexHtml, /grid-template-areas:\s*"ad ad"/);
+  assert.doesNotMatch(indexHtml, /grid-template-areas:\s*"title actions"/);
+  // Below 856px the whole header scales by viewport / 856 so title, ad and links stay on one line.
+  assert.match(indexHtml, /@media \(max-width:\s*855px\)\s*\{[\s\S]*?\.header\s*\{[^}]*--u:\s*calc\(100vw \/ 856\);[^}]*grid-template-columns:\s*max-content minmax\(0, calc\(520 \* var\(--u\)\)\) max-content;/);
+  assert.match(indexHtml, /@media \(max-width:\s*855px\)\s*\{[\s\S]*?\.site-title\s*\{[^}]*font-size:\s*calc\(41\.6 \* var\(--u\)\);[\s\S]*?\.header-link\s*\{[^}]*font-size:\s*calc\(16 \* var\(--u\)\);/);
 });
 
 test('does not render the mockup banner', () => {
