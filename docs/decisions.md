@@ -1549,3 +1549,17 @@
 - Supersedes: none
 - Evidence: `docs/open-issues-2026-09-20.md` and GitHub Support ticket #4776343.
 - Privacy waivers: none
+
+## DEC-0078 — Center the desktop advertisement inside the site header
+
+- Date: 2026-09-20
+- Owner: user
+- Status at record: active
+- Decision: LionHour reserves an exact 728 by 90 pixel advertisement slot centered inside the blue header at viewport widths of 1200 pixels and above, and hides the slot below that breakpoint to prevent collisions with the title and header actions.
+- Rationale: This matches the approved desktop placement reference while preserving the established LionHour, Feedback, and About layout at narrower widths.
+- Scope: Main-page header layout, responsive advertising behavior, header regression tests, and the advertising sales plan.
+- Implementation: pending
+- Recorded against HEAD: `aadbe2a8de975a55b6cc928e3f6cedc7be6a85ef`
+- Supersedes: none
+- Evidence: User-provided desktop reference image and `docs/ad-sales-outreach-plan.md`.
+- Privacy waivers: none

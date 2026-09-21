@@ -104,6 +104,24 @@
   }
   .header-content { position: relative; z-index: 1; display: flex; align-items: center; }
 
+  .desktop-ad-slot {
+    display: none; width: 728px; height: 90px;
+    align-items: center; justify-content: center;
+    background: #171717; overflow: hidden; z-index: 1;
+  }
+  .desktop-ad-slot img { display: block; width: 728px; height: 90px; object-fit: cover; }
+
+  @media (min-width: 1200px) {
+    .header { min-height: calc(90px + 1.8rem); }
+    .header-content {
+      position: absolute; top: 50%; left: 1.5rem; transform: translateY(-50%);
+    }
+    .desktop-ad-slot {
+      display: flex; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
 
 
   /* ── Header nav links (top-right) ────────────── */
@@ -962,6 +980,9 @@
       <p class="about-copy">LionHour is an aggregator for building times at Columbia University. I created this because I was tired of parsing through all the random building links lol</p>
     </details>
   </div>
+  <aside class="desktop-ad-slot" aria-label="Advertisement slot">
+    <img src="assets/gapless-leaderboard-1456x180.png" width="728" height="90" alt="Gapless Labs — Real Problems. Simple Solutions. gaplesslabs.com">
+  </aside>
   <div class="header-content">
     <div class="logo"><h1 class="site-title">Lion<span>Hour</span></h1></div>
   </div>
