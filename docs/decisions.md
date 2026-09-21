@@ -1601,3 +1601,25 @@
 - Superseded by: none
 - Note: The header advertisement now scales from 320 to 520 pixels at the fixed creative aspect ratio and remains hidden below the desktop breakpoint.
 - Privacy waivers: none
+
+## DEC-0080 — Shrink the advertisement only when header content requires it
+
+- Date: 2026-09-20
+- Owner: user
+- Status at record: active
+- Decision: LionHour keeps the header advertisement at 520 pixels wide while equal side rails can fit the title and actions, shrinks only the center grid column when those elements need the space, and moves the advertisement to a second row at 620 pixels and below instead of hiding it.
+- Rationale: The advertisement should retain the approved example size for as long as possible, preserve its aspect ratio under genuine horizontal constraint, and remain visible at narrow viewport sizes.
+- Scope: Main-page header grid, narrow-screen reflow, advertising plan, and header regression tests.
+- Implementation: pending
+- Recorded against HEAD: `162a9ca42e2323ef77e113caf65fbfddb485e5ce`
+- Supersedes: DEC-0079
+- Evidence: User clarification on collision-driven shrinking and disappearing behavior on 2026-09-20.
+- Privacy waivers: none
+
+## Update — 2026-09-21 — DEC-0079
+
+- Type: supersession
+- Implementation commit: not applicable
+- Superseded by: DEC-0080
+- Note: Viewport-proportional scaling and the below-1024 hidden state are replaced by collision-driven grid sizing with a visible narrow-screen reflow.
+- Privacy waivers: none

@@ -41,20 +41,22 @@ test('keeps the title left-aligned without a mascot at every breakpoint', () => 
 });
 
 test('vertically centers the title and the combined header action group', () => {
-  assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.9rem 1\.5rem;/);
+  assert.match(indexHtml, /\.header\s*\{[^}]*display:\s*grid;[^}]*align-items:\s*center;/);
   assert.match(indexHtml, /\.site-title\s*\{[^}]*margin:\s*0;/);
-  assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*display:\s*grid;[^}]*justify-items:\s*end;[^}]*gap:\s*0\.3rem;[^}]*text-align:\s*right;[^}]*transform:\s*translateY\(-50%\)/);
+  assert.match(indexHtml, /\.header-content\s*\{[^}]*grid-area:\s*title;[^}]*display:\s*flex;[^}]*align-items:\s*center;/);
+  assert.match(indexHtml, /\.header-actions\s*\{[^}]*grid-area:\s*actions;[^}]*position:\s*relative;[^}]*display:\s*grid;[^}]*justify-items:\s*end;[^}]*gap:\s*0\.3rem;[^}]*text-align:\s*right;/);
   assert.match(indexHtml, /\.header\s*\{[^}]*padding:\s*0\.7rem 1rem;/);
-  assert.match(indexHtml, /\.header-actions\s*\{[^}]*top:\s*50%;[^}]*right:\s*0\.8rem;[^}]*gap:\s*0\.2rem;/);
+  assert.match(indexHtml, /\.header-actions\s*\{[^}]*gap:\s*0\.2rem;/);
 });
 
-test('centers a responsive leaderboard slot on desktop only', () => {
+test('keeps the leaderboard visible and only shrinks it when the header runs out of room', () => {
   assert.match(indexHtml, /<aside class="desktop-ad-slot" aria-label="Advertisement slot">/);
   assert.match(indexHtml, /<img src="assets\/gapless-leaderboard-1456x180\.png" width="728" height="90" alt="Gapless Labs — Real Problems\. Simple Solutions\. gaplesslabs\.com">/);
-  assert.match(indexHtml, /\.desktop-ad-slot\s*\{[^}]*display:\s*none;[^}]*width:\s*728px;[^}]*height:\s*90px;/);
+  assert.match(indexHtml, /\.desktop-ad-slot\s*\{[^}]*grid-area:\s*ad;[^}]*display:\s*block;[^}]*width:\s*min\(100%,\s*520px\);[^}]*height:\s*auto;[^}]*aspect-ratio:\s*728\s*\/\s*90;/);
   assert.match(indexHtml, /\.desktop-ad-slot img\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/);
-  assert.match(indexHtml, /@media \(min-width:\s*1024px\)\s*\{[\s\S]*?\.header\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/);
-  assert.match(indexHtml, /@media \(min-width:\s*1024px\)\s*\{[\s\S]*?\.desktop-ad-slot\s*\{[^}]*display:\s*block;[^}]*width:\s*clamp\(320px,\s*34vw,\s*520px\);[^}]*height:\s*auto;[^}]*aspect-ratio:\s*728\s*\/\s*90;/);
+  assert.doesNotMatch(indexHtml, /\.desktop-ad-slot\s*\{[^}]*display:\s*none/);
+  assert.match(indexHtml, /@media \(min-width:\s*621px\)\s*\{[\s\S]*?\.header\s*\{[^}]*grid-template-columns:\s*minmax\(10\.5rem,1fr\) minmax\(0,520px\) minmax\(10\.5rem,1fr\);[^}]*grid-template-areas:\s*"title ad actions"/);
+  assert.match(indexHtml, /@media \(min-width:\s*621px\)\s*\{[\s\S]*?\.desktop-ad-slot\s*\{[^}]*width:\s*100%;/);
 });
 
 test('does not render the mockup banner', () => {
