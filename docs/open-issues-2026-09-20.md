@@ -9,9 +9,25 @@
 > not Git-prunable. The implementation branch resolves the actionable work while
 > retaining this document as historical evidence.
 
+| # | Resolution status on 2026-09-21 |
+|---|---|
+| 1 | Resolved: redundant local and remote branch deleted; `main` retained the intended header change. |
+| 2 | Resolved: recreation was republished and verified live with Dodge, Uris, and child-space hours. |
+| 3 | Resolved: checkout synchronized to current `main`; work continued on current branches. |
+| 4 | Resolved by owner: the exposed Gmail app password and old Telegram bot token were rotated outside the repository. |
+| 5 | Partially resolved: public branches and the local clone were rewritten; GitHub Support ticket #4776343 requests removal of PR refs #14–#17, while one public fork still requires owner cleanup. |
+| 6 | Resolved: outreach docs and mailbox checker committed and merged in PR #17. |
+| 7 | Resolved: Cafe East dual-category behavior merged, tested, deployed, and verified live. |
+| 8 | Verification pending: manual API publish is green; first post-migration scheduled run has not yet been observed. |
+| 9 | Resolved as a correction: DEC-0063's migration date is 2026-10-10; owner chose to keep this Mac until later migration. |
+| 10 | Resolved: owner-approved normalization repaired DEC-0071–DEC-0074, the history-independent ledger audit passes, and the trusted writer recorded the outstanding decisions and implementation updates. |
+| 11 | Resolved: clean worktrees, merged branches, and the four owner-approved superseded local branches were removed; only `main` and the active reconciliation branch remain locally. |
+| 12 | Resolved: scratch artifacts removed, historical notes archived, README and canonical root handoff refreshed. |
+| 13 | Resolved: the ruleset requires PRs but grants administrators an always-on bypass; normal delivery used PR #17. |
+
 Compiled 2026-09-20 21:35 ET from a review of `origin/main` = `ee6fa42`, the working copy,
 the GitHub Actions history, and a live check of the published endpoints at 01:30 UTC.
-Companion to `docs/handoff.md`, which has the full context for each of these.
+Companion to the canonical root `handoff.md`, which has the current continuation context.
 
 | # | Issue | Severity | Area |
 |---|---|---|---|
