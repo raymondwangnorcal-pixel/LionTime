@@ -33,6 +33,13 @@ test('restores the Feedback and About controls in the redesigned header', () => 
   assert.match(html, /\.header-actions\s*\{[^}]*top:\s*1\.9rem;\s*right:\s*1\.8rem;/);
 });
 
+test('keeps the title left-aligned without a mascot at every breakpoint', () => {
+  assert.doesNotMatch(indexHtml, /lionhour-mascot\.png|lion-icon/);
+  assert.match(indexHtml, /\.header\s*\{[^}]*text-align:\s*left;/);
+  assert.match(indexHtml, /\.header-content\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;/);
+  assert.match(indexHtml, /\.logo\s*\{[^}]*justify-content:\s*flex-start;/);
+});
+
 test('does not render the mockup banner', () => {
   assert.doesNotMatch(html, /class="mockup-banner"/);
 });
