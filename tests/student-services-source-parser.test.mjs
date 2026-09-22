@@ -176,3 +176,17 @@ test('parses the Mail page after Check-In Week has dropped off it', () => {
   const regularTuesday = evidence.find(item => item.reason === 'Regular Fall Hours' && item.weekdays.includes(2));
   assert.deepEqual(regularTuesday.intervals, [['09:00', '19:00']]);
 });
+
+test('parses Fall Rush once the weekend splits into separate Saturday and Sunday lines', () => {
+  const evidence = parseMailSource(fixture('student-services-mail-2026-09-22.html'));
+  const rushSaturday = evidence.find(item => item.reason === 'Fall Rush' && item.weekdays.includes(6));
+  assert.deepEqual(rushSaturday.weekdays, [6]);
+  assert.deepEqual(rushSaturday.intervals, [['12:00', '16:00']]);
+  assert.equal(rushSaturday.status, null);
+  const rushSunday = evidence.find(item => item.reason === 'Fall Rush' && item.weekdays.includes(0));
+  assert.deepEqual(rushSunday.weekdays, [0]);
+  assert.deepEqual(rushSunday.intervals, []);
+  assert.equal(rushSunday.status, 'Closed');
+  const rushMonday = evidence.find(item => item.reason === 'Fall Rush' && item.weekdays.includes(1));
+  assert.deepEqual(rushMonday.intervals, [['11:00', '20:00']]);
+});
