@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis';
 import { createTelegramService } from '../lib/telegram-service.js';
 import { createRedisPendingStore } from '../lib/telegram-pending-store.js';
 import { createRedisTicketStore, createTicketHandler } from '../lib/telegram-tickets.js';
+import { dispatchWorkflow } from '../lib/github-dispatch.js';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 const UPDATE_TTL_SECONDS = 86_400;
@@ -59,23 +60,7 @@ async function telegram(method, payload) {
  * and the edit is simply picked up by that job's next scheduled run.
  */
 async function dispatchTicketJob() {
-  const { TICKET_DISPATCH_REPO: repo, TICKET_DISPATCH_WORKFLOW: workflow, TICKET_DISPATCH_TOKEN: token } = process.env;
-  if (!repo || !workflow || !token) return false;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 3_000);
-  try {
-    const response = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref: process.env.TICKET_DISPATCH_REF || 'main' }),
-      signal: controller.signal,
-    });
-    return response.status === 204;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(timer);
-  }
+  return dispatchWorkflow(process.env.TICKET_DISPATCH_WORKFLOW);
 }
 
 export default async function handler(req, res) {
