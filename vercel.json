@@ -43,6 +43,9 @@
     },
     "api/preview.js": {
       "maxDuration": 10
+    },
+    "api/dispatch.js": {
+      "maxDuration": 10
     }
   }
 }
