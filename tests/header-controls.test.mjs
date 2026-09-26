@@ -50,7 +50,7 @@ test('vertically centers the title and the combined header action group', () => 
 
 test('keeps the leaderboard visible and only shrinks it when the header runs out of room', () => {
   assert.match(indexHtml, /<aside class="desktop-ad-slot" aria-label="Advertisement slot">/);
-  assert.match(indexHtml, /<a href="https:\/\/www\.folk\.com\/coffee" aria-label="Visit Folk Coffee">\s*<img/);
+  assert.match(indexHtml, /<a href="https:\/\/www\.folk\.com\/coffee"[^>]*aria-label="Visit Folk Coffee">\s*<img/);
   assert.match(indexHtml, /<img src="assets\/folk-starbucks-leaderboard-728x90\.png" width="728" height="90" alt="Free Starbucks on us — like seriously">/);
   assert.match(indexHtml, /\.desktop-ad-slot\s*\{[^}]*grid-area:\s*ad;[^}]*display:\s*block;[^}]*width:\s*min\(100%,\s*520px\);[^}]*height:\s*auto;[^}]*aspect-ratio:\s*728\s*\/\s*90;/);
   assert.match(indexHtml, /\.desktop-ad-slot a\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*height:\s*100%;/);
@@ -60,6 +60,10 @@ test('keeps the leaderboard visible and only shrinks it when the header runs out
   // 621-855px: the whole header scales by viewport / 856 so title, ad and links stay on one line.
   assert.match(indexHtml, /@media \(min-width:\s*621px\) and \(max-width:\s*855px\)\s*\{[\s\S]*?\.header\s*\{[^}]*--u:\s*calc\(100vw \/ 856\);[^}]*grid-template-columns:\s*max-content minmax\(0, calc\(520 \* var\(--u\)\)\) max-content;/);
   assert.match(indexHtml, /@media \(min-width:\s*621px\) and \(max-width:\s*855px\)\s*\{[\s\S]*?\.site-title\s*\{[^}]*font-size:\s*calc\(41\.6 \* var\(--u\)\);[\s\S]*?\.header-link\s*\{[^}]*font-size:\s*calc\(16 \* var\(--u\)\);/);
+});
+
+test('opens the advertisement in an isolated new tab', () => {
+  assert.match(indexHtml, /<a href="https:\/\/www\.folk\.com\/coffee" target="_blank" rel="noopener noreferrer" aria-label="Visit Folk Coffee">/);
 });
 
 test('phones stack the banner above a compact title row with the links side by side', () => {
