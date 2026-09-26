@@ -1637,3 +1637,11 @@
 - Supersedes: none
 - Evidence: Owner-supplied `Starbucks Folk.png` and change request on 2026-09-25.
 - Privacy waivers: none
+
+## Update — 2026-09-25 — DEC-0081
+
+- Type: implementation
+- Implementation commit: `2b9edd3819eb018fcf181bbdb46fdafc6b094fff` — feat: run Folk coffee banner
+- Superseded by: none
+- Note: The header now serves the owner-supplied Folk creative and destination without changing the slot's layout or responsive behavior.
+- Privacy waivers: none
