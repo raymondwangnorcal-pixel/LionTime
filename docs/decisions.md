@@ -1623,3 +1623,17 @@
 - Superseded by: DEC-0080
 - Note: Viewport-proportional scaling and the below-1024 hidden state are replaced by collision-driven grid sizing with a visible narrow-screen reflow.
 - Privacy waivers: none
+
+## DEC-0081 — Run the Folk coffee advertisement creative
+
+- Date: 2026-09-25
+- Owner: user
+- Status at record: active
+- Decision: Replace the Gapless Labs placeholder advertisement with the owner-supplied Folk Starbucks creative and direct the unchanged header slot to https://www.folk.com/coffee.
+- Rationale: The owner selected the creative and destination for the current advertisement while explicitly retaining the slot's existing behavior.
+- Scope: Main-page header advertisement asset, destination, accessible labeling, and regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `87a19517bafdfa7ba389aa587fda6d7ccdbeebb9`
+- Supersedes: none
+- Evidence: Owner-supplied `Starbucks Folk.png` and change request on 2026-09-25.
+- Privacy waivers: none

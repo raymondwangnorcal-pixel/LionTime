@@ -50,8 +50,8 @@ test('vertically centers the title and the combined header action group', () => 
 
 test('keeps the leaderboard visible and only shrinks it when the header runs out of room', () => {
   assert.match(indexHtml, /<aside class="desktop-ad-slot" aria-label="Advertisement slot">/);
-  assert.match(indexHtml, /<a href="https:\/\/gaplesslabs\.com\/" aria-label="Visit Gapless Labs">\s*<img/);
-  assert.match(indexHtml, /<img src="assets\/gapless-leaderboard-1456x180\.png" width="728" height="90" alt="Gapless Labs — Real Problems\. Simple Solutions\. gaplesslabs\.com">/);
+  assert.match(indexHtml, /<a href="https:\/\/www\.folk\.com\/coffee" aria-label="Visit Folk Coffee">\s*<img/);
+  assert.match(indexHtml, /<img src="assets\/folk-starbucks-leaderboard-728x90\.png" width="728" height="90" alt="Free Starbucks on us — like seriously">/);
   assert.match(indexHtml, /\.desktop-ad-slot\s*\{[^}]*grid-area:\s*ad;[^}]*display:\s*block;[^}]*width:\s*min\(100%,\s*520px\);[^}]*height:\s*auto;[^}]*aspect-ratio:\s*728\s*\/\s*90;/);
   assert.match(indexHtml, /\.desktop-ad-slot a\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*height:\s*100%;/);
   assert.match(indexHtml, /\.desktop-ad-slot img\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/);
