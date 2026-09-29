@@ -11,6 +11,7 @@ import {
 import { parseCafeEastPage } from '../lib/cafe-east-parser.js';
 import {
   BARNARD_DINING_VENUES,
+  BARNARD_HOURS_TABLE_SELECTOR,
   combineBarnardDiningWeeks,
   parseBarnardRenderedWeek,
 } from '../lib/barnard-dining-hours-parser.js';
@@ -550,10 +551,10 @@ async function waitForBarnardTargets(page, expectedWeekStart, deadline, maximum)
   const expectedCaption = expectedWeekStart ? barnardCaptionNeedle(expectedWeekStart) : null;
   const timeout = remainingTimeout(deadline, maximum);
   try {
-    await page.waitForFunction(({ names, caption }) => {
+    await page.waitForFunction(({ names, caption, selector }) => {
       const normalize = value => String(value || '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
       const targets = new Set();
-      for (const table of document.querySelectorAll('table.unified-hours-table')) {
+      for (const table of document.querySelectorAll(selector)) {
         const rows = [...table.querySelectorAll('tr.hours-row')].filter((row) => {
           const name = normalize(row.querySelector('th[scope="row"]')?.textContent);
           return names.includes(name);
@@ -566,7 +567,7 @@ async function waitForBarnardTargets(page, expectedWeekStart, deadline, maximum)
         }
       }
       return targets.size === names.length && names.every(name => targets.has(name));
-    }, { names: sourceNames, caption: expectedCaption }, { timeout, polling: 100 });
+    }, { names: sourceNames, caption: expectedCaption, selector: BARNARD_HOURS_TABLE_SELECTOR }, { timeout, polling: 100 });
   } catch (error) {
     throw new SourceAcquisitionError(
       /timeout/i.test(`${error?.name || ''} ${error?.message || ''}`) ? 'timeout' : 'missing-content',
@@ -577,10 +578,10 @@ async function waitForBarnardTargets(page, expectedWeekStart, deadline, maximum)
 
 async function barnardTargetSignature(page) {
   const sourceNames = Object.keys(BARNARD_DINING_VENUES);
-  return page.evaluate((names) => {
+  return page.evaluate(({ names, selector }) => {
     const normalize = value => String(value || '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
     const parts = [];
-    for (const table of document.querySelectorAll('table.unified-hours-table')) {
+    for (const table of document.querySelectorAll(selector)) {
       const caption = normalize(table.querySelector('caption')?.textContent);
       for (const row of table.querySelectorAll('tr.hours-row')) {
         const name = normalize(row.querySelector('th[scope="row"]')?.textContent);
@@ -588,7 +589,7 @@ async function barnardTargetSignature(page) {
       }
     }
     return parts.sort().join('\n---\n');
-  }, sourceNames);
+  }, { names: sourceNames, selector: BARNARD_HOURS_TABLE_SELECTOR });
 }
 
 async function waitForStableBarnardWeek(page, expectedWeekStart, deadline, maximum) {

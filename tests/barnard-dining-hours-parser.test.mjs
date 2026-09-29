@@ -119,3 +119,27 @@ test('combines either two or three consecutive complete weeks', () => {
   );
   assert.throws(() => combineBarnardDiningWeeks([weeks[0]]), /two or three/);
 });
+
+test('parses the per-venue location-hours-table layout dineoncampus switched to in 2026-09', () => {
+  // dineoncampus replaced one shared unified-hours-table with a location-hours-table per venue.
+  // The scraper kept waiting for the old class, timed out, and Barnard hours froze on 2026-09-24
+  // while Hewitt moved breakfast to 8:00 and lunch to 2:00.
+  const html = readFileSync(
+    new URL('./fixtures/barnard-dining-hours-location-tables-2026-09-27.html', import.meta.url),
+    'utf8',
+  );
+  const week = parseBarnardRenderedWeek(html, { expectedWeekStart: '2026-09-27' });
+  assert.deepEqual(week.venues.map(({ id }) => id), [
+    'hewitt', 'diana-center-cafe', 'barnard-bubble-tea-sushi', 'lizs-place',
+  ]);
+  const hewitt = week.venues.find(({ id }) => id === 'hewitt');
+  assert.deepEqual(hewitt.days[2], {
+    date: '2026-09-29', intervals: [['08:00', '10:00'], ['11:00', '14:00'], ['16:30', '20:00']], status: null,
+  });
+  assert.deepEqual(hewitt.days[0].intervals, [['10:30', '15:00'], ['16:30', '20:00']]);
+  const diana = week.venues.find(({ id }) => id === 'diana-center-cafe');
+  assert.deepEqual(diana.days[1].intervals, [['08:00', '11:00'], ['11:30', '00:00']]);
+  assert.deepEqual(diana.days[6], { date: '2026-10-03', intervals: [], status: 'Closed' });
+  assert.equal(week.venues.find(({ id }) => id === 'barnard-bubble-tea-sushi').days[0].status, 'Closed');
+  assert.deepEqual(week.venues.find(({ id }) => id === 'lizs-place').days[5].intervals, [['08:00', '15:00']]);
+});
