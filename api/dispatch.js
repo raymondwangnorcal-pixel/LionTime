@@ -21,6 +21,16 @@ export const JOBS = Object.freeze({
   regenerate: 'regenerate.yml',
 });
 
+/**
+ * Fixed workflow inputs per job. `send.yml` defaults `dry_run` to true so a run started by hand
+ * from the GitHub UI never mails anyone; the scheduled send must opt out of that, or every
+ * on-time run is a dry run. Real mail still needs the repo variable OUTREACH_LIVE=1, an armed
+ * system, the send window and an approved draft — this only stops the dispatch forcing a dry run.
+ */
+export const INPUTS = Object.freeze({
+  send: Object.freeze({ dry_run: 'false' }),   // a string: the dispatch API wants string values; send.yml types it boolean
+});
+
 function authorized(header, secret) {
   if (!secret || typeof header !== 'string' || !header.startsWith('Bearer ')) return false;
   const given = Buffer.from(header.slice('Bearer '.length));
@@ -42,7 +52,7 @@ export function createDispatchHandler({ env = process.env, dispatch = dispatchWo
     const job = typeof req.query?.job === 'string' ? req.query.job : req.body?.job;
     const workflow = Object.hasOwn(JOBS, job) ? JOBS[job] : null;
     if (!workflow) return res.status(400).json({ ok: false, error: 'Unknown job' });
-    const queued = await dispatch(workflow, { env });
+    const queued = await dispatch(workflow, { env, inputs: INPUTS[job] });
     // A non-2xx answer makes a retrying scheduler try again, which is what we want when GitHub
     // did not accept the dispatch.
     return res.status(queued ? 200 : 502).json({ ok: queued, job });

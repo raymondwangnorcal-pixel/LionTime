@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createDispatchHandler, JOBS } from '../api/dispatch.js';
+import { createDispatchHandler, INPUTS, JOBS } from '../api/dispatch.js';
 import { dispatchWorkflow } from '../lib/github-dispatch.js';
 
 const SECRET = 'dispatch-secret-0123456789';
@@ -19,10 +19,11 @@ const GOOD = `Bearer ${SECRET}`;
 
 async function call({ method = 'POST', authorization = GOOD, query = { job: 'draft' }, body, env = ENV, queued = true } = {}) {
   const calls = [];
-  const handler = createDispatchHandler({ env, dispatch: async (workflow) => { calls.push(workflow); return queued; } });
+  const inputs = [];
+  const handler = createDispatchHandler({ env, dispatch: async (workflow, opts) => { calls.push(workflow); inputs.push(opts?.inputs); return queued; } });
   const res = fakeRes();
   await handler({ method, headers: authorization === null ? {} : { authorization }, query, body }, res);
-  return { res, calls };
+  return { res, calls, inputs };
 }
 
 test('a correct secret starts exactly the named workflow', async () => {
@@ -79,6 +80,14 @@ test('a dispatch GitHub did not queue answers 502 so a retrying scheduler tries 
   assert.deepEqual(res.body, { ok: false, job: 'draft' });
 });
 
+test('the scheduled send opts out of the dry-run default; every other job gets no inputs', async () => {
+  assert.deepEqual(INPUTS, { send: { dry_run: 'false' } });
+  for (const job of Object.keys(JOBS)) {
+    const { inputs } = await call({ query: { job } });
+    assert.deepEqual(inputs, [job === 'send' ? { dry_run: 'false' } : undefined], job);
+  }
+});
+
 test('dispatchWorkflow calls the workflow_dispatch API and is true only on 204', async () => {
   const seen = [];
   const fetchImpl = async (url, init) => { seen.push({ url, init }); return { status: 204 }; };
@@ -86,6 +95,8 @@ test('dispatchWorkflow calls the workflow_dispatch API and is true only on 204',
   assert.equal(seen[0].url, 'https://api.github.com/repos/o/r/actions/workflows/send.yml/dispatches');
   assert.equal(seen[0].init.headers.Authorization, 'Bearer tok');
   assert.deepEqual(JSON.parse(seen[0].init.body), { ref: 'main' });
+  assert.equal(await dispatchWorkflow('send.yml', { env: ENV, fetchImpl, inputs: { dry_run: 'false' } }), true);
+  assert.deepEqual(JSON.parse(seen[1].init.body), { ref: 'main', inputs: { dry_run: 'false' } });
   assert.equal(await dispatchWorkflow('send.yml', { env: ENV, fetchImpl: async () => ({ status: 422 }) }), false);
   assert.equal(await dispatchWorkflow('send.yml', { env: ENV, fetchImpl: async () => { throw new Error('net'); } }), false);
   assert.equal(await dispatchWorkflow('send.yml', { env: { ...ENV, TICKET_DISPATCH_TOKEN: '' }, fetchImpl }), false);
