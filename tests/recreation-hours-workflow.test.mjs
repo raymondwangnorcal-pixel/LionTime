@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('recreation publishing runs independently every four hours', async () => {
+test('recreation publishing runs independently every four hours from the residential runner', async () => {
   const [workflow, libraryWorkflow, diningWorkflow] = await Promise.all([
     readFile('.github/workflows/update-recreation-hours.yml', 'utf8'),
     readFile('.github/workflows/update-library-hours.yml', 'utf8'),
@@ -12,7 +12,12 @@ test('recreation publishing runs independently every four hours', async () => {
   assert.match(workflow, /cron: ['"]27 \*\/4 \* \* \*['"]/);
   assert.notEqual(scheduledMinute(workflow), scheduledMinute(libraryWorkflow));
   assert.notEqual(scheduledMinute(workflow), scheduledMinute(diningWorkflow));
-  assert.match(workflow, /xvfb-run --auto-servernum node scripts\/recreation-hours-scraper\.mjs/);
+  assert.match(workflow, /if: github\.repository == 'raymondwangnorcal-pixel\/LionTime' && github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /runs-on: \[self-hosted, macOS, ARM64, lionhour-dining\]/);
+  assert.match(workflow, /npx playwright install chromium/);
+  assert.doesNotMatch(workflow, /playwright install --with-deps/);
+  assert.match(workflow, /run: node scripts\/recreation-hours-scraper\.mjs/);
+  assert.doesNotMatch(workflow, /xvfb-run/);
   assert.match(workflow, /vars\.RECREATION_HOURS_PUBLISH_ENABLED == 'true'/);
   assert.match(workflow, /vars\.RECREATION_HOURS_API_URL/);
   assert.match(workflow, /secrets\.LIBRARY_HOURS_UPDATE_SECRET/);

@@ -11,7 +11,7 @@ import {
   parseColumbiaModifications,
   isSafeEmptyColumbiaModificationsPage,
 } from '../lib/recreation-source-parser.js';
-import { RECREATION_FACILITIES, RECREATION_SOURCE_URLS } from '../lib/recreation-hours-catalog.js';
+import { RECREATION_SOURCE_URLS } from '../lib/recreation-hours-catalog.js';
 import { createScrapeManifest } from '../lib/scrape-manifest.js';
 import { acquireRecreationSources } from './recreation-hours-acquire.mjs';
 
@@ -21,10 +21,6 @@ const PARSER_SOURCES = Object.freeze([
   ['barnardFitness', 'parseBarnardHours'],
 ]);
 const REQUIRED_FACILITIES = new Set(['dodge', 'uris-pool', 'barnard-fitness']);
-const SOURCE_PRIMARY_FACILITIES = Object.freeze({
-  columbiaHours: ['dodge', 'uris-pool'],
-  barnardFitness: ['barnard-fitness'],
-});
 const MAX_ERROR_LENGTH = 400;
 
 export async function runRecreationScraper({
@@ -58,17 +54,13 @@ export async function runRecreationScraper({
 
   try {
     const { evidence: parsedEvidence, deniedSourceIds } = parseAllSources(acquired, parsers, manifest);
+    if (deniedSourceIds.length > 0) {
+      throw invalidSnapshotError(`source access denied: ${deniedSourceIds.join(', ')}`);
+    }
     const evidence = [...parsedEvidence, ...manualOverrides];
-    const deniedFacilities = new Set(deniedSourceIds.flatMap(id => SOURCE_PRIMARY_FACILITIES[id] || []));
-    if (!hasRequiredFacilities(evidence, deniedFacilities)) throw invalidSnapshotError('missing required facility evidence');
+    if (!hasRequiredFacilities(evidence)) throw invalidSnapshotError('missing required facility evidence');
 
     const snapshot = resolve({ evidence, generated: acquired.generated });
-    if (deniedFacilities.size > 0) {
-      snapshot.accessDenied = [...deniedFacilities].map(id => ({
-        id,
-        name: RECREATION_FACILITIES[id].name,
-      }));
-    }
     const validation = validate(snapshot);
     if (!validation.ok) throw invalidSnapshotError(validation.errors?.[0]);
 
@@ -158,10 +150,10 @@ function parseAllSources(acquired, parsers, manifest) {
   return { evidence, deniedSourceIds };
 }
 
-function hasRequiredFacilities(evidence, deniedFacilities = new Set()) {
+function hasRequiredFacilities(evidence) {
   return evidence.every(item => item && typeof item === 'object')
     && [...REQUIRED_FACILITIES].every(targetId =>
-      deniedFacilities.has(targetId) || evidence.some(item => item.targetId === targetId));
+      evidence.some(item => item.targetId === targetId));
 }
 
 function invalidSnapshotError(detail = '') {

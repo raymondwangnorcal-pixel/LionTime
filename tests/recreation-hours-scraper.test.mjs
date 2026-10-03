@@ -164,32 +164,22 @@ test('resumes the displayed Barnard live schedule on September 8', async () => {
   assert.deepEqual(september8.sourceRefs, ['barnardFitness']);
 });
 
-test('produces a valid snapshot with accessDenied when columbiaHours is denied', async () => {
+test('does not publish when the primary Columbia hours source is denied', async () => {
   const writes = [];
   const acquired = acquiredFixture();
   acquired.pages.columbiaHours = { url: 'https://perec.columbia.edu/hours-operation', accessDenied: true };
 
-  const snapshot = await runRecreationScraper({
+  await assert.rejects(runRecreationScraper({
     acquire: async () => acquired,
     parsers: parserFixture(),
     writeJson: async (path, value) => writes.push([path, value]),
     outputPath: '/tmp/access-denied.json',
-  });
+  }), /source access denied: columbiaHours/);
 
-  assert.equal(snapshot.facilities.length, 3);
-  assert.deepEqual(snapshot.accessDenied, [
-    { id: 'dodge', name: 'Dodge Fitness Center' },
-    { id: 'uris-pool', name: 'Uris Pool' },
-  ]);
-  const dodge = snapshot.facilities.find(f => f.id === 'dodge');
-  assert.ok(dodge.days.every(day => day.status === 'Hours need verification'));
-  assert.ok(dodge.days.every(day => day.intervals.length === 0));
-  const barnard = snapshot.facilities.find(f => f.id === 'barnard-fitness');
-  assert.ok(barnard.days.some(day => day.intervals.length > 0));
-  assert.deepEqual(writes, [['/tmp/access-denied.json', snapshot]]);
+  assert.deepEqual(writes, []);
 });
 
-test('produces a valid snapshot with accessDenied when all sources are denied', async () => {
+test('does not publish when all sources are denied', async () => {
   const acquired = {
     generated: new Date('2026-08-21T16:00:00-04:00'),
     pages: {
@@ -199,19 +189,12 @@ test('produces a valid snapshot with accessDenied when all sources are denied', 
     },
   };
 
-  const snapshot = await runRecreationScraper({
+  await assert.rejects(runRecreationScraper({
     acquire: async () => acquired,
     parsers: parserFixture(),
     writeJson: async () => {},
     outputPath: '/tmp/all-denied.json',
-  });
-
-  assert.equal(snapshot.facilities.length, 3);
-  assert.equal(snapshot.accessDenied.length, 3);
-  const dodge = snapshot.facilities.find(f => f.id === 'dodge');
-  const pool = snapshot.facilities.find(f => f.id === 'uris-pool');
-  assert.ok(dodge.days.every(d => d.status === 'Hours need verification'));
-  assert.ok(pool.days.every(d => d.status === 'Hours need verification'));
+  }), /source access denied: columbiaHours, columbiaModifications, barnardFitness/);
 });
 
 test('writes a scrape manifest naming every source, with evidence for the one that failed to parse', async () => {
@@ -244,14 +227,13 @@ test('a source the acquirer could not reach is a navigation failure in the manif
     url: 'https://perec.columbia.edu/content/modified-hours-closures',
     accessDenied: true, failureCode: 'timeout', failureDetail: 'page.goto: Timeout 60000ms exceeded',
   };
-  const snapshot = await runRecreationScraper({
+  await assert.rejects(runRecreationScraper({
     acquire: async () => acquired,
     parsers: parserFixture(),
     writeJson: async () => {},
     outputPath: '/tmp/recreation.json',
     manifest,
-  });
-  assert.equal(snapshot.facilities.length, 3);
+  }), /source access denied: columbiaModifications/);
   const entry = manifest.written.sources.find(s => s.sourceId === 'columbiaModifications');
   assert.equal(entry.failureCode, 'timeout');
   assert.equal(entry.evidencePath, null);

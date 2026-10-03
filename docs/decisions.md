@@ -1645,3 +1645,45 @@
 - Superseded by: none
 - Note: The header now serves the owner-supplied Folk creative and destination without changing the slot's layout or responsive behavior.
 - Privacy waivers: none
+
+## DEC-0082 — Identify Barnard hours tables semantically
+
+- Date: 2026-09-25
+- Owner: agent
+- Status at record: active
+- Decision: Barnard Dining acquisition and parsing scan rendered tables and accept only the contracted venue rows with complete weekly date evidence instead of requiring a presentation CSS class.
+- Rationale: The official source renamed its table class while preserving venue names, captions, dates, and hours, so depending on semantic evidence prevents harmless styling changes from stopping refreshes without broadening accepted data.
+- Scope: Barnard Dining rendered-page acquisition, stability detection, parsing, and regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `37bcdfe1356cc935ecee1cf65b410c9952ef9c45`
+- Supersedes: none
+- Evidence: `scripts/dining-hours-scraper.mjs`, `lib/barnard-dining-hours-parser.js`, and `tests/dining-hours-scraper.test.mjs`.
+- Privacy waivers: none
+
+## DEC-0083 — Acquire recreation hours from the residential runner
+
+- Date: 2026-10-03
+- Owner: agent
+- Status at record: active
+- Decision: Run the scheduled recreation-hours scrape on the existing self-hosted macOS runner instead of a GitHub-hosted runner while Columbia's official Recreation pages challenge hosted-runner traffic.
+- Rationale: The hosted runner repeatedly received a managed challenge and published verification-only data, while the same validated scraper retrieved the current official facility tables and activity calendars from the residential runner.
+- Scope: Recreation workflow execution environment, source availability, and published Dodge, Uris Pool, and activity-space hours.
+- Implementation: pending
+- Recorded against HEAD: `37bcdfe1356cc935ecee1cf65b410c9952ef9c45`
+- Supersedes: none
+- Evidence: Production recreation scrape manifest from workflow run 37126691496, the live hours audit, and a successful local scrape on 2026-10-03.
+- Privacy waivers: none
+
+## DEC-0084 — Preserve the last snapshot when a recreation source is denied
+
+- Date: 2026-10-03
+- Owner: agent
+- Status at record: active
+- Decision: A challenge, navigation failure, or missing page from any allowlisted recreation source fails the scrape before publication instead of replacing current hours with a verification-only snapshot.
+- Rationale: Publishing a structurally valid but source-denied snapshot erased usable Dodge, Uris Pool, and activity-space hours even though the API already held a better last accepted snapshot.
+- Scope: Recreation source-failure handling, publication safety, scrape manifests, and visitor-facing hours continuity.
+- Implementation: pending
+- Recorded against HEAD: `37bcdfe1356cc935ecee1cf65b410c9952ef9c45`
+- Supersedes: none
+- Evidence: Production workflow run 37126691496, `scripts/recreation-hours-scraper.mjs`, and `tests/recreation-hours-scraper.test.mjs`.
+- Privacy waivers: none
