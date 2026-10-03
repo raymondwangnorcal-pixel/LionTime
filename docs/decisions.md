@@ -1687,3 +1687,19 @@
 - Supersedes: none
 - Evidence: Production workflow run 37126691496, `scripts/recreation-hours-scraper.mjs`, and `tests/recreation-hours-scraper.test.mjs`.
 - Privacy waivers: none
+
+## Update — 2026-10-03 — DEC-0083
+
+- Type: implementation
+- Implementation commit: `d0eadd0144257b5d1a2bcbd674c957e5c1f529bb` — fix(recreation): keep live hours updating
+- Superseded by: none
+- Note: The recreation workflow now runs on the existing residential self-hosted macOS runner and retrieves Columbia's current official schedules.
+- Privacy waivers: none
+
+## Update — 2026-10-03 — DEC-0084
+
+- Type: implementation
+- Implementation commit: `d0eadd0144257b5d1a2bcbd674c957e5c1f529bb` — fix(recreation): keep live hours updating
+- Superseded by: none
+- Note: Recreation source denials now fail before the publish file is written, preserving the last accepted API snapshot.
+- Privacy waivers: none
