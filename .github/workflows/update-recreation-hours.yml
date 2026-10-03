@@ -14,8 +14,9 @@ concurrency:
 
 jobs:
   scrape-and-publish:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    if: github.repository == 'raymondwangnorcal-pixel/LionTime' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, macOS, ARM64, lionhour-dining]
+    timeout-minutes: 15
     outputs:
       notification_summary: ${{ steps.notification-summary.outputs.summary }}
     steps:
@@ -27,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Test Recreation pipeline
         run: >-
           node --test
@@ -42,7 +43,7 @@ jobs:
         id: scrape
         env:
           SCRAPE_EVIDENCE_DIR: ${{ runner.temp }}/scrape/recreation
-        run: xvfb-run --auto-servernum node scripts/recreation-hours-scraper.mjs --json-out "$RUNNER_TEMP/recreation-hours.json"
+        run: node scripts/recreation-hours-scraper.mjs --json-out "$RUNNER_TEMP/recreation-hours.json"
       # Evidence for the next parser fix (docs/automated-fix.md §3.1): the per-source
       # manifest plus the raw page of any source that failed. Uploaded on every
       # outcome, kept 14 days, never committed.
