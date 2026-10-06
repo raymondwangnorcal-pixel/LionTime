@@ -1703,3 +1703,59 @@
 - Superseded by: none
 - Note: Recreation source denials now fail before the publish file is written, preserving the last accepted API snapshot.
 - Privacy waivers: none
+
+## DEC-0085 — Accept late-night library closes for every library
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: The library scraper, the library API validator, and the browser client accept a closing time earlier than the opening time for any library when the close falls at or before 06:00, treating it as a late-night close; Butler and Uris keep their existing exemption, and any other close-before-open interval is still rejected.
+- Rationale: The Science & Engineering Library published 11 AM to 3 AM midterm hours from 2026-10-11, and the Butler-and-Uris-only rule rejected every library snapshot from 2026-10-04, which would have dropped all seven libraries to embedded hours on 2026-10-11.
+- Scope: `scrape.py`, `lib/library-hours-schema.js`, `assets/library-hours.js`, embedded library fallback hours in `index.html`, and their regression tests.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: Library workflow run 37398383739 (`science_engineering: overnight hours are not allowed`), the hours audit's stale-library finding, and the official Science & Engineering Library calendar checked on 2026-10-05.
+- Privacy waivers: none
+
+## DEC-0086 — Apply Columbia Dining period overrides only to the hours they cover
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: Columbia Dining period bounds are read as UTC instants and converted to Eastern time, and a narrower override period replaces only the part of the day its bounds cover; an override covering the whole day still replaces the day.
+- Rationale: Reading the first ten characters of the UTC bounds pushed evening end times onto the next day, and treating every override as whole-day turned Faculty House's 4-9 PM dinner relocation and a private event ending at noon into all-day closures.
+- Scope: `scripts/dining-hours-scraper.mjs` period selection and its regression tests.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: The live `dining_nodes` feed captured 2026-10-05 (`tests/fixtures/dining-nodes-2026-10-05.json`) and the published dining snapshot for Faculty House on 2026-10-06 through 2026-10-09.
+- Privacy waivers: none
+
+## DEC-0087 — Do not count a 24/7 phone line as an open Student Life office
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: Phone-support availability stays in a Student Life card's details and access badge but no longer makes the card Open, counts toward open totals, or contributes to the card's displayed hours; other restricted access types keep the DEC-0029 behavior.
+- Rationale: Medical Services, CAPS, and Sexual Violence Response each publish a 24/7 hotline, so every Columbia Health card read Open and "Open 24 hours" overnight while the offices were closed.
+- Scope: `assets/student-services-hours-view.js`, `assets/student-services-hours.js`, and their tests. This narrows DEC-0029 for phone support only.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: The live site at 9:25 PM on 2026-10-05 showing "Columbia Health Hours · 3 of 3 open" against the published student-services snapshot.
+- Privacy waivers: none
+
+## DEC-0088 — Include the reason in failed-workflow Telegram alerts
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: The shared Telegram sender includes a caller's summary in failure alerts, and the library workflow passes its validation errors as that summary when a scrape is rejected.
+- Rationale: The library scrape and the hours audit failed on every run for two days while Telegram only reported that a workflow failed, with the reason one click and a sign-in away.
+- Scope: `.github/workflows/send-telegram-update.yml`, `.github/workflows/update-library-hours.yml`, and their workflow tests.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: Hours audit run 37391508089 and library workflow run 37398383739.
+- Privacy waivers: none
