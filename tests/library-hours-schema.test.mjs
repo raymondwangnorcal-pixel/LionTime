@@ -42,6 +42,21 @@ test('rejects overnight hours for libraries other than Butler', () => {
   assert.match(validateLibraryHoursSnapshot(snapshot).errors.join('\n'), /lehman: overnight hours are not allowed/);
 });
 
+test('accepts a late-night close for any library', () => {
+  const snapshot = makeValidSnapshot();
+  const noco = snapshot.libraries.find((library) => library.id === 'science_engineering');
+  noco.schedules[0].hours['0'] = { open: '11:00', close: '03:00' };
+  const result = validateLibraryHoursSnapshot(snapshot);
+  assert.equal(result.ok, true, (result.errors || []).join('\n'));
+});
+
+test('rejects a close before the open that lands after 06:00', () => {
+  const snapshot = makeValidSnapshot();
+  const noco = snapshot.libraries.find((library) => library.id === 'science_engineering');
+  noco.schedules[0].hours['1'] = { open: '09:00', close: '07:00' };
+  assert.match(validateLibraryHoursSnapshot(snapshot).errors.join('\n'), /science_engineering: overnight hours are not allowed/);
+});
+
 test('accepts only the explicit Lehman embedded-fallback shape', () => {
   const snapshot = makeValidSnapshot();
   const lehman = snapshot.libraries.find((library) => library.id === 'lehman');

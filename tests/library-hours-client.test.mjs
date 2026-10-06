@@ -85,6 +85,16 @@ test('does not apply an unapproved overnight interval', () => {
   assert.equal(api.buildUpdates(snapshot, venues(), '2026-08-20').ok, false);
 });
 
+test('applies late-night closes such as NoCo midterm hours', () => {
+  const snapshot = makeValidSnapshot();
+  const noco = snapshot.libraries.find((library) => library.id === 'science_engineering');
+  noco.schedules[0].hours['1'] = { open: '09:00', close: '03:00' };
+  const result = api.buildUpdates(snapshot, venues(), '2026-08-20');
+  assert.equal(result.ok, true);
+  const [, next] = result.entries.find(([venue]) => venue.id === 'noco');
+  assert.equal(JSON.stringify(next.hours[1]), JSON.stringify([['09:00', '03:00']]));
+});
+
 test('updates six libraries while preserving embedded Lehman hours', async () => {
   const snapshot = makeValidSnapshot();
   const lehman = snapshot.libraries.find((library) => library.id === 'lehman');

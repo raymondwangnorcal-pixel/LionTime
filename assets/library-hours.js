@@ -11,6 +11,16 @@
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const FALLBACK_REASON = 'unapproved-overnight-hours';
+  // Same rule as lib/library-hours-schema.js and scrape.py: a close before the
+  // open is accepted as a late-night close when it lands at or before 06:00.
+  const LATEST_AFTER_MIDNIGHT_CLOSE = '06:00';
+  const OVERNIGHT_EXEMPT_IDS = ['butler_24', 'business'];
+
+  function acceptedInterval(scraperId, interval) {
+    if (OVERNIGHT_EXEMPT_IDS.includes(scraperId)) return true;
+    if (interval.close === '00:00' || interval.close > interval.open) return true;
+    return interval.close <= LATEST_AFTER_MIDNIGHT_CLOSE;
+  }
   const EMBEDDED_FALLBACK_IDS = ['lehman', 'business'];
   const BARNARD_PRIMARY_URL = 'https://hours.library.columbia.edu/locations/barnard';
   const BARNARD_HOLIDAY_URL = 'https://library.barnard.edu/visit/hours';
@@ -67,7 +77,7 @@
         if (interval === null) {
           hours[day] = null;
         } else if (interval && OPEN_TIME.test(interval.open || '') && CLOSE_TIME.test(interval.close || '')
-          && (scraperId === 'butler_24' || scraperId === 'business' || interval.close === '00:00' || interval.close > interval.open)) {
+          && acceptedInterval(scraperId, interval)) {
           hours[day] = [[interval.open, interval.close]];
         } else {
           return { ok: false };

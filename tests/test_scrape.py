@@ -171,6 +171,55 @@ class ScraperContractTests(unittest.TestCase):
         errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
         self.assertIn("lehman: overnight hours are not allowed", errors)
 
+    def test_accepts_late_night_close_for_any_library(self):
+        # NoCo published 11:00 AM - 3:00 AM midterm hours from 2026-10-11; the old
+        # Butler/Uris-only rule rejected the whole snapshot for a week.
+        payload = make_complete_payload()
+        noco = next(item for item in payload["libraries"] if item["id"] == "science_engineering")
+        noco["schedules"][0]["hours"]["0"] = {"open": "11:00", "close": "03:00"}
+        noco["schedules"][0]["hours"]["1"] = {"open": "09:00", "close": "06:00"}
+        self.assertEqual(validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS), [])
+
+    def test_rejects_close_before_open_that_is_not_late_night(self):
+        payload = make_complete_payload()
+        noco = next(item for item in payload["libraries"] if item["id"] == "science_engineering")
+        noco["schedules"][0]["hours"]["1"] = {"open": "09:00", "close": "06:30"}
+        errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
+        self.assertIn("science_engineering: overnight hours are not allowed", errors)
+
+    def test_scrapes_noco_midterm_hours_without_fallback(self):
+        html = """
+        <table><tr>
+          <td><div class="fulldate">2026-10-11</div><div class="day-hours">11:00AM-3:00AM</div></td>
+          <td><div class="fulldate">2026-10-12</div><div class="day-hours">9:00AM-3:00AM</div></td>
+        </tr></table>
+        """
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "science_engineering")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-10-11T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+        )
+        self.assertNotIn("scrapeFailed", entry)
+        self.assertNotIn("useEmbeddedFallback", entry)
+        self.assertEqual(entry["schedules"][0]["hours"]["0"], {"open": "11:00", "close": "03:00"})
+
+    def test_lehman_late_night_close_is_published_not_sent_to_fallback(self):
+        html = """
+        <table><tr><td>
+          <div class="fulldate">2026-10-12</div>
+          <div class="day-hours">9:00AM-2:00AM</div>
+        </td></tr></table>
+        """
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "lehman")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-10-12T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+        )
+        self.assertNotIn("useEmbeddedFallback", entry)
+        self.assertEqual(entry["schedules"][0]["hours"]["1"], {"open": "09:00", "close": "02:00"})
+
     def test_corrects_known_lehman_meridiem_anomaly_and_preserves_closed_days(self):
         html = """
         <table><tr>

@@ -1132,26 +1132,33 @@ const WEEKDAYS = (wd, sat=null, sun=null) => D(wd,wd,wd,wd,wd,sat,sun);
 /* Expose on globalThis so dining-vote.js can resolve hall display names */
 const VENUES = window.VENUES = [
   /* ── LIBRARIES (top 6 by traffic) ───────────────── */
+  /* Embedded hours are the fallback when the live snapshot can't be used.
+     They mirror the regular Fall 2026 week on hours.library.columbia.edu
+     (checked 2026-10-05); midterm and finals extensions come from the scraper. */
   { id:'butler', name:'Butler Library', cat:'library', loc:'535 W 114th St',
-    hours: D([['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],
-             [['00:00','23:00']],[['09:00','23:00']],[['09:00','24:00']]),
-    note:'Open 24 hours Sun 9 AM through Fri 11 PM during the semester.' },
+    hours: ALL([['00:00','24:00']]),
+    note:'Open 24 hours during the fall semester.' },
 
   { id:'noco', name:'NoCo Library', cat:'library', loc:'Northwest Corner Building, 4th fl',
-    hours: WEEKDAYS([['09:00','23:00']], [['11:00','20:00']], [['11:00','23:00']]) },
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','19:00']],[['10:00','18:00']],[['11:00','22:00']]) },
 
   { id:'lehman', name:'SIPA Library', cat:'library', loc:'International Affairs Building, 3rd fl',
-    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','19:00']],[['10:00','18:00']],[['11:00','22:00']]) },
 
   { id:'uris', name:'Uris Library', cat:'library', loc:'Uris Hall, 3rd fl',
-    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+    hours: D([['09:00','03:00']],[['09:00','03:00']],[['09:00','03:00']],[['09:00','03:00']],
+             [['09:00','19:00']],[['10:00','18:00']],[['11:00','22:00']]) },
 
   { id:'avery', name:'Avery Library', cat:'library', loc:'Avery Hall, 2nd fl',
-    hours: WEEKDAYS([['09:00','21:00']], [['11:00','18:00']], [['12:00','21:00']]),
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','21:00']],[['12:00','19:00']],[['12:00','22:00']]),
     note:'Service desk closes 15 minutes before the library.' },
 
   { id:'math', name:'Math Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
-    hours: WEEKDAYS([['09:00','20:00']], null, [['13:00','20:00']]) },
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','19:00']],[['12:00','17:00']],[['12:00','20:00']]) },
 
   { id:'milstein', name:'Milstein Library', cat:'library', loc:'Milstein Center, Barnard College',
     hours: ALL(null), sourceStatuses: ALL('Hours load from official schedule'),
