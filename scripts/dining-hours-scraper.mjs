@@ -76,14 +76,33 @@ function addDays(date, count) {
   return value.toISOString().slice(0, 10);
 }
 
-function sourceDate(value, field) {
-  if (typeof value === 'number' && Number.isFinite(value)) return easternDate(new Date(value * 1000));
-  if (typeof value === 'string' && /^\d+$/.test(value)) return easternDate(new Date(Number(value) * 1000));
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-    return value.slice(0, 10);
+function easternMinutes(value) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit',
+  }).formatToParts(value);
+  const part = (type) => Number(parts.find((item) => item.type === type)?.value);
+  return part('hour') * 60 + part('minute');
+}
+
+/**
+ * Columbia's period bounds are instants, not calendar dates. Epoch seconds are
+ * unambiguous; the "2026-10-06T20:00:00" strings carry no offset but are UTC
+ * (the 7:30 a.m. breakfast period starts at "T11:30:00", midnight closures at
+ * "T04:00:00"). Reading their first ten characters put an evening end time on
+ * the next day and turned a 4-9 p.m. dinner notice into a whole-day closure.
+ * Returns { date, minutes } in Eastern time, or { date, minutes: null } for a
+ * bare date, which covers the whole day.
+ */
+function sourceInstant(value, field) {
+  let instant = null;
+  if (typeof value === 'number' && Number.isFinite(value)) instant = new Date(value * 1000);
+  else if (typeof value === 'string' && /^\d+$/.test(value)) instant = new Date(Number(value) * 1000);
+  else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return { date: value, minutes: null };
+  else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value)) {
+    instant = new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`);
   }
-  throw new Error(`invalid ${field}`);
+  if (!instant || Number.isNaN(instant.getTime())) throw new Error(`invalid ${field}`);
+  return { date: easternDate(instant), minutes: easternMinutes(instant) };
 }
 
 function cleanStatus(value, maxLength = 160) {
@@ -212,11 +231,27 @@ function intervalsFor(period, date) {
  */
 const PERIOD_TIER_TOLERANCE_DAYS = 7;
 
-function periodBounds(period) {
+function periodInstants(period) {
   return {
-    start: sourceDate(period.date_from ?? period.dateFrom, 'date_from'),
-    end: sourceDate(period.date_to ?? period.dateTo, 'date_to'),
+    from: sourceInstant(period.date_from ?? period.dateFrom, 'date_from'),
+    to: sourceInstant(period.date_to ?? period.dateTo, 'date_to'),
   };
+}
+
+function periodBounds(period) {
+  const { from, to } = periodInstants(period);
+  // A period that ends exactly at midnight Eastern does not reach into that day.
+  const end = to.minutes === 0 && to.date > from.date ? addDays(to.date, -1) : to.date;
+  return { start: from.date, end };
+}
+
+/** The part of `date` a period covers, in minutes from Eastern midnight ([0, 1440]). */
+function periodWindowOn(period, date) {
+  const { from, to } = periodInstants(period);
+  const start = from.date === date && from.minutes !== null ? from.minutes : 0;
+  let end = to.date === date && to.minutes !== null ? to.minutes : 1440;
+  if (end >= 1439) end = 1440; // "11:59 p.m." and "11:59:59 p.m." mean end of day
+  return [start, Math.max(start, end)];
 }
 
 function spanDays({ start, end }) {
@@ -244,10 +279,82 @@ export function periodsCovering(periods, date) {
 
 /** The periods that actually decide a date: see the comment above for why it is a tier. */
 export function periodsForDate(periods, date) {
+  const tiers = periodTiersForDate(periods, date);
+  return tiers.length ? tiers.at(-1) : [];
+}
+
+/**
+ * Usable periods for a date grouped into tiers, broadest first. Periods whose spans are
+ * within PERIOD_TIER_TOLERANCE_DAYS of each other share a tier (concurrent meal periods);
+ * each narrower tier is an override of the ones before it.
+ */
+function periodTiersForDate(periods, date) {
   const usable = periodsCovering(periods, date).filter((period) => !excludedDates(period).has(date));
-  if (!usable.length) return [];
-  const narrowest = Math.min(...usable.map((period) => spanDays(periodBounds(period))));
-  return usable.filter((period) => spanDays(periodBounds(period)) - narrowest <= PERIOD_TIER_TOLERANCE_DAYS);
+  const sorted = usable
+    .map((period) => ({ period, span: spanDays(periodBounds(period)) }))
+    .sort((a, b) => a.span - b.span);
+  const tiers = [];
+  for (const item of sorted) {
+    const tier = tiers.at(-1);
+    if (tier && item.span - tier.minSpan <= PERIOD_TIER_TOLERANCE_DAYS) tier.periods.push(item.period);
+    else tiers.push({ minSpan: item.span, periods: [item.period] });
+  }
+  return tiers.reverse().map((tier) => tier.periods);
+}
+
+function toMinutes(value) {
+  const [hour, minute] = value.split(':').map(Number);
+  return hour * 60 + minute;
+}
+
+function fromMinutes(total) {
+  if (total === 1440) return '24:00';
+  const value = total % 1440;
+  return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+}
+
+/** Remove [start, end) of the day from intervals; overnight intervals keep their tail. */
+function subtractWindow(intervals, [start, end]) {
+  const pieces = [];
+  for (const [open, close] of intervals) {
+    const from = toMinutes(open);
+    let to = close === '24:00' ? 1440 : toMinutes(close);
+    if (to <= from) to += 1440;
+    const parts = [[from, Math.min(to, start)], [Math.max(from, end), to]];
+    for (const [a, b] of parts) if (b > a) pieces.push([fromMinutes(a), fromMinutes(b)]);
+  }
+  return pieces;
+}
+
+/**
+ * Resolve one date. The broadest tier sets the base; each narrower tier overrides it, but
+ * only for the hours its period covers. A whole-day override replaces the day (a holiday
+ * schedule, a private-event closure); a part-day one replaces just that part — Faculty House
+ * "Dinner will be served on the 4th Floor" (4-9 p.m.) leaves breakfast and lunch alone, and a
+ * private event that ends at noon leaves dinner open.
+ */
+export function resolveDate(periods, date) {
+  const tiers = periodTiersForDate(periods, date);
+  if (!tiers.length) return null;
+  let intervals = mergeIntervals(tiers[0].flatMap((period) => intervalsFor(period, date)));
+  let statusPeriods = tiers[0];
+  let deciding = tiers[0];
+  for (const tier of tiers.slice(1)) {
+    const tierIntervals = tier.flatMap((period) => intervalsFor(period, date));
+    const windows = tier.map((period) => periodWindowOn(period, date));
+    const wholeDay = windows.some(([start, end]) => start === 0 && end === 1440);
+    if (wholeDay) {
+      intervals = mergeIntervals(tierIntervals);
+      statusPeriods = tier;
+      deciding = tier;
+    } else {
+      for (const window of windows) intervals = subtractWindow(intervals, window);
+      intervals = mergeIntervals([...intervals, ...tierIntervals]);
+      statusPeriods = [...statusPeriods, ...tier];
+      if (!intervals.length) deciding = tier;
+    }
+  }
+  return { intervals, statusPeriods, deciding };
 }
 
 /** Union the day's intervals. Overnight spans (12 p.m. - 10 a.m.) are left alone. */
@@ -289,19 +396,19 @@ export function buildDiningSnapshot(dataset, generated = new Date()) {
       if (!periodsCovering(periods, date).length) {
         return { date, intervals: [], status: 'Hours not published' };
       }
-      const selected = periodsForDate(periods, date);
+      const resolved = resolveDate(periods, date);
       // Every period covering this date excludes it: a holiday closure, nothing else to read.
-      if (!selected.length) return { date, intervals: [], status: 'Closed' };
+      if (!resolved) return { date, intervals: [], status: 'Closed' };
 
-      const intervals = mergeIntervals(selected.flatMap((period) => intervalsFor(period, date)));
-      const status = cleanStatus(selected.map((period) => period.displayed_hours ?? period.displayedHours));
+      const { intervals, statusPeriods, deciding } = resolved;
+      const wording = (list) => cleanStatus(list.map((period) => period.displayed_hours ?? period.displayedHours));
       // A schedule that lists other weekdays but not this one means closed today. Saying so
       // beats repeating the schedule sentence ("Monday - Friday, 8 a.m. - 9 p.m.") on a
       // Sunday, which reads like opening hours. A pure closure notice keeps its own wording.
-      if (!intervals.length && !selected.every(publishesNoHours)) {
-        return { date, intervals: [], status: 'Closed' };
+      if (!intervals.length) {
+        return { date, intervals: [], status: deciding.every(publishesNoHours) ? wording(deciding) : 'Closed' };
       }
-      return { date, intervals, status };
+      return { date, intervals, status: wording(statusPeriods) };
     });
     return {
       id: mapping.id,

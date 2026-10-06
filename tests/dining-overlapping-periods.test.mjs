@@ -6,6 +6,7 @@
  * override period (holiday hours, a private-event closure) lost to the semester one.
  */
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 
 import { buildDiningSnapshot, periodsForDate } from '../scripts/dining-hours-scraper.mjs';
@@ -122,4 +123,51 @@ test('periodsForDate keeps the tier that decides the date', () => {
   assert.deepEqual(periodsForDate([broad, narrow], '2026-09-20').map(p => p.displayed_hours[0].title), ['Override']);
   assert.deepEqual(periodsForDate([broad, narrow], '2026-09-25').map(p => p.displayed_hours[0].title), ['Semester']);
   assert.deepEqual(periodsForDate([], '2026-09-20'), []);
+});
+
+/*
+ * 2026-10-05 live feed. Columbia's period bounds are UTC instants without an offset
+ * ("2026-10-06T20:00:00" is 4 p.m. Eastern). Reading the first ten characters made the
+ * 4-9 p.m. "Dinner will be served on the 4th Floor" notice close Faculty House all day on
+ * Oct 6, and a private event that ends at noon on Oct 8 closed that whole day too.
+ */
+const LIVE_2026_10_05 = JSON.parse(
+  fs.readFileSync(new URL('./fixtures/dining-nodes-2026-10-05.json', import.meta.url), 'utf8'),
+);
+const LIVE_GENERATED = new Date('2026-10-05T17:32:47.839Z');
+
+test('a part-day notice replaces only the hours it covers', () => {
+  const snapshot = buildDiningSnapshot(LIVE_2026_10_05, LIVE_GENERATED);
+  // Tue Oct 6: breakfast and lunch as usual; dinner moved to the 4th floor.
+  assert.deepEqual(on(snapshot, 'facultyhouse', '2026-10-06').intervals, [['07:30', '14:30']]);
+  // Wed Oct 7: the private event covers the whole day.
+  assert.deepEqual(on(snapshot, 'facultyhouse', '2026-10-07'), {
+    date: '2026-10-07', intervals: [], status: 'Breakfast, lunch, and dinner are closed for a private event.',
+  });
+  // Thu Oct 8: closed until noon (lunch is excluded that day), dinner still open.
+  assert.deepEqual(on(snapshot, 'facultyhouse', '2026-10-08').intervals, [['17:00', '21:00']]);
+  // Mon Oct 5 is untouched.
+  assert.deepEqual(on(snapshot, 'facultyhouse', '2026-10-05').intervals, [['07:30', '14:30'], ['17:00', '21:00']]);
+});
+
+test('a period ending late in the evening Eastern does not spill into the next day', () => {
+  const snapshot = buildDiningSnapshot(LIVE_2026_10_05, LIVE_GENERATED);
+  // The 4th-floor closure ends 2026-10-09T03:59:59Z, i.e. 11:59 p.m. on Oct 8 Eastern.
+  assert.deepEqual(on(snapshot, 'facultyhouse-4', '2026-10-08'), {
+    date: '2026-10-08', intervals: [], status: 'Closed for a private event',
+  });
+  assert.deepEqual(on(snapshot, 'facultyhouse-4', '2026-10-09'), {
+    date: '2026-10-09', intervals: [], status: 'Closed',
+  });
+});
+
+test('a part-day closure keeps the tail of an overnight interval', () => {
+  const semester = period({
+    from: '2026-09-04T04:00:00', to: '2026-12-31T04:59:59', displayed: 'Open daily 12:00 p.m. - 10:00 a.m.',
+    days: { days_monday: [{ hours_from: '1200', hours_to: '1000' }] },
+  });
+  // Closed 3-6 p.m. Eastern on Monday Sep 21.
+  const notice = period({ from: '2026-09-21T19:00:00', to: '2026-09-21T22:00:00', displayed: 'Closed for cleaning' });
+  const snapshot = buildDiningSnapshot(dataset(11, [semester, notice]), GENERATED);
+  assert.deepEqual(on(snapshot, 'jjs', '2026-09-21').intervals, [['12:00', '15:00'], ['18:00', '10:00']]);
 });
