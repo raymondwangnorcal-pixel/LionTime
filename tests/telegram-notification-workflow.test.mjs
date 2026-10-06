@@ -15,3 +15,11 @@ test('reusable Telegram sender has scoped inputs, secrets, and delivery safeguar
   assert.match(workflow, /cancelled|skipped|failure/);
   assert.match(workflow, /run_url/);
 });
+
+test('a failed run carries its summary instead of only a link', () => {
+  // The audit flagged "library — stale" on every run for two days, but Telegram only
+  // ever said "Hours audit workflow failed. Details: …".
+  const workflow = fs.readFileSync(new URL('../.github/workflows/send-telegram-update.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /if \[ -n "\$SUMMARY" \]; then\n\s+message="\$SOURCE_LABEL workflow \$status:/);
+  assert.match(workflow, /\$\{SUMMARY:0:3000\}/);
+});
