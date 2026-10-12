@@ -19,8 +19,8 @@ const LONG = [
   'Baja Steak Burrito: Baja steak, refried black beans, yellow rice, shredded cheese, pico de gallo, on a flour tortilla',
 ];
 
-test('defaults dining halls to the menus view', () => {
-  assert.equal(api.activeView, 'menus');
+test('defaults dining halls to the hours view', () => {
+  assert.equal(api.activeView, 'hours');
 });
 
 test('splitItem leaves a short plain item alone', () => {
