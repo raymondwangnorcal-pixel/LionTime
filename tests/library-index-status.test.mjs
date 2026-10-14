@@ -58,3 +58,10 @@ test('overnight spill uses the real previous day when the overlay supplies it', 
   const stale = { ...jjs, previousDayHours: { dow: 2, intervals: [] } };
   assert.equal(getStatus(stale, fridayOneAm).status, 'open');
 });
+
+test('the page schedules its once-a-minute re-render without a missing clock function', () => {
+  const scheduler = html.indexOf('setInterval(render, 60000);');
+  assert.ok(scheduler > 0);
+  assert.equal(/setInterval\(updateClock/.test(html), /function updateClock\b/.test(html),
+    'a setInterval for an undefined function throws before the re-render is scheduled');
+});

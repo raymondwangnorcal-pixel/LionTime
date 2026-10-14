@@ -2170,7 +2170,9 @@ function hydrateRecreationHours() {
 if (window.LionHourDiningVote) {
   LionHourDiningVote.init().then(render);
 }
-setInterval(updateClock, 1000);
+// Re-render each minute so open/closed badges and countdowns stay current while the
+// tab is open. (A leftover interval for the removed header clock used to throw here,
+// so this line never ran.)
 setInterval(render, 60000);
 </script>
 
