@@ -1737,7 +1737,7 @@
 - Date: 2026-10-14
 - Owner: agent
 - Status at record: active
-- Decision: Columbia Dining's Fall Break 2026 article is a seventh, optional Dining source (attempt batch version 4, public snapshot version 5) whose per-date board-plan and retail sections override the feed for October 29 through November 3, with omitted covered venues shown as closed.
+- Decision: Columbia Dining's Fall Break 2026 article is a seventh, optional Dining source (attempt batch version 4, public snapshot version 5) whose per-date board-plan and retail sections override the feed for October 29 through November 3, with omitted covered venues shown as closed; version 5 locations also state the resolved previous day so overnight venues never borrow next week's hours as "yesterday".
 - Rationale: The structured feed's regular Fall periods do not mention the break, so without the article LionHour would show normal hours while most Columbia Dining locations are closed or shortened. Making the source optional keeps one challenged article from freezing every Dining venue.
 - Scope: Dining article parsing, source contracts and schemas, API merge, resolver precedence, browser validation, the self-hosted scraper, autofix source registry, tests, and dining operations documentation.
 - Implementation: pending

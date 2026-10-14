@@ -1443,11 +1443,21 @@ function chainEnd(venue, dow, endMin) {
   return end;
 }
 
+/* Yesterday's published hours. A live overlay fills the seven weekday slots from
+   today through today+6, so the slot before today is next week's, not yesterday's;
+   when the overlay knows the real previous day it supplies previousDayHours. */
+function previousDayHours(venue, dow) {
+  const prior = venue.previousDayHours;
+  const yesterday = ((dow - 1) % 7 + 7) % 7;
+  return prior && prior.dow === yesterday && Array.isArray(prior.intervals)
+    ? prior.intervals : dayHours(venue, dow - 1);
+}
+
 /* Absolute-minute intervals for yesterday + today, relative to today's midnight. */
 function activeIntervals(venue, dow) {
   const out = [];
   for (const off of [-1, 0]) {
-    for (const iv of dayHours(venue, dow + off)) {
+    for (const iv of off === -1 ? previousDayHours(venue, dow) : dayHours(venue, dow + off)) {
       const s = toMin(iv[0]);
       let e = iv[1] === '24:00' ? 1440 : toMin(iv[1]);
       if (e <= s) e += 1440;

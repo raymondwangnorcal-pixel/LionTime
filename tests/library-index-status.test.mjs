@@ -43,3 +43,18 @@ test('embedded library hours follow the Fall 2026 schedule including 3 AM closes
   assert.match(getStatus(venue('uris'), { dow: 3, mins: 23 * 60 }).detail, /3 AM/);
   assert.match(getStatus(venue('lehman'), { dow: 0, mins: 12 * 60 }).detail, /10 PM/);
 });
+
+test('overnight spill uses the real previous day when the overlay supplies it', () => {
+  // A live overlay fills slots today..today+6, so Thursday's slot (dow 4) before
+  // Friday Oct 30 actually holds next Thursday's normal 12 PM - 10 AM.
+  const jjs = { ...venue('jjs'), hours: { 0: [['10:00', '19:00']], 1: [['10:00', '19:00']], 2: [['10:00', '19:00']],
+    3: [['12:00', '10:00']], 4: [['12:00', '10:00']], 5: [['10:00', '19:00']], 6: [['10:00', '19:00']] } };
+  const fridayOneAm = { dow: 5, mins: 60 };
+  assert.equal(getStatus(jjs, fridayOneAm).status, 'open', 'without the real yesterday the next-week slot leaks in');
+  const withPrior = { ...jjs, previousDayHours: { dow: 4, intervals: [['12:00', '20:00']] } };
+  assert.equal(getStatus(withPrior, fridayOneAm).status, 'closed');
+  assert.match(getStatus(withPrior, fridayOneAm).detail, /10 AM today/);
+  // A stale previous day for another weekday is ignored.
+  const stale = { ...jjs, previousDayHours: { dow: 2, intervals: [] } };
+  assert.equal(getStatus(stale, fridayOneAm).status, 'open');
+});

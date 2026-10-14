@@ -243,3 +243,24 @@ test('upgrades a v3 source state to the v5 Fall Break overlay without freezing t
   // November 4 is outside the break.
   assert.equal(day('johnjay', '2026-11-04').sourceId, 'locations-feed');
 });
+
+test('a v5 snapshot states the real previous day for overnight venues', async () => {
+  const store = memoryStore(null);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  const put = async generated => {
+    const batch = makeValidDiningAttemptBatch({ schemaVersion: 4, generated });
+    assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: batch })).status, 204);
+    return (await service.handle({ method: 'GET' })).body;
+  };
+  // Window opens on the second break day: the previous day is the break's Thursday.
+  const during = await put('2026-10-30T16:00:00.000Z');
+  const jjs = during.locations.find(location => location.id === 'jjs');
+  assert.deepEqual(jjs.previousDay, {
+    date: '2026-10-29', intervals: [['12:00', '20:00']], status: 'Fall Break 2026 hours', sourceId: 'fall-break-2026',
+  });
+  // Window opens the day after the break: Tuesday's 10 AM - 7 PM, not next Tuesday's.
+  const after = await put('2026-11-04T16:00:00.000Z');
+  assert.deepEqual(after.locations.find(location => location.id === 'jjs').previousDay.intervals, [['10:00', '19:00']]);
+  // Every location, including Café East and Barnard, carries one.
+  assert.ok(after.locations.every(location => location.previousDay?.date === '2026-11-03'));
+});

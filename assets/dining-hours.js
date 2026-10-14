@@ -129,9 +129,11 @@
         || location.category !== locationContract.category
         || typeof location.name !== 'string' || !location.name.trim()
         || !Array.isArray(location.days) || location.days.length !== 14) return null;
-      if (hasProvenance && !exactKeys(location, ['id', 'sourceId', 'category', 'name', 'days'])) return null;
-      for (let index = 0; index < 14; index += 1) {
-        const day = location.days[index];
+      if (hasProvenance && !exactKeys(location, [
+        'id', 'sourceId', 'category', 'name', 'days', ...(versionFive ? ['previousDay'] : []),
+      ])) return null;
+      for (let index = versionFive ? -1 : 0; index < 14; index += 1) {
+        const day = index < 0 ? location.previousDay : location.days[index];
         if (!day || day.date !== addDays(snapshot.windowStart, index)
           || !validIntervals(day.intervals) || !validStatus(day.status)) return null;
         if (hasProvenance) {
@@ -230,6 +232,13 @@
         sourceStatuses[dow] = day.status;
         sourceIds[dow] = day.sourceId || 'locations-feed';
       }
+      // The weekday slot before today holds today+6, so overnight spill from the
+      // real yesterday needs that day itself: inside the window, or v5's previousDay.
+      const priorDay = firstIndex >= 1 ? byId.get(id).days[firstIndex - 1] : byId.get(id).previousDay;
+      const previousDayHours = priorDay ? {
+        dow: new Date(`${priorDay.date}T12:00:00Z`).getUTCDay(),
+        intervals: priorDay.intervals.map((interval) => [interval[0], interval[1]]),
+      } : null;
       const todayStatus = days[0].status;
       const isBarnard = BARNARD_IDS.includes(id);
       const barnardFetchedAt = sourceFetchedAt['barnard-hours'];
@@ -255,6 +264,7 @@
       }
       entries.push([venue, {
         hours,
+        previousDayHours,
         sourceStatuses,
         sourceIds,
         sourceNote,
@@ -337,6 +347,11 @@
         sourceStatuses[dow] = day.status;
         sourceIds[dow] = 'barnard-hours';
       }
+      const priorDay = firstIndex >= 1 ? byId.get(id).days[firstIndex - 1] : null;
+      const previousDayHours = priorDay ? {
+        dow: new Date(`${priorDay.date}T12:00:00Z`).getUTCDay(),
+        intervals: priorDay.intervals.map(interval => [interval[0], interval[1]]),
+      } : null;
       const allWeekClosed = days.every(day => day.status === 'Closed' && !day.intervals.length);
       const sourceNote = expired
         ? `Barnard hours may be outdated · Last confirmed ${formatEastern(snapshot.generated)}`
@@ -345,6 +360,7 @@
           : allWeekClosed ? 'Closed throughout the published week' : null;
       entries.push([venue, {
         hours,
+        previousDayHours,
         sourceStatuses,
         sourceIds,
         sourceNote,

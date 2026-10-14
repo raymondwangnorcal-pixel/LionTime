@@ -300,6 +300,14 @@ test('accepts a v5 snapshot and shows Fall Break hours and closures', async () =
   assert.equal(JSON.stringify(next('ferris').hours[6]), JSON.stringify([['10:00', '19:00']]));
   assert.equal(next('johnjay').sourceStatuses[6], 'Closed');
   assert.equal(next('ferris').sourceStatuses[6], 'Fall Break 2026 hours');
+  // today is inside the window, so the real previous day comes from the window itself.
+  assert.equal(next('jjs').previousDayHours.dow, 3);
+  const sameDay = api.buildUpdates(snapshot, venues(), '2026-10-28', new Date('2026-10-28T16:30:00Z'));
+  const jjsSameDay = sameDay.entries.find(([venue]) => venue.id === 'jjs')[1];
+  // ...and on the snapshot's own date it comes from v5's previousDay (Tuesday Oct 27).
+  assert.equal(jjsSameDay.previousDayHours.dow, 2);
+  assert.equal(JSON.stringify(jjsSameDay.previousDayHours.intervals),
+    JSON.stringify(snapshot.locations.find(location => location.id === 'jjs').previousDay.intervals));
   // The fixture's Barnard weeks are from August, so only Barnard may fall back here.
   assert.ok(Array.from(updates.staticFallbackIds).every(id => [...STATIC_IDS, ...BARNARD_IDS].includes(id)));
 });
