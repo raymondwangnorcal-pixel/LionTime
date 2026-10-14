@@ -103,6 +103,24 @@ test('parses the Drupal definition-list Health page shape', () => {
   assert.ok(!svrOffice.some(days => days.join(',') === '1,2,4'), 'Friday was dropped from the Oxford-comma list');
 });
 
+test('parses a weekday label written ahead of a list of drop-in ranges', () => {
+  // Columbia Health added Immunization drop-ins in October 2026:
+  // "Monday - Friday: <ul><li>10:00 a.m. - 12:00 p.m ET</li><li>2:00 p.m. - 4:00 p.m. ET</li></ul>".
+  const evidence = parseHealthSource(fixture('student-services-health-2026-10-13.html'));
+  const dropIns = evidence.filter(item => item.targetId === 'immunization' && item.type === 'walk-in');
+  assert.equal(dropIns.length, 1);
+  assert.deepEqual(dropIns[0].weekdays, [1, 2, 3, 4, 5]);
+  assert.deepEqual(dropIns[0].intervals, [['10:00', '12:00'], ['14:00', '16:00']]);
+  assert.equal(dropIns[0].reason, 'Drop-ins');
+  const virtual = evidence.find(item => item.targetId === 'immunization' && item.type === 'virtual-only');
+  assert.deepEqual(virtual.intervals, [['09:00', '17:00']]);
+  const attempt = buildStudentServicesAttempt({
+    sourceId: 'health', sourceUrl: 'https://www.health.columbia.edu/content/hours-and-locations', evidence, generated: new Date('2026-10-13T19:00:00Z'),
+  });
+  const tuesday = attempt.venues.find(venue => venue.id === 'immunization').days.find(day => day.date === '2026-10-13');
+  assert.deepEqual(tuesday.availabilities.map(item => item.type).sort(), ['virtual-only', 'walk-in']);
+});
+
 test('requires the exact official Bookstore identity and seven weekdays', () => {
   const data = fixture('student-services-bookstore.json');
   assert.equal(parseBookstoreSource(data).length, 7);

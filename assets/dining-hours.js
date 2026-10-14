@@ -53,6 +53,10 @@
     ...V3_SOURCE_CONTRACT,
     'barnard-hours': 'https://dineoncampus.com/barnard/hours-of-operation',
   });
+  const V5_SOURCE_CONTRACT = Object.freeze({
+    ...SOURCE_CONTRACT,
+    'fall-break-2026': 'https://dining.columbia.edu/news/fall-break-2026-operating-hours',
+  });
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -100,10 +104,12 @@
   function validateSnapshot(snapshot) {
     const versionTwo = snapshot?.schemaVersion === 2;
     const versionThree = snapshot?.schemaVersion === 3;
-    const versionFour = snapshot?.schemaVersion === 4;
+    const versionFive = snapshot?.schemaVersion === 5;
+    // v5 is v4 plus the Fall Break 2026 source.
+    const versionFour = snapshot?.schemaVersion === 4 || versionFive;
     const hasProvenance = versionTwo || versionThree || versionFour;
     const contract = versionFour ? CONTRACT : versionThree ? V3_CONTRACT : LEGACY_CONTRACT;
-    const sourceContract = versionFour ? SOURCE_CONTRACT
+    const sourceContract = versionFive ? V5_SOURCE_CONTRACT : versionFour ? SOURCE_CONTRACT
       : versionThree ? V3_SOURCE_CONTRACT : LEGACY_SOURCE_CONTRACT;
     if (!snapshot || (snapshot.schemaVersion !== 1 && !hasProvenance) || snapshot.source !== SOURCE
       || typeof snapshot.generated !== 'string' || Number.isNaN(Date.parse(snapshot.generated))
@@ -257,7 +263,7 @@
           : isPartial ? 'partial' : isBarnardStale ? 'stale' : 'live',
       }]);
     }
-    const baseFallbackIds = snapshot.schemaVersion === 4 ? STATIC_FALLBACK_IDS
+    const baseFallbackIds = snapshot.schemaVersion >= 4 ? STATIC_FALLBACK_IDS
       : snapshot.schemaVersion === 3 ? V3_STATIC_FALLBACK_IDS : LEGACY_STATIC_FALLBACK_IDS;
     const staticFallbackIds = [...baseFallbackIds, ...dynamicFallbackIds];
     const updatedCount = entries.filter(([, next]) => next.diningLive).length;

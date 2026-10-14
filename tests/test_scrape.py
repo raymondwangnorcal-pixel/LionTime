@@ -343,6 +343,36 @@ class ScraperContractTests(unittest.TestCase):
         schedule = entry["schedules"][0]
         self.assertEqual(schedule["hours"]["4"], {"open": "10:00", "close": "02:00"})
 
+    def test_small_hours_close_is_approved_for_any_library(self):
+        # Columbia's October 2026 NoCo calendar: 9:00 AM - 3:00 AM Sunday-Thursday.
+        html = """
+        <table><tr>
+          <td><div class="fulldate">2026-10-11</div><div class="day-hours">11:00AM-3:00AM</div></td>
+          <td><div class="fulldate">2026-10-12</div><div class="day-hours">9:00AM-3:00AM</div></td>
+          <td><div class="fulldate">2026-10-16</div><div class="day-hours">9:00AM-11:00PM</div></td>
+        </tr></table>
+        """
+        definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == "science_engineering")
+        entry = scrape_library(
+            definition,
+            datetime.fromisoformat("2026-10-13T12:00:00-04:00"),
+            fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+        )
+        hours = entry["schedules"][0]["hours"]
+        self.assertEqual(hours["0"], {"open": "11:00", "close": "03:00"})
+        self.assertEqual(hours["1"], {"open": "09:00", "close": "03:00"})
+        payload = make_complete_payload()
+        noco = next(item for item in payload["libraries"] if item["id"] == "science_engineering")
+        noco["schedules"][0]["hours"]["1"] = {"open": "09:00", "close": "03:00"}
+        self.assertEqual(validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS), [])
+
+    def test_rejects_overnight_close_after_the_small_hours(self):
+        payload = make_complete_payload()
+        avery = next(item for item in payload["libraries"] if item["id"] == "avery")
+        avery["schedules"][0]["hours"]["1"] = {"open": "09:00", "close": "07:00"}
+        errors = validate_publishable_payload(payload, DISPLAYED_LIBRARY_IDS)
+        self.assertIn("avery: overnight hours are not allowed", errors)
+
     def test_accepts_explicit_business_embedded_fallback(self):
         payload = make_complete_payload()
         business = next(item for item in payload["libraries"] if item["id"] == "business")

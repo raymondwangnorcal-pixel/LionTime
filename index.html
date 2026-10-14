@@ -1132,26 +1132,33 @@ const WEEKDAYS = (wd, sat=null, sun=null) => D(wd,wd,wd,wd,wd,sat,sun);
 /* Expose on globalThis so dining-vote.js can resolve hall display names */
 const VENUES = window.VENUES = [
   /* ── LIBRARIES (top 6 by traffic) ───────────────── */
+  /* Embedded hours are the fallback when the live library snapshot is
+     unavailable. They are Columbia's Fall 2026 regular schedule as published
+     on hours.library.columbia.edu for October 11 onward; refresh them when
+     the semester schedule changes. */
   { id:'butler', name:'Butler Library', cat:'library', loc:'535 W 114th St',
-    hours: D([['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],[['00:00','24:00']],
-             [['00:00','23:00']],[['09:00','23:00']],[['09:00','24:00']]),
-    note:'Open 24 hours Sun 9 AM through Fri 11 PM during the semester.' },
+    hours: ALL([['00:00','24:00']]) },
 
   { id:'noco', name:'NoCo Library', cat:'library', loc:'Northwest Corner Building, 4th fl',
-    hours: WEEKDAYS([['09:00','23:00']], [['11:00','20:00']], [['11:00','23:00']]) },
+    hours: D([['09:00','03:00']],[['09:00','03:00']],[['09:00','03:00']],[['09:00','03:00']],
+             [['09:00','23:00']],[['10:00','23:00']],[['11:00','03:00']]) },
 
   { id:'lehman', name:'SIPA Library', cat:'library', loc:'International Affairs Building, 3rd fl',
-    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','19:00']],[['10:00','18:00']],[['11:00','22:00']]) },
 
   { id:'uris', name:'Uris Library', cat:'library', loc:'Uris Hall, 3rd fl',
-    hours: WEEKDAYS([['09:00','22:00']], [['11:00','18:00']], [['12:00','22:00']]) },
+    hours: D([['09:00','03:00']],[['09:00','03:00']],[['09:00','03:00']],[['09:00','03:00']],
+             [['09:00','19:00']],[['10:00','18:00']],[['11:00','22:00']]) },
 
   { id:'avery', name:'Avery Library', cat:'library', loc:'Avery Hall, 2nd fl',
-    hours: WEEKDAYS([['09:00','21:00']], [['11:00','18:00']], [['12:00','21:00']]),
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','21:00']],[['12:00','19:00']],[['12:00','22:00']]),
     note:'Service desk closes 15 minutes before the library.' },
 
   { id:'math', name:'Math Library', cat:'library', loc:'Mathematics Hall, 3rd fl',
-    hours: WEEKDAYS([['09:00','20:00']], null, [['13:00','20:00']]) },
+    hours: D([['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],[['09:00','23:00']],
+             [['09:00','19:00']],[['12:00','17:00']],[['12:00','20:00']]) },
 
   { id:'milstein', name:'Milstein Library', cat:'library', loc:'Milstein Center, Barnard College',
     hours: ALL(null), sourceStatuses: ALL('Hours load from official schedule'),
@@ -1301,7 +1308,7 @@ const VENUES = window.VENUES = [
 
   { id:'immunization', name:'Immunization Compliance Office', cat:'student', loc:'John Jay Hall, 3rd fl',
     hours: WEEKDAYS([['09:00','17:00']]),
-    studentAccessType:'virtual-only', note:'Virtual appointments only.' },
+    studentAccessType:'virtual-only', note:'Virtual appointments and weekday drop-ins are available.' },
 ];
 
 /* ══════════════════════════════════════════════════
@@ -1342,7 +1349,7 @@ function fmt12(mins) {
 
 function fmtRange(iv) {
   const s = toMin(iv[0]), e = toMin(iv[1]);
-  if (s === 0 && (e === 1440 || iv[1] === '24:00')) return 'Open 24 hours';
+  if (s === 0 && (e === 1440 || e === 0 || iv[1] === '24:00')) return 'Open 24 hours';
   return `${fmt12(s)} – ${fmt12(e)}`;
 }
 
@@ -1415,7 +1422,11 @@ function activeSourceRestriction(venue, now) {
 
 /* An interval ending exactly at midnight continues into the next day if that
    day opens at 00:00 — e.g. Butler runs Sun 9 AM straight through Fri 11 PM.
-   Returns the true closing time in minutes from the start of `dow`. */
+   Returns the true closing time in minutes from the start of `dow`, or
+   Infinity when every day of the week is open around the clock (Butler during
+   the semester), so the status never invents a closing time.
+   A day published as 00:00–00:00 (the library feed's "Open 24 hours") is a
+   full day, the same as 00:00–24:00. */
 function chainEnd(venue, dow, endMin) {
   let end = endMin, guard = 0;
   while (end % 1440 === 0 && guard < 8) {
@@ -1423,11 +1434,11 @@ function chainEnd(venue, dow, endMin) {
     if (!next.length) break;
     const first = next[0];
     if (toMin(first[0]) !== 0) break;
-    const fe = first[1] === '24:00' ? 1440 : toMin(first[1]);
-    if (fe === 0) break;
+    const fe = first[1] === '24:00' || first[1] === '00:00' ? 1440 : toMin(first[1]);
     end += fe;
     guard++;
     if (fe !== 1440) break;
+    if (guard >= 7) return Infinity;
   }
   return end;
 }
@@ -1482,6 +1493,7 @@ function getStatus(venue, now) {
   // 1. Currently inside an open interval (including ones spanning midnight)
   for (const iv of activeIntervals(venue, now.dow)) {
     if (now.mins >= iv.start && now.mins < iv.end) {
+      if (iv.end === Infinity) return { status: 'open', label: 'Open', detail: 'Open 24/7' };
       const until = iv.end - now.mins;
       return {
         status: until <= CLOSING_SOON ? 'closing-soon' : 'open',

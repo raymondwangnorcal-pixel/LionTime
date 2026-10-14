@@ -12,6 +12,12 @@ The workflow is guarded to the exact `raymondwangnorcal-pixel/LionTime` reposito
 
 Library and dining jobs are independent. A failed Dining source records a bounded attempt result while preserving that source's prior successful evidence. A malformed batch or invalid merged snapshot is rejected atomically and never interrupts library updates. The Dining job has a 15-minute ceiling; Barnard acquisition is separately capped at 75 seconds. Its shared deadline includes the 45-second navigation limit, any 12-second challenge grace, the 15-second initial-render limit, and up to 7.5 seconds for each week transition.
 
+### Fall Break 2026 overlay
+
+A seventh source, the official [Fall Break 2026 Operating Hours](https://dining.columbia.edu/news/fall-break-2026-operating-hours) article, carries dated exceptions for October 29 through November 3. It is published in attempt-batch/envelope version 4 and public snapshot version 5, which are version 3/4 plus that one source; clients accept versions 1 through 5. For each break day the article's board-plan table decides every Columbia board venue (a venue it leaves out is `Closed` that day), and its retail section either lists the retail cafés that open (the rest are `Closed`), closes all of them, or says they keep normal hours (the feed then decides). Café East, Barnard, and Robert F. Smith are never touched. Fall Break evidence outranks the feed's regular weekly periods on those dates and shows `Fall Break 2026 hours`.
+
+Fall Break is optional for publication: until its first successful attempt, the other six sources still resolve a version 4 snapshot instead of waiting on it. After November 3 its retained evidence no longer affects any date in the window; if Columbia removes the article the source simply reports a failure and keeps its last success.
+
 The Barnard adapter whitelists only Hewitt Dining, Diana Center Cafe, Barnard Dining Bubble Tea and Sushi Spot, and Liz's Place. It does not publish LeFrak Byte Kiosk, LeFrak Center, or Barnard Kosher as separate venues. Diana Center Cafe and Bubble Tea & Sushi are Dining cards; Liz's Place is a Cafe card.
 
 ## Required configuration

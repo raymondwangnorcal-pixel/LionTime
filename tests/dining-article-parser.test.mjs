@@ -74,3 +74,33 @@ test('rejects a backwards non-overnight Fall interval', () => {
   );
   assert.throws(() => parseFallArticle(source), /must increase/);
 });
+
+test('parses the Fall Break 2026 article into dated venue exceptions', async () => {
+  const { parseFallBreakArticle } = await import('../lib/dining-article-parser.js');
+  const html = readFileSync(new URL('./fixtures/dining-fall-break-2026.html', import.meta.url), 'utf8');
+  const parsed = parseFallBreakArticle(html);
+  assert.equal(parsed.id, 'fall-break-2026');
+  assert.deepEqual(parsed.days.map(day => day.date), [
+    '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02', '2026-11-03',
+  ]);
+  const [thursday, friday, saturday, , monday] = parsed.days;
+  assert.deepEqual(thursday.venues.facultyhouse, [['07:30', '14:00'], ['17:00', '21:00']]);
+  assert.deepEqual(thursday.venues.jjs, [['12:00', '20:00']]);
+  assert.equal('bj-butler' in thursday.venues, false, 'retail runs normal hours on Thursday');
+  assert.deepEqual(friday.venues.chefdons, [['08:00', '15:00']]);
+  assert.deepEqual(friday.venues.johnnys, []);
+  assert.deepEqual(friday.venues['bj-mudd'], [['08:00', '15:00']]);
+  assert.deepEqual(friday.venues['lenfest-cafe'], []);
+  assert.deepEqual(saturday.venues['bj-butler'], []);
+  assert.deepEqual(monday.venues['bj-everett'], [['08:30', '14:30']]);
+  assert.deepEqual(monday.venues['bj-uris'], []);
+  assert.equal('smith-dining' in monday.venues, false);
+});
+
+test('rejects a Fall Break article it does not fully understand', async () => {
+  const { parseFallBreakArticle } = await import('../lib/dining-article-parser.js');
+  const html = readFileSync(new URL('./fixtures/dining-fall-break-2026.html', import.meta.url), 'utf8');
+  assert.throws(() => parseFallBreakArticle(html.replace('<dd>Ferris</dd>', '<dd>Pop-Up Kitchen</dd>')), /unknown dining venue/);
+  assert.throws(() => parseFallBreakArticle(html.replace('All retail locations are closed on Saturday.', 'Retail hours vary.')), /retail notice/);
+  assert.throws(() => parseFallBreakArticle(html.replace('<strong>Tuesday, November 3</strong>', '<strong>Tuesday, November 10</strong>')), /October 29 through November 3/);
+});

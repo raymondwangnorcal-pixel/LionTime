@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   parseFallArticle,
+  parseFallBreakArticle,
   parseLaborDayArticle,
   parseNsopArticle,
 } from '../../lib/dining-article-parser.js';
@@ -179,13 +180,20 @@ export function makeValidDiningAttemptBatch({
     ['cafe-east', 'https://lernerhall.columbia.edu/content/cafe-east',
       parseCafeEastPage(fixture('cafe-east-live.txt'))],
   ];
-  if (schemaVersion === 3) {
+  if (schemaVersion >= 3) {
     const barnardWeeks = ['2026-08-23', '2026-08-30', '2026-09-06']
       .map(date => parseBarnardRenderedWeek(fixture(`barnard-dining-hours-week-${date}.html`)));
     sources.push([
       'barnard-hours',
       'https://dineoncampus.com/barnard/hours-of-operation',
       combineBarnardDiningWeeks(barnardWeeks),
+    ]);
+  }
+  if (schemaVersion >= 4) {
+    sources.push([
+      'fall-break-2026',
+      'https://dining.columbia.edu/news/fall-break-2026-operating-hours',
+      parseFallBreakArticle(fixture('dining-fall-break-2026.html')),
     ]);
   }
   return {

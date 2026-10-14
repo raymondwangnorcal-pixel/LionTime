@@ -49,6 +49,12 @@ DISPLAYED_LIBRARIES = [
 ]
 DISPLAYED_LIBRARY_IDS = {library["id"] for library in DISPLAYED_LIBRARIES}
 EMBEDDED_FALLBACK_LIBRARY_IDS = {"lehman", "business"}
+# Libraries whose published hours may run past midnight with any close time.
+UNRESTRICTED_OVERNIGHT_LIBRARY_IDS = {"butler_24", "business"}
+# Any other library may close after midnight, but only in the small hours
+# (e.g. NoCo's 9 AM–3 AM midterm schedule). A close later than this that is at
+# or before the opening time is a source error (DEC-0008's 9 PM–5 PM case).
+LATE_NIGHT_CLOSE_LIMIT = "06:00"
 EMBEDDED_FALLBACK_REASON = "unapproved-overnight-hours"
 LEHMAN_MERIDIEM_ANOMALY = {"open": "21:00", "close": "17:00"}
 LEHMAN_CORRECTED_HOURS = {"open": "09:00", "close": "17:00"}
@@ -422,13 +428,19 @@ def _embedded_fallback_entry(definition: dict) -> dict:
     }
 
 
+def is_approved_interval(library_id: str, interval: dict[str, str]) -> bool:
+    """True unless the close is at or before the open in a way no library publishes."""
+    close, opening = interval["close"], interval["open"]
+    if close == "00:00" or close > opening:
+        return True
+    if library_id in UNRESTRICTED_OVERNIGHT_LIBRARY_IDS:
+        return True
+    return close <= LATE_NIGHT_CLOSE_LIMIT and close < opening
+
+
 def _has_unapproved_overnight(library_id: str, schedules: list[dict]) -> bool:
-    if library_id in ("butler_24", "business"):
-        return False
     return any(
-        interval is not None
-        and interval["close"] != "00:00"
-        and interval["close"] <= interval["open"]
+        interval is not None and not is_approved_interval(library_id, interval)
         for schedule in schedules
         for interval in schedule["hours"].values()
     )
@@ -633,7 +645,7 @@ def validate_publishable_payload(payload: object, required_ids: set[str]) -> lis
                 )
                 if not valid_interval:
                     errors.append(f"{library_id}: invalid hours for day {day}")
-                elif library_id not in ("butler_24", "business") and interval["close"] != "00:00" and interval["close"] <= interval["open"]:
+                elif not is_approved_interval(library_id, interval):
                     error = f"{library_id}: overnight hours are not allowed"
                     if error not in errors:
                         errors.append(error)
