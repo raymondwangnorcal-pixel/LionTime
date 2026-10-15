@@ -1703,3 +1703,59 @@
 - Superseded by: none
 - Note: Recreation source denials now fail before the publish file is written, preserving the last accepted API snapshot.
 - Privacy waivers: none
+
+## DEC-0085 — Accept small-hours closing times for every displayed library
+
+- Date: 2026-10-14
+- Owner: agent
+- Status at record: active
+- Decision: A library interval whose close is at or before its opening is publishable for any displayed library when the close is no later than 6:00 AM (for example NoCo's 9:00 AM to 3:00 AM), while Butler and Business keep accepting any overnight interval and every other inverted interval still rejects or triggers the existing Lehman/Business embedded fallback.
+- Rationale: Columbia began publishing 3:00 AM closes for the Science & Engineering (NoCo) Library on October 11, 2026; the Butler-and-Business-only rule rejected every library snapshot from October 4 onward, so the site served out-of-date embedded hours for all seven libraries for ten days. A small-hours bound keeps DEC-0008's protection against the afternoon-close Lehman inversion.
+- Scope: `scrape.py` validation and embedded-fallback detection, `lib/library-hours-schema.js`, `assets/library-hours.js`, and their tests.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: Library workflow runs failing since 2026-10-04 (last success 2026-10-03T23:01Z), the official October 2026 Science & Engineering calendar, and a replay of the live October 11-24 calendars through `scrape.py`, which failed with `science_engineering: overnight hours are not allowed` before this change and validates after it.
+- Privacy waivers: none
+
+## DEC-0086 — Keep embedded library hours on the current semester schedule
+
+- Date: 2026-10-14
+- Owner: agent
+- Status at record: active
+- Decision: The embedded `VENUES` library schedules are Columbia's Fall 2026 regular hours published for October 11 onward, Butler is embedded as open around the clock, and a venue open around the clock every day reports `Open 24/7` rather than a computed closing time.
+- Rationale: The embedded schedules are what visitors see whenever the live snapshot is unavailable, and the previous values (including Butler closing Friday and Saturday nights) were materially wrong; the status engine also reported `Closes at 12 AM` for a 24/7 Butler.
+- Scope: `index.html` VENUES library entries, the status engine's midnight chaining and 24-hour formatting, generated venue pages, and `tests/library-index-status.test.mjs`.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: The official hours.library.columbia.edu calendars for Butler, Science & Engineering, Lehman, Business, Avery, and Mathematics captured on 2026-10-13.
+- Privacy waivers: none
+
+## DEC-0087 — Overlay the official Fall Break 2026 Dining article
+
+- Date: 2026-10-14
+- Owner: agent
+- Status at record: active
+- Decision: Columbia Dining's Fall Break 2026 article is a seventh, optional Dining source (attempt batch version 4, public snapshot version 5) whose per-date board-plan and retail sections override the feed for October 29 through November 3, with omitted covered venues shown as closed; version 5 locations also state the resolved previous day so overnight venues never borrow next week's hours as "yesterday".
+- Rationale: The structured feed's regular Fall periods do not mention the break, so without the article LionHour would show normal hours while most Columbia Dining locations are closed or shortened. Making the source optional keeps one challenged article from freezing every Dining venue.
+- Scope: Dining article parsing, source contracts and schemas, API merge, resolver precedence, browser validation, the self-hosted scraper, autofix source registry, tests, and dining operations documentation.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: The official Fall Break 2026 Operating Hours article as rendered on 2026-10-13 (`tests/fixtures/dining-fall-break-2026.html`) and the Locations & Hours feed, which contains no break periods.
+- Privacy waivers: none
+
+## DEC-0088 — Read Health weekday labels written ahead of a range list
+
+- Date: 2026-10-14
+- Owner: agent
+- Status at record: active
+- Decision: When a Columbia Health hours cell is a weekday label followed by a bulleted list of ranges, the parser publishes one availability for those weekdays containing every listed range.
+- Rationale: Columbia Health added Immunization Compliance drop-ins (Monday through Friday, 10 AM to 12 PM and 2 PM to 4 PM) in that shape, and the parser silently dropped them.
+- Scope: `lib/student-services-source-parser.js`, the Immunization card note, and Health parser tests.
+- Implementation: pending
+- Recorded against HEAD: `245126aa9bd6d2184706b37e06506b91198b5a05`
+- Supersedes: none
+- Evidence: The official Columbia Health Hours and Locations page captured on 2026-10-13 and `tests/fixtures/student-services-health-2026-10-13.html`.
+- Privacy waivers: none

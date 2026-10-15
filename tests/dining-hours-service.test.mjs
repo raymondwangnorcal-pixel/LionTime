@@ -199,3 +199,68 @@ test('protects writes and handles empty, unsupported, and failed storage', async
   assert.equal(response.status, 500);
   assert.deepEqual(errors[0][1], { name: 'Error' });
 });
+
+test('upgrades a v3 source state to the v5 Fall Break overlay without freezing the other sources', async () => {
+  const store = memoryStore(null);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  // Production today: a v3 state publishing a v4 snapshot.
+  const v3 = makeValidDiningAttemptBatch({ schemaVersion: 3, generated: '2026-10-13T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: v3 })).status, 204);
+  assert.equal((await store.getSnapshot()).snapshot.schemaVersion, 4);
+
+  // The first v4 batch whose Fall Break article is challenged still publishes everything else.
+  const blocked = makeValidDiningAttemptBatch({
+    schemaVersion: 4, generated: '2026-10-13T20:00:00.000Z', failures: ['fall-break-2026'],
+  });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: blocked })).status, 204);
+  const partial = await store.getSnapshot();
+  assert.equal(partial.schemaVersion, 4);
+  assert.equal(partial.sources.length, 7);
+  assert.equal(partial.snapshot.schemaVersion, 4);
+  assert.equal(partial.snapshot.generated, blocked.generated);
+
+  // Once the article parses, the snapshot becomes v5 and carries its source.
+  const window = makeValidDiningAttemptBatch({ schemaVersion: 4, generated: '2026-10-28T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: window })).status, 204);
+  const body = (await service.handle({ method: 'GET' })).body;
+  assert.equal(body.schemaVersion, 5);
+  assert.equal(body.sources.at(-1).id, 'fall-break-2026');
+  const day = (id, date) => body.locations.find(location => location.id === id).days.find(item => item.date === date);
+  assert.deepEqual(day('ferris', '2026-10-31'), {
+    date: '2026-10-31', intervals: [['10:00', '19:00']], status: 'Fall Break 2026 hours', sourceId: 'fall-break-2026',
+  });
+  assert.deepEqual(day('johnjay', '2026-10-31'), {
+    date: '2026-10-31', intervals: [], status: 'Closed', sourceId: 'fall-break-2026',
+  });
+  assert.deepEqual(day('facultyhouse', '2026-10-29').intervals, [['07:30', '14:00'], ['17:00', '21:00']]);
+  // "All retail locations operate with normal hours on Thursday": the feed still decides.
+  assert.equal(day('bj-butler', '2026-10-29').sourceId, 'locations-feed');
+  assert.deepEqual(day('bj-everett', '2026-11-02').intervals, [['08:30', '14:30']]);
+  assert.equal(day('bj-uris', '2026-11-02').status, 'Closed');
+  // Café East and Barnard keep their own sources.
+  assert.equal(day('cafe-east', '2026-10-31').sourceId, 'cafe-east');
+  assert.equal(day('hewitt', '2026-10-31').sourceId === 'fall-break-2026', false);
+  // November 4 is outside the break.
+  assert.equal(day('johnjay', '2026-11-04').sourceId, 'locations-feed');
+});
+
+test('a v5 snapshot states the real previous day for overnight venues', async () => {
+  const store = memoryStore(null);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  const put = async generated => {
+    const batch = makeValidDiningAttemptBatch({ schemaVersion: 4, generated });
+    assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: batch })).status, 204);
+    return (await service.handle({ method: 'GET' })).body;
+  };
+  // Window opens on the second break day: the previous day is the break's Thursday.
+  const during = await put('2026-10-30T16:00:00.000Z');
+  const jjs = during.locations.find(location => location.id === 'jjs');
+  assert.deepEqual(jjs.previousDay, {
+    date: '2026-10-29', intervals: [['12:00', '20:00']], status: 'Fall Break 2026 hours', sourceId: 'fall-break-2026',
+  });
+  // Window opens the day after the break: Tuesday's 10 AM - 7 PM, not next Tuesday's.
+  const after = await put('2026-11-04T16:00:00.000Z');
+  assert.deepEqual(after.locations.find(location => location.id === 'jjs').previousDay.intervals, [['10:00', '19:00']]);
+  // Every location, including Café East and Barnard, carries one.
+  assert.ok(after.locations.every(location => location.previousDay?.date === '2026-11-03'));
+});

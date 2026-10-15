@@ -12,6 +12,14 @@
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const FALLBACK_REASON = 'unapproved-overnight-hours';
   const EMBEDDED_FALLBACK_IDS = ['lehman', 'business'];
+  // Same rule as lib/library-hours-schema.js and scrape.py.
+  const UNRESTRICTED_OVERNIGHT_IDS = ['butler_24', 'business'];
+  const LATE_NIGHT_CLOSE_LIMIT = '06:00';
+  function isApprovedInterval(scraperId, { open, close }) {
+    if (close === '00:00' || close === '24:00' || close > open) return true;
+    if (UNRESTRICTED_OVERNIGHT_IDS.includes(scraperId)) return true;
+    return close <= LATE_NIGHT_CLOSE_LIMIT && close < open;
+  }
   const BARNARD_PRIMARY_URL = 'https://hours.library.columbia.edu/locations/barnard';
   const BARNARD_HOLIDAY_URL = 'https://library.barnard.edu/visit/hours';
 
@@ -67,7 +75,7 @@
         if (interval === null) {
           hours[day] = null;
         } else if (interval && OPEN_TIME.test(interval.open || '') && CLOSE_TIME.test(interval.close || '')
-          && (scraperId === 'butler_24' || scraperId === 'business' || interval.close === '00:00' || interval.close > interval.open)) {
+          && isApprovedInterval(scraperId, interval)) {
           hours[day] = [[interval.open, interval.close]];
         } else {
           return { ok: false };

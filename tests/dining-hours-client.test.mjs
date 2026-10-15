@@ -280,3 +280,34 @@ test('rejects unsafe version 2 source and NSOP open-count claims atomically', as
     assert.deepEqual(list, before);
   }
 });
+
+test('accepts a v5 snapshot and shows Fall Break hours and closures', async () => {
+  const { createDiningHoursService } = await import('../lib/dining-hours-service.js');
+  const { makeValidDiningAttemptBatch } = await import('./helpers/dining-hours-fixture.mjs');
+  let stored = null;
+  const service = createDiningHoursService({
+    store: { async getSnapshot() { return stored; }, async putSnapshot(next) { stored = next; } },
+    updateSecret: 'secret',
+  });
+  const batch = makeValidDiningAttemptBatch({ schemaVersion: 4, generated: '2026-10-28T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer secret', body: batch })).status, 204);
+  const snapshot = (await service.handle({ method: 'GET' })).body;
+  assert.equal(snapshot.schemaVersion, 5);
+  const updates = api.buildUpdates(snapshot, venues(), '2026-10-29', new Date('2026-10-28T16:30:00Z'));
+  assert.equal(updates.ok, true);
+  const next = id => updates.entries.find(([venue]) => venue.id === id)[1];
+  // 2026-10-31 is a Saturday (dow 6).
+  assert.equal(JSON.stringify(next('ferris').hours[6]), JSON.stringify([['10:00', '19:00']]));
+  assert.equal(next('johnjay').sourceStatuses[6], 'Closed');
+  assert.equal(next('ferris').sourceStatuses[6], 'Fall Break 2026 hours');
+  // today is inside the window, so the real previous day comes from the window itself.
+  assert.equal(next('jjs').previousDayHours.dow, 3);
+  const sameDay = api.buildUpdates(snapshot, venues(), '2026-10-28', new Date('2026-10-28T16:30:00Z'));
+  const jjsSameDay = sameDay.entries.find(([venue]) => venue.id === 'jjs')[1];
+  // ...and on the snapshot's own date it comes from v5's previousDay (Tuesday Oct 27).
+  assert.equal(jjsSameDay.previousDayHours.dow, 2);
+  assert.equal(JSON.stringify(jjsSameDay.previousDayHours.intervals),
+    JSON.stringify(snapshot.locations.find(location => location.id === 'jjs').previousDay.intervals));
+  // The fixture's Barnard weeks are from August, so only Barnard may fall back here.
+  assert.ok(Array.from(updates.staticFallbackIds).every(id => [...STATIC_IDS, ...BARNARD_IDS].includes(id)));
+});

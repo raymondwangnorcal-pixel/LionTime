@@ -117,7 +117,7 @@ test('rejects missing official locations and malformed time values', () => {
   assert.throws(() => buildDiningSnapshot(malformed, new Date('2026-08-21T12:00:00Z')), /invalid dining time/);
 });
 
-test('publishes six independent Dining source attempts and always closes Chromium', async () => {
+test('publishes seven independent Dining source attempts and always closes Chromium', async () => {
   const calls = [];
   let currentUrl = '';
   let barnardWeek = 0;
@@ -126,6 +126,7 @@ test('publishes six independent Dining source attempts and always closes Chromiu
     ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
     ['/news/labor-day-2026-operating-hours', readFileSync(new URL('./fixtures/dining-labor-day-2026.html', import.meta.url), 'utf8')],
     ['/news/fall-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-2026.html', import.meta.url), 'utf8')],
+    ['/news/fall-break-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-break-2026.html', import.meta.url), 'utf8')],
   ]);
   const barnardWeeks = ['2026-08-23', '2026-08-30', '2026-09-06']
     .map(date => readFileSync(new URL(`./fixtures/barnard-dining-hours-week-${date}.html`, import.meta.url), 'utf8'));
@@ -183,26 +184,32 @@ test('publishes six independent Dining source attempts and always closes Chromiu
     chromiumImpl,
   });
 
-  assert.equal(batch.schemaVersion, 3);
-  assert.equal(batch.attempts.length, 6);
+  assert.equal(batch.schemaVersion, 4);
+  assert.equal(batch.attempts.length, 7);
   assert.ok(batch.attempts.every(attempt => attempt.result === 'success'));
   assert.equal(batch.attempts[0].payload.locations.length, 16);
   assert.deepEqual(JSON.parse(await readFile(outputPath, 'utf8')), batch);
   assert.equal(calls[0][0], 'launch');
   assert.deepEqual(calls[0][1], { headless: false });
   assert.equal(calls.at(-1)[0], 'close');
-  assert.equal(calls.filter(([name]) => name === 'goto').length, 6);
+  assert.equal(calls.filter(([name]) => name === 'goto').length, 7);
   assert.deepEqual(calls.filter(([name]) => name === 'goto').map((call) => new URL(call[1]).hostname), [
     'dining.columbia.edu', 'dining.columbia.edu', 'dining.columbia.edu', 'dining.columbia.edu',
-    'lernerhall.columbia.edu', 'dineoncampus.com',
+    'lernerhall.columbia.edu', 'dineoncampus.com', 'dining.columbia.edu',
   ]);
   assert.ok(calls.some(([name]) => name === 'waitForFunction'));
   assert.deepEqual(calls.find(([name]) => name === 'waitForFunction').slice(1), [null, { timeout: 90_000 }]);
   assert.ok(calls.some(([name]) => name === 'evaluate'));
-  assert.equal(calls.filter(([name]) => name === 'innerHTML').length, 3);
+  assert.equal(calls.filter(([name]) => name === 'innerHTML').length, 4);
   assert.equal(calls.filter(([name]) => name === 'barnard-next').length, 2);
-  assert.equal(batch.attempts.at(-1).payload.venues.length, 4);
-  assert.equal(batch.attempts.at(-1).payload.venues[0].days.length, 21);
+  const barnard = batch.attempts.find(attempt => attempt.sourceId === 'barnard-hours');
+  assert.equal(barnard.payload.venues.length, 4);
+  assert.equal(barnard.payload.venues[0].days.length, 21);
+  const fallBreak = batch.attempts.at(-1);
+  assert.equal(fallBreak.sourceId, 'fall-break-2026');
+  assert.deepEqual(fallBreak.payload.days.map(day => day.date), [
+    '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02', '2026-11-03',
+  ]);
 });
 
 test('publishes fourteen Barnard days when the optional third week is unavailable', async () => {
@@ -371,12 +378,13 @@ test('reads a bare "0" closing time as midnight (Butler Blue Java, Fall 2026)', 
   assert.deepEqual(location.days[0].intervals, [['08:00', '24:00']]);
 });
 
-test('writes a manifest naming all six sources, keeping the article body when one article stops parsing', async () => {
+test('writes a manifest naming all seven sources, keeping the article body when one article stops parsing', async () => {
   const cafeEast = readFileSync(new URL('./fixtures/cafe-east-live.txt', import.meta.url), 'utf8');
   const articleByPath = new Map([
     ['/news/new-student-orientation-program-nsop-2026-dining-service', readFileSync(new URL('./fixtures/dining-nsop-2026.html', import.meta.url), 'utf8')],
     ['/news/labor-day-2026-operating-hours', readFileSync(new URL('./fixtures/dining-labor-day-2026.html', import.meta.url), 'utf8')],
     ['/news/fall-2026-operating-hours', '<div class="field"><p>Fall 2026 hours have moved to a new page.</p></div>'],
+    ['/news/fall-break-2026-operating-hours', readFileSync(new URL('./fixtures/dining-fall-break-2026.html', import.meta.url), 'utf8')],
   ]);
   const barnardWeeks = ['2026-08-23', '2026-08-30', '2026-09-06']
     .map(date => readFileSync(new URL(`./fixtures/barnard-dining-hours-week-${date}.html`, import.meta.url), 'utf8'));
@@ -406,7 +414,7 @@ test('writes a manifest naming all six sources, keeping the article body when on
   const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-manifest-'));
   const batch = await scrapeDiningHours({ outputPath: join(directory, 'attempts.json'), now: new Date('2026-08-21T12:00:00Z'), chromiumImpl, manifest });
 
-  assert.equal(batch.attempts.filter(attempt => attempt.result === 'success').length, 5);
+  assert.equal(batch.attempts.filter(attempt => attempt.result === 'success').length, 6);
   const written = manifest.written;
   assert.equal(written.category, 'dining');
   assert.deepEqual(written.sources.map(s => s.sourceId), batch.attempts.map(a => a.sourceId));
@@ -429,7 +437,7 @@ test('navigation failures are in the manifest without evidence, and it is writte
   const manifest = createScrapeManifest({ category: 'dining', dir: null, env: {} });
   const directory = await mkdtemp(join(tmpdir(), 'lionhour-dining-manifest-nav-'));
   await scrapeDiningHours({ outputPath: join(directory, 'attempts.json'), chromiumImpl, manifest });
-  assert.equal(manifest.written.sources.length, 6);
+  assert.equal(manifest.written.sources.length, 7);
   assert.ok(manifest.written.sources.every(s => s.failureCode === 'navigation' && s.evidencePath === null));
   assert.deepEqual(manifest.written.summary.fixable, []);
 });
@@ -440,5 +448,5 @@ test('a browser that cannot launch still leaves a manifest behind', async () => 
     outputPath: '/tmp/never-written.json', manifest,
     chromiumImpl: { async launch() { throw new Error('browserType.launch: Executable does not exist'); } },
   }), /Executable does not exist/);
-  assert.equal(manifest.written.sources.length, 6);
+  assert.equal(manifest.written.sources.length, 7);
 });
