@@ -1759,3 +1759,31 @@
 - Supersedes: none
 - Evidence: The official Columbia Health Hours and Locations page captured on 2026-10-13 and `tests/fixtures/student-services-health-2026-10-13.html`.
 - Privacy waivers: none
+
+## DEC-0089 — Do not count a 24/7 phone line as an open Student Life office
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: Phone-support availability stays in a Student Life card's details and access badge but no longer makes the card Open, counts toward open totals, or contributes to the card's displayed hours; other restricted access types keep the DEC-0029 behavior.
+- Rationale: Medical Services, CAPS, and Sexual Violence Response each publish a 24/7 hotline, so every Columbia Health card read Open and "Open 24 hours" overnight while the offices were closed.
+- Scope: `assets/student-services-hours-view.js`, `assets/student-services-hours.js`, and their tests. This narrows DEC-0029 for phone support only.
+- Implementation: pending
+- Recorded against HEAD: `fd7b4fd74dd778d01b1471cf1edeb4a7ec542a09` (first drafted as DEC-0087/DEC-0088 in PR #30, renumbered when ported because PR #31 used those numbers)
+- Supersedes: none
+- Evidence: The live site at 9:25 PM on 2026-10-05 showing "Columbia Health Hours · 3 of 3 open" against the published student-services snapshot.
+- Privacy waivers: none
+
+## DEC-0090 — Include the reason in failed-workflow Telegram alerts
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: The shared Telegram sender includes a caller's summary in failure alerts, and the library workflow passes its validation errors as that summary when a scrape is rejected.
+- Rationale: The library scrape and the hours audit failed on every run for two days while Telegram only reported that a workflow failed, with the reason one click and a sign-in away.
+- Scope: `.github/workflows/send-telegram-update.yml`, `.github/workflows/update-library-hours.yml`, and their workflow tests.
+- Implementation: pending
+- Recorded against HEAD: `fd7b4fd74dd778d01b1471cf1edeb4a7ec542a09` (first drafted as DEC-0087/DEC-0088 in PR #30, renumbered when ported because PR #31 used those numbers)
+- Supersedes: none
+- Evidence: Hours audit run 37391508089 and library workflow run 37398383739.
+- Privacy waivers: none
