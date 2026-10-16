@@ -24,7 +24,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-          cache: npm
+          # No npm cache on the self-hosted Mac: restoring it from GitHub kept stalling
+          # past the 15-minute job limit. npm's own cache on this machine persists between runs.
+          package-manager-cache: false
       - name: Install dependencies
         run: npm ci
       - name: Install Chromium
