@@ -86,8 +86,10 @@
     return 'live';
   }
 
+  // Phone lines stay in the day's details but are not the venue's opening hours.
   function mergeIntervals(availabilities) {
-    const sorted = availabilities.flatMap(availability => availability.intervals)
+    const sorted = availabilities.filter(availability => availability.type !== 'phone-support')
+      .flatMap(availability => availability.intervals)
       .map(interval => [...interval]).sort((left, right) => left[0].localeCompare(right[0]));
     const merged = [];
     for (const interval of sorted) {

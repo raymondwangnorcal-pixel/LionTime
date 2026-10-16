@@ -95,3 +95,18 @@ test('hydrate rolls back every mutation when rendering fails', async () => {
   assert.equal(result.applied, false);
   assert.equal(JSON.stringify(items), before);
 });
+
+test('a 24/7 phone line stays in the details but not in the opening hours', async () => {
+  const value = await snapshot();
+  const health = value.sources.find(source => source.sourceId === 'health');
+  const caps = health.venues.find(item => item.id === 'caps');
+  const day = caps.days.find(item => item.date === '2026-08-24');
+  day.availabilities = [
+    { type: 'office-hours', intervals: [['08:00', '19:00']], status: null, reason: null },
+    { type: 'phone-support', intervals: [['00:00', '24:00']], status: null, reason: 'After Hours' },
+  ];
+  const updates = client.buildUpdates(value, venues(), '2026-08-23', new Date('2026-08-23T17:00:00Z'));
+  const [, next] = updates.entries.find(([venue]) => venue.id === 'caps');
+  assert.equal(JSON.stringify(next.hours[1]), JSON.stringify([['08:00', '19:00']]));
+  assert.equal(next.studentServicesDays[1].availabilities.length, 2);
+});

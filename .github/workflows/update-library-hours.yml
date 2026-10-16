@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
-      notification_summary: ${{ steps.notification-summary.outputs.summary }}
+      notification_summary: ${{ steps.notification-summary.outputs.summary || steps.scrape-rejected.outputs.summary }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -36,7 +36,7 @@ jobs:
         id: scrape
         env:
           SCRAPE_EVIDENCE_DIR: ${{ runner.temp }}/scrape/library
-        run: python scrape.py --json-out "$RUNNER_TEMP/library-hours.json"
+        run: set -o pipefail; python scrape.py --json-out "$RUNNER_TEMP/library-hours.json" 2>&1 | tee "$RUNNER_TEMP/library-scrape.log"
       # Evidence for the next parser fix (docs/automated-fix.md §3.1): the per-source
       # manifest plus the raw page of any source that failed. Uploaded on every
       # outcome, kept 14 days, never committed.
@@ -48,6 +48,19 @@ jobs:
           path: ${{ runner.temp }}/scrape/library
           retention-days: 14
           if-no-files-found: warn
+      # 2026-10-04..10-06: every run was rejected for "science_engineering: overnight hours
+      # are not allowed" and Telegram only ever said "Library workflow failed". Say why.
+      - name: Summarize a rejected scrape
+        id: scrape-rejected
+        if: ${{ failure() && steps.scrape.outcome == 'failure' }}
+        run: |
+          reasons="$(grep -E '^\[(VALIDATION|ERROR)\]' "$RUNNER_TEMP/library-scrape.log" 2>/dev/null | sort -u | head -n 8)"
+          {
+            echo 'summary<<EOF'
+            echo "Library scrape rejected; the site keeps serving the last good snapshot."
+            echo "${reasons:-No validation message was captured.}"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
       - name: Format notification summary
         id: notification-summary
         env:

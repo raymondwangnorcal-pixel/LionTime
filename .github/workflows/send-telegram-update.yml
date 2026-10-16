@@ -46,6 +46,13 @@ jobs:
               *) status='did not complete' ;;
             esac
             message="$SOURCE_LABEL workflow $status. Details: $RUN_URL"
+            # Carry the reason when the caller has one (the audit's findings, a rejected
+            # scrape's validation errors); Telegram caps a message at 4096 characters.
+            if [ -n "$SUMMARY" ]; then
+              message="$SOURCE_LABEL workflow $status:
+          ${SUMMARY:0:3000}
+          Details: $RUN_URL"
+            fi
           fi
           curl --fail-with-body --silent --show-error \
             --retry 3 --retry-all-errors \
