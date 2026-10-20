@@ -88,6 +88,7 @@ test('student services counts an explicit Closed as an answer and a bare day as 
     generated: FRESH,
     sources: [{
       sourceId: 'health',
+      lastSuccessAt: FRESH,
       venues: [
         { id: 'medical', days: days(14, { availabilities: [{ type: 'office-hours', intervals: [['09:00', '17:00']] }] }) },
         { id: 'caps', days: days(14, { availabilities: [{ type: 'office-hours', intervals: [], status: 'Closed' }] }) },
@@ -150,4 +151,30 @@ test('the audit workflow reports through Telegram and stays quiet when clean', (
   assert.match(workflow, /source_label: Hours audit/);
   assert.doesNotMatch(workflow, /LIBRARY_HOURS_UPDATE_SECRET|ANTHROPIC_API_KEY/);
   assert.doesNotMatch(workflow, /contents: write/);
+});
+
+test('a freshly generated snapshot still reports a source that keeps failing', () => {
+  const findings = audit('student-services', {
+    generated: FRESH,
+    sources: [
+      { sourceId: 'bookstore', lastSuccessAt: FRESH, failureCode: null, venues: [
+        { id: 'bookstore', days: days(14, { availabilities: [{ type: 'office-hours', intervals: [['09:00', '19:00']] }] }) },
+      ] },
+      { sourceId: 'health', lastSuccessAt: THREE_DAYS_OLD, failureCode: 'challenge', venues: [] },
+      { sourceId: 'mail', lastSuccessAt: null, failureCode: 'challenge', venues: [] },
+    ],
+  });
+  assert.deepEqual(kinds(findings), ['stale-source:health', 'stale-source:mail']);
+  assert.match(findings[0].detail, /latest failure: challenge/);
+  // Dining v4+ carries per-source fetch times; event articles are exempt.
+  assert.deepEqual(kinds(audit('dining', {
+    schemaVersion: 5,
+    generated: FRESH,
+    sources: [
+      { id: 'locations-feed', fetchedAt: FRESH },
+      { id: 'barnard-hours', fetchedAt: THREE_DAYS_OLD },
+      { id: 'fall-break-2026', fetchedAt: THREE_DAYS_OLD },
+    ],
+    locations: [{ id: 'johnjay', days: days(14, { intervals: [['09:30', '21:00']], status: null }) }],
+  })), ['stale-source:barnard-hours']);
 });

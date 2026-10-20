@@ -14,7 +14,11 @@ concurrency:
 
 jobs:
   scrape-and-publish:
-    runs-on: ubuntu-24.04
+    # Columbia Health, Lerner and Mail Services began answering GitHub-hosted runners with
+    # a managed challenge on 2026-10-17/18 (DEC-0091), as Recreation's pages did before
+    # (DEC-0083). The residential Mac runner reaches them; it only runs trusted main.
+    if: github.repository == 'raymondwangnorcal-pixel/LionTime' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, macOS, ARM64, lionhour-dining]
     timeout-minutes: 15
     outputs:
       notification_summary: ${{ steps.notification-summary.outputs.summary }}
@@ -23,11 +27,12 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
+          # No npm cache on the self-hosted Mac (see update-recreation-hours.yml).
+          package-manager-cache: false
       - name: Install dependencies
         run: npm ci
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Test Student Life pipeline
         run: >-
           node --test
@@ -45,7 +50,7 @@ jobs:
         id: scrape
         env:
           SCRAPE_EVIDENCE_DIR: ${{ runner.temp }}/scrape/student-services
-        run: xvfb-run --auto-servernum node scripts/student-services-hours-scraper.mjs --json-out "$RUNNER_TEMP/student-services-hours.json"
+        run: node scripts/student-services-hours-scraper.mjs --json-out "$RUNNER_TEMP/student-services-hours.json"
       # Evidence for the next parser fix (docs/automated-fix.md §3.1): the per-source
       # manifest plus the raw page of any source that failed. Uploaded on every
       # outcome, kept 14 days, never committed.

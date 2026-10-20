@@ -1,5 +1,9 @@
 # Student Life hours operations
 
+## Runner
+
+The `Update student services hours` workflow runs on the residential self-hosted Mac runner (`[self-hosted, macOS, ARM64, lionhour-dining]`), guarded to `main` of this repository, in a headed Chromium. Columbia Health, Lerner Hall and Columbia Mail started answering GitHub-hosted runners with a managed challenge on 2026-10-17/18; each challenged source kept only its last success, and after 24 hours those cards read `Needs verification` (DEC-0091).
+
 ## Scope and source policy
 
 The independent Student Life pipeline owns ten cards and four official source boundaries:

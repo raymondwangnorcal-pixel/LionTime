@@ -61,14 +61,46 @@ export async function acquireRecreationSources({
   }
 }
 
-export async function acquireActivityCalendars({ page, timeoutMs = 60_000 } = {}) {
+export const ACTIVITY_CALENDAR_ATTEMPTS = 3;
+/* Retries stop once this much time has gone to calendars, so a bad day cannot push the
+   job past its 15-minute limit and lose the Dodge, Uris and Barnard update with it. */
+export const ACTIVITY_CALENDAR_RETRY_BUDGET_MS = 5 * 60_000;
+
+/**
+ * Each embedded Google Calendar is read independently and retried: a calendar that does
+ * not render in time used to leave its space on "Hours need verification" for every day
+ * of the window until the next run (Aerobics Room 4, 2026-10-20). The last attempt
+ * reloads the page first. Every failure is logged, because the manifest only names the
+ * three page sources.
+ */
+export async function acquireActivityCalendars({
+  page, timeoutMs = 60_000, log = console.error, acquireOne = acquireActivityCalendar,
+  retryBudgetMs = ACTIVITY_CALENDAR_RETRY_BUDGET_MS, now = () => Date.now(),
+} = {}) {
   const calendars = {};
+  const retryDeadline = now() + retryBudgetMs;
   for (const [targetId, heading] of Object.entries(ACTIVITY_CALENDAR_HEADINGS)) {
-    try {
-      calendars[targetId] = await acquireActivityCalendar({ page, targetId, heading, timeoutMs });
-    } catch {
-      calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
+    let lastError = null;
+    for (let attempt = 1; attempt <= ACTIVITY_CALENDAR_ATTEMPTS; attempt += 1) {
+      if (attempt > 1 && now() >= retryDeadline) {
+        log(`activity calendar ${targetId}: retry budget spent; not retrying`);
+        break;
+      }
+      try {
+        if (attempt === ACTIVITY_CALENDAR_ATTEMPTS && typeof page.reload === 'function') {
+          await page.reload({ waitUntil: 'domcontentloaded', timeout: timeoutMs });
+          await page.waitForLoadState?.('networkidle', { timeout: timeoutMs }).catch(() => {});
+        }
+        calendars[targetId] = await acquireOne({ page, targetId, heading, timeoutMs });
+        if (attempt > 1) log(`activity calendar ${targetId}: succeeded on attempt ${attempt}`);
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+        log(`activity calendar ${targetId}: attempt ${attempt} failed: ${String(error?.message || error).split('\n')[0]}`);
+      }
     }
+    if (lastError) calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
   }
   return calendars;
 }
