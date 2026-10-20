@@ -488,4 +488,16 @@ test('reads feed period bounds as UTC instants so a one-day notice stays on its 
   assert.deepEqual(day('ferris', '2026-10-21').intervals, [['07:30', '20:00']]);
   assert.deepEqual(day('jjs', '2026-10-26').intervals, [['10:00', '02:00']]);
   assert.deepEqual(day('jjs', '2026-10-27').intervals, [['12:00', '10:00']]);
+
+  // In standard time a notice written with the summer offset (04:00 UTC = 23:00 EST the day
+  // before) must still start on its own day: a Thanksgiving closure cannot close Wednesday.
+  jjs.open_hours_fields.push({
+    date_from: '2026-11-26T04:00:00', date_to: '2026-11-27T04:59:59', days: [{}],
+    displayed_hours: [{ title: 'Closed for Thanksgiving' }], excluded: [],
+  });
+  const winter = buildDiningSnapshot(dataset, new Date('2026-11-20T14:00:00Z'));
+  const winterDay = date => winter.locations.find((item) => item.id === 'jjs').days.find((item) => item.date === date);
+  assert.deepEqual(winterDay('2026-11-25').intervals, [['12:00', '10:00']]);
+  assert.deepEqual(winterDay('2026-11-26').intervals, []);
+  assert.deepEqual(winterDay('2026-11-27').intervals, [['12:00', '10:00']]);
 });

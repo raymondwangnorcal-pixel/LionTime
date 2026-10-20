@@ -62,9 +62,14 @@ export async function acquireRecreationSources({
 }
 
 export const ACTIVITY_CALENDAR_ATTEMPTS = 3;
-/* Retries stop once this much time has gone to calendars, so a bad day cannot push the
-   job past its 15-minute limit and lose the Dodge, Uris and Barnard update with it. */
-export const ACTIVITY_CALENDAR_RETRY_BUDGET_MS = 5 * 60_000;
+/* All activity-calendar work, first attempts included, fits in this budget, so a bad day
+   cannot push the job past its 15-minute limit and lose the Dodge, Uris and Barnard
+   update with it. Each attempt's timeouts shrink to the time left. */
+export const ACTIVITY_CALENDAR_BUDGET_MS = 6 * 60_000;
+const MIN_ATTEMPT_TIMEOUT_MS = 5_000;
+/* acquireActivityCalendar waits on up to six steps (render, three stable weeks, two
+   clicks), each bounded by its timeout. */
+const ATTEMPT_STEPS = 6;
 
 /**
  * Each embedded Google Calendar is read independently and retried: a calendar that does
@@ -75,32 +80,32 @@ export const ACTIVITY_CALENDAR_RETRY_BUDGET_MS = 5 * 60_000;
  */
 export async function acquireActivityCalendars({
   page, timeoutMs = 60_000, log = console.error, acquireOne = acquireActivityCalendar,
-  retryBudgetMs = ACTIVITY_CALENDAR_RETRY_BUDGET_MS, now = () => Date.now(),
+  budgetMs = ACTIVITY_CALENDAR_BUDGET_MS, now = () => Date.now(),
 } = {}) {
   const calendars = {};
-  const retryDeadline = now() + retryBudgetMs;
+  const deadline = now() + budgetMs;
   for (const [targetId, heading] of Object.entries(ACTIVITY_CALENDAR_HEADINGS)) {
-    let lastError = null;
+    calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
     for (let attempt = 1; attempt <= ACTIVITY_CALENDAR_ATTEMPTS; attempt += 1) {
-      if (attempt > 1 && now() >= retryDeadline) {
-        log(`activity calendar ${targetId}: retry budget spent; not retrying`);
+      const remaining = deadline - now();
+      if (remaining < MIN_ATTEMPT_TIMEOUT_MS * ATTEMPT_STEPS) {
+        log(`activity calendar ${targetId}: time budget spent; ${attempt === 1 ? 'not attempted' : 'not retrying'}`);
+        if (attempt === 1) calendars[targetId] = { result: 'failure', failureCode: 'timeout' };
         break;
       }
+      const attemptTimeout = Math.max(MIN_ATTEMPT_TIMEOUT_MS, Math.min(timeoutMs, Math.floor(remaining / ATTEMPT_STEPS)));
       try {
         if (attempt === ACTIVITY_CALENDAR_ATTEMPTS && typeof page.reload === 'function') {
-          await page.reload({ waitUntil: 'domcontentloaded', timeout: timeoutMs });
-          await page.waitForLoadState?.('networkidle', { timeout: timeoutMs }).catch(() => {});
+          await page.reload({ waitUntil: 'domcontentloaded', timeout: attemptTimeout });
+          await page.waitForLoadState?.('networkidle', { timeout: attemptTimeout }).catch(() => {});
         }
-        calendars[targetId] = await acquireOne({ page, targetId, heading, timeoutMs });
+        calendars[targetId] = await acquireOne({ page, targetId, heading, timeoutMs: attemptTimeout });
         if (attempt > 1) log(`activity calendar ${targetId}: succeeded on attempt ${attempt}`);
-        lastError = null;
         break;
       } catch (error) {
-        lastError = error;
         log(`activity calendar ${targetId}: attempt ${attempt} failed: ${String(error?.message || error).split('\n')[0]}`);
       }
     }
-    if (lastError) calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
   }
   return calendars;
 }

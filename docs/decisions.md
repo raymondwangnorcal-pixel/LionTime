@@ -1821,7 +1821,7 @@
 - Date: 2026-10-20
 - Owner: agent
 - Status at record: active
-- Decision: Columbia Dining feed `date_from`/`date_to` values without a zone are UTC instants; LionHour converts them to Eastern dates, treating an end exactly at midnight as exclusive.
+- Decision: Columbia Dining feed `date_from`/`date_to` values without a zone are UTC instants; LionHour rounds each to the nearest Eastern date (start plus 90 minutes, end minus 90 minutes), so an end exactly at midnight is exclusive and a midnight written with the other DST offset still lands on its intended day.
 - Rationale: Periods start at 04:00/05:00 and end at 03:59/04:59 (Eastern midnight in UTC). Taking the calendar date from the string extended every period by a day, so one-day notices replaced the next day's hours: JJ's Place read Closed on 2026-10-27, and Ferris's 2026-10-20 repair notice would have closed it on 2026-10-21.
 - Scope: `scripts/dining-hours-scraper.mjs` period bounds and scraper tests.
 - Implementation: pending
@@ -1849,7 +1849,7 @@
 - Date: 2026-10-20
 - Owner: agent
 - Status at record: active
-- Decision: Each Dodge activity calendar is attempted up to three times (reloading the page before the last) within a five-minute retry budget, and calendars that are not acquired or produce no evidence are logged.
+- Decision: Each Dodge activity calendar is attempted up to three times (reloading the page before the last); all calendar work, first attempts included, fits a six-minute budget with each attempt's timeouts shrunk to the time left, and calendars that are not acquired or produce no evidence are logged.
 - Rationale: A calendar that did not render once left Aerobics Room 4 on "Hours need verification" for all fourteen days, and the miss appeared nowhere: calendar outcomes are not manifest sources.
 - Scope: `scripts/recreation-hours-acquire.mjs`, `scripts/recreation-hours-scraper.mjs`, and acquisition tests.
 - Implementation: pending

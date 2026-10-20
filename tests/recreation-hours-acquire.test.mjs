@@ -206,21 +206,26 @@ test('retries an activity calendar that does not render, reloading before the la
   assert.ok(logs.some(line => /levien-gymnasium: attempt 3 failed: missing unique/.test(line)));
 });
 
-test('stops retrying activity calendars once the retry budget is spent', async () => {
+test('keeps every calendar attempt inside the time budget', async () => {
   let clock = 0;
   const attempts = {};
+  const timeouts = [];
+  const logs = [];
   const calendars = await acquireActivityCalendars({
     page: {},
-    log: () => {},
-    retryBudgetMs: 100,
+    log: line => logs.push(line),
+    budgetMs: 100_000,
     now: () => clock,
-    acquireOne: async ({ targetId }) => {
+    acquireOne: async ({ targetId, timeoutMs }) => {
       attempts[targetId] = (attempts[targetId] || 0) + 1;
-      clock += 60;
+      timeouts.push(timeoutMs);
+      clock += 30_000;
       throw new Error('activity calendar did not stabilize');
     },
   });
-  assert.ok(Object.values(calendars).every(calendar => calendar.result === 'failure'));
-  assert.equal(attempts['blue-gym'], 2);
-  assert.equal(attempts['functional-fitness-studio'], 1);
+  // 100 s budget, 30 s per failed attempt, 30 s minimum to start one: three attempts in all.
+  assert.deepEqual(attempts, { 'blue-gym': 3 });
+  assert.ok(timeouts.every(value => value * 6 <= 100_000));
+  assert.equal(calendars['levien-gymnasium'].failureCode, 'timeout');
+  assert.ok(logs.some(line => /functional-fitness-studio: time budget spent; not attempted/.test(line)));
 });

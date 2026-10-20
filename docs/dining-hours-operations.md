@@ -18,6 +18,8 @@ A seventh source, the official [Fall Break 2026 Operating Hours](https://dining.
 
 Version 5 locations also carry `previousDay`, the resolved day before the window. Browsers fill seven weekday slots from today through today+6, so the slot they used as "yesterday" for overnight venues (JJ's Place, Chef Mike's) was really next week's; dated exceptions such as the break made that visibly wrong. Outside the break, `previousDay` is the same weekday's regular evidence.
 
+Locations-feed payloads may also carry `previousDay` (the day before the window, from the same feed periods); the API accepts payloads with or without it. Once one is stored, an API rolled back to before that field rejects the retained state, so roll forward.
+
 Rollout order matters: deploy the API and browser code (Vercel) before the self-hosted runner pulls the new scraper, or its version 4 batches are rejected with 422 until the deploy lands. Once a version 4 batch is stored, rolling the API back to code that only knows envelopes 1 through 3 makes Dining GET and PUT fail; roll forward instead.
 
 Fall Break is optional for publication: until its first successful attempt, the other six sources still resolve a version 4 snapshot instead of waiting on it. After November 3 its retained evidence no longer affects any date in the window; if Columbia removes the article the source simply reports a failure and keeps its last success.
