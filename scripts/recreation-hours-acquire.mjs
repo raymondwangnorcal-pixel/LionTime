@@ -61,13 +61,50 @@ export async function acquireRecreationSources({
   }
 }
 
-export async function acquireActivityCalendars({ page, timeoutMs = 60_000 } = {}) {
+export const ACTIVITY_CALENDAR_ATTEMPTS = 3;
+/* All activity-calendar work, first attempts included, fits in this budget, so a bad day
+   cannot push the job past its 15-minute limit and lose the Dodge, Uris and Barnard
+   update with it. Each attempt's timeouts shrink to the time left. */
+export const ACTIVITY_CALENDAR_BUDGET_MS = 6 * 60_000;
+const MIN_ATTEMPT_TIMEOUT_MS = 5_000;
+/* acquireActivityCalendar waits on up to six steps (render, three stable weeks, two
+   clicks), each bounded by its timeout. */
+const ATTEMPT_STEPS = 6;
+
+/**
+ * Each embedded Google Calendar is read independently and retried: a calendar that does
+ * not render in time used to leave its space on "Hours need verification" for every day
+ * of the window until the next run (Aerobics Room 4, 2026-10-20). The last attempt
+ * reloads the page first. Every failure is logged, because the manifest only names the
+ * three page sources.
+ */
+export async function acquireActivityCalendars({
+  page, timeoutMs = 60_000, log = console.error, acquireOne = acquireActivityCalendar,
+  budgetMs = ACTIVITY_CALENDAR_BUDGET_MS, now = () => Date.now(),
+} = {}) {
   const calendars = {};
+  const deadline = now() + budgetMs;
   for (const [targetId, heading] of Object.entries(ACTIVITY_CALENDAR_HEADINGS)) {
-    try {
-      calendars[targetId] = await acquireActivityCalendar({ page, targetId, heading, timeoutMs });
-    } catch {
-      calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
+    calendars[targetId] = { result: 'failure', failureCode: 'missing-content' };
+    for (let attempt = 1; attempt <= ACTIVITY_CALENDAR_ATTEMPTS; attempt += 1) {
+      const remaining = deadline - now();
+      if (remaining < MIN_ATTEMPT_TIMEOUT_MS * ATTEMPT_STEPS) {
+        log(`activity calendar ${targetId}: time budget spent; ${attempt === 1 ? 'not attempted' : 'not retrying'}`);
+        if (attempt === 1) calendars[targetId] = { result: 'failure', failureCode: 'timeout' };
+        break;
+      }
+      const attemptTimeout = Math.max(MIN_ATTEMPT_TIMEOUT_MS, Math.min(timeoutMs, Math.floor(remaining / ATTEMPT_STEPS)));
+      try {
+        if (attempt === ACTIVITY_CALENDAR_ATTEMPTS && typeof page.reload === 'function') {
+          await page.reload({ waitUntil: 'domcontentloaded', timeout: attemptTimeout });
+          await page.waitForLoadState?.('networkidle', { timeout: attemptTimeout }).catch(() => {});
+        }
+        calendars[targetId] = await acquireOne({ page, targetId, heading, timeoutMs: attemptTimeout });
+        if (attempt > 1) log(`activity calendar ${targetId}: succeeded on attempt ${attempt}`);
+        break;
+      } catch (error) {
+        log(`activity calendar ${targetId}: attempt ${attempt} failed: ${String(error?.message || error).split('\n')[0]}`);
+      }
     }
   }
   return calendars;

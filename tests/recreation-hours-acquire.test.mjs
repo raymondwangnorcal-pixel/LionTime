@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { acquireRecreationSources } from '../scripts/recreation-hours-acquire.mjs';
+import { acquireActivityCalendars, acquireRecreationSources } from '../scripts/recreation-hours-acquire.mjs';
 
 /*
  * Official-source inventory (2026-08-21):
@@ -177,3 +177,55 @@ function fakeChromium({ pages, calls, failing = new Map() }) {
     },
   };
 }
+
+test('retries an activity calendar that does not render, reloading before the last attempt', async () => {
+  const attempts = {};
+  const reloadsBefore = {};
+  const logs = [];
+  let reloads = 0;
+  const page = { async reload() { reloads += 1; }, async waitForLoadState() {} };
+  const calendars = await acquireActivityCalendars({
+    page,
+    timeoutMs: 10,
+    log: line => logs.push(line),
+    acquireOne: async ({ targetId }) => {
+      attempts[targetId] = (attempts[targetId] || 0) + 1;
+      if (attempts[targetId] === 1) reloadsBefore[targetId] = reloads;
+      // Aerobics Room 4 renders only after its own reload; Levien never does.
+      if (targetId === 'aerobics-room-4' && reloads === reloadsBefore[targetId]) throw new Error('activity calendar did not stabilize');
+      if (targetId === 'levien-gymnasium') throw new Error('missing unique official Levien Gymnasium calendar');
+      return { result: 'success', targetId, calendarUrl: 'https://calendar.google.com/calendar/embed', weeks: ['w'] };
+    },
+  });
+  assert.equal(calendars['aerobics-room-4'].result, 'success');
+  assert.equal(attempts['aerobics-room-4'], 3);
+  assert.equal(calendars['levien-gymnasium'].result, 'failure');
+  assert.equal(attempts['levien-gymnasium'], 3);
+  assert.equal(attempts['blue-gym'], 1);
+  assert.ok(logs.some(line => /aerobics-room-4: succeeded on attempt 3/.test(line)));
+  assert.ok(logs.some(line => /levien-gymnasium: attempt 3 failed: missing unique/.test(line)));
+});
+
+test('keeps every calendar attempt inside the time budget', async () => {
+  let clock = 0;
+  const attempts = {};
+  const timeouts = [];
+  const logs = [];
+  const calendars = await acquireActivityCalendars({
+    page: {},
+    log: line => logs.push(line),
+    budgetMs: 100_000,
+    now: () => clock,
+    acquireOne: async ({ targetId, timeoutMs }) => {
+      attempts[targetId] = (attempts[targetId] || 0) + 1;
+      timeouts.push(timeoutMs);
+      clock += 30_000;
+      throw new Error('activity calendar did not stabilize');
+    },
+  });
+  // 100 s budget, 30 s per failed attempt, 30 s minimum to start one: three attempts in all.
+  assert.deepEqual(attempts, { 'blue-gym': 3 });
+  assert.ok(timeouts.every(value => value * 6 <= 100_000));
+  assert.equal(calendars['levien-gymnasium'].failureCode, 'timeout');
+  assert.ok(logs.some(line => /functional-fitness-studio: time budget spent; not attempted/.test(line)));
+});

@@ -9,12 +9,16 @@ const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.u
 test('Student Life workflow runs every four hours in one bounded headed browser job', () => {
   assert.match(workflow, /cron: '57 \*\/4 \* \* \*'/);
   assert.match(workflow, /timeout-minutes: 15/);
-  assert.match(workflow, /runs-on: ubuntu-24\.04/);
+  assert.match(workflow, /if: github\.repository == 'raymondwangnorcal-pixel\/LionTime' && github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /runs-on: \[self-hosted, macOS, ARM64, lionhour-dining\]/);
+  assert.doesNotMatch(workflow, /cache: npm/);
   assert.match(workflow, /permissions:\n  contents: read/);
   assert.match(workflow, /group: update-student-services-hours/);
-  assert.match(workflow, /npx playwright install --with-deps chromium/);
+  assert.match(workflow, /npx playwright install chromium/);
+  assert.doesNotMatch(workflow, /playwright install --with-deps/);
   assert.ok(workflow.indexOf('Test Student Life pipeline') < workflow.indexOf('Scrape validated Student Life hours'));
-  assert.match(workflow, /xvfb-run --auto-servernum node scripts\/student-services-hours-scraper\.mjs/);
+  assert.match(workflow, /run: node scripts\/student-services-hours-scraper\.mjs/);
+  assert.doesNotMatch(workflow, /xvfb-run/);
   assert.match(workflow, /vars\.STUDENT_SERVICES_HOURS_PUBLISH_ENABLED == 'true'/);
   assert.match(workflow, /vars\.STUDENT_SERVICES_HOURS_API_URL/);
   assert.match(workflow, /secrets\.LIBRARY_HOURS_UPDATE_SECRET/);
