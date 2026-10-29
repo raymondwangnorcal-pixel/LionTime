@@ -104,3 +104,21 @@ test('rejects a Fall Break article it does not fully understand', async () => {
   assert.throws(() => parseFallBreakArticle(html.replace('All retail locations are closed on Saturday.', 'Retail hours vary.')), /retail notice/);
   assert.throws(() => parseFallBreakArticle(html.replace('<strong>Tuesday, November 3</strong>', '<strong>Tuesday, November 10</strong>')), /October 29 through November 3/);
 });
+
+test('parses a Fall Break capture whose accordion items carry no day heading', async () => {
+  const { parseFallBreakArticle } = await import('../lib/dining-article-parser.js');
+  const html = fixture('dining-fall-break-2026-2026-10-29.html');
+  const parsed = parseFallBreakArticle(html);
+  assert.equal(parsed.id, 'fall-break-2026');
+  assert.deepEqual(parsed.days.map(day => day.date), [
+    '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02', '2026-11-03',
+  ]);
+  const [thursday, friday, saturday] = parsed.days;
+  assert.deepEqual(thursday.venues.ferris, [['07:30', '20:00']]);
+  assert.deepEqual(thursday.venues.facultyhouse, [['07:30', '14:00'], ['17:00', '21:00']]);
+  assert.equal('bj-butler' in thursday.venues, false, 'retail runs normal hours on Thursday');
+  assert.deepEqual(friday.venues.chefdons, [['08:00', '15:00']]);
+  assert.deepEqual(friday.venues['bj-mudd'], [['08:00', '15:00']]);
+  assert.deepEqual(saturday.venues['bj-butler'], []);
+  assert.deepEqual(saturday.venues.ferris, [['10:00', '19:00']]);
+});
