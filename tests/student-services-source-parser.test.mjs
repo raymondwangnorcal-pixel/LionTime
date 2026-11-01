@@ -130,6 +130,16 @@ test('requires the exact official Bookstore identity and seven weekdays', () => 
   assert.deepEqual(visible.find(item => item.weekdays[0] === 1).intervals, [['09:00', '18:00']]);
 });
 
+test('parses the 2026-11-01 Bookstore page without a STORE HOURS caption', () => {
+  const records = parseBookstoreSource(fixture('student-services-bookstore-2026-11-01.txt'));
+  assert.equal(records.length, 7);
+  const byWeekday = weekday => records.find(item => item.weekdays[0] === weekday);
+  assert.deepEqual(byWeekday(1).intervals, [['09:00', '19:00']]);
+  assert.deepEqual(byWeekday(5).intervals, [['09:00', '19:00']]);
+  assert.deepEqual(byWeekday(6).intervals, [['11:00', '17:00']]);
+  assert.deepEqual(byWeekday(0).intervals, [['11:00', '17:00']]);
+});
+
 test('parses the Fall 2026 Health page: seasonal heading and split Alice! office hours', () => {
   const evidence = parseHealthSource(fixture('student-services-health-fall-2026.html'));
   assert.deepEqual([...new Set(evidence.map(item => item.targetId))].sort(), [
