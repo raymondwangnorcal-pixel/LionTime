@@ -1856,4 +1856,16 @@
 - Recorded against HEAD: `c0274990bef7eb34ecbdeb4d26204ee33c1e328b`
 - Supersedes: none
 - Evidence: The 2026-10-20 13:44Z Recreation run (7-minute scrape, Aerobics Room 4 without evidence) and the official Aerobics Room 4 calendar, which publishes events for every day of the window and parses with the current parser.
-- Privacy waivers: none
+
+## DEC-0096 — Correct the 9 PM–5 PM meridiem inversion for every displayed library
+
+- Date: 2026-11-02
+- Owner: agent
+- Status at record: active
+- Decision: The exact `9:00PM-5:00PM` interval on Columbia's hours calendar is corrected to 9:00 AM–5:00 PM for every displayed library, not only Lehman; every other inverted interval remains rejected under DEC-0009 and DEC-0085.
+- Rationale: Columbia published Avery's November 2, 2026 Election Day-eve early closure as `9:00PM-5:00PM` while the other five calendars read `9:00AM-5:00PM`; the Lehman-only correction let that one cell fail validation on every scheduled run from November 1, so the site served the October 25–31 schedule into Election Day week. No library opens at 9 PM and closes at 5 PM, so the correction cannot misstate real hours.
+- Scope: `scrape.py` source-anomaly normalization and `tests/test_scrape.py`.
+- Implementation: pending
+- Recorded against HEAD: `75ee2da` (origin/main after PR #33; first drafted as DEC-0089 before PRs #32 and #33 merged)
+- Supersedes: none
+- Evidence: Library workflow runs 41278884551 through 41564973517 failing with `avery: overnight hours are not allowed`, the live Avery calendar on 2026-11-02 (`2026-11-02 9:00PM-5:00PM Early Closure`), and a replay of the live calendars through `scrape.py` that validates after this change.
