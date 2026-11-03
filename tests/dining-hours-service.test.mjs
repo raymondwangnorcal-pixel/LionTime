@@ -264,3 +264,27 @@ test('a v5 snapshot states the real previous day for overnight venues', async ()
   // Every location, including Café East and Barnard, carries one.
   assert.ok(after.locations.every(location => location.previousDay?.date === '2026-11-03'));
 });
+
+test('uses the feed-supplied previous day rather than next week when the scraper provides it', async () => {
+  const store = memoryStore(null);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  const batch = makeValidDiningAttemptBatch({ schemaVersion: 4, generated: '2026-10-20T16:00:00.000Z' });
+  const feed = batch.attempts[0].payload;
+  for (const location of feed.locations) {
+    location.previousDay = { date: '2026-10-19', intervals: [['12:00', '10:00']], status: 'Open daily' };
+  }
+  // A dated special six days out must not leak into "yesterday".
+  feed.locations.find(location => location.id === 'jjs').days[6] = {
+    date: '2026-10-26', intervals: [['10:00', '02:00']], status: 'Overnight Service 10/25-10/26 Ends Early',
+  };
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: batch })).status, 204);
+  const body = (await service.handle({ method: 'GET' })).body;
+  const jjs = body.locations.find(location => location.id === 'jjs');
+  assert.deepEqual(jjs.previousDay, {
+    date: '2026-10-19', intervals: [['12:00', '10:00']], status: 'Open daily', sourceId: 'locations-feed',
+  });
+
+  const malformed = makeValidDiningAttemptBatch({ schemaVersion: 4, generated: '2026-10-20T20:00:00.000Z' });
+  malformed.attempts[0].payload.locations[0].previousDay = { date: '2026-10-18', intervals: [], status: null };
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: malformed })).status, 422);
+});

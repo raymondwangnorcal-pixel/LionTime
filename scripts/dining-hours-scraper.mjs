@@ -84,8 +84,19 @@ function sourceDate(value, field) {
   if (typeof value === 'number' && Number.isFinite(value)) return easternDate(new Date(value * 1000));
   if (typeof value === 'string' && /^\d+$/.test(value)) return easternDate(new Date(Number(value) * 1000));
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-    return value.slice(0, 10);
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value)) {
+    // Columbia's feed writes these in UTC without a zone: periods start at 04:00 (EDT
+    // midnight) or 05:00 (EST) and end at 03:59 or 04:59. Reading the calendar date off
+    // the string pushed every end one day late, so a one-day notice ("2026-10-20T04:00"
+    // to "2026-10-21T03:59") also captured the next day and, as the narrowest period,
+    // replaced its hours (JJ's read Closed on Oct 27; Ferris would have on Oct 21).
+    // Bounds are rounded to the nearest Eastern day (start +90 min, end -90 min), so a
+    // midnight written with the wrong DST offset (04:00 in winter = 23:00 ET) or an end
+    // exactly at midnight still lands on the intended date.
+    const instant = Date.parse(/(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`);
+    if (Number.isNaN(instant)) throw new Error(`invalid ${field}`);
+    const nudge = 90 * 60_000;
+    return easternDate(new Date(field === 'date_to' ? instant - nudge : instant + nudge));
   }
   throw new Error(`invalid ${field}`);
 }
@@ -289,7 +300,7 @@ export function buildDiningSnapshot(dataset, generated = new Date()) {
     const node = bySourceId.get(sourceId);
     if (!node) throw new Error(`missing source location: ${sourceId}`);
     const periods = periodsFor(node);
-    const days = dates.map((date) => {
+    const dayFor = (date) => {
       if (!periodsCovering(periods, date).length) {
         return { date, intervals: [], status: 'Hours not published' };
       }
@@ -306,13 +317,16 @@ export function buildDiningSnapshot(dataset, generated = new Date()) {
         return { date, intervals: [], status: 'Closed' };
       }
       return { date, intervals, status };
-    });
+    };
     return {
       id: mapping.id,
       sourceId,
       name: String(node.title || node.name || mapping.name).trim(),
       category: mapping.category,
-      days,
+      days: dates.map(dayFor),
+      // The day before the window, from the same periods, so overnight venues get their
+      // real "yesterday" instead of a same-weekday day from the following week.
+      previousDay: dayFor(addDays(windowStart, -1)),
     };
   });
 

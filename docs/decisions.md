@@ -1760,7 +1760,104 @@
 - Evidence: The official Columbia Health Hours and Locations page captured on 2026-10-13 and `tests/fixtures/student-services-health-2026-10-13.html`.
 - Privacy waivers: none
 
-## DEC-0089 — Correct the 9 PM–5 PM meridiem inversion for every displayed library
+## DEC-0089 — Do not count a 24/7 phone line as an open Student Life office
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: Phone-support availability stays in a Student Life card's details and access badge but no longer makes the card Open, counts toward open totals, or contributes to the card's displayed hours; other restricted access types keep the DEC-0029 behavior.
+- Rationale: Medical Services, CAPS, and Sexual Violence Response each publish a 24/7 hotline, so every Columbia Health card read Open and "Open 24 hours" overnight while the offices were closed.
+- Scope: `assets/student-services-hours-view.js`, `assets/student-services-hours.js`, and their tests. This narrows DEC-0029 for phone support only.
+- Implementation: pending
+- Recorded against HEAD: `fd7b4fd74dd778d01b1471cf1edeb4a7ec542a09` (first drafted as DEC-0087/DEC-0088 in PR #30, renumbered when ported because PR #31 used those numbers)
+- Supersedes: none
+- Evidence: The live site at 9:25 PM on 2026-10-05 showing "Columbia Health Hours · 3 of 3 open" against the published student-services snapshot.
+- Privacy waivers: none
+
+## DEC-0090 — Include the reason in failed-workflow Telegram alerts
+
+- Date: 2026-10-05
+- Owner: user
+- Status at record: active
+- Decision: The shared Telegram sender includes a caller's summary in failure alerts, and the library workflow passes its validation errors as that summary when a scrape is rejected.
+- Rationale: The library scrape and the hours audit failed on every run for two days while Telegram only reported that a workflow failed, with the reason one click and a sign-in away.
+- Scope: `.github/workflows/send-telegram-update.yml`, `.github/workflows/update-library-hours.yml`, and their workflow tests.
+- Implementation: pending
+- Recorded against HEAD: `fd7b4fd74dd778d01b1471cf1edeb4a7ec542a09` (first drafted as DEC-0087/DEC-0088 in PR #30, renumbered when ported because PR #31 used those numbers)
+- Supersedes: none
+- Evidence: Hours audit run 37391508089 and library workflow run 37398383739.
+- Privacy waivers: none
+
+## DEC-0091 — Acquire Student Life hours from the residential runner
+
+- Date: 2026-10-20
+- Owner: agent
+- Status at record: active
+- Decision: Run the scheduled Student Life scrape on the existing self-hosted macOS runner, in a headed browser, instead of a GitHub-hosted Linux runner.
+- Rationale: Columbia Health, Lerner Hall and Columbia Mail answered the hosted runner with a managed challenge from 2026-10-17/18; every run stayed green while nine cards fell to "Needs verification", and the same Columbia origins load from the residential runner that already serves Recreation (DEC-0083).
+- Scope: Student Life workflow execution environment and its workflow test.
+- Implementation: pending
+- Recorded against HEAD: `c0274990bef7eb34ecbdeb4d26204ee33c1e328b`
+- Supersedes: none
+- Evidence: The live `/api/student-services-hours` snapshot on 2026-10-20 (health, lerner and mail `failure (challenge)`, last successes 2026-10-17/18) and green workflow runs over the same period.
+- Privacy waivers: none
+
+## DEC-0092 — Audit per-source success times, not only snapshot generation
+
+- Date: 2026-10-20
+- Owner: agent
+- Status at record: active
+- Decision: The published-hours audit also fails when a Student Life source, or a non-event Dining source in schema v4+, has not succeeded within the freshness budget.
+- Rationale: Snapshots are regenerated every run while carrying a failed source's last success, so the snapshot-level age check never noticed three Student Life sources failing for days.
+- Scope: `lib/hours-audit.js` and its tests.
+- Implementation: pending
+- Recorded against HEAD: `c0274990bef7eb34ecbdeb4d26204ee33c1e328b`
+- Supersedes: none
+- Evidence: The 2026-10-17 to 2026-10-20 Student Life outage.
+- Privacy waivers: none
+
+## DEC-0093 — Read Columbia Dining feed period bounds as UTC
+
+- Date: 2026-10-20
+- Owner: agent
+- Status at record: active
+- Decision: Columbia Dining feed `date_from`/`date_to` values without a zone are UTC instants; LionHour rounds each to the nearest Eastern date (start plus 90 minutes, end minus 90 minutes), so an end exactly at midnight is exclusive and a midnight written with the other DST offset still lands on its intended day.
+- Rationale: Periods start at 04:00/05:00 and end at 03:59/04:59 (Eastern midnight in UTC). Taking the calendar date from the string extended every period by a day, so one-day notices replaced the next day's hours: JJ's Place read Closed on 2026-10-27, and Ferris's 2026-10-20 repair notice would have closed it on 2026-10-21.
+- Scope: `scripts/dining-hours-scraper.mjs` period bounds and scraper tests.
+- Implementation: pending
+- Recorded against HEAD: `c0274990bef7eb34ecbdeb4d26204ee33c1e328b`
+- Supersedes: none
+- Evidence: The Columbia Dining locations feed captured on 2026-10-20 (time-of-day distribution of every period bound, JJ's and Ferris notices).
+- Privacy waivers: none
+
+## DEC-0094 — Take the Dining previous day from the feed itself
+
+- Date: 2026-10-20
+- Owner: agent
+- Status at record: active
+- Decision: The locations-feed payload carries an optional `previousDay` computed from the same periods for the date before the window, and the v5 resolver prefers it over the same-weekday day a week later.
+- Rationale: The week-later stand-in imported a dated special (JJ's "Overnight Service 10/25-10/26 Ends Early") as "yesterday".
+- Scope: Dining scraper payload, attempt-batch validation, resolver, and tests.
+- Implementation: pending
+- Recorded against HEAD: `c0274990bef7eb34ecbdeb4d26204ee33c1e328b`
+- Supersedes: none
+- Evidence: The published v5 snapshot on 2026-10-20 (JJ's `previousDay` for 2026-10-19 carrying the 2026-10-26 special).
+- Privacy waivers: none
+
+## DEC-0095 — Retry embedded Recreation activity calendars and log every miss
+
+- Date: 2026-10-20
+- Owner: agent
+- Status at record: active
+- Decision: Each Dodge activity calendar is attempted up to three times (reloading the page before the last); all calendar work, first attempts included, fits a six-minute budget with each attempt's timeouts shrunk to the time left, and calendars that are not acquired or produce no evidence are logged.
+- Rationale: A calendar that did not render once left Aerobics Room 4 on "Hours need verification" for all fourteen days, and the miss appeared nowhere: calendar outcomes are not manifest sources.
+- Scope: `scripts/recreation-hours-acquire.mjs`, `scripts/recreation-hours-scraper.mjs`, and acquisition tests.
+- Implementation: pending
+- Recorded against HEAD: `c0274990bef7eb34ecbdeb4d26204ee33c1e328b`
+- Supersedes: none
+- Evidence: The 2026-10-20 13:44Z Recreation run (7-minute scrape, Aerobics Room 4 without evidence) and the official Aerobics Room 4 calendar, which publishes events for every day of the window and parses with the current parser.
+
+## DEC-0096 — Correct the 9 PM–5 PM meridiem inversion for every displayed library
 
 - Date: 2026-11-02
 - Owner: agent
@@ -1769,7 +1866,6 @@
 - Rationale: Columbia published Avery's November 2, 2026 Election Day-eve early closure as `9:00PM-5:00PM` while the other five calendars read `9:00AM-5:00PM`; the Lehman-only correction let that one cell fail validation on every scheduled run from November 1, so the site served the October 25–31 schedule into Election Day week. No library opens at 9 PM and closes at 5 PM, so the correction cannot misstate real hours.
 - Scope: `scrape.py` source-anomaly normalization and `tests/test_scrape.py`.
 - Implementation: pending
-- Recorded against HEAD: `fd7b4fd74dd778d01b1471cf1edeb4a7ec542a09`
+- Recorded against HEAD: `75ee2da` (origin/main after PR #33; first drafted as DEC-0089 before PRs #32 and #33 merged)
 - Supersedes: none
 - Evidence: Library workflow runs 41278884551 through 41564973517 failing with `avery: overnight hours are not allowed`, the live Avery calendar on 2026-11-02 (`2026-11-02 9:00PM-5:00PM Early Closure`), and a replay of the live calendars through `scrape.py` that validates after this change.
-- Privacy waivers: none

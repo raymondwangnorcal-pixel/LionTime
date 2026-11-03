@@ -450,3 +450,54 @@ test('a browser that cannot launch still leaves a manifest behind', async () => 
   }), /Executable does not exist/);
   assert.equal(manifest.written.sources.length, 7);
 });
+
+test('reads feed period bounds as UTC instants so a one-day notice stays on its day', () => {
+  const dataset = completeDataset();
+  // Captured from Columbia's feed on 2026-10-20.
+  const ferris = dataset.nodes.find((node) => String(node.nid) === '12');
+  ferris.open_hours_fields = [{
+    date_from: '2026-09-04T04:00:00', date_to: '2026-12-31T04:59:59',
+    days: [{
+      days_monday: [{ hours_from: '730', hours_to: '2000' }], days_tuesday: [{ hours_from: '730', hours_to: '2000' }],
+      days_wednesday: [{ hours_from: '730', hours_to: '2000' }], days_thursday: [{ hours_from: '730', hours_to: '2000' }],
+      days_friday: [{ hours_from: '730', hours_to: '2000' }], days_saturday: [{ hours_from: '900', hours_to: '2000' }],
+      days_sunday: [{ hours_from: '1000', hours_to: '1400' }, { hours_from: '1600', hours_to: '2000' }],
+    }],
+    displayed_hours: [{ title: 'Open Monday - Friday, 7:30 a.m. - 8:00 p.m.' }],
+    excluded: ['2026-10-20'],
+  }, {
+    date_from: '2026-10-20T04:00:25', date_to: '2026-10-21T03:59:00',
+    days: [{ days_tuesday: [{ hours_from: '730', hours_to: '1400' }, { hours_from: '1700', hours_to: '2000' }] }],
+    displayed_hours: [{ title: 'Closed from 2-5pm to repair a maintenance issue.' }],
+    excluded: [],
+  }];
+  const jjs = dataset.nodes.find((node) => String(node.nid) === '11');
+  const daily = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    .map((day) => [`days_${day}`, [{ hours_from: '1200', hours_to: '1000' }]]));
+  jjs.open_hours_fields = [{
+    date_from: '2026-09-04T04:00:00', date_to: '2026-12-30T16:59:59', days: [daily],
+    displayed_hours: [{ title: 'Open daily 12:00 p.m. - 10:00 a.m.' }], excluded: ['2026-10-25', '2026-10-26'],
+  }, {
+    date_from: '2026-10-25T04:00:00', date_to: '2026-10-27T03:59:00',
+    days: [{ days_sunday: [{ hours_from: '1200', hours_to: '1000' }], days_monday: [{ hours_from: '1000', hours_to: '200' }] }],
+    displayed_hours: [{ title: 'Overnight Service 10/25-10/26 Ends Early' }], excluded: [],
+  }];
+  const snapshot = buildDiningSnapshot(dataset, new Date('2026-10-20T14:00:00Z'));
+  const day = (id, date) => snapshot.locations.find((item) => item.id === id).days.find((item) => item.date === date);
+  assert.deepEqual(day('ferris', '2026-10-20').intervals, [['07:30', '14:00'], ['17:00', '20:00']]);
+  assert.deepEqual(day('ferris', '2026-10-21').intervals, [['07:30', '20:00']]);
+  assert.deepEqual(day('jjs', '2026-10-26').intervals, [['10:00', '02:00']]);
+  assert.deepEqual(day('jjs', '2026-10-27').intervals, [['12:00', '10:00']]);
+
+  // In standard time a notice written with the summer offset (04:00 UTC = 23:00 EST the day
+  // before) must still start on its own day: a Thanksgiving closure cannot close Wednesday.
+  jjs.open_hours_fields.push({
+    date_from: '2026-11-26T04:00:00', date_to: '2026-11-27T04:59:59', days: [{}],
+    displayed_hours: [{ title: 'Closed for Thanksgiving' }], excluded: [],
+  });
+  const winter = buildDiningSnapshot(dataset, new Date('2026-11-20T14:00:00Z'));
+  const winterDay = date => winter.locations.find((item) => item.id === 'jjs').days.find((item) => item.date === date);
+  assert.deepEqual(winterDay('2026-11-25').intervals, [['12:00', '10:00']]);
+  assert.deepEqual(winterDay('2026-11-26').intervals, []);
+  assert.deepEqual(winterDay('2026-11-27').intervals, [['12:00', '10:00']]);
+});

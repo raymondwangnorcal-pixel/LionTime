@@ -41,3 +41,10 @@ test('Library refuses a publish that was not accepted, and checks the site after
   assert.match(workflow, /verify-published-snapshot\.mjs\n\s+--kind library/);
   assert.match(workflow, /--local "\$RUNNER_TEMP\/library-hours\.json"/);
 });
+
+test('a rejected library scrape reports its validation errors to Telegram', () => {
+  assert.match(workflow, /tee "\$RUNNER_TEMP\/library-scrape\.log"/);
+  assert.match(workflow, /id: scrape-rejected\n\s+if: \$\{\{ failure\(\) && steps\.scrape\.outcome == 'failure' \}\}/);
+  assert.match(workflow, /grep -E '\^\\\[\(VALIDATION\|ERROR\)\\\]'/);
+  assert.match(workflow, /notification_summary: \$\{\{ steps\.notification-summary\.outputs\.summary \|\| steps\.scrape-rejected\.outputs\.summary \}\}/);
+});

@@ -137,13 +137,21 @@ function parseAllSources(acquired, parsers, manifest) {
   const calendars = acquired.pages.columbiaHours?.activityCalendars;
   const calendarParser = parsers?.parseActivityCalendar;
   if (calendars && typeof calendars === 'object' && typeof calendarParser === 'function') {
-    for (const calendar of Object.values(calendars)) {
-      if (calendar?.result !== 'success') continue;
+    for (const [targetId, calendar] of Object.entries(calendars)) {
+      // Each embedded activity calendar is optional and fails independently, but never
+      // silently: a space without evidence reads "Hours need verification" for the window.
+      if (calendar?.result !== 'success') {
+        console.error(`activity calendar ${targetId}: not acquired (${calendar?.failureCode || 'unknown'})`);
+        continue;
+      }
       try {
         const parsedCalendar = calendarParser(calendar, { generated: acquired.generated });
         if (Array.isArray(parsedCalendar)) evidence.push(...parsedCalendar);
-      } catch {
-        // Each embedded activity calendar is optional and fails independently.
+        if (!Array.isArray(parsedCalendar) || !parsedCalendar.length) {
+          console.error(`activity calendar ${targetId}: acquired but produced no evidence`);
+        }
+      } catch (error) {
+        console.error(`activity calendar ${targetId}: parser threw: ${boundedText(error?.message)}`);
       }
     }
   }

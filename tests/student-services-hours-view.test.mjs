@@ -35,10 +35,20 @@ test('suppresses the access badge when a venue opts out', () => {
   assert.equal(view.stateFor(lerner, { dow: 0, mins: 12 * 60 }).accessLabel, null);
 });
 
-test('keeps 24/7 availability open near midnight', () => {
-  const state = view.stateFor(venue([{ type: 'phone-support', intervals: [['00:00', '24:00']], status: null, reason: null }]), { dow: 0, mins: 23 * 60 + 50 });
+test('keeps 24/7 open-access availability open near midnight', () => {
+  const state = view.stateFor(venue([{ type: 'open-access', intervals: [['00:00', '24:00']], status: null, reason: null }]), { dow: 0, mins: 23 * 60 + 50 });
   assert.equal(state.status, 'open');
   assert.equal(state.label, 'Open');
+});
+
+test('a 24/7 phone line alone does not make an office open', () => {
+  const state = view.stateFor(venue([
+    { type: 'office-hours', intervals: [['09:00', '18:00']], status: null, reason: null },
+    { type: 'phone-support', intervals: [['00:00', '24:00']], status: null, reason: null },
+  ]), { dow: 0, mins: 21 * 60 + 25 });
+  assert.equal(state.status, 'closed');
+  assert.equal(state.label, 'Closed');
+  assert.equal(state.detail, 'Phone support available now');
   assert.equal(state.accessLabel, 'Phone Support');
 });
 

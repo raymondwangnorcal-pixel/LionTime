@@ -54,10 +54,15 @@
     }
     const day = dayFor(venue, now.dow);
     if (!day) return null;
-    const active = ranked(day.availabilities.filter(availability => activeInterval(availability, now.mins)));
+    const anyActive = ranked(day.availabilities.filter(availability => activeInterval(availability, now.mins)));
+    // A 24/7 hotline is not the office being open: Medical Services, CAPS and SVR all
+    // publish one, which made every Columbia Health card read "Open" at 3 a.m.
+    const active = anyActive.filter(availability => availability.type !== 'phone-support');
     if (!active.length) {
+      const phoneOnly = anyActive.length > 0;
       return {
-        status: 'closed', label: 'Closed', detail: 'No active availability right now',
+        status: 'closed', label: 'Closed',
+        detail: phoneOnly ? 'Phone support available now' : 'No active availability right now',
         accessLabel: accessLabelFor(venue, now),
       };
     }
