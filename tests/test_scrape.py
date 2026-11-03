@@ -195,6 +195,38 @@ class ScraperContractTests(unittest.TestCase):
         self.assertIsNone(current_hours["0"])
         self.assertEqual(current_hours["1"], {"open": "09:00", "close": "17:00"})
 
+    def test_corrects_meridiem_anomaly_for_every_displayed_library(self):
+        # Columbia published Avery's 2026-11-02 early closure as 9:00PM-5:00PM.
+        html = """
+        <table><tr>
+          <td>
+            <div class="fulldate">2026-11-01</div>
+            <div class="day-hours">12:00PM-10:00PM</div>
+          </td>
+          <td>
+            <div class="fulldate">2026-11-02</div>
+            <div class="day-hours">9:00PM-5:00PM</div>
+          </td>
+          <td>
+            <div class="fulldate">2026-11-03</div>
+            <div class="day-hours">Closed</div>
+          </td>
+        </tr></table>
+        """
+        for library_id in ("avery", "math", "science_engineering"):
+            definition = next(item for item in DISPLAYED_LIBRARIES if item["id"] == library_id)
+            entry = scrape_library(
+                definition,
+                datetime.fromisoformat("2026-11-01T12:00:00-04:00"),
+                fetcher=lambda slug, date=None: BeautifulSoup(html, "html.parser"),
+                holiday_fetcher=lambda: BeautifulSoup("<html></html>", "html.parser"),
+            )
+            current_hours = entry["schedules"][0]["hours"]
+            self.assertNotIn("scrapeFailed", entry, library_id)
+            self.assertEqual(current_hours["0"], {"open": "12:00", "close": "22:00"}, library_id)
+            self.assertEqual(current_hours["1"], {"open": "09:00", "close": "17:00"}, library_id)
+            self.assertIsNone(current_hours["2"], library_id)
+
     def test_marks_other_suspicious_lehman_hours_for_embedded_fallback(self):
         html = """
         <table><tr><td>

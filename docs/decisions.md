@@ -1759,3 +1759,17 @@
 - Supersedes: none
 - Evidence: The official Columbia Health Hours and Locations page captured on 2026-10-13 and `tests/fixtures/student-services-health-2026-10-13.html`.
 - Privacy waivers: none
+
+## DEC-0089 — Correct the 9 PM–5 PM meridiem inversion for every displayed library
+
+- Date: 2026-11-02
+- Owner: agent
+- Status at record: active
+- Decision: The exact `9:00PM-5:00PM` interval on Columbia's hours calendar is corrected to 9:00 AM–5:00 PM for every displayed library, not only Lehman; every other inverted interval remains rejected under DEC-0009 and DEC-0085.
+- Rationale: Columbia published Avery's November 2, 2026 Election Day-eve early closure as `9:00PM-5:00PM` while the other five calendars read `9:00AM-5:00PM`; the Lehman-only correction let that one cell fail validation on every scheduled run from November 1, so the site served the October 25–31 schedule into Election Day week. No library opens at 9 PM and closes at 5 PM, so the correction cannot misstate real hours.
+- Scope: `scrape.py` source-anomaly normalization and `tests/test_scrape.py`.
+- Implementation: pending
+- Recorded against HEAD: `fd7b4fd74dd778d01b1471cf1edeb4a7ec542a09`
+- Supersedes: none
+- Evidence: Library workflow runs 41278884551 through 41564973517 failing with `avery: overnight hours are not allowed`, the live Avery calendar on 2026-11-02 (`2026-11-02 9:00PM-5:00PM Early Closure`), and a replay of the live calendars through `scrape.py` that validates after this change.
+- Privacy waivers: none

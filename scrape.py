@@ -56,8 +56,14 @@ UNRESTRICTED_OVERNIGHT_LIBRARY_IDS = {"butler_24", "business"}
 # or before the opening time is a source error (DEC-0008's 9 PM–5 PM case).
 LATE_NIGHT_CLOSE_LIMIT = "06:00"
 EMBEDDED_FALLBACK_REASON = "unapproved-overnight-hours"
-LEHMAN_MERIDIEM_ANOMALY = {"open": "21:00", "close": "17:00"}
-LEHMAN_CORRECTED_HOURS = {"open": "09:00", "close": "17:00"}
+# Columbia's hours calendar sometimes publishes a 9 AM–5 PM early-closure day as
+# "9:00PM-5:00PM" (Lehman on 2026-08-20, Avery on 2026-11-02). No library opens
+# at 9 PM and closes at 5 PM, so this exact inversion is corrected for every
+# displayed library; any other inverted interval is still rejected.
+MERIDIEM_ANOMALY = {"open": "21:00", "close": "17:00"}
+MERIDIEM_CORRECTED_HOURS = {"open": "09:00", "close": "17:00"}
+LEHMAN_MERIDIEM_ANOMALY = MERIDIEM_ANOMALY
+LEHMAN_CORRECTED_HOURS = MERIDIEM_CORRECTED_HOURS
 
 MANIFEST_SCHEMA_VERSION = 1
 FIXABLE_FAILURE_CODES = ("parse", "missing-content")
@@ -385,13 +391,13 @@ def _normalize_known_source_anomalies(
     library_id: str,
     date_hours: dict[str, Optional[dict[str, str]]],
 ) -> dict[str, Optional[dict[str, str]]]:
-    """Apply only explicitly approved, source-specific corrections."""
-    if library_id != "lehman":
+    """Apply only explicitly approved corrections (the 9 PM–5 PM meridiem inversion)."""
+    if library_id not in DISPLAYED_LIBRARY_IDS:
         return date_hours
     return {
         date_value: (
-            LEHMAN_CORRECTED_HOURS.copy()
-            if interval == LEHMAN_MERIDIEM_ANOMALY
+            MERIDIEM_CORRECTED_HOURS.copy()
+            if interval == MERIDIEM_ANOMALY
             else interval
         )
         for date_value, interval in date_hours.items()
