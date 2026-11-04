@@ -1292,7 +1292,7 @@
 - Decision: The self-hosted `lionhour-dining` runner migrates from the laptop to an always-on Mac mini by 2026-10-10. Until then the laptop is a known-unreliable dependency and dining staleness is expected.
 - Rationale: Dining hours went stale for two days when the laptop slept; managed infrastructure everywhere else makes the laptop the only fragile component.
 - Scope: `.github/workflows/update-dining-hours.yml`, `scripts/install-dining-runner-macos.sh`.
-- Implementation: pending
+- Implementation: done 2026-11-03 — runner `lionhour-dining-mac` re-registered from an always-on Mac mini (account `forwa`, uid 502, local clone at `~/PersonalProjects/Gapless-Labs/InternalProjects/LionTime`, not iCloud Drive) on runner 2.338.0; first runs 41767254698 and 41768153322 succeeded.
 - Recorded against HEAD: `e3a23dbb295bdf028eb0f582d65d42e0c4b5e739`
 - Supersedes: none
 - Evidence: docs/telegram-bot-review-codex.md; user answers to the pre-implementation review questions on 2026-09-10.

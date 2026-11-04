@@ -65,8 +65,8 @@ The runner requires all of the following at execution time:
 Inspect the local services and GitHub registration:
 
 ```bash
-launchctl print gui/501/actions.runner.raymondwangnorcal-pixel-LionTime.lionhour-dining-mac
-launchctl print gui/501/com.lionhour.dining-keep-awake
+launchctl print gui/502/actions.runner.raymondwangnorcal-pixel-LionTime.lionhour-dining-mac
+launchctl print gui/502/com.lionhour.dining-keep-awake
 gh api repos/raymondwangnorcal-pixel/LionTime/actions/runners
 ```
 
@@ -75,8 +75,8 @@ If the runner is offline after a login, repair both services by rerunning the in
 To remove the runner, first stop and uninstall its service from `.github-runner/`. Obtain a short-lived removal token through `gh api --method POST repos/raymondwangnorcal-pixel/LionTime/actions/runners/remove-token --jq .token`, pass it directly to `./config.sh remove --token`, and do not print or save it. Then run:
 
 ```bash
-launchctl bootout gui/501 /Users/raymondwang/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist
-rm /Users/raymondwang/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist
+launchctl bootout gui/502 /Users/forwa/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist
+rm /Users/forwa/Library/LaunchAgents/com.lionhour.dining-keep-awake.plist
 ```
 
 Delete `.github-runner/` only after GitHub no longer lists the runner.
