@@ -281,6 +281,30 @@ test('rejects unsafe version 2 source and NSOP open-count claims atomically', as
   }
 });
 
+test('accepts a v6 snapshot and shows Thanksgiving hours and closures', async () => {
+  const { createDiningHoursService } = await import('../lib/dining-hours-service.js');
+  const { makeValidDiningAttemptBatch } = await import('./helpers/dining-hours-fixture.mjs');
+  let stored = null;
+  const service = createDiningHoursService({
+    store: { async getSnapshot() { return stored; }, async putSnapshot(next) { stored = next; } },
+    updateSecret: 'secret',
+  });
+  const batch = makeValidDiningAttemptBatch({ schemaVersion: 5, generated: '2026-11-23T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer secret', body: batch })).status, 204);
+  const snapshot = (await service.handle({ method: 'GET' })).body;
+  assert.equal(snapshot.schemaVersion, 6);
+  const updates = api.buildUpdates(snapshot, venues(), '2026-11-24', new Date('2026-11-23T16:30:00Z'));
+  assert.equal(updates.ok, true);
+  const next = id => updates.entries.find(([venue]) => venue.id === id)[1];
+  // 2026-11-26 is a Thursday (dow 4): everything is closed for Thanksgiving.
+  assert.equal(next('ferris').sourceStatuses[4], 'Closed');
+  assert.equal(next('johnjay').sourceStatuses[4], 'Closed');
+  // 2026-11-27 is a Friday (dow 5): JJ's is the one board venue open.
+  assert.equal(JSON.stringify(next('jjs').hours[5]), JSON.stringify([['10:00', '19:00']]));
+  assert.equal(next('jjs').sourceStatuses[5], 'Thanksgiving 2026 hours');
+  assert.equal(next('ferris').sourceStatuses[5], 'Closed');
+});
+
 test('accepts a v5 snapshot and shows Fall Break hours and closures', async () => {
   const { createDiningHoursService } = await import('../lib/dining-hours-service.js');
   const { makeValidDiningAttemptBatch } = await import('./helpers/dining-hours-fixture.mjs');

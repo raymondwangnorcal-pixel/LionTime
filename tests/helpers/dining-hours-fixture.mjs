@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   parseFallArticle,
   parseFallBreakArticle,
+  parseThanksgivingArticle,
   parseLaborDayArticle,
   parseNsopArticle,
 } from '../../lib/dining-article-parser.js';
@@ -194,6 +195,13 @@ export function makeValidDiningAttemptBatch({
       'fall-break-2026',
       'https://dining.columbia.edu/news/fall-break-2026-operating-hours',
       parseFallBreakArticle(fixture('dining-fall-break-2026.html')),
+    ]);
+  }
+  if (schemaVersion >= 5) {
+    sources.push([
+      'thanksgiving-2026',
+      'https://dining.columbia.edu/news/thanksgiving-2026-operating-hours',
+      parseThanksgivingArticle(fixture('dining-thanksgiving-2026.html')),
     ]);
   }
   return {

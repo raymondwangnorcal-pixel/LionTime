@@ -288,3 +288,44 @@ test('uses the feed-supplied previous day rather than next week when the scraper
   malformed.attempts[0].payload.locations[0].previousDay = { date: '2026-10-18', intervals: [], status: null };
   assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: malformed })).status, 422);
 });
+
+test('publishes a v6 snapshot that overlays the Thanksgiving article on top of Fall Break', async () => {
+  const store = memoryStore(null);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  // A v4 batch (Fall Break, no Thanksgiving) still publishes v5.
+  const v4 = makeValidDiningAttemptBatch({ schemaVersion: 4, generated: '2026-11-01T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: v4 })).status, 204);
+  assert.equal((await store.getSnapshot()).snapshot.schemaVersion, 5);
+
+  // The first v5 batch whose Thanksgiving article is challenged still publishes everything else.
+  const blocked = makeValidDiningAttemptBatch({
+    schemaVersion: 5, generated: '2026-11-02T20:00:00.000Z', failures: ['thanksgiving-2026'],
+  });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: blocked })).status, 204);
+  const partial = await store.getSnapshot();
+  assert.equal(partial.schemaVersion, 5);
+  assert.equal(partial.sources.length, 8);
+  assert.equal(partial.snapshot.schemaVersion, 5);
+
+  // Once the article parses, the snapshot becomes v6 and carries both break sources.
+  const window = makeValidDiningAttemptBatch({ schemaVersion: 5, generated: '2026-11-20T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: window })).status, 204);
+  const body = (await service.handle({ method: 'GET' })).body;
+  assert.equal(body.schemaVersion, 6);
+  assert.deepEqual(body.sources.slice(-2).map(source => source.id), ['fall-break-2026', 'thanksgiving-2026']);
+  const day = (id, date) => body.locations.find(location => location.id === id).days.find(item => item.date === date);
+  assert.deepEqual(day('johnjay', '2026-11-26'), {
+    date: '2026-11-26', intervals: [], status: 'Closed', sourceId: 'thanksgiving-2026',
+  });
+  assert.deepEqual(day('jjs', '2026-11-27'), {
+    date: '2026-11-27', intervals: [['10:00', '19:00']], status: 'Thanksgiving 2026 hours', sourceId: 'thanksgiving-2026',
+  });
+  assert.deepEqual(day('smith-dining', '2026-11-24').intervals, [['08:00', '16:30']]);
+  assert.equal(day('smith-dining', '2026-11-25').status, 'Closed');
+  // Tuesday retail keeps normal hours: the feed still decides.
+  assert.equal(day('bj-butler', '2026-11-24').sourceId, 'locations-feed');
+  assert.equal(day('bj-butler', '2026-11-25').status, 'Closed');
+  // Café East and Barnard keep their own sources; November 30 is outside the break.
+  assert.equal(day('cafe-east', '2026-11-26').sourceId, 'cafe-east');
+  assert.equal(day('johnjay', '2026-11-30').sourceId, 'locations-feed');
+});

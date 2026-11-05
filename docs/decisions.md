@@ -1869,3 +1869,46 @@
 - Recorded against HEAD: `75ee2da` (origin/main after PR #33; first drafted as DEC-0089 before PRs #32 and #33 merged)
 - Supersedes: none
 - Evidence: Library workflow runs 41278884551 through 41564973517 failing with `avery: overnight hours are not allowed`, the live Avery calendar on 2026-11-02 (`2026-11-02 9:00PM-5:00PM Early Closure`), and a replay of the live calendars through `scrape.py` that validates after this change.
+
+## DEC-0097 — Resolve Columbia Mail's named holiday closings to dates
+
+- Date: 2026-11-05
+- Owner: agent
+- Status at record: active
+- Decision: The Student Mail Center parser reads the "Holiday Closings" list and publishes an exact-date `Closed` record for each recognized University holiday in the current and following year; the hand-asserted Labor Day closure remains only as the fallback for a page without that list.
+- Rationale: Mail Services names its holidays without dates, so the Election Day closure on 2026-11-03 was invisible and the card showed regular 9 AM–7 PM hours; the same list covers Thanksgiving, the day after, and the winter closures.
+- Scope: `lib/student-services-source-parser.js`, its tests, and the Student Life operations doc.
+- Implementation: pending
+- Recorded against HEAD: `7be842f99683f443bf9776a0571917bf177d7d7e`
+- Supersedes: none
+- Evidence: The live Columbia Mail Locations & Hours page on 2026-11-02 and `tests/fixtures/student-services-mail-2026-09-22.html`, which already carried the list.
+- Privacy waivers: none
+
+## DEC-0098 — Read the bulleted Pool Closures and Dodge closure-date lists
+
+- Date: 2026-11-05
+- Owner: agent
+- Status at record: active
+- Decision: `parseColumbiaModifications` also reads the "Pool Closures" list as timed `Closed for Athletics event` restrictions on Uris Pool (subtracted from the weekly schedule by the existing resolver) and the "Dodge will be CLOSED on the following dates" list as whole-day Dodge closures, inferring the year from the heading and rejecting any date whose stated weekday does not match; either list that cannot be read in full rejects the source.
+- Rationale: Columbia restructured the Modified Hours page into bulleted lists that the heading walk never saw, so the source reported success with no evidence while the pool was closed 11 AM–6 PM on November 6 and 8 AM–7 PM on November 7, and Dodge's November 26–27 and December 24–January 1 closures were missing.
+- Scope: `lib/recreation-source-parser.js`, `tests/fixtures/recreation-columbia-modifications-2026-11-02.html`, parser and resolver tests, and the Recreation operations doc.
+- Implementation: pending
+- Recorded against HEAD: `7be842f99683f443bf9776a0571917bf177d7d7e`
+- Supersedes: none
+- Evidence: The live Modified Hours & Closures page captured on 2026-11-02 and 2026-11-05 and the published recreation snapshots of those days showing regular pool hours on November 6 and 7.
+- Privacy waivers: none
+
+## DEC-0099 — Overlay the official Thanksgiving 2026 Dining article
+
+- Date: 2026-11-05
+- Owner: agent
+- Status at record: active
+- Decision: Columbia Dining's Thanksgiving 2026 article is an eighth, optional Dining source (attempt batch version 5, public snapshot version 6) with the same per-date board-plan and retail rules as Fall Break (DEC-0087); it also covers Robert F. Smith, reads a day whose only content is "All locations are closed" as closing every covered venue, reads "Faculty House" with no floor as both floors, and is applied only once Fall Break has also succeeded.
+- Rationale: The article was published on 2026-10-28 and the structured feed carries nothing for November 24–29, so from 2026-11-12 the site would show regular hours for every Columbia Dining venue through Thanksgiving Day.
+- Scope: Dining article parsing, source contracts and schemas, API merge, resolver precedence, browser validation, the self-hosted scraper, autofix source registry, hours audit, tests, and dining operations documentation.
+- Implementation: pending
+- Recorded against HEAD: `7be842f99683f443bf9776a0571917bf177d7d7e`
+- Supersedes: none
+- Evidence: The official Thanksgiving 2026 Operating Hours article as rendered on 2026-11-05 (`tests/fixtures/dining-thanksgiving-2026.html`) and the Locations & Hours feed, which contains no Thanksgiving periods.
+- Privacy waivers: none
+

@@ -57,6 +57,10 @@
     ...SOURCE_CONTRACT,
     'fall-break-2026': 'https://dining.columbia.edu/news/fall-break-2026-operating-hours',
   });
+  const V6_SOURCE_CONTRACT = Object.freeze({
+    ...V5_SOURCE_CONTRACT,
+    'thanksgiving-2026': 'https://dining.columbia.edu/news/thanksgiving-2026-operating-hours',
+  });
   const OPEN_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const CLOSE_TIME = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/;
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -104,12 +108,13 @@
   function validateSnapshot(snapshot) {
     const versionTwo = snapshot?.schemaVersion === 2;
     const versionThree = snapshot?.schemaVersion === 3;
-    const versionFive = snapshot?.schemaVersion === 5;
-    // v5 is v4 plus the Fall Break 2026 source.
+    const versionSix = snapshot?.schemaVersion === 6;
+    // v6 is v5 plus the Thanksgiving 2026 source; v5 is v4 plus the Fall Break 2026 source.
+    const versionFive = snapshot?.schemaVersion === 5 || versionSix;
     const versionFour = snapshot?.schemaVersion === 4 || versionFive;
     const hasProvenance = versionTwo || versionThree || versionFour;
     const contract = versionFour ? CONTRACT : versionThree ? V3_CONTRACT : LEGACY_CONTRACT;
-    const sourceContract = versionFive ? V5_SOURCE_CONTRACT : versionFour ? SOURCE_CONTRACT
+    const sourceContract = versionSix ? V6_SOURCE_CONTRACT : versionFive ? V5_SOURCE_CONTRACT : versionFour ? SOURCE_CONTRACT
       : versionThree ? V3_SOURCE_CONTRACT : LEGACY_SOURCE_CONTRACT;
     if (!snapshot || (snapshot.schemaVersion !== 1 && !hasProvenance) || snapshot.source !== SOURCE
       || typeof snapshot.generated !== 'string' || Number.isNaN(Date.parse(snapshot.generated))

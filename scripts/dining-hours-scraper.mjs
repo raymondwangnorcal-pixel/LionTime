@@ -5,6 +5,7 @@ import {
   DINING_ARTICLE_SOURCES,
   parseFallArticle,
   parseFallBreakArticle,
+  parseThanksgivingArticle,
   parseLaborDayArticle,
   parseNsopArticle,
   verifiedLaborDay2026Payload,
@@ -18,14 +19,14 @@ import {
 } from '../lib/barnard-dining-hours-parser.js';
 import { resolveDiningSnapshot } from '../lib/dining-hours-resolver.js';
 import { createScrapeManifest } from '../lib/scrape-manifest.js';
-import { DINING_SOURCE_CONTRACT_V5 as DINING_SOURCE_CONTRACT } from '../lib/dining-hours-schema.js';
+import { DINING_SOURCE_CONTRACT_V6 as DINING_SOURCE_CONTRACT } from '../lib/dining-hours-schema.js';
 import {
-  DINING_SOURCE_IDS_V5 as DINING_SOURCE_IDS,
+  DINING_SOURCE_IDS_V6 as DINING_SOURCE_IDS,
   validateDiningAttemptBatch,
 } from '../lib/dining-hours-source-schema.js';
 
-// Attempt-batch schema 4 carries the v5 source set (v4 plus the Fall Break article).
-const ATTEMPT_BATCH_SCHEMA_VERSION = 4;
+// Attempt-batch schema 5 carries the v6 source set (v5 plus the Thanksgiving article).
+const ATTEMPT_BATCH_SCHEMA_VERSION = 5;
 
 const SOURCE_URL = 'https://dining.columbia.edu/content/locations-hours';
 const BARNARD_ACQUISITION_TIMEOUT_MS = 75_000;
@@ -499,6 +500,7 @@ const ARTICLE_PARSERS = Object.freeze({
   'labor-day-2026': parseLaborDayArticle,
   'fall-2026': parseFallArticle,
   'fall-break-2026': parseFallBreakArticle,
+  'thanksgiving-2026': parseThanksgivingArticle,
 });
 
 async function acquireArticleAttempt(page, sourceId, now, manifest) {

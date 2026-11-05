@@ -622,3 +622,72 @@ test('still rejects a Barnard row whose split shifts overlap or run backwards', 
     .replace('<strong>Monday</strong>: 7-9:50am / 2:30-9pm', '<strong>Monday</strong>: 7-11am / 10am-9pm');
   assert.deepEqual(parseBarnardHours(html, { generated: new Date('2026-09-09T14:00:00-04:00') }), []);
 });
+
+test('reads the bulleted Pool Closures list as timed Uris Pool restrictions (2026-11-02 page)', async () => {
+  const html = await readFixture('recreation-columbia-modifications-2026-11-02.html');
+  const evidence = parseColumbiaModifications(html);
+  const pool = evidence.filter(item => item.targetId === 'uris-pool');
+  assert.deepEqual(pool.map(item => [item.effectiveStart, item.dateIntervals[0]]), [
+    ['2026-10-30', ['15:00', '21:00']],
+    ['2026-10-31', ['11:00', '17:00']],
+    ['2026-11-06', ['11:00', '18:00']],
+    ['2026-11-07', ['08:00', '19:00']],
+    ['2027-01-23', ['11:00', '19:00']],
+  ]);
+  for (const item of pool) {
+    assert.equal(item.sourceId, 'columbiaModifications');
+    assert.equal(item.priority, 1);
+    assert.equal(item.status, 'Closed for Athletics event');
+    assert.equal(item.availabilityType, 'lap-swim');
+    assert.equal(item.effectiveEnd, item.effectiveStart);
+  }
+  assert.equal(pool[2].reason, 'No 11 am Lap Swim; No 12 - 2 pm Open Recreation');
+  assert.equal(isSafeEmptyColumbiaModificationsPage(html), true, 'the page still has no heading notices');
+});
+
+test('reads the Dodge semester closure dates, inferring the year from the heading and checking weekdays', async () => {
+  const html = await readFixture('recreation-columbia-modifications-2026-11-02.html');
+  const dodge = parseColumbiaModifications(html).filter(item => item.targetId === 'dodge');
+  assert.deepEqual(dodge.map(item => item.effectiveStart), [
+    '2026-11-26', '2026-11-27',
+    '2026-12-24', '2026-12-25', '2026-12-26', '2026-12-27', '2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31', '2027-01-01',
+  ]);
+  for (const item of dodge) {
+    assert.deepEqual(item.dateIntervals, []);
+    assert.equal(item.status, 'Closed');
+    assert.equal(item.priority, 1);
+    assert.equal(item.reason, 'During the Fall 2026 semester, Dodge will be CLOSED on the following dates');
+  }
+});
+
+test('subtracts a pool closure from the weekly pool schedule and closes Dodge spaces with the building', async () => {
+  const generated = new Date('2026-11-02T22:40:00.000Z');
+  const hours = parseColumbiaHours(await readFixture('recreation-columbia-hours-fall-2026.html'), { generated });
+  const modifications = parseColumbiaModifications(await readFixture('recreation-columbia-modifications-2026-11-02.html'));
+  const snapshot = resolveRecreationSnapshot({ evidence: [...hours, ...modifications], generated });
+  const pool = snapshot.facilities.find(item => item.id === 'uris-pool');
+  const friday = pool.days.find(day => day.date === '2026-11-06');
+  assert.deepEqual(friday.intervals, [['19:00', '21:30']]);
+  assert.equal(friday.status, null);
+  assert.deepEqual(friday.restrictions.map(item => [item.intervals, item.status]), [[[['12:00', '14:00']], 'Closed for Athletics event']]);
+  const saturday = pool.days.find(day => day.date === '2026-11-07');
+  assert.deepEqual(saturday.intervals, [['19:00', '21:30']]);
+  const thursday = pool.days.find(day => day.date === '2026-11-05');
+  assert.deepEqual(thursday.intervals, [['12:00', '14:00'], ['19:00', '21:30']]);
+
+  const thanksgiving = resolveRecreationSnapshot({ evidence: [...hours, ...modifications], generated: new Date('2026-11-20T12:00:00.000Z') });
+  const dodge = thanksgiving.facilities.find(item => item.id === 'dodge');
+  assert.equal(dodge.days.find(day => day.date === '2026-11-26').status, 'Closed');
+  assert.equal(dodge.days.find(day => day.date === '2026-11-27').status, 'Closed');
+  assert.equal(dodge.days.find(day => day.date === '2026-11-25').status, null);
+  const blueGym = dodge.spaces.find(item => item.id === 'blue-gym');
+  assert.equal(blueGym.days.find(day => day.date === '2026-11-26').status, 'Closed');
+});
+
+test('rejects the whole modifications source when a pool closure or closure date cannot be read', async () => {
+  const html = await readFixture('recreation-columbia-modifications-2026-11-02.html');
+  assert.deepEqual(parseColumbiaModifications(html.replace('Friday, November 6, 2026', 'Monday, November 6, 2026')), [], 'weekday does not match the date');
+  assert.deepEqual(parseColumbiaModifications(html.replace('11 am - 6 pm', 'TBD')), [], 'closure window missing');
+  assert.deepEqual(parseColumbiaModifications(html.replace('Thursday, November 26 &amp; Friday, November 27', 'Thursday, November 26 &amp; Friday')), [], 'closure date incomplete');
+  assert.deepEqual(parseColumbiaModifications(html.replace('During the Fall 2026 semester', 'During the Fall semester')), [], 'no year to resolve against');
+});
