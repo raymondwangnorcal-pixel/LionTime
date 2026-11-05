@@ -1934,3 +1934,17 @@
 - Superseded by: none
 - Note: The header now serves the owner-supplied TousePass creative and UTM-tagged destination without changing the slot's layout or responsive behavior.
 - Privacy waivers: none
+
+## DEC-0101 — Refresh the TousePass advertisement creative
+
+- Date: 2026-11-05
+- Owner: user
+- Status at record: active
+- Decision: Replace the DEC-0100 TousePass creative with the owner-supplied "Buy & Sell Event Tickets" version (`assets/tousepass-leaderboard-728x90.png`) and retire the earlier 1456×180 TousePass asset; the UTM-tagged destination and slot behavior are unchanged.
+- Rationale: The owner supplied a revised creative for the same campaign the same day.
+- Scope: Main-page header advertisement asset, accessible labeling, and regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `993402bbbe8dec72bebd7468a6d5b489aa4813a0`
+- Supersedes: DEC-0100
+- Evidence: Owner-supplied revised TousePass leaderboard image and change request on 2026-11-05.
+- Privacy waivers: none
