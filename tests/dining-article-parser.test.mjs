@@ -104,3 +104,41 @@ test('rejects a Fall Break article it does not fully understand', async () => {
   assert.throws(() => parseFallBreakArticle(html.replace('All retail locations are closed on Saturday.', 'Retail hours vary.')), /retail notice/);
   assert.throws(() => parseFallBreakArticle(html.replace('<strong>Tuesday, November 3</strong>', '<strong>Tuesday, November 10</strong>')), /October 29 through November 3/);
 });
+
+test('parses the Thanksgiving 2026 article into dated venue exceptions', async () => {
+  const { parseThanksgivingArticle } = await import('../lib/dining-article-parser.js');
+  const html = readFileSync(new URL('./fixtures/dining-thanksgiving-2026.html', import.meta.url), 'utf8');
+  const parsed = parseThanksgivingArticle(html);
+  assert.equal(parsed.id, 'thanksgiving-2026');
+  assert.deepEqual([parsed.start, parsed.end], ['2026-11-24', '2026-11-29']);
+  assert.deepEqual(parsed.days.map(day => day.date), [
+    '2026-11-24', '2026-11-25', '2026-11-26', '2026-11-27', '2026-11-28', '2026-11-29',
+  ]);
+  const [tuesday, wednesday, thanksgiving, friday, , sunday] = parsed.days;
+  // Tuesday: the article names Robert F. Smith, so it is covered from here on.
+  assert.deepEqual(tuesday.venues['smith-dining'], [['08:00', '16:30']]);
+  assert.deepEqual(tuesday.venues.jjs, [['12:00', '10:00']], 'JJ\'s overnight close is kept');
+  // "Faculty House" with no floor speaks for both floors.
+  assert.deepEqual(tuesday.venues.facultyhouse, [['11:00', '14:00'], ['17:00', '21:00']]);
+  assert.deepEqual(tuesday.venues['facultyhouse-4'], [['11:00', '14:00'], ['17:00', '21:00']]);
+  assert.equal('bj-butler' in tuesday.venues, false, 'retail runs normal hours on Tuesday');
+  assert.deepEqual(wednesday.venues.ferris, [['07:30', '20:00']]);
+  assert.deepEqual(wednesday.venues.jjs, [['00:00', '10:00']]);
+  assert.deepEqual(wednesday.venues.johnjay, []);
+  assert.deepEqual(wednesday.venues['bj-butler'], []);
+  // Thanksgiving Day has no tables: one sentence closes everything.
+  assert.ok(Object.keys(thanksgiving.venues).length >= 16);
+  assert.ok(Object.values(thanksgiving.venues).every(intervals => intervals.length === 0));
+  assert.deepEqual(friday.venues.jjs, [['10:00', '19:00']]);
+  assert.deepEqual(friday.venues['smith-dining'], []);
+  assert.deepEqual(sunday.venues.johnjay, [['10:00', '19:00']]);
+});
+
+test('rejects a Thanksgiving article it does not fully understand', async () => {
+  const { parseThanksgivingArticle } = await import('../lib/dining-article-parser.js');
+  const html = readFileSync(new URL('./fixtures/dining-thanksgiving-2026.html', import.meta.url), 'utf8');
+  assert.throws(() => parseThanksgivingArticle(html.replace('<dd>Ferris</dd>', '<dd>Pop-Up Kitchen</dd>')), /unknown dining venue/);
+  assert.throws(() => parseThanksgivingArticle(html.replace('All locations are closed on Thursday for the Thanksgiving holiday.', 'Most locations are closed on Thursday.')), /board plan table is missing/);
+  assert.throws(() => parseThanksgivingArticle(html.replace('<strong>Sunday, November 29</strong>', '<strong>Sunday, December 6</strong>')), /November 24 through November 29/);
+  assert.throws(() => parseThanksgivingArticle(html.replace('resume normal operating hours on November 30', 'resume normal operating hours soon')), /effective range/);
+});

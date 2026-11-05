@@ -208,3 +208,28 @@ test('parses Fall Rush once the weekend splits into separate Saturday and Sunday
   const rushMonday = evidence.find(item => item.reason === 'Fall Rush' && item.weekdays.includes(1));
   assert.deepEqual(rushMonday.intervals, [['11:00', '20:00']]);
 });
+
+test('closes the Mail Center on each named University holiday for this year and next', () => {
+  const evidence = parseMailSource(fixture('student-services-mail-2026-09-22.html'), { now: new Date('2026-11-02T12:00:00Z') });
+  const closures = evidence.filter(item => item.exactDate && item.status === 'Closed');
+  const byDate = Object.fromEntries(closures.map(item => [item.exactDate, item.reason]));
+  assert.equal(byDate['2026-11-03'], 'Closed for Election Day');
+  assert.equal(byDate['2026-11-26'], 'Closed for Thanksgiving Day');
+  assert.equal(byDate['2026-11-27'], 'Closed for The day after Thanksgiving');
+  assert.equal(byDate['2026-09-07'], 'Closed for Labor Day');
+  assert.equal(byDate['2026-01-19'], 'Closed for Martin Luther King, Jr. Day');
+  assert.equal(byDate['2027-01-18'], 'Closed for Martin Luther King, Jr. Day');
+  assert.equal(byDate['2026-05-25'], 'Closed for Memorial Day');
+  assert.equal(byDate['2027-11-02'], 'Closed for Election Day');
+  assert.equal(closures.length, 24);
+  for (const closure of closures) {
+    assert.deepEqual(closure.intervals, []);
+    assert.equal(closure.evidenceRef, `mail:mail-center:closure-${closure.exactDate}`);
+  }
+});
+
+test('keeps the hand-asserted Labor Day closure when the page has no Holiday Closings list', () => {
+  const evidence = parseMailSource(fixture('student-services-mail-fall-2026.html'));
+  const closures = evidence.filter(item => item.exactDate && item.status === 'Closed');
+  assert.deepEqual(closures.map(item => item.exactDate), ['2026-09-07']);
+});

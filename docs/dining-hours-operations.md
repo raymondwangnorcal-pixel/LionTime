@@ -24,6 +24,12 @@ Rollout order matters: deploy the API and browser code (Vercel) before the self-
 
 Fall Break is optional for publication: until its first successful attempt, the other six sources still resolve a version 4 snapshot instead of waiting on it. After November 3 its retained evidence no longer affects any date in the window; if Columbia removes the article the source simply reports a failure and keeps its last success.
 
+### Thanksgiving 2026 overlay
+
+An eighth source, the official [Thanksgiving 2026 Operating Hours](https://dining.columbia.edu/news/thanksgiving-2026-operating-hours) article (published 2026-10-28), carries dated exceptions for November 24 through November 29 with the same shape and rules as Fall Break. It is published in attempt-batch version 5 and public snapshot version 6 (version 4/5 plus that one source); clients accept versions 1 through 6. Two shapes are new: Thanksgiving Day has no tables, only the sentence "All locations are closed on Thursday", which closes every covered venue; and the article names Robert F. Smith, so that venue is covered by this article (a day that omits it is `Closed`). "Faculty House" with no floor is read as both floors. The feed carried nothing for that week on 2026-11-05, so without this source every Columbia Dining venue would have shown regular hours over the break. Thanksgiving evidence shows `Thanksgiving 2026 hours`; it is applied only once Fall Break has also succeeded, because version 6 lists both sources with their fetch times.
+
+Thanksgiving is optional for publication in the same way as Fall Break. After November 29 its retained evidence no longer affects any date in the window.
+
 The Barnard adapter whitelists only Hewitt Dining, Diana Center Cafe, Barnard Dining Bubble Tea and Sushi Spot, and Liz's Place. It does not publish LeFrak Byte Kiosk, LeFrak Center, or Barnard Kosher as separate venues. Diana Center Cafe and Bubble Tea & Sushi are Dining cards; Liz's Place is a Cafe card.
 
 ## Required configuration
