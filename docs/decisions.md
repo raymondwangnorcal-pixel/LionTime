@@ -1926,3 +1926,11 @@
 - Supersedes: DEC-0081
 - Evidence: Owner-supplied TousePass leaderboard image and change request on 2026-11-05.
 - Privacy waivers: none
+
+## Update — 2026-11-05 — DEC-0100
+
+- Type: implementation
+- Implementation commit: `f100aa8c4b5a91b0e97374a982d5eb01f2ba1013` — feat: run TousePass banner
+- Superseded by: none
+- Note: The header now serves the owner-supplied TousePass creative and UTM-tagged destination without changing the slot's layout or responsive behavior.
+- Privacy waivers: none
