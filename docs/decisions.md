@@ -1912,3 +1912,17 @@
 - Evidence: The official Thanksgiving 2026 Operating Hours article as rendered on 2026-11-05 (`tests/fixtures/dining-thanksgiving-2026.html`) and the Locations & Hours feed, which contains no Thanksgiving periods.
 - Privacy waivers: none
 
+
+## DEC-0100 — Run the TousePass advertisement creative
+
+- Date: 2026-11-05
+- Owner: user
+- Status at record: active
+- Decision: Replace the Folk Starbucks advertisement with the owner-supplied TousePass creative (`assets/tousepass-leaderboard-1456x180.png`, a 2x asset for the 728×90 slot) and direct the unchanged header slot to https://tousepass.com/ tagged `utm_source=lionhour`, `utm_medium=banner`, `utm_campaign=header` so TousePass can attribute LionHour clicks.
+- Rationale: The owner selected a new creative and destination for the header advertisement while retaining the slot's existing behavior.
+- Scope: Main-page header advertisement asset, destination, accessible labeling, and regression coverage.
+- Implementation: pending
+- Recorded against HEAD: `34afaadb7b3dbac2a712329afe34bb889dc482ea`
+- Supersedes: DEC-0081
+- Evidence: Owner-supplied TousePass leaderboard image and change request on 2026-11-05.
+- Privacy waivers: none
