@@ -1948,3 +1948,11 @@
 - Supersedes: DEC-0100
 - Evidence: Owner-supplied revised TousePass leaderboard image and change request on 2026-11-05.
 - Privacy waivers: none
+
+## Update — 2026-11-05 — DEC-0101
+
+- Type: implementation
+- Implementation commit: `e9d07a5fc0db225541b982812eab636a6f400d0a` — feat: refresh TousePass banner creative
+- Superseded by: none
+- Note: The header now serves the revised TousePass creative; destination, UTM tags, and slot behavior are unchanged.
+- Privacy waivers: none
