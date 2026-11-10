@@ -178,3 +178,28 @@ test('a freshly generated snapshot still reports a source that keeps failing', (
     locations: [{ id: 'johnjay', days: days(14, { intervals: [['09:30', '21:00']], status: null }) }],
   })), ['stale-source:barnard-hours']);
 });
+
+test('warns two weeks ahead when a venue runs out of term-article hours', () => {
+  // Blue Java Mudd is only covered by the Fall 2026 article, which stops on 2026-12-23.
+  const window = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(Date.UTC(2026, 11, 13 + index)).toISOString().slice(0, 10);
+    return date <= '2026-12-23'
+      ? { date, intervals: [['08:00', '18:00']], status: 'Fall 2026 hours', sourceId: 'fall-2026' }
+      : { date, intervals: [], status: 'Hours not published', sourceId: 'unpublished' };
+  });
+  const findings = auditCategory({
+    category: 'dining',
+    snapshot: { generated: '2026-12-13T05:00:00.000Z', locations: [{ id: 'bj-mudd', days: window }] },
+    now: new Date('2026-12-13T06:00:00.000Z'),
+  }).findings;
+  assert.deepEqual(kinds(findings), ['term-ending:bj-mudd']);
+  assert.match(findings[0].detail, /stops after 2026-12-23; nothing is published from 2026-12-24/);
+});
+
+test('term-article hours with no gap after them are not reported', () => {
+  const findings = audit('dining', {
+    generated: FRESH,
+    locations: [{ id: 'bj-mudd', days: days(14, { intervals: [['08:00', '18:00']], status: 'Fall 2026 hours', sourceId: 'fall-2026' }) }],
+  });
+  assert.deepEqual(findings, []);
+});

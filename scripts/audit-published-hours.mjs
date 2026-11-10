@@ -11,6 +11,8 @@
 import { pathToFileURL } from 'node:url';
 
 import { MAX_SNAPSHOT_AGE_MS, auditAll, describeAudit } from '../lib/hours-audit.js';
+import { checkJoeCoffee } from '../lib/joe-coffee-check.js';
+import { VENUE_BY_ID } from '../lib/venue-catalog.generated.mjs';
 
 export const AUDITED_PATHS = Object.freeze({
   library: '/api/library-hours',
@@ -53,6 +55,10 @@ async function main() {
   const maxAgeMs = args['max-age-hours'] ? Number(args['max-age-hours']) * 3_600_000 : MAX_SNAPSHOT_AGE_MS;
   const snapshots = await fetchSnapshots(args['base-url']);
   const audit = auditAll({ snapshots, maxAgeMs });
+  // Joe Coffee has no scraper; its hand-entered hours are checked against Joe's own pages.
+  const joe = await checkJoeCoffee(VENUE_BY_ID);
+  audit.results.push(joe);
+  audit.ok = audit.ok && joe.findings.length === 0;
 
   process.stdout.write(args.json ? `${JSON.stringify(audit, null, 2)}\n` : `${describeAudit(audit)}\n`);
   if (!audit.ok) process.exitCode = 1;

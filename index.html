@@ -1192,7 +1192,8 @@ const VENUES = window.VENUES = [
              [['07:30','14:30'],['17:00','21:00']],[['07:30','14:30'],['17:00','21:00']],null,null,null) },
 
   { id:'facultyhouse-4', name:'Fac House (4th Floor)', cat:'dining', loc:'64 Morningside Dr',
-    hours: ALL(null), note:'Live Columbia Dining schedule loads when available.' },
+    hours: ALL(null), sourceStatuses: ALL('Hours load from official schedule'),
+    note:'Live Columbia Dining schedule loads when available.' },
 
   { id:'facshack', name:'Fac Shack', cat:'dining', loc:'Faculty House patio',
     hours: D([['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],[['12:00','20:00']],
@@ -1248,8 +1249,8 @@ const VENUES = window.VENUES = [
     note:'Columbia ID required for entry.' },
 
   { id:'bj-everett', name:'Everett Cafe', cat:'cafe', loc:'Lenfest Hall, Law School',
-    hours: D([['08:30','19:30']],[['08:30','19:30']],[['08:30','19:30']],[['08:30','19:30']],
-             [['08:30','14:00']],null,null) },
+    hours: D([['08:00','19:30']],[['08:00','19:30']],[['08:00','19:30']],[['08:00','19:30']],
+             [['08:00','14:30']],null,null) },
 
   { id:'lenfest-cafe', name:'Lenfest Cafe', cat:'cafe', loc:'Lenfest Hall',
     hours: D([['08:00','18:30']],[['08:00','18:30']],[['08:00','18:30']],[['08:00','18:30']],
@@ -1257,36 +1258,39 @@ const VENUES = window.VENUES = [
 
   /* ── FITNESS ────────────────────────────────────── */
   { id:'dodge', name:'Dodge Gym', cat:'fitness', loc:'3030 Broadway',
-    hours: WEEKDAYS([['06:00','22:00']], [['08:00','20:00']], [['08:00','20:00']]) },
+    hours: D([['06:00','24:00']],[['06:00','24:00']],[['06:00','24:00']],[['06:00','24:00']],
+             [['06:00','22:00']],[['08:00','22:00']],[['08:00','24:00']]) },
 
   { id:'uris-pool', name:'Uris Pool', cat:'fitness', parentId:'dodge', loc:'Dodge Gym, lower level',
     hours: WEEKDAYS([['12:00','14:00'],['19:00','21:30']],
-                    [['13:00','17:00']], [['13:00','17:00']]) },
+                    [['13:00','17:00'],['19:00','21:30']], [['13:00','17:00'],['19:00','21:30']]) },
 
   { id:'barnard-fitness', name:'Barnard Gym', cat:'fitness', loc:'LeFrak Center, Barnard College',
-    hours: ALL(null) },
+    hours: ALL(null), sourceStatuses: ALL('Hours load from official schedule') },
 
   /* ── STUDENT LIFE & SERVICES ────────────────────── */
   { id:'lerner', name:'Alfred Lerner Hall', cat:'student', loc:'2920 Broadway',
-    hours: WEEKDAYS([['07:30','20:00']], [['09:00','17:00']], [['09:00','17:00']]),
+    hours: WEEKDAYS([['07:30','00:30']], [['08:30','00:30']], [['08:30','00:30']]),
     hideAccessBadge:true, hideStatusBadge:true,
     note:'Times are subject to change throughout the academic year.' },
 
   { id:'bookstore', name:'Columbia University Bookstore', cat:'student', loc:'Lerner Hall, lower level',
-    hours: WEEKDAYS([['09:00','19:00']], [['10:00','18:00']], [['11:00','17:00']]),
+    hours: WEEKDAYS([['09:00','19:00']], [['11:00','17:00']], [['11:00','17:00']]),
     estimated: true, hideStatusBadge:true },
 
   { id:'mail-center', name:'Student Mail Center', cat:'student', loc:'Wien Hall, lower level',
-    hours: WEEKDAYS([['12:00','16:00']]), studentAccessType:'office-hours', hideStatusBadge:true,
+    hours: D([['11:00','19:00']],[['09:00','19:00']],[['09:00','19:00']],[['11:00','19:00']],
+             [['11:00','18:00']],null,null), studentAccessType:'office-hours', hideStatusBadge:true,
     note:'Live source includes check-in week, Fall Rush, holidays, and regular fall hours.' },
 
   { id:'alice-health', name:'Alice Health', cat:'student', loc:'John Jay Hall, 3rd fl',
-    hours: WEEKDAYS([['09:00','17:00']]), studentAccessType:'office-hours',
+    hours: D([['09:00','18:00']],[['09:00','18:00']],[['09:00','18:00']],[['09:00','18:00']],
+             [['09:00','17:00']],null,null), studentAccessType:'office-hours',
     note:'Virtual appointments and selected virtual drop-in services are also available.' },
 
   { id:'medical', name:'Medical Services', cat:'student', loc:'John Jay Hall, 4th fl',
-    hours: D([['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],[['09:00','17:00']],
-             [['08:00','16:00']],null,null),
+    hours: D([['09:00','18:00']],[['09:00','18:00']],[['09:00','18:00']],[['09:00','18:00']],
+             [['09:00','17:00']],[['10:00','15:30']],null),
     studentAccessType:'office-hours', note:'Check-in closes 30 minutes before closing. After-hours nurse line available 24/7.' },
 
   { id:'caps', name:'Counseling & Psychological Services', cat:'student', loc:'Lerner Hall, 8th fl',
@@ -1307,7 +1311,7 @@ const VENUES = window.VENUES = [
     note:'Appointments and selected weekday drop-in hours are available.' },
 
   { id:'immunization', name:'Immunization Compliance Office', cat:'student', loc:'John Jay Hall, 3rd fl',
-    hours: WEEKDAYS([['09:00','17:00']]),
+    hours: WEEKDAYS([['09:00','16:00']]),
     studentAccessType:'virtual-only', note:'Virtual appointments and weekday drop-ins are available.' },
 ];
 
@@ -1370,6 +1374,13 @@ function sourceClosureStatus(venue, dow) {
 
 function sourceDisplayStatus(venue, dow) {
   const value = sourceStatus(venue, dow);
+  // The fail-closed live-only cards (Milstein, Barnard Dining) carry a "pending" status
+  // until live data arrives. It was not on the list below, so whenever the live feed
+  // failed they fell through to "Closed today" with a CLOSED badge — the one outcome
+  // their design forbids (DEC-0033/0034). Show them as unverified instead.
+  if (value === 'Hours load from official schedule' || value === 'Hours pending first live update') {
+    return 'Hours need verification';
+  }
   return value && (/^closed\b/i.test(value)
     || value === 'Reservation required'
     || value === 'Separate hours not published'
@@ -1537,11 +1548,18 @@ function getStatus(venue, now) {
    run) is included while it is still going and tagged with the day it began,
    so this column can never contradict the status, which also looks back a day. */
 function todayHoursText(venue, now) {
-  const spans = activeIntervals(venue, now.dow)
+  const todays = activeIntervals(venue, now.dow)
     .filter(iv => iv.end > 0 && iv.start < 1440)        // touches today at all
-    .filter(iv => iv.start >= 0 || iv.end > now.mins)   // yesterday's spill: only while live
+    .filter(iv => iv.start >= 0 || iv.end > now.mins);  // yesterday's spill: only while live
+  const spans = todays
     .filter(iv => iv.end > now.mins || iv.start > now.mins) // hide intervals already elapsed today
     .sort((a, b) => a.start - b.start);
+
+  // Everything today has already ended. "Closed today" read as if the place never opened
+  // (Mudd, Johnny's and Fac House 4th all said so on a weekday evening), so say when it shut.
+  if (!spans.length && todays.some(iv => iv.start >= 0)) {
+    return `Closed at ${fmt12(Math.max(...todays.filter(iv => iv.start >= 0).map(iv => iv.end)))}`;
+  }
 
   // A multi-day 24h run yields one span per source day — merge them back.
   const merged = [];

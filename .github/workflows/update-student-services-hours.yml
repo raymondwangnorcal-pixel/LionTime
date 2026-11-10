@@ -2,7 +2,9 @@ name: Update student services hours
 
 on:
   schedule:
-    - cron: '57 */4 * * *'
+    # Every 2 hours, not 4: GitHub delayed or dropped enough scheduled runs in Nov 2026 that
+    # the 4-hour cadence was landing every 8-10 hours, one bad day from the 24h budget.
+    - cron: '57 */2 * * *'
   workflow_dispatch:
 
 permissions:
@@ -31,8 +33,18 @@ jobs:
           package-manager-cache: false
       - name: Install dependencies
         run: npm ci
+      # Playwright's download hung on the Mac runner from 2026-11-08 to 2026-11-10: every run
+      # sat in this step until the 15-minute job limit cancelled it, and "cancelled" read as
+      # routine for two and a half days. Skip the download when this Playwright's Chromium is
+      # already on disk, and cap the step so a hang fails fast and loudly instead.
       - name: Install Chromium
-        run: npx playwright install chromium
+        timeout-minutes: 4
+        run: |
+          if node -e "process.exit(require('fs').existsSync(require('playwright').chromium.executablePath()) ? 0 : 1)"; then
+            echo "Chromium for this Playwright version is already installed; skipping the download."
+          else
+            npx playwright install chromium
+          fi
       - name: Test Student Life pipeline
         run: >-
           node --test

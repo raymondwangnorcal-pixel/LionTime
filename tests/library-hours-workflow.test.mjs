@@ -4,8 +4,8 @@ import test from 'node:test';
 
 const workflow = fs.readFileSync(new URL('../.github/workflows/update-library-hours.yml', import.meta.url), 'utf8');
 
-test('publisher runs every four hours with least privilege and a deployment gate', () => {
-  assert.match(workflow, /cron: ['"]17 \*\/4 \* \* \*['"]/);
+test('publisher runs every two hours with least privilege and a deployment gate', () => {
+  assert.match(workflow, /cron: ['"]17 \*\/2 \* \* \*['"]/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /contents: read/);
   assert.doesNotMatch(workflow, /contents: write/);

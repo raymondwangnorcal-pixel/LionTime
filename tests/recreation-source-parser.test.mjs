@@ -146,6 +146,35 @@ test('reads Blue Gym under the Fall 2026 calendar name and activity-style titles
   ]);
 });
 
+test('keeps calendar sessions that run until midnight', () => {
+  // Captured from the live Blue Gym week view on 2026-11-10. Google writes an event ending
+  // at 12am with both dates and a trailing comma; it used to be dropped silently.
+  const calendarText = [
+    '6am to 8:45am, Open Recreation, Calendar: University Hall (Blue) Gym Open Recreation, No location, November 10, 2026',
+    '12pm to 1pm, Badminton/Pickleball - Open Recreation , Calendar: University Hall (Blue) Gym Open Recreation, No location, November 10, 2026',
+    '5pm to 7:45pm, Volleyball - Open Recreation, Calendar: University Hall (Blue) Gym Open Recreation, No location, November 10, 2026',
+    'November 10, 2026 at 11pm to November 11, 2026 at 12am, Open Recreation, Calendar: University Hall (Blue) Gym Open Recreation, No location,',
+    '11pm – 12am',
+    'November 12, 2026 at 11pm to November 14, 2026 at 12am, Open Recreation, Calendar: University Hall (Blue) Gym Open Recreation, No location,',
+    'November 13, 2026 at 11pm to November 14, 2026 at 1am, Open Recreation, Calendar: University Hall (Blue) Gym Open Recreation, No location,',
+  ].join('\n');
+  const evidence = parseActivityCalendar({
+    targetId: 'blue-gym',
+    calendarUrl: blueGymCalendarUrl(),
+    weeks: [calendarText],
+  }, { generated: new Date('2026-11-10T18:00:00-05:00') });
+
+  assert.deepEqual(find(evidence, 'blue-gym', item => item.effectiveStart === '2026-11-10').dateIntervals, [
+    ['06:00', '08:45'],
+    ['12:00', '13:00'],
+    ['17:00', '19:45'],
+    ['23:00', '24:00'],
+  ]);
+  assert.deepEqual(find(evidence, 'dodge', item => item.effectiveStart === '2026-11-10').dateIntervals, [['06:00', '24:00']]);
+  // A span over more than one midnight, or ending after 12am, is not guessed at.
+  assert.equal(evidence.some(item => item.effectiveStart === '2026-11-12' || item.effectiveStart === '2026-11-13'), false);
+});
+
 test('rejects mismatched calendar URLs and event identities', async () => {
   const calendarText = await readFixture('recreation-blue-gym-calendar.txt');
 

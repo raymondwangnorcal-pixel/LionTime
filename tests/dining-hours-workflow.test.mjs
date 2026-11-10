@@ -7,8 +7,8 @@ const vercel = JSON.parse(fs.readFileSync(new URL('../vercel.json', import.meta.
 const api = fs.readFileSync(new URL('../api/dining-hours.js', import.meta.url), 'utf8');
 const barnardApi = fs.readFileSync(new URL('../api/barnard-dining-hours.js', import.meta.url), 'utf8');
 
-test('dining publisher runs independently every four hours with least privilege', () => {
-  assert.match(workflow, /cron: ['"]47 \*\/4 \* \* \*['"]/);
+test('dining publisher runs independently every two hours with least privilege', () => {
+  assert.match(workflow, /cron: ['"]47 \*\/2 \* \* \*['"]/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.doesNotMatch(workflow, /pull_request(?:_target)?:/);
   assert.match(workflow, /contents: read/);
@@ -71,4 +71,15 @@ test('Dining refuses a publish that was not accepted, and checks the site afterw
   assert.match(workflow, /- name: Verify the site is serving this run's snapshot/);
   assert.match(workflow, /verify-published-snapshot\.mjs\n\s+--kind dining/);
   assert.match(workflow, /--local "\$RUNNER_TEMP\/dining-hours\.json"/);
+});
+
+test('every headed-browser workflow caps the Chromium install and skips it when cached', () => {
+  // The 2026-11-08 to 11-10 outage: the install hung until the 15-minute job limit.
+  for (const name of ['update-dining-hours', 'update-recreation-hours', 'update-student-services-hours']) {
+    const text = fs.readFileSync(new URL(`../.github/workflows/${name}.yml`, import.meta.url), 'utf8');
+    const step = text.slice(text.indexOf('- name: Install Chromium'), text.indexOf('- name:', text.indexOf('- name: Install Chromium') + 10));
+    assert.match(step, /timeout-minutes: [1-5]\n/, name);
+    assert.match(step, /existsSync\(require\('playwright'\)\.chromium\.executablePath\(\)\)/, name);
+    assert.match(step, /npx playwright install chromium/, name);
+  }
 });
