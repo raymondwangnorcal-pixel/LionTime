@@ -6,8 +6,8 @@ const workflow = await readFile(new URL('../.github/workflows/update-student-ser
 const api = await readFile(new URL('../api/student-services-hours.js', import.meta.url), 'utf8');
 const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
 
-test('Student Life workflow runs every four hours in one bounded headed browser job', () => {
-  assert.match(workflow, /cron: '57 \*\/4 \* \* \*'/);
+test('Student Life workflow runs every two hours in one bounded headed browser job', () => {
+  assert.match(workflow, /cron: '57 \*\/2 \* \* \*'/);
   assert.match(workflow, /timeout-minutes: 15/);
   assert.match(workflow, /if: github\.repository == 'raymondwangnorcal-pixel\/LionTime' && github\.ref == 'refs\/heads\/main'/);
   assert.match(workflow, /runs-on: \[self-hosted, macOS, ARM64, lionhour-dining\]/);

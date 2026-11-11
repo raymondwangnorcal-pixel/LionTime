@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('recreation publishing runs independently every four hours from the residential runner', async () => {
+test('recreation publishing runs independently every two hours from the residential runner', async () => {
   const [workflow, libraryWorkflow, diningWorkflow] = await Promise.all([
     readFile('.github/workflows/update-recreation-hours.yml', 'utf8'),
     readFile('.github/workflows/update-library-hours.yml', 'utf8'),
     readFile('.github/workflows/update-dining-hours.yml', 'utf8'),
   ]);
 
-  assert.match(workflow, /cron: ['"]27 \*\/4 \* \* \*['"]/);
+  assert.match(workflow, /cron: ['"]27 \*\/2 \* \* \*['"]/);
   assert.notEqual(scheduledMinute(workflow), scheduledMinute(libraryWorkflow));
   assert.notEqual(scheduledMinute(workflow), scheduledMinute(diningWorkflow));
   assert.match(workflow, /if: github\.repository == 'raymondwangnorcal-pixel\/LionTime' && github\.ref == 'refs\/heads\/main'/);
@@ -34,7 +34,7 @@ test('Recreation always notifies Telegram with its validated summary', async () 
 });
 
 function scheduledMinute(workflow) {
-  return workflow.match(/cron: ['"](\d+) \*\/4 \* \* \*['"]/)?.[1];
+  return workflow.match(/cron: ['"](\d+) \*\/2 \* \* \*['"]/)?.[1];
 }
 
 test('Recreation refuses a publish that was not accepted, and checks the site afterwards', async () => {

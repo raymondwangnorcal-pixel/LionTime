@@ -65,3 +65,19 @@ test('the page schedules its once-a-minute re-render without a missing clock fun
   assert.equal(/setInterval\(updateClock/.test(html), /function updateClock\b/.test(html),
     'a setInterval for an undefined function throws before the re-render is scheduled');
 });
+
+test('a venue that already closed for the day says when, not "Closed today"', () => {
+  // Tuesday 6:30 PM. Mudd (8 AM - 6 PM) has finished for the day; Joe Dodge is closed all Sunday.
+  const mudd = { ...venue('bj-mudd'), hours: { ...venue('bj-mudd').hours } };
+  assert.equal(todayHoursText(mudd, { dow: 2, mins: 18 * 60 + 30 }), 'Closed at 6 PM');
+  assert.equal(todayHoursText(mudd, { dow: 2, mins: 12 * 60 }), '8 AM – 6 PM');
+  assert.equal(todayHoursText(venue('joe-dodge'), { dow: 0, mins: 12 * 60 }), 'Closed today');
+});
+
+test('live-only cards without live data read as unverified, never as closed today', () => {
+  for (const id of ['milstein', 'hewitt', 'lizs-place', 'facultyhouse-4', 'barnard-fitness']) {
+    const now = { dow: 2, mins: 18 * 60 + 30 };
+    assert.equal(todayHoursText(venue(id), now), 'Hours need verification', id);
+    assert.equal(getStatus(venue(id), now).label, 'Hours need verification', id);
+  }
+});

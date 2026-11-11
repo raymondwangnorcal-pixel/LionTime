@@ -2,7 +2,9 @@ name: Update library hours
 
 on:
   schedule:
-    - cron: '17 */4 * * *'
+    # Every 2 hours, not 4: GitHub delayed or dropped enough scheduled runs in Nov 2026 that
+    # the 4-hour cadence was landing every 8-10 hours, one bad day from the 24h budget.
+    - cron: '17 */2 * * *'
   workflow_dispatch:
 
 permissions:

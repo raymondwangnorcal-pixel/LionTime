@@ -1956,3 +1956,17 @@
 - Superseded by: none
 - Note: The header now serves the revised TousePass creative; destination, UTM tags, and slot behavior are unchanged.
 - Privacy waivers: none
+
+## DEC-0102 — Harden hours freshness after the 2026-11-08 runner outage
+
+- Date: 2026-11-10
+- Owner: user
+- Status at record: active
+- Decision: Cap the headed-browser workflows' Chromium install at four minutes and skip it when the matching Chromium is on disk; run all four hours scrapers every two hours; keep Google Calendar sessions that end at midnight; have the hours audit check Joe Coffee's hand-entered hours against Joe's own pages and warn two weeks before a venue runs out of term-article hours; correct embedded fallback hours to the verified Fall 2026 schedules; say "Closed at <time>" once a venue has finished for the day; show fail-closed live-only cards as "Hours need verification" instead of "Closed today" when live data is missing.
+- Rationale: The Mac runner hung in `npx playwright install chromium` from 2026-11-08 to 2026-11-10, so Dining, Recreation and Student Life served 2.5-day-old snapshots while runs read as "cancelled". A full check against every official page on 2026-11-10 found the Blue Gym 11 PM–midnight sessions missing, stale fallback hours for nine venues, and no check at all on Joe Coffee or on Blue Java Mudd's single source.
+- Scope: Scraper workflows, recreation calendar parsing, hours audit, embedded VENUES fallbacks and generated SEO pages, today-hours wording, dated reminders. Milstein, Barnard Dining, Barnard Fitness and Faculty House 4th stay fail-closed (`ALL(null)`) per DEC-0033/DEC-0034.
+- Implementation: pending
+- Recorded against HEAD: `a1b4acab34c230e389821ddc54051874f6ec28b5`
+- Supersedes: none
+- Evidence: Workflow runs #323–#328 (Dining), #302–#307 (Recreation), #297–#302 (Student Life), audit runs #192–#194; official pages read in the owner's browser on 2026-11-10.
+- Privacy waivers: none
