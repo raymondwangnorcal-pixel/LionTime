@@ -1970,3 +1970,17 @@
 - Supersedes: none
 - Evidence: Workflow runs #323–#328 (Dining), #302–#307 (Recreation), #297–#302 (Student Life), audit runs #192–#194; official pages read in the owner's browser on 2026-11-10.
 - Privacy waivers: none
+
+## DEC-0103 — Read Thanksgiving-style dated exceptions from every source
+
+- Date: 2026-11-22
+- Owner: user
+- Status at record: active
+- Decision: Apply Columbia Health's dated "Alert" list (closures, early closes, appointment-only days; 24/7 phone lines kept); treat the Bookstore's starred days as this week's dated hours; limit Café East to Lerner Hall's published hours when the Dining API serves a snapshot; let a feed status that appears only on break dates (a dated period such as a private-event close) beat the break article; and apply the library calendar's "Beginning <time>" note to 24-hour days.
+- Rationale: A check against the official pages on 2026-11-22 found Thanksgiving week wrong for Columbia Health, the Bookstore, Café East, Grace Dodge (11/24) and Butler (11/28) — in each case the source published the exception and the parser either ignored it or let an older source override it.
+- Scope: Student Life Health and Bookstore parsing, Dining API read path and break resolution, library scraper.
+- Implementation: pending
+- Recorded against HEAD: `399575f536dc147513a9c72d76062a226a94aa67`
+- Supersedes: none
+- Evidence: Official pages read in the owner's browser on 2026-11-22 (Columbia Health alert list, Bookstore store hours, Lerner Hall building hours, Columbia Dining feed for Grace Dodge, Columbia Libraries Butler calendar).
+- Privacy waivers: none

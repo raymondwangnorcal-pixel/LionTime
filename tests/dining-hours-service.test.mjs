@@ -329,3 +329,28 @@ test('publishes a v6 snapshot that overlays the Thanksgiving article on top of F
   assert.equal(day('cafe-east', '2026-11-26').sourceId, 'cafe-east');
   assert.equal(day('johnjay', '2026-11-30').sourceId, 'locations-feed');
 });
+
+test('a dated feed period on a break day beats the break article (Grace Dodge, 2026-11-24)', async () => {
+  const store = memoryStore(null);
+  const service = createDiningHoursService({ store, updateSecret: 'test-secret' });
+  const v4 = makeValidDiningAttemptBatch({ schemaVersion: 4, generated: '2026-11-01T16:00:00.000Z' });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: v4 })).status, 204);
+
+  const batch = makeValidDiningAttemptBatch({ schemaVersion: 5, generated: '2026-11-20T16:00:00.000Z' });
+  const feed = batch.attempts.find(attempt => attempt.sourceId === 'locations-feed').payload;
+  const location = id => feed.locations.find(item => item.id === id);
+  // Columbia Dining added a private-event close for Grace Dodge after the article was written.
+  Object.assign(location('gracedodge').days.find(day => day.date === '2026-11-24'), {
+    intervals: [['11:00', '16:00']], status: 'Closing at 4pm for Private Event',
+  });
+  assert.equal((await service.handle({ method: 'PUT', authorization: 'Bearer test-secret', body: batch })).status, 204);
+  const body = (await service.handle({ method: 'GET' })).body;
+  const day = (id, date) => body.locations.find(item => item.id === id).days.find(item => item.date === date);
+
+  assert.deepEqual(day('gracedodge', '2026-11-24'), {
+    date: '2026-11-24', intervals: [['11:00', '16:00']], status: 'Closing at 4pm for Private Event', sourceId: 'locations-feed',
+  });
+  // Days whose feed status is the ordinary schedule still follow the article.
+  assert.equal(day('johnjay', '2026-11-26').sourceId, 'thanksgiving-2026');
+  assert.equal(day('jjs', '2026-11-27').sourceId, 'thanksgiving-2026');
+});

@@ -1,10 +1,14 @@
 import { createDiningHoursService } from '../lib/dining-hours-service.js';
 import { createDiningHoursStore } from '../lib/dining-hours-store.js';
+import { lernerDaysFromStudentServices } from '../lib/cafe-east-building-hours.js';
+import { createStudentServicesHoursStore } from '../lib/student-services-hours-store.js';
 
 export default async function handler(req, res) {
   const service = createDiningHoursService({
     store: createDiningHoursStore(),
     updateSecret: process.env.LIBRARY_HOURS_UPDATE_SECRET,
+    // Café East is open only while Lerner Hall is; Lerner's dated hours come from Student Life.
+    buildingHours: async () => lernerDaysFromStudentServices(await createStudentServicesHoursStore().getSnapshot()),
   });
   const result = await service.handle({
     method: req.method,
