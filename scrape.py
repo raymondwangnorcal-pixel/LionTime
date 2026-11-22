@@ -219,6 +219,23 @@ def parse_hours_text(text: str) -> Optional[dict[str, str]]:
     return {"open": parse_time(match.group(1)), "close": parse_time(match.group(2))}
 
 
+def apply_day_note(hours: dict[str, str], note: str) -> dict[str, str]:
+    """Apply a cell note that moves an all-day opening.
+
+    Butler on 2026-11-28 read "Open 24 hours on 11/28/2026" with the note "Building Open
+    24 Hours Beginning 11AM": it reopened at 11 AM after Thanksgiving, but the note was
+    ignored and the whole day showed as open from midnight. Only a 24-hour day with an
+    explicit "beginning <time>" note is changed; every other note is left alone.
+    """
+    if hours != {"open": "00:00", "close": "00:00"}:
+        return hours
+    match = re.search(r"(?i)\bbeginning\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*([AP])\.?\s*M\.?", " ".join(note.split()))
+    if not match:
+        return hours
+    opening = parse_time(f"{match.group(1)}:{match.group(2) or '00'}{match.group(3).upper()}M")
+    return {"open": opening, "close": "00:00"}
+
+
 def fetch_library_page(slug: str, date_value: Optional[str] = None) -> Optional[BeautifulSoup]:
     url = f"{BASE_URL}/{slug}"
     if date_value:
@@ -257,7 +274,11 @@ def extract_schedule_from_page(soup: BeautifulSoup) -> dict[str, Optional[dict[s
         hours_element = cell.select_one(".day-hours")
         if hours_element is None:
             raise ScheduleParseError(f"{date_value}: missing .day-hours")
-        schedule[date_value] = parse_hours_text(hours_element.get_text(" ", strip=True))
+        hours = parse_hours_text(hours_element.get_text(" ", strip=True))
+        note_element = cell.select_one(".day-note")
+        if hours is not None and note_element is not None:
+            hours = apply_day_note(hours, note_element.get_text(" ", strip=True))
+        schedule[date_value] = hours
     if not schedule:
         raise ScheduleParseError("no dated calendar cells found")
     return schedule

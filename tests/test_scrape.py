@@ -82,6 +82,26 @@ class ScraperContractTests(unittest.TestCase):
         self.assertEqual(schedule["2026-08-20"], {"open": "09:00", "close": "21:00"})
         self.assertIsNone(schedule["2026-08-23"])
 
+    def test_beginning_note_moves_a_24_hour_opening(self):
+        # Butler, Thanksgiving Saturday 2026-11-28, exactly as the calendar cell reads.
+        soup = BeautifulSoup(
+            '<table><tr>'
+            '<td><div class="fulldate d-none">2026-11-27</div><div class="day-hours">Closed</div>'
+            '<div class="day-note">University Holiday</div></td>'
+            '<td><div class="fulldate d-none">2026-11-28</div><div class="day-hours">Open 24 hours on 11/28/2026</div>'
+            '<div class="day-note">Building Open 24 Hours Beginning 11AM</div></td>'
+            '<td><div class="fulldate d-none">2026-11-29</div><div class="day-hours">Open 24 hours on 11/29/2026</div></td>'
+            '<td><div class="fulldate d-none">2026-11-25</div><div class="day-hours">9:00AM-5:00PM</div>'
+            '<div class="day-note">Academic Holiday</div></td>'
+            '</tr></table>',
+            "html.parser",
+        )
+        schedule = extract_schedule_from_page(soup)
+        self.assertEqual(schedule["2026-11-28"], {"open": "11:00", "close": "00:00"})
+        self.assertEqual(schedule["2026-11-29"], {"open": "00:00", "close": "00:00"})
+        self.assertEqual(schedule["2026-11-25"], {"open": "09:00", "close": "17:00"})
+        self.assertIsNone(schedule["2026-11-27"])
+
     def test_library_identity_is_explicit_and_unique(self):
         self.assertEqual(
             [(item["id"], item["slug"], item["venue_id"]) for item in DISPLAYED_LIBRARIES],

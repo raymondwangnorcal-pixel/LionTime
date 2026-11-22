@@ -233,3 +233,64 @@ test('keeps the hand-asserted Labor Day closure when the page has no Holiday Clo
   const closures = evidence.filter(item => item.exactDate && item.status === 'Closed');
   assert.deepEqual(closures.map(item => item.exactDate), ['2026-09-07']);
 });
+
+test('Health holiday alerts close, trim and restrict the dated days, keeping 24/7 phone lines', () => {
+  // The 2026-11-22 alert list, placed in the Fall 2026 page shape. The page wrote
+  // "Wednesday, November 26" for a Thursday; the dates are what count.
+  const evidence = parseHealthSource(fixture('student-services-health-2026-11-22.html'));
+  const attempt = buildStudentServicesAttempt({
+    sourceId: 'health', sourceUrl: 'https://www.health.columbia.edu/content/hours-and-locations',
+    generated: new Date('2026-11-22T20:00:00Z'), evidence,
+  });
+  const day = (id, date) => attempt.venues.find(venue => venue.id === id).days.find(item => item.date === date).availabilities;
+  const ofType = (id, date, type) => day(id, date).filter(item => item.type === type);
+
+  // Wednesday: every department closes at 2 PM.
+  assert.deepEqual(ofType('medical', '2026-11-25', 'office-hours')[0].intervals, [['09:00', '14:00']]);
+  assert.deepEqual(ofType('caps', '2026-11-25', 'office-hours')[0].intervals, [['08:00', '14:00']]);
+  // Thursday and Friday: closed, but the 24/7 lines are still answered.
+  for (const date of ['2026-11-26', '2026-11-27']) {
+    for (const id of ['alice-health', 'caps', 'disability', 'medical', 'svr', 'student-insurance', 'immunization']) {
+      const open = day(id, date).filter(item => item.type !== 'phone-support' && item.intervals.length);
+      assert.deepEqual(open, [], `${id} ${date}`);
+    }
+    assert.deepEqual(ofType('caps', date, 'phone-support')[0].intervals, [['00:00', '24:00']]);
+    assert.equal(ofType('medical', date, 'office-hours')[0].status, 'Closed');
+  }
+  // Alice! is appointment-only Monday to Wednesday: no drop-in.
+  for (const date of ['2026-11-23', '2026-11-24', '2026-11-25']) {
+    assert.deepEqual(ofType('alice-health', date, 'walk-in'), [], date);
+  }
+  // Outside the alert dates nothing changes.
+  assert.deepEqual(ofType('medical', '2026-11-30', 'office-hours')[0].intervals, ofType('medical', '2026-11-23', 'office-hours')[0].intervals);
+});
+
+test('an undated Health alert is ignored; a dated one that cannot be read fails the source', () => {
+  const page = fixture('student-services-health-2026-11-22.html');
+  // The October page carried "SVR at CUIMC is temporarily closed" with no date.
+  assert.doesNotThrow(() => parseHealthSource(fixture('student-services-health-2026-10-13.html')));
+  const unreadable = page.replace('Adjusted hours; all departments close at 2 p.m. ET', 'Hours vary by department today');
+  assert.throws(() => parseHealthSource(unreadable), /Health alert is not understood/);
+});
+
+test('Bookstore starred holiday days apply to this week only, not every week', () => {
+  // The store page on 2026-11-22: changed days carry "*" and a "*Thanksgiving Break" footnote.
+  const text = ['Columbia University in the City of New York', 'COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK',
+    '2922 Broadway', 'Lerner Hall | Lower Level', 'New York, NY 10027', 'STORE HOURS',
+    'Mon: 9:00 am - 7:00 pm', 'Tue: 9:00 am - 7:00 pm', 'Wed: 9:00 am - 4:00 pm *', 'Thu: CLOSED *',
+    'Fri: 9:00 am - 7:00 pm', 'Sat: 11:00 am - 5:00 pm', 'Sun: 11:00 am - 5:00 pm', '*Thanksgiving Break',
+    'Visit Customer Care'].join('\n');
+  const generated = new Date('2026-11-22T20:00:00Z');
+  const evidence = parseBookstoreSource(text, { now: generated });
+  const attempt = buildStudentServicesAttempt({ sourceId: 'bookstore', sourceUrl: 'https://columbia.bncollege.com/', generated, evidence });
+  const on = date => attempt.venues[0].days.find(day => day.date === date).availabilities[0];
+
+  assert.deepEqual(on('2026-11-25').intervals, [['09:00', '16:00']]);
+  assert.equal(on('2026-11-25').reason, 'Thanksgiving Break');
+  assert.equal(on('2026-11-26').status, 'Closed');
+  // The following Wednesday and Thursday are regular weekdays again.
+  assert.deepEqual(on('2026-12-02').intervals, [['09:00', '19:00']]);
+  assert.deepEqual(on('2026-12-03').intervals, [['09:00', '19:00']]);
+  // The footnote's own "*" does not mark Sunday.
+  assert.equal(on('2026-11-22').reason, null);
+});
